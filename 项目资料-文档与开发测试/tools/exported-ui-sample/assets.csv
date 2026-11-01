@@ -1,0 +1,53 @@
+﻿kind,name,page,theme,selector,css_w,css_h,px_w,px_h,x,y,transparent,file,note
+component,titlebar-1,home,dark,div > div.app-root > header.titlebar.fx-noise,1440,48,1440,50,0,0,True,dark\home\titlebar-1__1440x48.png,"自动发现 阴影/外发光部分被页面边界裁剪 部分阴影被祖先容器裁切（BODY, DIV, app-root） 该组件带 backdrop-filter（blur(0px) saturate(1)）：透明版会失去材质，另附 __opaque 版（含页面背景）"
+component,tb-btn-1,home,dark,div.app-root > header.titlebar.fx-noise > div.titlebar-buttons.no-drag > button.tb-btn,32,28,36,32,1324,9.5,True,dark\home\tb-btn-1__32x28.png,自动发现 该组件带 backdrop-filter（blur(0px) saturate(1)）：透明版会失去材质，另附 __opaque 版（含页面背景）
+component,nav-item-1,home,dark,div.app-body > nav.nav > div.nav-group > button.nav-item.is-active,35,36,39,40,6,94,True,dark\home\nav-item-1__35x36.png,自动发现
+component,search-card-1,search,dark,div.vlist.switch-anim > div.vlist-spacer > div.vrow > article.card,323,196,379,252,72,579.2,True,dark\search\search-card-1__323x196.png,"部分阴影被祖先容器裁切（content, page, page-scroll） 该组件带 backdrop-filter（blur(10px) saturate(1.4)）：透明版会失去材质，另附 __opaque 版（含页面背景）"
+component,card-icon-1,search,dark,div.vrow > article.card > div.card-head > span.card-icon,64,64,68,68,89,594.2,False,dark\search\card-icon-1__64x64.png,该组件带 backdrop-filter（blur(10px) saturate(1.4)）：透明版会失去材质，另附 __opaque 版（含页面背景） 该区域四角基本不透明（组件自身铺满整块），叠放时按普通图片用即可
+component,card-btn-1,search,dark,article.card > div.card-head > div.card-btn-group > button.card-btn,26,26,30,30,356,592.2,False,dark\search\card-btn-1__26x26.png,该组件带 backdrop-filter（blur(10px) saturate(1.4)）：透明版会失去材质，另附 __opaque 版（含页面背景） 该区域四角基本不透明（组件自身铺满整块），叠放时按普通图片用即可
+component,search-chip-1,search,dark,div.filter-inner > div.filter-row > div.filter-row-items > button.chip.is-on,52,26,56,30,151,230.2,True,dark\search\search-chip-1__52x26.png,
+component,card-icon-1,search-filter,dark,div.vrow > article.card > div.card-head > span.card-icon,64,64,68,68,89,594.2,False,dark\search-filter\card-icon-1__64x64.png,自动发现 该组件带 backdrop-filter（blur(10px) saturate(1.4)）：透明版会失去材质，另附 __opaque 版（含页面背景） 该区域四角基本不透明（组件自身铺满整块），叠放时按普通图片用即可
+component,card-btn-1,search-filter,dark,article.card > div.card-head > div.card-btn-group > button.card-btn,26,26,30,30,356,592.2,False,dark\search-filter\card-btn-1__26x26.png,自动发现 该组件带 backdrop-filter（blur(10px) saturate(1.4)）：透明版会失去材质，另附 __opaque 版（含页面背景） 该区域四角基本不透明（组件自身铺满整块），叠放时按普通图片用即可
+component,tag-1,search-filter,dark,article.card > div.card-foot > div.row.row-6 > span.tag,43,22,47,26,89,736.2,False,dark\search-filter\tag-1__43x22.png,自动发现 部分阴影被祖先容器裁切（row row-6） 该组件带 backdrop-filter（blur(10px) saturate(1.4)）：透明版会失去材质，另附 __opaque 版（含页面背景） 该区域四角基本不透明（组件自身铺满整块），叠放时按普通图片用即可
+component,combo-trigger-1,search-filter,dark,div.search-content > div.toolbar-row > div.combo > button.combo-trigger,160,32,164,36,1176,137,True,dark\search-filter\combo-trigger-1__160x32.png,自动发现
+component,seg-item-1,search-filter,dark,div.search-content > div.toolbar-row > div.segmented.view-seg > button.seg-item.is-on,30,24,34,28,1351,141,True,dark\search-filter\seg-item-1__30x24.png,自动发现
+component,btn-1,detail,dark,div.page-scroll > div.detail-wrap > div.detail-topbar > button.btn.btn-wide,100,32,104,36,349,92,False,dark\detail\btn-1__100x32.png,自动发现 该组件带 backdrop-filter（blur(18px)）：透明版会失去材质，另附 __opaque 版（含页面背景） 该区域四角基本不透明（组件自身铺满整块），叠放时按普通图片用即可
+component,tag-1,detail,dark,header.detail-hero > div.detail-hero-text > div.row.row-6 > span.tag,43,22,47,26,448,240.7,True,dark\detail\tag-1__43x22.png,自动发现
+component,titlebar-1,detail,dark,div > div.app-root > header.titlebar.fx-noise,1440,48,1440,50,0,0,True,dark\detail\titlebar-1__1440x48.png,"自动发现 阴影/外发光部分被页面边界裁剪 部分阴影被祖先容器裁切（BODY, DIV, app-root） 该组件带 backdrop-filter（blur(0px) saturate(1)）：透明版会失去材质，另附 __opaque 版（含页面背景）"
+component,tb-btn-1,detail,dark,div.app-root > header.titlebar.fx-noise > div.titlebar-buttons.no-drag > button.tb-btn,32,28,36,32,1324,9.5,True,dark\detail\tb-btn-1__32x28.png,自动发现 该组件带 backdrop-filter（blur(0px) saturate(1)）：透明版会失去材质，另附 __opaque 版（含页面背景）
+component,nav-item-1,detail,dark,div.app-body > nav.nav > div.nav-group > button.nav-item,35,36,39,40,6,94,True,dark\detail\nav-item-1__35x36.png,自动发现
+component,btn-1,customize,dark,div.onboard-center > div.onboard-card > div.onboard-foot > button.btn.btn-primary,51,32,103,84,1044,593.5,True,dark\customize\btn-1__51x32.png,自动发现 该组件带 backdrop-filter（blur(18px)）：透明版会失去材质，另附 __opaque 版（含页面背景）
+component,titlebar-1,customize,dark,div > div.app-root > header.titlebar.fx-noise,1440,48,1440,50,0,0,True,dark\customize\titlebar-1__1440x48.png,"自动发现 阴影/外发光部分被页面边界裁剪 部分阴影被祖先容器裁切（BODY, DIV, app-root） 该组件带 backdrop-filter（blur(0px) saturate(1)）：透明版会失去材质，另附 __opaque 版（含页面背景）"
+component,tb-btn-1,customize,dark,div.app-root > header.titlebar.fx-noise > div.titlebar-buttons.no-drag > button.tb-btn,32,28,36,32,1324,9.5,True,dark\customize\tb-btn-1__32x28.png,自动发现 该组件带 backdrop-filter（blur(0px) saturate(1)）：透明版会失去材质，另附 __opaque 版（含页面背景）
+component,nav-item-1,customize,dark,div.app-body > nav.nav > div.nav-group > button.nav-item,35,36,39,40,6,94,True,dark\customize\nav-item-1__35x36.png,自动发现
+component,titlebar-1,favorites,dark,div > div.app-root > header.titlebar.fx-noise,1440,48,1440,50,0,0,True,dark\favorites\titlebar-1__1440x48.png,"自动发现 阴影/外发光部分被页面边界裁剪 部分阴影被祖先容器裁切（BODY, DIV, app-root） 该组件带 backdrop-filter（blur(0px) saturate(1)）：透明版会失去材质，另附 __opaque 版（含页面背景）"
+component,tb-btn-1,favorites,dark,div.app-root > header.titlebar.fx-noise > div.titlebar-buttons.no-drag > button.tb-btn,32,28,36,32,1324,9.5,True,dark\favorites\tb-btn-1__32x28.png,自动发现 该组件带 backdrop-filter（blur(0px) saturate(1)）：透明版会失去材质，另附 __opaque 版（含页面背景）
+component,nav-item-1,favorites,dark,div.app-body > nav.nav > div.nav-group > button.nav-item,35,36,39,40,6,94,True,dark\favorites\nav-item-1__35x36.png,自动发现
+component,notice-card-1,notice,dark,div.page-scroll > div.narrow > div.notice-list > article.notice-card.is-unread,820,352,876,408,334,118,True,dark\notice\notice-card-1__820x352.png,
+component,btn-1,notice,dark,div.page-scroll > div.narrow > div.row.gap8 > button.btn,98,32,102,36,1018,72,True,dark\notice\btn-1__98x32.png,自动发现
+component,titlebar-1,notice,dark,div > div.app-root > header.titlebar.fx-noise,1440,48,1440,50,0,0,True,dark\notice\titlebar-1__1440x48.png,"自动发现 阴影/外发光部分被页面边界裁剪 部分阴影被祖先容器裁切（BODY, DIV, app-root） 该组件带 backdrop-filter（blur(0px) saturate(1)）：透明版会失去材质，另附 __opaque 版（含页面背景）"
+component,tb-btn-1,notice,dark,div.app-root > header.titlebar.fx-noise > div.titlebar-buttons.no-drag > button.tb-btn,32,28,36,32,1324,9.5,True,dark\notice\tb-btn-1__32x28.png,自动发现 该组件带 backdrop-filter（blur(0px) saturate(1)）：透明版会失去材质，另附 __opaque 版（含页面背景）
+component,nav-item-1,notice,dark,div.app-body > nav.nav > div.nav-group > button.nav-item,35,36,39,40,6,94,True,dark\notice\nav-item-1__35x36.png,自动发现
+component,gh-card-1,github,dark,div.page-scroll > div.gh-wrap > div.gh-grid > div.panel.gh-card,582,460,638,516,154,70,True,dark\github\gh-card-1__582x460.png,"部分阴影被祖先容器裁切（app-body, content, page, page-scroll） 该组件带 backdrop-filter（blur(18px) saturate(1.5)）：透明版会失去材质，另附 __opaque 版（含页面背景）"
+component,titlebar-1,github,dark,div > div.app-root > header.titlebar.fx-noise,1440,48,1440,50,0,0,True,dark\github\titlebar-1__1440x48.png,"自动发现 阴影/外发光部分被页面边界裁剪 部分阴影被祖先容器裁切（BODY, DIV, app-root） 该组件带 backdrop-filter（blur(0px) saturate(1)）：透明版会失去材质，另附 __opaque 版（含页面背景）"
+component,tb-btn-1,github,dark,div.app-root > header.titlebar.fx-noise > div.titlebar-buttons.no-drag > button.tb-btn,32,28,36,32,1324,9.5,True,dark\github\tb-btn-1__32x28.png,自动发现 该组件带 backdrop-filter（blur(0px) saturate(1)）：透明版会失去材质，另附 __opaque 版（含页面背景）
+component,nav-item-1,github,dark,div.app-body > nav.nav > div.nav-group > button.nav-item,35,36,39,40,6,94,True,dark\github\nav-item-1__35x36.png,自动发现
+component,titlebar-1,feedback,dark,div > div.app-root > header.titlebar.fx-noise,1440,48,1440,50,0,0,True,dark\feedback\titlebar-1__1440x48.png,"自动发现 阴影/外发光部分被页面边界裁剪 部分阴影被祖先容器裁切（BODY, DIV, app-root） 该组件带 backdrop-filter（blur(0px) saturate(1)）：透明版会失去材质，另附 __opaque 版（含页面背景）"
+component,tb-btn-1,feedback,dark,div.app-root > header.titlebar.fx-noise > div.titlebar-buttons.no-drag > button.tb-btn,32,28,36,32,1324,9.5,True,dark\feedback\tb-btn-1__32x28.png,自动发现 该组件带 backdrop-filter（blur(0px) saturate(1)）：透明版会失去材质，另附 __opaque 版（含页面背景）
+component,nav-item-1,feedback,dark,div.app-body > nav.nav > div.nav-group > button.nav-item,35,36,39,40,6,94,True,dark\feedback\nav-item-1__35x36.png,自动发现
+component,btn-1,log,dark,div.narrow-wide > div.panel > div.row.gap12 > button.btn.btn-danger-ghost,127,32,131,36,651,125.5,True,dark\log\btn-1__127x32.png,自动发现 该组件带 backdrop-filter（blur(18px) saturate(1.5)）：透明版会失去材质，另附 __opaque 版（含页面背景）
+component,titlebar-1,log,dark,div > div.app-root > header.titlebar.fx-noise,1440,48,1440,50,0,0,True,dark\log\titlebar-1__1440x48.png,"自动发现 阴影/外发光部分被页面边界裁剪 部分阴影被祖先容器裁切（BODY, DIV, app-root） 该组件带 backdrop-filter（blur(0px) saturate(1)）：透明版会失去材质，另附 __opaque 版（含页面背景）"
+component,tb-btn-1,log,dark,div.app-root > header.titlebar.fx-noise > div.titlebar-buttons.no-drag > button.tb-btn,32,28,36,32,1324,9.5,True,dark\log\tb-btn-1__32x28.png,自动发现 该组件带 backdrop-filter（blur(0px) saturate(1)）：透明版会失去材质，另附 __opaque 版（含页面背景）
+component,nav-item-1,log,dark,div.app-body > nav.nav > div.nav-group > button.nav-item,35,36,39,40,6,94,True,dark\log\nav-item-1__35x36.png,自动发现
+screen,default,home,dark,,1440,900,1440,900,0,0,False,screens\dark\home\default__full.png,首页
+screen,tile,search,dark,,1440,900,1440,900,0,0,False,screens\dark\search\tile__full.png,磁贴视图
+screen,grid,search,dark,,1440,900,1440,900,0,0,False,screens\dark\search\grid__full.png,网格视图
+screen,filter,search,dark,,1440,900,1440,900,0,0,False,screens\dark\search\filter__full.png,筛选面板
+screen,default,favorites,dark,,1440,900,1440,900,0,0,False,screens\dark\favorites\default__full.png,默认收藏夹
+screen,folder,favorites,dark,,1440,900,1440,900,0,0,False,screens\dark\favorites\folder__full.png,其它收藏夹
+screen,default,notice,dark,,1440,900,1440,900,0,0,False,screens\dark\notice\default__full.png,公告
+screen,default,log,dark,,1440,900,1440,900,0,0,False,screens\dark\log\default__full.png,日志
+screen,export,deploy,dark,,1440,900,1440,900,0,0,False,screens\dark\deploy\export__full.png,导出模式
+screen,deploy,deploy,dark,,1440,900,1440,900,0,0,False,screens\dark\deploy\deploy__full.png,部署模式
+screen,grid,plugins,dark,,1440,900,1440,900,0,0,False,screens\dark\plugins\grid__full.png,插件网格
+screen,form,maker-form,dark,,1440,900,1440,900,0,0,False,screens\dark\maker-form\form__full.png,投稿表单

@@ -1,0 +1,35 @@
+# =============================================================================
+# ToolsGCP 运行依赖 —— **web 版**（pywebview + Vue3 前端）
+# =============================================================================
+# 安装（国内网络建议加镜像）：
+#   pip install -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple/
+#
+# ⚠️ 上一版这里是 PyQt5 + PyQt-Fluent-Widgets 两行 —— 那是**旧 PyQt 单机版**的依赖。
+#    现在主体是 web 版（入口 ToolsGCP.pyw → pywebview 壳 + webui/ 前端），
+#    装那两行是**跑不起来**的（缺 pywebview / bottle / Pillow）。
+#
+# 依赖是怎么定出来的：扫描 web 版运行期真正会被 import 到的模块
+#   （ToolsGCP.pyw、desktop/**、.ToolsGCP/modules/pymodels/{core,utils,constants,splash_screen}），
+#   逐个确认第三方包，不是凭印象写的。
+
+# ---------- 运行必需 ----------
+pywebview>=6.2,<7            # 桌面窗口外壳（Windows 走 WebView2 / winforms 后端）
+bottle>=0.13,<0.14           # 本地 WSGI 服务：把 webui/ 与 .ToolsGCP 的资源喂给 WebView2
+pythonnet>=3.0,<4            # 原生层（System.Drawing / clr）：托盘自绘菜单、PNG→HICON、窗口边框
+Pillow>=10,<12               # native/appicon.py：把 logo.png 转成多尺寸 .ico 供任务栏使用
+
+# ---------- 仍然必需：原版业务层里的这几个模块是 PyQt5 写的 ----------
+#   pymodels/utils/fonts.py        → 启动动画 / 界面字体
+#   pymodels/utils/global_hotkey.py→ 全局快捷键（QAbstractNativeEventFilter）
+#   pymodels/splash_screen.py      → 启动动画窗口
+#   pymodels/core/ai/agent_runtime.py → 插件 agent 的工具注册（import qfluentwidgets）
+# 换句话说：**web 版只把这些当"工具库"用，不再用 PyQt 画主界面**。
+PyQt5>=5.15.9,<5.16
+PyQt-Fluent-Widgets>=1.11,<2
+
+# ---------- 可选：打包成 exe 时才需要 ----------
+# pyinstaller>=6.0
+
+# ---------- 只给「py 版本-已弃用仅作为参考项目…」里的 PyQt 单机版用 ----------
+# 参考版是**只读留存**，不需要安装；真要跑它，把下面这行也装上即可（上面已经包含）：
+# PyQt5-Frameless-Window>=0.8,<1

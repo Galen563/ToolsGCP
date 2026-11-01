@@ -1,0 +1,2198 @@
+{
+  "tool": {
+    "name": "ToolsGCP UI 素材导出器",
+    "version": "1.0.0",
+    "schema": 1,
+    "generated_at": "2026-10-30T07:22:05"
+  },
+  "note": "样例子集（1x 原生无损，含组件与整程序整图）。完整导出请自己运行 ToolsGCP_UI_Asset_Exporter.py。",
+  "source_summary": {
+    "screens": 78,
+    "themes": 2,
+    "pages": 48,
+    "assets": 1050,
+    "skipped": 432,
+    "bytes": 15572260,
+    "seconds": 637.5
+  },
+  "sample_assets": 40,
+  "sample_screens": 12,
+  "assets": [
+    {
+      "name": "titlebar-1",
+      "page": "home",
+      "page_title": "首页",
+      "theme": "dark",
+      "selector": "div > div.app-root > header.titlebar.fx-noise",
+      "fx": "mica",
+      "accent": "blue",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 48
+      },
+      "doc_bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 50
+      },
+      "css_size": {
+        "w": 1440,
+        "h": 48
+      },
+      "px_size": {
+        "w": 1440,
+        "h": 50
+      },
+      "scale": 1,
+      "file": "dark\\home\\titlebar-1__1440x48.png",
+      "transparent": true,
+      "alpha_sample": {
+        "corners": [
+          255,
+          255,
+          0,
+          0
+        ],
+        "ratio": 0.0588
+      },
+      "backdrop_filter": "blur(0px) saturate(1)",
+      "timestamp": "2026-10-30T07:22:10",
+      "note": "自动发现 阴影/外发光部分被页面边界裁剪 部分阴影被祖先容器裁切（BODY, DIV, app-root） 该组件带 backdrop-filter（blur(0px) saturate(1)）：透明版会失去材质，另附 __opaque 版（含页面背景）",
+      "opaque_file": "dark\\home\\titlebar-1__1440x48__opaque.png",
+      "opaque_note": "含页面背景材质（backdrop-filter 需要底色才好看）"
+    },
+    {
+      "name": "tb-btn-1",
+      "page": "home",
+      "page_title": "首页",
+      "theme": "dark",
+      "selector": "div.app-root > header.titlebar.fx-noise > div.titlebar-buttons.no-drag > button.tb-btn",
+      "fx": "mica",
+      "accent": "blue",
+      "bbox": {
+        "x": 1324,
+        "y": 9.5,
+        "w": 32,
+        "h": 28
+      },
+      "doc_bbox": {
+        "x": 1322,
+        "y": 7.5,
+        "w": 36,
+        "h": 32
+      },
+      "css_size": {
+        "w": 32,
+        "h": 28
+      },
+      "px_size": {
+        "w": 36,
+        "h": 32
+      },
+      "scale": 1,
+      "file": "dark\\home\\tb-btn-1__32x28.png",
+      "transparent": true,
+      "alpha_sample": {
+        "corners": [
+          7,
+          10,
+          4,
+          6
+        ],
+        "ratio": 0.8636
+      },
+      "backdrop_filter": "blur(0px) saturate(1)",
+      "timestamp": "2026-10-30T07:22:11",
+      "note": "自动发现 该组件带 backdrop-filter（blur(0px) saturate(1)）：透明版会失去材质，另附 __opaque 版（含页面背景）",
+      "opaque_file": "dark\\home\\tb-btn-1__32x28__opaque.png",
+      "opaque_note": "含页面背景材质（backdrop-filter 需要底色才好看）"
+    },
+    {
+      "name": "nav-item-1",
+      "page": "home",
+      "page_title": "首页",
+      "theme": "dark",
+      "selector": "div.app-body > nav.nav > div.nav-group > button.nav-item.is-active",
+      "fx": "mica",
+      "accent": "blue",
+      "bbox": {
+        "x": 6,
+        "y": 94,
+        "w": 35,
+        "h": 36
+      },
+      "doc_bbox": {
+        "x": 4,
+        "y": 92,
+        "w": 39,
+        "h": 40
+      },
+      "css_size": {
+        "w": 35,
+        "h": 36
+      },
+      "px_size": {
+        "w": 39,
+        "h": 40
+      },
+      "scale": 1,
+      "file": "dark\\home\\nav-item-1__35x36.png",
+      "transparent": true,
+      "alpha_sample": {
+        "corners": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "ratio": 0.2637
+      },
+      "backdrop_filter": "none",
+      "timestamp": "2026-10-30T07:22:12",
+      "note": "自动发现"
+    },
+    {
+      "name": "search-card-1",
+      "page": "search",
+      "page_title": "搜索页",
+      "theme": "dark",
+      "selector": "div.vlist.switch-anim > div.vlist-spacer > div.vrow > article.card",
+      "fx": "mica",
+      "accent": "blue",
+      "bbox": {
+        "x": 72,
+        "y": 579.2,
+        "w": 323,
+        "h": 196
+      },
+      "doc_bbox": {
+        "x": 44,
+        "y": 551.2,
+        "w": 379,
+        "h": 252
+      },
+      "css_size": {
+        "w": 323,
+        "h": 196
+      },
+      "px_size": {
+        "w": 379,
+        "h": 252
+      },
+      "scale": 1,
+      "file": "dark\\search\\search-card-1__323x196.png",
+      "transparent": true,
+      "alpha_sample": {
+        "corners": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "ratio": 0.2204
+      },
+      "backdrop_filter": "blur(10px) saturate(1.4)",
+      "timestamp": "2026-10-30T07:22:21",
+      "note": "部分阴影被祖先容器裁切（content, page, page-scroll） 该组件带 backdrop-filter（blur(10px) saturate(1.4)）：透明版会失去材质，另附 __opaque 版（含页面背景）",
+      "opaque_file": "dark\\search\\search-card-1__323x196__opaque.png",
+      "opaque_note": "含页面背景材质（backdrop-filter 需要底色才好看）"
+    },
+    {
+      "name": "card-icon-1",
+      "page": "search",
+      "page_title": "搜索页",
+      "theme": "dark",
+      "selector": "div.vrow > article.card > div.card-head > span.card-icon",
+      "fx": "mica",
+      "accent": "blue",
+      "bbox": {
+        "x": 89,
+        "y": 594.2,
+        "w": 64,
+        "h": 64
+      },
+      "doc_bbox": {
+        "x": 87,
+        "y": 592.2,
+        "w": 68,
+        "h": 68
+      },
+      "css_size": {
+        "w": 64,
+        "h": 64
+      },
+      "px_size": {
+        "w": 68,
+        "h": 68
+      },
+      "scale": 1,
+      "file": "dark\\search\\card-icon-1__64x64.png",
+      "transparent": false,
+      "alpha_sample": {
+        "corners": [
+          184,
+          184,
+          184,
+          184
+        ],
+        "ratio": 0.0
+      },
+      "backdrop_filter": "blur(10px) saturate(1.4)",
+      "timestamp": "2026-10-30T07:22:22",
+      "note": "该组件带 backdrop-filter（blur(10px) saturate(1.4)）：透明版会失去材质，另附 __opaque 版（含页面背景） 该区域四角基本不透明（组件自身铺满整块），叠放时按普通图片用即可",
+      "opaque_file": "dark\\search\\card-icon-1__64x64__opaque.png",
+      "opaque_note": "含页面背景材质（backdrop-filter 需要底色才好看）"
+    },
+    {
+      "name": "card-btn-1",
+      "page": "search",
+      "page_title": "搜索页",
+      "theme": "dark",
+      "selector": "article.card > div.card-head > div.card-btn-group > button.card-btn",
+      "fx": "mica",
+      "accent": "blue",
+      "bbox": {
+        "x": 356,
+        "y": 592.2,
+        "w": 26,
+        "h": 26
+      },
+      "doc_bbox": {
+        "x": 354,
+        "y": 590.2,
+        "w": 30,
+        "h": 30
+      },
+      "css_size": {
+        "w": 26,
+        "h": 26
+      },
+      "px_size": {
+        "w": 30,
+        "h": 30
+      },
+      "scale": 1,
+      "file": "dark\\search\\card-btn-1__26x26.png",
+      "transparent": false,
+      "alpha_sample": {
+        "corners": [
+          184,
+          184,
+          184,
+          184
+        ],
+        "ratio": 0.0
+      },
+      "backdrop_filter": "blur(10px) saturate(1.4)",
+      "timestamp": "2026-10-30T07:22:23",
+      "note": "该组件带 backdrop-filter（blur(10px) saturate(1.4)）：透明版会失去材质，另附 __opaque 版（含页面背景） 该区域四角基本不透明（组件自身铺满整块），叠放时按普通图片用即可",
+      "opaque_file": "dark\\search\\card-btn-1__26x26__opaque.png",
+      "opaque_note": "含页面背景材质（backdrop-filter 需要底色才好看）"
+    },
+    {
+      "name": "search-chip-1",
+      "page": "search",
+      "page_title": "搜索页",
+      "theme": "dark",
+      "selector": "div.filter-inner > div.filter-row > div.filter-row-items > button.chip.is-on",
+      "fx": "mica",
+      "accent": "blue",
+      "bbox": {
+        "x": 151,
+        "y": 230.2,
+        "w": 52,
+        "h": 26
+      },
+      "doc_bbox": {
+        "x": 149,
+        "y": 228.2,
+        "w": 56,
+        "h": 30
+      },
+      "css_size": {
+        "w": 52,
+        "h": 26
+      },
+      "px_size": {
+        "w": 56,
+        "h": 30
+      },
+      "scale": 1,
+      "file": "dark\\search\\search-chip-1__52x26.png",
+      "transparent": true,
+      "alpha_sample": {
+        "corners": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "ratio": 0.244
+      },
+      "backdrop_filter": "none",
+      "timestamp": "2026-10-30T07:22:25",
+      "note": ""
+    },
+    {
+      "name": "card-icon-1",
+      "page": "search-filter",
+      "page_title": "搜索页-筛选面板",
+      "theme": "dark",
+      "selector": "div.vrow > article.card > div.card-head > span.card-icon",
+      "fx": "mica",
+      "accent": "blue",
+      "bbox": {
+        "x": 89,
+        "y": 594.2,
+        "w": 64,
+        "h": 64
+      },
+      "doc_bbox": {
+        "x": 87,
+        "y": 592.2,
+        "w": 68,
+        "h": 68
+      },
+      "css_size": {
+        "w": 64,
+        "h": 64
+      },
+      "px_size": {
+        "w": 68,
+        "h": 68
+      },
+      "scale": 1,
+      "file": "dark\\search-filter\\card-icon-1__64x64.png",
+      "transparent": false,
+      "alpha_sample": {
+        "corners": [
+          184,
+          184,
+          184,
+          184
+        ],
+        "ratio": 0.0
+      },
+      "backdrop_filter": "blur(10px) saturate(1.4)",
+      "timestamp": "2026-10-30T07:22:40",
+      "note": "自动发现 该组件带 backdrop-filter（blur(10px) saturate(1.4)）：透明版会失去材质，另附 __opaque 版（含页面背景） 该区域四角基本不透明（组件自身铺满整块），叠放时按普通图片用即可",
+      "opaque_file": "dark\\search-filter\\card-icon-1__64x64__opaque.png",
+      "opaque_note": "含页面背景材质（backdrop-filter 需要底色才好看）"
+    },
+    {
+      "name": "card-btn-1",
+      "page": "search-filter",
+      "page_title": "搜索页-筛选面板",
+      "theme": "dark",
+      "selector": "article.card > div.card-head > div.card-btn-group > button.card-btn",
+      "fx": "mica",
+      "accent": "blue",
+      "bbox": {
+        "x": 356,
+        "y": 592.2,
+        "w": 26,
+        "h": 26
+      },
+      "doc_bbox": {
+        "x": 354,
+        "y": 590.2,
+        "w": 30,
+        "h": 30
+      },
+      "css_size": {
+        "w": 26,
+        "h": 26
+      },
+      "px_size": {
+        "w": 30,
+        "h": 30
+      },
+      "scale": 1,
+      "file": "dark\\search-filter\\card-btn-1__26x26.png",
+      "transparent": false,
+      "alpha_sample": {
+        "corners": [
+          184,
+          184,
+          184,
+          184
+        ],
+        "ratio": 0.0
+      },
+      "backdrop_filter": "blur(10px) saturate(1.4)",
+      "timestamp": "2026-10-30T07:22:45",
+      "note": "自动发现 该组件带 backdrop-filter（blur(10px) saturate(1.4)）：透明版会失去材质，另附 __opaque 版（含页面背景） 该区域四角基本不透明（组件自身铺满整块），叠放时按普通图片用即可",
+      "opaque_file": "dark\\search-filter\\card-btn-1__26x26__opaque.png",
+      "opaque_note": "含页面背景材质（backdrop-filter 需要底色才好看）"
+    },
+    {
+      "name": "tag-1",
+      "page": "search-filter",
+      "page_title": "搜索页-筛选面板",
+      "theme": "dark",
+      "selector": "article.card > div.card-foot > div.row.row-6 > span.tag",
+      "fx": "mica",
+      "accent": "blue",
+      "bbox": {
+        "x": 89,
+        "y": 736.2,
+        "w": 43,
+        "h": 22
+      },
+      "doc_bbox": {
+        "x": 87,
+        "y": 734.2,
+        "w": 47,
+        "h": 26
+      },
+      "css_size": {
+        "w": 43,
+        "h": 22
+      },
+      "px_size": {
+        "w": 47,
+        "h": 26
+      },
+      "scale": 1,
+      "file": "dark\\search-filter\\tag-1__43x22.png",
+      "transparent": false,
+      "alpha_sample": {
+        "corners": [
+          184,
+          184,
+          184,
+          184
+        ],
+        "ratio": 0.0
+      },
+      "backdrop_filter": "blur(10px) saturate(1.4)",
+      "timestamp": "2026-10-30T07:22:48",
+      "note": "自动发现 部分阴影被祖先容器裁切（row row-6） 该组件带 backdrop-filter（blur(10px) saturate(1.4)）：透明版会失去材质，另附 __opaque 版（含页面背景） 该区域四角基本不透明（组件自身铺满整块），叠放时按普通图片用即可",
+      "opaque_file": "dark\\search-filter\\tag-1__43x22__opaque.png",
+      "opaque_note": "含页面背景材质（backdrop-filter 需要底色才好看）"
+    },
+    {
+      "name": "combo-trigger-1",
+      "page": "search-filter",
+      "page_title": "搜索页-筛选面板",
+      "theme": "dark",
+      "selector": "div.search-content > div.toolbar-row > div.combo > button.combo-trigger",
+      "fx": "mica",
+      "accent": "blue",
+      "bbox": {
+        "x": 1176,
+        "y": 137,
+        "w": 160,
+        "h": 32
+      },
+      "doc_bbox": {
+        "x": 1174,
+        "y": 135,
+        "w": 164,
+        "h": 36
+      },
+      "css_size": {
+        "w": 160,
+        "h": 32
+      },
+      "px_size": {
+        "w": 164,
+        "h": 36
+      },
+      "scale": 1,
+      "file": "dark\\search-filter\\combo-trigger-1__160x32.png",
+      "transparent": true,
+      "alpha_sample": {
+        "corners": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "ratio": 0.1133
+      },
+      "backdrop_filter": "none",
+      "timestamp": "2026-10-30T07:22:49",
+      "note": "自动发现"
+    },
+    {
+      "name": "seg-item-1",
+      "page": "search-filter",
+      "page_title": "搜索页-筛选面板",
+      "theme": "dark",
+      "selector": "div.search-content > div.toolbar-row > div.segmented.view-seg > button.seg-item.is-on",
+      "fx": "mica",
+      "accent": "blue",
+      "bbox": {
+        "x": 1351,
+        "y": 141,
+        "w": 30,
+        "h": 24
+      },
+      "doc_bbox": {
+        "x": 1349,
+        "y": 139,
+        "w": 34,
+        "h": 28
+      },
+      "css_size": {
+        "w": 30,
+        "h": 24
+      },
+      "px_size": {
+        "w": 34,
+        "h": 28
+      },
+      "scale": 1,
+      "file": "dark\\search-filter\\seg-item-1__30x24.png",
+      "transparent": true,
+      "alpha_sample": {
+        "corners": [
+          11,
+          0,
+          0,
+          11
+        ],
+        "ratio": 0.0167
+      },
+      "backdrop_filter": "none",
+      "timestamp": "2026-10-30T07:22:50",
+      "note": "自动发现"
+    },
+    {
+      "name": "btn-1",
+      "page": "detail",
+      "page_title": "详情页",
+      "theme": "dark",
+      "selector": "div.page-scroll > div.detail-wrap > div.detail-topbar > button.btn.btn-wide",
+      "fx": "mica",
+      "accent": "blue",
+      "bbox": {
+        "x": 349,
+        "y": 92,
+        "w": 100,
+        "h": 32
+      },
+      "doc_bbox": {
+        "x": 347,
+        "y": 90,
+        "w": 104,
+        "h": 36
+      },
+      "css_size": {
+        "w": 100,
+        "h": 32
+      },
+      "px_size": {
+        "w": 104,
+        "h": 36
+      },
+      "scale": 1,
+      "file": "dark\\detail\\btn-1__100x32.png",
+      "transparent": false,
+      "alpha_sample": {
+        "corners": [
+          184,
+          184,
+          184,
+          184
+        ],
+        "ratio": 0.0
+      },
+      "backdrop_filter": "blur(18px)",
+      "timestamp": "2026-10-30T07:23:00",
+      "note": "自动发现 该组件带 backdrop-filter（blur(18px)）：透明版会失去材质，另附 __opaque 版（含页面背景） 该区域四角基本不透明（组件自身铺满整块），叠放时按普通图片用即可",
+      "opaque_file": "dark\\detail\\btn-1__100x32__opaque.png",
+      "opaque_note": "含页面背景材质（backdrop-filter 需要底色才好看）"
+    },
+    {
+      "name": "tag-1",
+      "page": "detail",
+      "page_title": "详情页",
+      "theme": "dark",
+      "selector": "header.detail-hero > div.detail-hero-text > div.row.row-6 > span.tag",
+      "fx": "mica",
+      "accent": "blue",
+      "bbox": {
+        "x": 448,
+        "y": 240.7,
+        "w": 43,
+        "h": 22
+      },
+      "doc_bbox": {
+        "x": 446,
+        "y": 238.7,
+        "w": 47,
+        "h": 26
+      },
+      "css_size": {
+        "w": 43,
+        "h": 22
+      },
+      "px_size": {
+        "w": 47,
+        "h": 26
+      },
+      "scale": 1,
+      "file": "dark\\detail\\tag-1__43x22.png",
+      "transparent": true,
+      "alpha_sample": {
+        "corners": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "ratio": 0.3611
+      },
+      "backdrop_filter": "none",
+      "timestamp": "2026-10-30T07:23:02",
+      "note": "自动发现"
+    },
+    {
+      "name": "titlebar-1",
+      "page": "detail",
+      "page_title": "详情页",
+      "theme": "dark",
+      "selector": "div > div.app-root > header.titlebar.fx-noise",
+      "fx": "mica",
+      "accent": "blue",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 48
+      },
+      "doc_bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 50
+      },
+      "css_size": {
+        "w": 1440,
+        "h": 48
+      },
+      "px_size": {
+        "w": 1440,
+        "h": 50
+      },
+      "scale": 1,
+      "file": "dark\\detail\\titlebar-1__1440x48.png",
+      "transparent": true,
+      "alpha_sample": {
+        "corners": [
+          255,
+          255,
+          0,
+          0
+        ],
+        "ratio": 0.0588
+      },
+      "backdrop_filter": "blur(0px) saturate(1)",
+      "timestamp": "2026-10-30T07:23:03",
+      "note": "自动发现 阴影/外发光部分被页面边界裁剪 部分阴影被祖先容器裁切（BODY, DIV, app-root） 该组件带 backdrop-filter（blur(0px) saturate(1)）：透明版会失去材质，另附 __opaque 版（含页面背景）",
+      "opaque_file": "dark\\detail\\titlebar-1__1440x48__opaque.png",
+      "opaque_note": "含页面背景材质（backdrop-filter 需要底色才好看）"
+    },
+    {
+      "name": "tb-btn-1",
+      "page": "detail",
+      "page_title": "详情页",
+      "theme": "dark",
+      "selector": "div.app-root > header.titlebar.fx-noise > div.titlebar-buttons.no-drag > button.tb-btn",
+      "fx": "mica",
+      "accent": "blue",
+      "bbox": {
+        "x": 1324,
+        "y": 9.5,
+        "w": 32,
+        "h": 28
+      },
+      "doc_bbox": {
+        "x": 1322,
+        "y": 7.5,
+        "w": 36,
+        "h": 32
+      },
+      "css_size": {
+        "w": 32,
+        "h": 28
+      },
+      "px_size": {
+        "w": 36,
+        "h": 32
+      },
+      "scale": 1,
+      "file": "dark\\detail\\tb-btn-1__32x28.png",
+      "transparent": true,
+      "alpha_sample": {
+        "corners": [
+          7,
+          10,
+          4,
+          6
+        ],
+        "ratio": 0.8636
+      },
+      "backdrop_filter": "blur(0px) saturate(1)",
+      "timestamp": "2026-10-30T07:23:03",
+      "note": "自动发现 该组件带 backdrop-filter（blur(0px) saturate(1)）：透明版会失去材质，另附 __opaque 版（含页面背景）",
+      "opaque_file": "dark\\detail\\tb-btn-1__32x28__opaque.png",
+      "opaque_note": "含页面背景材质（backdrop-filter 需要底色才好看）"
+    },
+    {
+      "name": "nav-item-1",
+      "page": "detail",
+      "page_title": "详情页",
+      "theme": "dark",
+      "selector": "div.app-body > nav.nav > div.nav-group > button.nav-item",
+      "fx": "mica",
+      "accent": "blue",
+      "bbox": {
+        "x": 6,
+        "y": 94,
+        "w": 35,
+        "h": 36
+      },
+      "doc_bbox": {
+        "x": 4,
+        "y": 92,
+        "w": 39,
+        "h": 40
+      },
+      "css_size": {
+        "w": 35,
+        "h": 36
+      },
+      "px_size": {
+        "w": 39,
+        "h": 40
+      },
+      "scale": 1,
+      "file": "dark\\detail\\nav-item-1__35x36.png",
+      "transparent": true,
+      "alpha_sample": {
+        "corners": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "ratio": 0.9341
+      },
+      "backdrop_filter": "none",
+      "timestamp": "2026-10-30T07:23:05",
+      "note": "自动发现"
+    },
+    {
+      "name": "btn-1",
+      "page": "customize",
+      "page_title": "定制页",
+      "theme": "dark",
+      "selector": "div.onboard-center > div.onboard-card > div.onboard-foot > button.btn.btn-primary",
+      "fx": "mica",
+      "accent": "blue",
+      "bbox": {
+        "x": 1044,
+        "y": 593.5,
+        "w": 51,
+        "h": 32
+      },
+      "doc_bbox": {
+        "x": 1018,
+        "y": 567.5,
+        "w": 103,
+        "h": 84
+      },
+      "css_size": {
+        "w": 51,
+        "h": 32
+      },
+      "px_size": {
+        "w": 103,
+        "h": 84
+      },
+      "scale": 1,
+      "file": "dark\\customize\\btn-1__51x32.png",
+      "transparent": true,
+      "alpha_sample": {
+        "corners": [
+          0,
+          0,
+          42,
+          79
+        ],
+        "ratio": 0.533
+      },
+      "backdrop_filter": "blur(18px)",
+      "timestamp": "2026-10-30T07:23:13",
+      "note": "自动发现 该组件带 backdrop-filter（blur(18px)）：透明版会失去材质，另附 __opaque 版（含页面背景）",
+      "opaque_file": "dark\\customize\\btn-1__51x32__opaque.png",
+      "opaque_note": "含页面背景材质（backdrop-filter 需要底色才好看）"
+    },
+    {
+      "name": "titlebar-1",
+      "page": "customize",
+      "page_title": "定制页",
+      "theme": "dark",
+      "selector": "div > div.app-root > header.titlebar.fx-noise",
+      "fx": "mica",
+      "accent": "blue",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 48
+      },
+      "doc_bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 50
+      },
+      "css_size": {
+        "w": 1440,
+        "h": 48
+      },
+      "px_size": {
+        "w": 1440,
+        "h": 50
+      },
+      "scale": 1,
+      "file": "dark\\customize\\titlebar-1__1440x48.png",
+      "transparent": true,
+      "alpha_sample": {
+        "corners": [
+          255,
+          255,
+          0,
+          0
+        ],
+        "ratio": 0.0588
+      },
+      "backdrop_filter": "blur(0px) saturate(1)",
+      "timestamp": "2026-10-30T07:23:13",
+      "note": "自动发现 阴影/外发光部分被页面边界裁剪 部分阴影被祖先容器裁切（BODY, DIV, app-root） 该组件带 backdrop-filter（blur(0px) saturate(1)）：透明版会失去材质，另附 __opaque 版（含页面背景）",
+      "opaque_file": "dark\\customize\\titlebar-1__1440x48__opaque.png",
+      "opaque_note": "含页面背景材质（backdrop-filter 需要底色才好看）"
+    },
+    {
+      "name": "tb-btn-1",
+      "page": "customize",
+      "page_title": "定制页",
+      "theme": "dark",
+      "selector": "div.app-root > header.titlebar.fx-noise > div.titlebar-buttons.no-drag > button.tb-btn",
+      "fx": "mica",
+      "accent": "blue",
+      "bbox": {
+        "x": 1324,
+        "y": 9.5,
+        "w": 32,
+        "h": 28
+      },
+      "doc_bbox": {
+        "x": 1322,
+        "y": 7.5,
+        "w": 36,
+        "h": 32
+      },
+      "css_size": {
+        "w": 32,
+        "h": 28
+      },
+      "px_size": {
+        "w": 36,
+        "h": 32
+      },
+      "scale": 1,
+      "file": "dark\\customize\\tb-btn-1__32x28.png",
+      "transparent": true,
+      "alpha_sample": {
+        "corners": [
+          7,
+          10,
+          4,
+          6
+        ],
+        "ratio": 0.8636
+      },
+      "backdrop_filter": "blur(0px) saturate(1)",
+      "timestamp": "2026-10-30T07:23:14",
+      "note": "自动发现 该组件带 backdrop-filter（blur(0px) saturate(1)）：透明版会失去材质，另附 __opaque 版（含页面背景）",
+      "opaque_file": "dark\\customize\\tb-btn-1__32x28__opaque.png",
+      "opaque_note": "含页面背景材质（backdrop-filter 需要底色才好看）"
+    },
+    {
+      "name": "nav-item-1",
+      "page": "customize",
+      "page_title": "定制页",
+      "theme": "dark",
+      "selector": "div.app-body > nav.nav > div.nav-group > button.nav-item",
+      "fx": "mica",
+      "accent": "blue",
+      "bbox": {
+        "x": 6,
+        "y": 94,
+        "w": 35,
+        "h": 36
+      },
+      "doc_bbox": {
+        "x": 4,
+        "y": 92,
+        "w": 39,
+        "h": 40
+      },
+      "css_size": {
+        "w": 35,
+        "h": 36
+      },
+      "px_size": {
+        "w": 39,
+        "h": 40
+      },
+      "scale": 1,
+      "file": "dark\\customize\\nav-item-1__35x36.png",
+      "transparent": true,
+      "alpha_sample": {
+        "corners": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "ratio": 0.9341
+      },
+      "backdrop_filter": "none",
+      "timestamp": "2026-10-30T07:23:15",
+      "note": "自动发现"
+    },
+    {
+      "name": "titlebar-1",
+      "page": "favorites",
+      "page_title": "收藏页",
+      "theme": "dark",
+      "selector": "div > div.app-root > header.titlebar.fx-noise",
+      "fx": "mica",
+      "accent": "blue",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 48
+      },
+      "doc_bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 50
+      },
+      "css_size": {
+        "w": 1440,
+        "h": 48
+      },
+      "px_size": {
+        "w": 1440,
+        "h": 50
+      },
+      "scale": 1,
+      "file": "dark\\favorites\\titlebar-1__1440x48.png",
+      "transparent": true,
+      "alpha_sample": {
+        "corners": [
+          255,
+          255,
+          0,
+          0
+        ],
+        "ratio": 0.0588
+      },
+      "backdrop_filter": "blur(0px) saturate(1)",
+      "timestamp": "2026-10-30T07:23:24",
+      "note": "自动发现 阴影/外发光部分被页面边界裁剪 部分阴影被祖先容器裁切（BODY, DIV, app-root） 该组件带 backdrop-filter（blur(0px) saturate(1)）：透明版会失去材质，另附 __opaque 版（含页面背景）",
+      "opaque_file": "dark\\favorites\\titlebar-1__1440x48__opaque.png",
+      "opaque_note": "含页面背景材质（backdrop-filter 需要底色才好看）"
+    },
+    {
+      "name": "tb-btn-1",
+      "page": "favorites",
+      "page_title": "收藏页",
+      "theme": "dark",
+      "selector": "div.app-root > header.titlebar.fx-noise > div.titlebar-buttons.no-drag > button.tb-btn",
+      "fx": "mica",
+      "accent": "blue",
+      "bbox": {
+        "x": 1324,
+        "y": 9.5,
+        "w": 32,
+        "h": 28
+      },
+      "doc_bbox": {
+        "x": 1322,
+        "y": 7.5,
+        "w": 36,
+        "h": 32
+      },
+      "css_size": {
+        "w": 32,
+        "h": 28
+      },
+      "px_size": {
+        "w": 36,
+        "h": 32
+      },
+      "scale": 1,
+      "file": "dark\\favorites\\tb-btn-1__32x28.png",
+      "transparent": true,
+      "alpha_sample": {
+        "corners": [
+          7,
+          10,
+          4,
+          6
+        ],
+        "ratio": 0.8636
+      },
+      "backdrop_filter": "blur(0px) saturate(1)",
+      "timestamp": "2026-10-30T07:23:25",
+      "note": "自动发现 该组件带 backdrop-filter（blur(0px) saturate(1)）：透明版会失去材质，另附 __opaque 版（含页面背景）",
+      "opaque_file": "dark\\favorites\\tb-btn-1__32x28__opaque.png",
+      "opaque_note": "含页面背景材质（backdrop-filter 需要底色才好看）"
+    },
+    {
+      "name": "nav-item-1",
+      "page": "favorites",
+      "page_title": "收藏页",
+      "theme": "dark",
+      "selector": "div.app-body > nav.nav > div.nav-group > button.nav-item",
+      "fx": "mica",
+      "accent": "blue",
+      "bbox": {
+        "x": 6,
+        "y": 94,
+        "w": 35,
+        "h": 36
+      },
+      "doc_bbox": {
+        "x": 4,
+        "y": 92,
+        "w": 39,
+        "h": 40
+      },
+      "css_size": {
+        "w": 35,
+        "h": 36
+      },
+      "px_size": {
+        "w": 39,
+        "h": 40
+      },
+      "scale": 1,
+      "file": "dark\\favorites\\nav-item-1__35x36.png",
+      "transparent": true,
+      "alpha_sample": {
+        "corners": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "ratio": 0.9341
+      },
+      "backdrop_filter": "none",
+      "timestamp": "2026-10-30T07:23:26",
+      "note": "自动发现"
+    },
+    {
+      "name": "notice-card-1",
+      "page": "notice",
+      "page_title": "公告页",
+      "theme": "dark",
+      "selector": "div.page-scroll > div.narrow > div.notice-list > article.notice-card.is-unread",
+      "fx": "mica",
+      "accent": "blue",
+      "bbox": {
+        "x": 334,
+        "y": 118,
+        "w": 820,
+        "h": 352
+      },
+      "doc_bbox": {
+        "x": 306,
+        "y": 90,
+        "w": 876,
+        "h": 408
+      },
+      "css_size": {
+        "w": 820,
+        "h": 352
+      },
+      "px_size": {
+        "w": 876,
+        "h": 408
+      },
+      "scale": 1,
+      "file": "dark\\notice\\notice-card-1__820x352.png",
+      "transparent": true,
+      "alpha_sample": {
+        "corners": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "ratio": 0.1176
+      },
+      "backdrop_filter": "none",
+      "timestamp": "2026-10-30T07:23:29",
+      "note": ""
+    },
+    {
+      "name": "btn-1",
+      "page": "notice",
+      "page_title": "公告页",
+      "theme": "dark",
+      "selector": "div.page-scroll > div.narrow > div.row.gap8 > button.btn",
+      "fx": "mica",
+      "accent": "blue",
+      "bbox": {
+        "x": 1018,
+        "y": 72,
+        "w": 98,
+        "h": 32
+      },
+      "doc_bbox": {
+        "x": 1016,
+        "y": 70,
+        "w": 102,
+        "h": 36
+      },
+      "css_size": {
+        "w": 98,
+        "h": 32
+      },
+      "px_size": {
+        "w": 102,
+        "h": 36
+      },
+      "scale": 1,
+      "file": "dark\\notice\\btn-1__98x32.png",
+      "transparent": true,
+      "alpha_sample": {
+        "corners": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "ratio": 0.1199
+      },
+      "backdrop_filter": "none",
+      "timestamp": "2026-10-30T07:23:30",
+      "note": "自动发现"
+    },
+    {
+      "name": "titlebar-1",
+      "page": "notice",
+      "page_title": "公告页",
+      "theme": "dark",
+      "selector": "div > div.app-root > header.titlebar.fx-noise",
+      "fx": "mica",
+      "accent": "blue",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 48
+      },
+      "doc_bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 50
+      },
+      "css_size": {
+        "w": 1440,
+        "h": 48
+      },
+      "px_size": {
+        "w": 1440,
+        "h": 50
+      },
+      "scale": 1,
+      "file": "dark\\notice\\titlebar-1__1440x48.png",
+      "transparent": true,
+      "alpha_sample": {
+        "corners": [
+          255,
+          255,
+          0,
+          0
+        ],
+        "ratio": 0.0588
+      },
+      "backdrop_filter": "blur(0px) saturate(1)",
+      "timestamp": "2026-10-30T07:23:31",
+      "note": "自动发现 阴影/外发光部分被页面边界裁剪 部分阴影被祖先容器裁切（BODY, DIV, app-root） 该组件带 backdrop-filter（blur(0px) saturate(1)）：透明版会失去材质，另附 __opaque 版（含页面背景）",
+      "opaque_file": "dark\\notice\\titlebar-1__1440x48__opaque.png",
+      "opaque_note": "含页面背景材质（backdrop-filter 需要底色才好看）"
+    },
+    {
+      "name": "tb-btn-1",
+      "page": "notice",
+      "page_title": "公告页",
+      "theme": "dark",
+      "selector": "div.app-root > header.titlebar.fx-noise > div.titlebar-buttons.no-drag > button.tb-btn",
+      "fx": "mica",
+      "accent": "blue",
+      "bbox": {
+        "x": 1324,
+        "y": 9.5,
+        "w": 32,
+        "h": 28
+      },
+      "doc_bbox": {
+        "x": 1322,
+        "y": 7.5,
+        "w": 36,
+        "h": 32
+      },
+      "css_size": {
+        "w": 32,
+        "h": 28
+      },
+      "px_size": {
+        "w": 36,
+        "h": 32
+      },
+      "scale": 1,
+      "file": "dark\\notice\\tb-btn-1__32x28.png",
+      "transparent": true,
+      "alpha_sample": {
+        "corners": [
+          7,
+          10,
+          4,
+          6
+        ],
+        "ratio": 0.8636
+      },
+      "backdrop_filter": "blur(0px) saturate(1)",
+      "timestamp": "2026-10-30T07:23:32",
+      "note": "自动发现 该组件带 backdrop-filter（blur(0px) saturate(1)）：透明版会失去材质，另附 __opaque 版（含页面背景）",
+      "opaque_file": "dark\\notice\\tb-btn-1__32x28__opaque.png",
+      "opaque_note": "含页面背景材质（backdrop-filter 需要底色才好看）"
+    },
+    {
+      "name": "nav-item-1",
+      "page": "notice",
+      "page_title": "公告页",
+      "theme": "dark",
+      "selector": "div.app-body > nav.nav > div.nav-group > button.nav-item",
+      "fx": "mica",
+      "accent": "blue",
+      "bbox": {
+        "x": 6,
+        "y": 94,
+        "w": 35,
+        "h": 36
+      },
+      "doc_bbox": {
+        "x": 4,
+        "y": 92,
+        "w": 39,
+        "h": 40
+      },
+      "css_size": {
+        "w": 35,
+        "h": 36
+      },
+      "px_size": {
+        "w": 39,
+        "h": 40
+      },
+      "scale": 1,
+      "file": "dark\\notice\\nav-item-1__35x36.png",
+      "transparent": true,
+      "alpha_sample": {
+        "corners": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "ratio": 0.9341
+      },
+      "backdrop_filter": "none",
+      "timestamp": "2026-10-30T07:23:33",
+      "note": "自动发现"
+    },
+    {
+      "name": "gh-card-1",
+      "page": "github",
+      "page_title": "Github 页",
+      "theme": "dark",
+      "selector": "div.page-scroll > div.gh-wrap > div.gh-grid > div.panel.gh-card",
+      "fx": "mica",
+      "accent": "blue",
+      "bbox": {
+        "x": 154,
+        "y": 70,
+        "w": 582,
+        "h": 460
+      },
+      "doc_bbox": {
+        "x": 126,
+        "y": 42,
+        "w": 638,
+        "h": 516
+      },
+      "css_size": {
+        "w": 582,
+        "h": 460
+      },
+      "px_size": {
+        "w": 638,
+        "h": 516
+      },
+      "scale": 1,
+      "file": "dark\\github\\gh-card-1__582x460.png",
+      "transparent": true,
+      "alpha_sample": {
+        "corners": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "ratio": 0.1187
+      },
+      "backdrop_filter": "blur(18px) saturate(1.5)",
+      "timestamp": "2026-10-30T07:23:37",
+      "note": "部分阴影被祖先容器裁切（app-body, content, page, page-scroll） 该组件带 backdrop-filter（blur(18px) saturate(1.5)）：透明版会失去材质，另附 __opaque 版（含页面背景）",
+      "opaque_file": "dark\\github\\gh-card-1__582x460__opaque.png",
+      "opaque_note": "含页面背景材质（backdrop-filter 需要底色才好看）"
+    },
+    {
+      "name": "titlebar-1",
+      "page": "github",
+      "page_title": "Github 页",
+      "theme": "dark",
+      "selector": "div > div.app-root > header.titlebar.fx-noise",
+      "fx": "mica",
+      "accent": "blue",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 48
+      },
+      "doc_bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 50
+      },
+      "css_size": {
+        "w": 1440,
+        "h": 48
+      },
+      "px_size": {
+        "w": 1440,
+        "h": 50
+      },
+      "scale": 1,
+      "file": "dark\\github\\titlebar-1__1440x48.png",
+      "transparent": true,
+      "alpha_sample": {
+        "corners": [
+          255,
+          255,
+          0,
+          0
+        ],
+        "ratio": 0.0588
+      },
+      "backdrop_filter": "blur(0px) saturate(1)",
+      "timestamp": "2026-10-30T07:23:41",
+      "note": "自动发现 阴影/外发光部分被页面边界裁剪 部分阴影被祖先容器裁切（BODY, DIV, app-root） 该组件带 backdrop-filter（blur(0px) saturate(1)）：透明版会失去材质，另附 __opaque 版（含页面背景）",
+      "opaque_file": "dark\\github\\titlebar-1__1440x48__opaque.png",
+      "opaque_note": "含页面背景材质（backdrop-filter 需要底色才好看）"
+    },
+    {
+      "name": "tb-btn-1",
+      "page": "github",
+      "page_title": "Github 页",
+      "theme": "dark",
+      "selector": "div.app-root > header.titlebar.fx-noise > div.titlebar-buttons.no-drag > button.tb-btn",
+      "fx": "mica",
+      "accent": "blue",
+      "bbox": {
+        "x": 1324,
+        "y": 9.5,
+        "w": 32,
+        "h": 28
+      },
+      "doc_bbox": {
+        "x": 1322,
+        "y": 7.5,
+        "w": 36,
+        "h": 32
+      },
+      "css_size": {
+        "w": 32,
+        "h": 28
+      },
+      "px_size": {
+        "w": 36,
+        "h": 32
+      },
+      "scale": 1,
+      "file": "dark\\github\\tb-btn-1__32x28.png",
+      "transparent": true,
+      "alpha_sample": {
+        "corners": [
+          7,
+          10,
+          4,
+          6
+        ],
+        "ratio": 0.8636
+      },
+      "backdrop_filter": "blur(0px) saturate(1)",
+      "timestamp": "2026-10-30T07:23:42",
+      "note": "自动发现 该组件带 backdrop-filter（blur(0px) saturate(1)）：透明版会失去材质，另附 __opaque 版（含页面背景）",
+      "opaque_file": "dark\\github\\tb-btn-1__32x28__opaque.png",
+      "opaque_note": "含页面背景材质（backdrop-filter 需要底色才好看）"
+    },
+    {
+      "name": "nav-item-1",
+      "page": "github",
+      "page_title": "Github 页",
+      "theme": "dark",
+      "selector": "div.app-body > nav.nav > div.nav-group > button.nav-item",
+      "fx": "mica",
+      "accent": "blue",
+      "bbox": {
+        "x": 6,
+        "y": 94,
+        "w": 35,
+        "h": 36
+      },
+      "doc_bbox": {
+        "x": 4,
+        "y": 92,
+        "w": 39,
+        "h": 40
+      },
+      "css_size": {
+        "w": 35,
+        "h": 36
+      },
+      "px_size": {
+        "w": 39,
+        "h": 40
+      },
+      "scale": 1,
+      "file": "dark\\github\\nav-item-1__35x36.png",
+      "transparent": true,
+      "alpha_sample": {
+        "corners": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "ratio": 0.9341
+      },
+      "backdrop_filter": "none",
+      "timestamp": "2026-10-30T07:23:43",
+      "note": "自动发现"
+    },
+    {
+      "name": "titlebar-1",
+      "page": "feedback",
+      "page_title": "反馈页",
+      "theme": "dark",
+      "selector": "div > div.app-root > header.titlebar.fx-noise",
+      "fx": "mica",
+      "accent": "blue",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 48
+      },
+      "doc_bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 50
+      },
+      "css_size": {
+        "w": 1440,
+        "h": 48
+      },
+      "px_size": {
+        "w": 1440,
+        "h": 50
+      },
+      "scale": 1,
+      "file": "dark\\feedback\\titlebar-1__1440x48.png",
+      "transparent": true,
+      "alpha_sample": {
+        "corners": [
+          255,
+          255,
+          0,
+          0
+        ],
+        "ratio": 0.0588
+      },
+      "backdrop_filter": "blur(0px) saturate(1)",
+      "timestamp": "2026-10-30T07:23:48",
+      "note": "自动发现 阴影/外发光部分被页面边界裁剪 部分阴影被祖先容器裁切（BODY, DIV, app-root） 该组件带 backdrop-filter（blur(0px) saturate(1)）：透明版会失去材质，另附 __opaque 版（含页面背景）",
+      "opaque_file": "dark\\feedback\\titlebar-1__1440x48__opaque.png",
+      "opaque_note": "含页面背景材质（backdrop-filter 需要底色才好看）"
+    },
+    {
+      "name": "tb-btn-1",
+      "page": "feedback",
+      "page_title": "反馈页",
+      "theme": "dark",
+      "selector": "div.app-root > header.titlebar.fx-noise > div.titlebar-buttons.no-drag > button.tb-btn",
+      "fx": "mica",
+      "accent": "blue",
+      "bbox": {
+        "x": 1324,
+        "y": 9.5,
+        "w": 32,
+        "h": 28
+      },
+      "doc_bbox": {
+        "x": 1322,
+        "y": 7.5,
+        "w": 36,
+        "h": 32
+      },
+      "css_size": {
+        "w": 32,
+        "h": 28
+      },
+      "px_size": {
+        "w": 36,
+        "h": 32
+      },
+      "scale": 1,
+      "file": "dark\\feedback\\tb-btn-1__32x28.png",
+      "transparent": true,
+      "alpha_sample": {
+        "corners": [
+          7,
+          10,
+          4,
+          6
+        ],
+        "ratio": 0.8636
+      },
+      "backdrop_filter": "blur(0px) saturate(1)",
+      "timestamp": "2026-10-30T07:23:48",
+      "note": "自动发现 该组件带 backdrop-filter（blur(0px) saturate(1)）：透明版会失去材质，另附 __opaque 版（含页面背景）",
+      "opaque_file": "dark\\feedback\\tb-btn-1__32x28__opaque.png",
+      "opaque_note": "含页面背景材质（backdrop-filter 需要底色才好看）"
+    },
+    {
+      "name": "nav-item-1",
+      "page": "feedback",
+      "page_title": "反馈页",
+      "theme": "dark",
+      "selector": "div.app-body > nav.nav > div.nav-group > button.nav-item",
+      "fx": "mica",
+      "accent": "blue",
+      "bbox": {
+        "x": 6,
+        "y": 94,
+        "w": 35,
+        "h": 36
+      },
+      "doc_bbox": {
+        "x": 4,
+        "y": 92,
+        "w": 39,
+        "h": 40
+      },
+      "css_size": {
+        "w": 35,
+        "h": 36
+      },
+      "px_size": {
+        "w": 39,
+        "h": 40
+      },
+      "scale": 1,
+      "file": "dark\\feedback\\nav-item-1__35x36.png",
+      "transparent": true,
+      "alpha_sample": {
+        "corners": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "ratio": 0.9341
+      },
+      "backdrop_filter": "none",
+      "timestamp": "2026-10-30T07:23:50",
+      "note": "自动发现"
+    },
+    {
+      "name": "btn-1",
+      "page": "log",
+      "page_title": "查看日志",
+      "theme": "dark",
+      "selector": "div.narrow-wide > div.panel > div.row.gap12 > button.btn.btn-danger-ghost",
+      "fx": "mica",
+      "accent": "blue",
+      "bbox": {
+        "x": 651,
+        "y": 125.5,
+        "w": 127,
+        "h": 32
+      },
+      "doc_bbox": {
+        "x": 649,
+        "y": 123.5,
+        "w": 131,
+        "h": 36
+      },
+      "css_size": {
+        "w": 127,
+        "h": 32
+      },
+      "px_size": {
+        "w": 131,
+        "h": 36
+      },
+      "scale": 1,
+      "file": "dark\\log\\btn-1__127x32.png",
+      "transparent": true,
+      "alpha_sample": {
+        "corners": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "ratio": 0.7343
+      },
+      "backdrop_filter": "blur(18px) saturate(1.5)",
+      "timestamp": "2026-10-30T07:23:56",
+      "note": "自动发现 该组件带 backdrop-filter（blur(18px) saturate(1.5)）：透明版会失去材质，另附 __opaque 版（含页面背景）",
+      "opaque_file": "dark\\log\\btn-1__127x32__opaque.png",
+      "opaque_note": "含页面背景材质（backdrop-filter 需要底色才好看）"
+    },
+    {
+      "name": "titlebar-1",
+      "page": "log",
+      "page_title": "查看日志",
+      "theme": "dark",
+      "selector": "div > div.app-root > header.titlebar.fx-noise",
+      "fx": "mica",
+      "accent": "blue",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 48
+      },
+      "doc_bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1440,
+        "h": 50
+      },
+      "css_size": {
+        "w": 1440,
+        "h": 48
+      },
+      "px_size": {
+        "w": 1440,
+        "h": 50
+      },
+      "scale": 1,
+      "file": "dark\\log\\titlebar-1__1440x48.png",
+      "transparent": true,
+      "alpha_sample": {
+        "corners": [
+          255,
+          255,
+          0,
+          0
+        ],
+        "ratio": 0.0588
+      },
+      "backdrop_filter": "blur(0px) saturate(1)",
+      "timestamp": "2026-10-30T07:23:57",
+      "note": "自动发现 阴影/外发光部分被页面边界裁剪 部分阴影被祖先容器裁切（BODY, DIV, app-root） 该组件带 backdrop-filter（blur(0px) saturate(1)）：透明版会失去材质，另附 __opaque 版（含页面背景）",
+      "opaque_file": "dark\\log\\titlebar-1__1440x48__opaque.png",
+      "opaque_note": "含页面背景材质（backdrop-filter 需要底色才好看）"
+    },
+    {
+      "name": "tb-btn-1",
+      "page": "log",
+      "page_title": "查看日志",
+      "theme": "dark",
+      "selector": "div.app-root > header.titlebar.fx-noise > div.titlebar-buttons.no-drag > button.tb-btn",
+      "fx": "mica",
+      "accent": "blue",
+      "bbox": {
+        "x": 1324,
+        "y": 9.5,
+        "w": 32,
+        "h": 28
+      },
+      "doc_bbox": {
+        "x": 1322,
+        "y": 7.5,
+        "w": 36,
+        "h": 32
+      },
+      "css_size": {
+        "w": 32,
+        "h": 28
+      },
+      "px_size": {
+        "w": 36,
+        "h": 32
+      },
+      "scale": 1,
+      "file": "dark\\log\\tb-btn-1__32x28.png",
+      "transparent": true,
+      "alpha_sample": {
+        "corners": [
+          7,
+          10,
+          4,
+          6
+        ],
+        "ratio": 0.8636
+      },
+      "backdrop_filter": "blur(0px) saturate(1)",
+      "timestamp": "2026-10-30T07:23:57",
+      "note": "自动发现 该组件带 backdrop-filter（blur(0px) saturate(1)）：透明版会失去材质，另附 __opaque 版（含页面背景）",
+      "opaque_file": "dark\\log\\tb-btn-1__32x28__opaque.png",
+      "opaque_note": "含页面背景材质（backdrop-filter 需要底色才好看）"
+    },
+    {
+      "name": "nav-item-1",
+      "page": "log",
+      "page_title": "查看日志",
+      "theme": "dark",
+      "selector": "div.app-body > nav.nav > div.nav-group > button.nav-item",
+      "fx": "mica",
+      "accent": "blue",
+      "bbox": {
+        "x": 6,
+        "y": 94,
+        "w": 35,
+        "h": 36
+      },
+      "doc_bbox": {
+        "x": 4,
+        "y": 92,
+        "w": 39,
+        "h": 40
+      },
+      "css_size": {
+        "w": 35,
+        "h": 36
+      },
+      "px_size": {
+        "w": 39,
+        "h": 40
+      },
+      "scale": 1,
+      "file": "dark\\log\\nav-item-1__35x36.png",
+      "transparent": true,
+      "alpha_sample": {
+        "corners": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "ratio": 0.9341
+      },
+      "backdrop_filter": "none",
+      "timestamp": "2026-10-30T07:23:58",
+      "note": "自动发现"
+    }
+  ],
+  "screens": [
+    {
+      "page": "home",
+      "page_title": "首页",
+      "theme": "dark",
+      "state": "default",
+      "label": "首页",
+      "fx": "mica",
+      "accent": "blue",
+      "file": "screens\\dark\\home\\default__full.png",
+      "px_size": {
+        "w": 1440,
+        "h": 900
+      },
+      "timestamp": "2026-10-30T07:22:08"
+    },
+    {
+      "page": "search",
+      "page_title": "搜索页",
+      "theme": "dark",
+      "state": "tile",
+      "label": "磁贴视图",
+      "fx": "mica",
+      "accent": "blue",
+      "file": "screens\\dark\\search\\tile__full.png",
+      "px_size": {
+        "w": 1440,
+        "h": 900
+      },
+      "timestamp": "2026-10-30T07:22:17"
+    },
+    {
+      "page": "search",
+      "page_title": "搜索页",
+      "theme": "dark",
+      "state": "grid",
+      "label": "网格视图",
+      "fx": "mica",
+      "accent": "blue",
+      "file": "screens\\dark\\search\\grid__full.png",
+      "px_size": {
+        "w": 1440,
+        "h": 900
+      },
+      "timestamp": "2026-10-30T07:22:18"
+    },
+    {
+      "page": "search",
+      "page_title": "搜索页",
+      "theme": "dark",
+      "state": "filter",
+      "label": "筛选面板",
+      "fx": "mica",
+      "accent": "blue",
+      "file": "screens\\dark\\search\\filter__full.png",
+      "px_size": {
+        "w": 1440,
+        "h": 900
+      },
+      "timestamp": "2026-10-30T07:22:18"
+    },
+    {
+      "page": "favorites",
+      "page_title": "收藏页",
+      "theme": "dark",
+      "state": "default",
+      "label": "默认收藏夹",
+      "fx": "mica",
+      "accent": "blue",
+      "file": "screens\\dark\\favorites\\default__full.png",
+      "px_size": {
+        "w": 1440,
+        "h": 900
+      },
+      "timestamp": "2026-10-30T07:23:19"
+    },
+    {
+      "page": "favorites",
+      "page_title": "收藏页",
+      "theme": "dark",
+      "state": "folder",
+      "label": "其它收藏夹",
+      "fx": "mica",
+      "accent": "blue",
+      "file": "screens\\dark\\favorites\\folder__full.png",
+      "px_size": {
+        "w": 1440,
+        "h": 900
+      },
+      "timestamp": "2026-10-30T07:23:19"
+    },
+    {
+      "page": "notice",
+      "page_title": "公告页",
+      "theme": "dark",
+      "state": "default",
+      "label": "公告",
+      "fx": "mica",
+      "accent": "blue",
+      "file": "screens\\dark\\notice\\default__full.png",
+      "px_size": {
+        "w": 1440,
+        "h": 900
+      },
+      "timestamp": "2026-10-30T07:23:28"
+    },
+    {
+      "page": "log",
+      "page_title": "查看日志",
+      "theme": "dark",
+      "state": "default",
+      "label": "日志",
+      "fx": "mica",
+      "accent": "blue",
+      "file": "screens\\dark\\log\\default__full.png",
+      "px_size": {
+        "w": 1440,
+        "h": 900
+      },
+      "timestamp": "2026-10-30T07:23:53"
+    },
+    {
+      "page": "deploy",
+      "page_title": "应用部署",
+      "theme": "dark",
+      "state": "export",
+      "label": "导出模式",
+      "fx": "mica",
+      "accent": "blue",
+      "file": "screens\\dark\\deploy\\export__full.png",
+      "px_size": {
+        "w": 1440,
+        "h": 900
+      },
+      "timestamp": "2026-10-30T07:24:01"
+    },
+    {
+      "page": "deploy",
+      "page_title": "应用部署",
+      "theme": "dark",
+      "state": "deploy",
+      "label": "部署模式",
+      "fx": "mica",
+      "accent": "blue",
+      "file": "screens\\dark\\deploy\\deploy__full.png",
+      "px_size": {
+        "w": 1440,
+        "h": 900
+      },
+      "timestamp": "2026-10-30T07:24:02"
+    },
+    {
+      "page": "plugins",
+      "page_title": "插件页",
+      "theme": "dark",
+      "state": "grid",
+      "label": "插件网格",
+      "fx": "mica",
+      "accent": "blue",
+      "file": "screens\\dark\\plugins\\grid__full.png",
+      "px_size": {
+        "w": 1440,
+        "h": 900
+      },
+      "timestamp": "2026-10-30T07:24:10"
+    },
+    {
+      "page": "maker-form",
+      "page_title": "提交软件-投稿表单",
+      "theme": "dark",
+      "state": "form",
+      "label": "投稿表单",
+      "fx": "mica",
+      "accent": "blue",
+      "file": "screens\\dark\\maker-form\\form__full.png",
+      "px_size": {
+        "w": 1440,
+        "h": 900
+      },
+      "timestamp": "2026-10-30T07:24:23"
+    }
+  ],
+  "skipped": [
+    {
+      "theme": "dark",
+      "page": "home",
+      "selector": "carousel-pip-1",
+      "reason": "尺寸过小（20x8），单独成图没有意义"
+    },
+    {
+      "theme": "dark",
+      "page": "home",
+      "selector": "carousel-pip-1",
+      "reason": "尺寸过小（8x8），单独成图没有意义"
+    },
+    {
+      "theme": "dark",
+      "page": "home",
+      "selector": "carousel-pip-1",
+      "reason": "尺寸过小（8x8），单独成图没有意义"
+    },
+    {
+      "theme": "dark",
+      "page": "home",
+      "selector": "carousel-pip-1",
+      "reason": "尺寸过小（8x8），单独成图没有意义"
+    },
+    {
+      "theme": "dark",
+      "page": "home",
+      "selector": "carousel-pip-1",
+      "reason": "尺寸过小（8x8），单独成图没有意义"
+    },
+    {
+      "theme": "dark",
+      "page": "home",
+      "selector": "home-plugin-card",
+      "reason": "本页没有匹配到元素（选择器 .plugin-card），可能该页结构变了"
+    },
+    {
+      "theme": "dark",
+      "page": "home",
+      "selector": "home-card",
+      "reason": "本页没有匹配到元素（选择器 .card），可能该页结构变了"
+    },
+    {
+      "theme": "dark",
+      "page": "home",
+      "selector": "nav-badge-1",
+      "reason": "尺寸过小（15x15），单独成图没有意义"
+    },
+    {
+      "theme": "dark",
+      "page": "home",
+      "selector": "nav-indicator-1",
+      "reason": "尺寸过小（3x18），单独成图没有意义"
+    },
+    {
+      "theme": "dark",
+      "page": "home",
+      "selector": "pip-1",
+      "reason": "尺寸过小（20x8），单独成图没有意义"
+    },
+    {
+      "theme": "dark",
+      "page": "home",
+      "selector": "pip-1",
+      "reason": "尺寸过小（8x8），单独成图没有意义"
+    },
+    {
+      "theme": "dark",
+      "page": "home",
+      "selector": "pip-1",
+      "reason": "尺寸过小（8x8），单独成图没有意义"
+    },
+    {
+      "theme": "dark",
+      "page": "home",
+      "selector": "pip-1",
+      "reason": "尺寸过小（8x8），单独成图没有意义"
+    },
+    {
+      "theme": "dark",
+      "page": "home",
+      "selector": "pip-1",
+      "reason": "尺寸过小（8x8），单独成图没有意义"
+    },
+    {
+      "theme": "dark",
+      "page": "search-filter",
+      "selector": "card-tint-1",
+      "reason": "当前不可见（display/visibility/opacity）"
+    },
+    {
+      "theme": "dark",
+      "page": "search-filter",
+      "selector": "card-tint-1",
+      "reason": "当前不可见（display/visibility/opacity）"
+    },
+    {
+      "theme": "dark",
+      "page": "search-filter",
+      "selector": "card-tint-1",
+      "reason": "当前不可见（display/visibility/opacity）"
+    },
+    {
+      "theme": "dark",
+      "page": "search-filter",
+      "selector": "card-tint-1",
+      "reason": "当前不可见（display/visibility/opacity）"
+    },
+    {
+      "theme": "dark",
+      "page": "search-filter",
+      "selector": "card-tint-1",
+      "reason": "当前不可见（display/visibility/opacity）"
+    },
+    {
+      "theme": "dark",
+      "page": "search-filter",
+      "selector": "card-tint-1",
+      "reason": "当前不可见（display/visibility/opacity）"
+    },
+    {
+      "theme": "dark",
+      "page": "search-filter",
+      "selector": "card-tint-1",
+      "reason": "当前不可见（display/visibility/opacity）"
+    },
+    {
+      "theme": "dark",
+      "page": "search-filter",
+      "selector": "card-tint-1",
+      "reason": "当前不可见（display/visibility/opacity）"
+    },
+    {
+      "theme": "dark",
+      "page": "search-filter",
+      "selector": "card-tint-1",
+      "reason": "当前不可见（display/visibility/opacity）"
+    },
+    {
+      "theme": "dark",
+      "page": "search-filter",
+      "selector": "card-tint-1",
+      "reason": "当前不可见（display/visibility/opacity）"
+    },
+    {
+      "theme": "dark",
+      "page": "search-filter",
+      "selector": "card-tint-1",
+      "reason": "当前不可见（display/visibility/opacity）"
+    },
+    {
+      "theme": "dark",
+      "page": "search-filter",
+      "selector": "card-tint-1",
+      "reason": "当前不可见（display/visibility/opacity）"
+    },
+    {
+      "theme": "dark",
+      "page": "search-filter",
+      "selector": "card-tint-1",
+      "reason": "当前不可见（display/visibility/opacity）"
+    },
+    {
+      "theme": "dark",
+      "page": "search-filter",
+      "selector": "card-tint-1",
+      "reason": "当前不可见（display/visibility/opacity）"
+    },
+    {
+      "theme": "dark",
+      "page": "search-filter",
+      "selector": "card-tint-1",
+      "reason": "当前不可见（display/visibility/opacity）"
+    },
+    {
+      "theme": "dark",
+      "page": "search-filter",
+      "selector": "card-tint-1",
+      "reason": "当前不可见（display/visibility/opacity）"
+    }
+  ]
+}
