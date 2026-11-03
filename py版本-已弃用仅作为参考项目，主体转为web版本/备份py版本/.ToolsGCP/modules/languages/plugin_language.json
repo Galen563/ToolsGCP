@@ -1,0 +1,207 @@
+{
+  "builtin_tip": {
+    "简体中文": "内置示例插件，不可删除",
+    "繁體中文": "內建範例外掛，不可刪除",
+    "English": "Built-in sample plugin, cannot be deleted"
+  },
+  "by_author": {
+    "简体中文": "作者：{name}",
+    "繁體中文": "作者：{name}",
+    "English": "by {name}"
+  },
+  "confirm_delete": {
+    "简体中文": "确定要删除插件「{name}」吗？插件文件夹会被整个删掉。",
+    "繁體中文": "確定要刪除外掛「{name}」嗎？外掛資料夾會被整個刪掉。",
+    "English": "Delete plugin \"{name}\"? Its whole folder will be removed."
+  },
+  "delete": {
+    "简体中文": "删除插件",
+    "繁體中文": "刪除外掛",
+    "English": "Delete plugin"
+  },
+  "deleted": {
+    "简体中文": "已删除插件",
+    "繁體中文": "已刪除外掛",
+    "English": "Plugin deleted"
+  },
+  "disable": {
+    "简体中文": "禁用",
+    "繁體中文": "停用",
+    "English": "Disable"
+  },
+  "empty": {
+    "简体中文": "还没有插件。点右上角「我想开发」看看怎么写一个。",
+    "繁體中文": "還沒有外掛。點右上角「我想開發」看看怎麼寫一個。",
+    "English": "No plugins yet. Click \"I want to build one\" to get started."
+  },
+  "enable": {
+    "简体中文": "启用",
+    "繁體中文": "啟用",
+    "English": "Enable"
+  },
+  "layout_grid": {
+    "简体中文": "井字排版",
+    "繁體中文": "井字排版",
+    "English": "Grid layout"
+  },
+  "layout_list": {
+    "简体中文": "列表排版",
+    "繁體中文": "列表排版",
+    "English": "List layout"
+  },
+  "no_desc": {
+    "简体中文": "（没有填写说明）",
+    "繁體中文": "（沒有填寫說明）",
+    "English": "(no description)"
+  },
+  "no_match": {
+    "简体中文": "没有匹配的插件，换个关键词试试。",
+    "繁體中文": "沒有符合的外掛，換個關鍵字試試。",
+    "English": "No matching plugins — try another keyword."
+  },
+  "note_button": {
+    "简体中文": "备注",
+    "繁體中文": "備註",
+    "English": "Note"
+  },
+  "note_placeholder": {
+    "简体中文": "写个备注（最多 20 字）",
+    "繁體中文": "寫個備註（最多 20 字）",
+    "English": "Write a note (max 20 characters)"
+  },
+  "note_saved": {
+    "简体中文": "备注已保存",
+    "繁體中文": "備註已儲存",
+    "English": "Note saved"
+  },
+  "note_tip": {
+    "简体中文": "给自己留个备注，Enter 保存，Esc 取消",
+    "繁體中文": "給自己留個備註，Enter 儲存，Esc 取消",
+    "English": "Keep a note for yourself — Enter saves, Esc cancels"
+  },
+  "open_dir": {
+    "简体中文": "打开插件目录",
+    "繁體中文": "開啟外掛資料夾",
+    "English": "Open plugins folder"
+  },
+  "open_readme": {
+    "简体中文": "开发文档",
+    "繁體中文": "開發文件",
+    "English": "Developer docs"
+  },
+  "plugins_hint": {
+    "简体中文": "一个文件夹就是一个插件，放在 .ToolsGCP/plugins 下。装好之后点「重新加载」即可生效。",
+    "繁體中文": "一個資料夾就是一個外掛，放在 .ToolsGCP/plugins 下。裝好之後點「重新載入」即可生效。",
+    "English": "One folder = one plugin, placed under .ToolsGCP/plugins. Click \"Reload\" to load it."
+  },
+  "plugins_title": {
+    "简体中文": "插件",
+    "繁體中文": "外掛",
+    "English": "Plugins"
+  },
+  "reload": {
+    "简体中文": "重新加载",
+    "繁體中文": "重新載入",
+    "English": "Reload"
+  },
+  "search_plugin": {
+    "简体中文": "搜索插件（名称 / id / 作者）",
+    "繁體中文": "搜尋外掛（名稱 / id / 作者）",
+    "English": "Search plugins (name / id / author)"
+  },
+  "status_disabled": {
+    "简体中文": "已禁用",
+    "繁體中文": "已停用",
+    "English": "Disabled"
+  },
+  "status_enabled": {
+    "简体中文": "已启用",
+    "繁體中文": "已啟用",
+    "English": "Enabled"
+  },
+  "status_error": {
+    "简体中文": "加载失败",
+    "繁體中文": "載入失敗",
+    "English": "Failed to load"
+  },
+  "switch_off": {
+    "简体中文": "已关闭",
+    "繁體中文": "已關閉",
+    "English": "Off"
+  },
+  "switch_on": {
+    "简体中文": "已开启",
+    "繁體中文": "已開啟",
+    "English": "On"
+  },
+  "toggle_hint": {
+    "简体中文": "启用",
+    "繁體中文": "啟用",
+    "English": "Enable"
+  },
+  "toggle_tip": {
+    "简体中文": "打开 / 关闭这个插件",
+    "繁體中文": "開啟 / 關閉這個外掛",
+    "English": "Turn this plugin on or off"
+  },
+  "want_dev": {
+    "简体中文": "我想开发",
+    "繁體中文": "我想開發",
+    "English": "I want to build one"
+  },
+  "count": {
+    "简体中文": "共 {total} 个，已启用 {enabled} 个",
+    "繁體中文": "共 {total} 個，已啟用 {enabled} 個",
+    "English": "{total} plugin(s), {enabled} enabled"
+  },
+  "count_filtered": {
+    "简体中文": "共 {total} 个，已启用 {enabled} 个，筛出 {shown} 个",
+    "繁體中文": "共 {total} 個，已啟用 {enabled} 個，篩出 {shown} 個",
+    "English": "{total} plugin(s), {enabled} enabled, {shown} shown"
+  },
+  "config_button": {
+    "简体中文": "配置界面",
+    "繁體中文": "設定介面",
+    "English": "Settings"
+  },
+  "config_title": {
+    "简体中文": "{name} · 配置界面",
+    "繁體中文": "{name} · 設定介面",
+    "English": "{name} · Settings"
+  },
+  "config_unavailable": {
+    "简体中文": "这个插件没有配置界面（或没加载成功）",
+    "繁體中文": "這個外掛沒有設定介面（或沒載入成功）",
+    "English": "This plugin has no settings screen (or it failed to load)"
+  },
+  "config_back": {
+    "简体中文": "返回插件列表",
+    "繁體中文": "返回外掛清單",
+    "English": "Back to plugin list"
+  },
+  "dev_guide_title": {
+    "简体中文": "我想开发插件",
+    "繁體中文": "我想開發外掛",
+    "English": "I want to build a plugin"
+  },
+  "dialog_close": {
+    "简体中文": "关闭",
+    "繁體中文": "關閉",
+    "English": "Close"
+  },
+  "dialog_cancel": {
+    "简体中文": "取消",
+    "繁體中文": "取消",
+    "English": "Cancel"
+  },
+  "dialog_ok": {
+    "简体中文": "确定",
+    "繁體中文": "確定",
+    "English": "OK"
+  },
+  "not_found": {
+    "简体中文": "找不到 {name}",
+    "繁體中文": "找不到 {name}",
+    "English": "Cannot find {name}"
+  }
+}

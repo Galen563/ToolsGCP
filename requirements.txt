@@ -1,0 +1,47 @@
+# =============================================================================
+# ToolsGCP 运行依赖 —— **web 版**（pywebview + Vue3 前端）
+# =============================================================================
+# 安装（国内网络建议加镜像）：
+#   pip install -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple/
+#
+# ⚠️ 上一版这里是 PyQt5 + PyQt-Fluent-Widgets 两行 —— 那是**旧 PyQt 单机版**的依赖。
+#    现在主体是 web 版（入口 ToolsGCP.pyw → pywebview 壳 + webui/ 前端），
+#    装那两行是**跑不起来**的（缺 pywebview / bottle / Pillow）。
+#
+# 依赖是怎么定出来的：扫描 web 版运行期真正会被 import 到的模块
+#   （ToolsGCP.pyw、desktop/**、.ToolsGCP/modules/pymodels/{core,utils,constants,splash_screen}），
+#   逐个确认第三方包，不是凭印象写的。
+
+# ---------- 运行必需 ----------
+pywebview>=6.2,<7            # 桌面窗口外壳（Windows 走 WebView2 / winforms 后端）
+bottle>=0.13,<0.14           # 本地 WSGI 服务：把 webui/ 与 .ToolsGCP 的资源喂给 WebView2
+pythonnet>=3.0,<4            # 原生层（System.Drawing / clr）：托盘自绘菜单、PNG→HICON、窗口边框
+Pillow>=10,<12               # native/appicon.py（logo→多尺寸 .ico）+ splash.py（启动画面位图）
+
+# ---------- ⚠️ PyQt5 / PyQt-Fluent-Widgets 已**不再需要** ----------
+# 上一版这里还有两行 PyQt5 + PyQt-Fluent-Widgets，理由是"启动动画 / 字体 / 全局热键 /
+# 插件 agent 运行时是 PyQt5 写的"。本版把它们逐个清掉了：
+#   · 启动动画：`desktop/splash.py` 改为纯 Win32 分层窗口（ctypes + Pillow），
+#     视觉规格与原版逐像素对齐（logo 夹到 300、窗口=logo+80、圆角 20、rgba(43,43,43,240)）；
+#   · 全局热键：`desktop/native/hotkey.py` 本来就是 Win32 RegisterHotKey + 纯 ctypes 解析，
+#     只在"能 import 到原版解析器"时借用它，拿不到就用本地等价实现 —— 无 Qt 也能用；
+#   · 系统工具：`pymodels/utils/system_utils.py` 的 Qt 只服务于旧界面的 `restart_program()`
+#     里的 `QApplication.quit()`，已改成函数内惰性 import —— 这样 AI 工具链里
+#     "设置开机自启"（`agent_tools.py` 惰性引用本模块）在打包版里照常可用；
+#   · 公告：`pymodels/core/announcements.py` 删掉了只被旧 Qt 界面使用的 QThread 类，
+#     现在是纯标准库模块；
+#   · 字体 / 主题 / i18n 组件 / smooth_scroll 等：Web 版从未引用（已逐个核查，未打包）。
+# 验证方式：`项目资料-文档与开发测试/_devtest/` 下的 `_noqt` 自检会屏蔽 PyQt5 后
+#   跑整条主链路（desktop.shell / desktop.api / webhost / 各 native 层 / pymodels 核心），
+#   要求"被拦截的 Qt import 次数 = 0"、失败模块为空。
+# 收益：exe 体积明显下降（PyQt5 + Fluent-Widgets 是几十 MB 的量级）。
+# ⚠️ 若还要跑 `py版本-已弃用仅作为参考项目…/` 里的旧 Qt 单机版，那两行仍要自己装 ——
+#    但那是只读存档，不属于本项目的运行依赖。
+
+
+# ---------- 可选：打包成 exe 时才需要 ----------
+# pyinstaller>=6.0
+
+# ---------- 只给「py 版本-已弃用仅作为参考项目…」里的 PyQt 单机版用 ----------
+# 参考版是**只读留存**，不需要安装；真要跑它，把下面这行也装上即可（上面已经包含）：
+# PyQt5-Frameless-Window>=0.8,<1

@@ -1,0 +1,101 @@
+{
+  "group": "A",
+  "items": [
+    {
+      "id": "localsend",
+      "systems": ["全平台"],
+      "architectures": ["x64", "arm64", "arm", "Apple Silicon"],
+      "supplement": "官方提供 Windows、macOS、Linux 桌面版，并有 Android 与 iOS 手机客户端；同一局域网内的设备可直接互传文件，不需要账号，也不依赖公网服务器。",
+      "intro": "LocalSend 是一款免费开源的文件传输工具，手机与电脑只要处在同一个局域网，就能直接互传图片、视频、文档乃至整个文件夹，既不需要数据线，也不用登录账号或依赖云端服务器。它会自动发现附近设备，也支持手动输入地址连接，接收方确认后文件才会保存，传输过程经过加密。界面简洁、上手几乎零门槛，适合在家庭、宿舍或办公环境里快速交换大文件，尤其适合不想借助网盘和聊天软件传文件的用户。",
+      "note": "来源：官网 localsend.org + 官方 GitHub Release v1.18.2 产物名（LocalSend-1.18.2-windows-x86-64.exe、-windows-arm-64.zip、-linux-x86-64、-linux-arm-64、-android-x64.apk、-android-arm64v8.apk、-android-arm32v7.apk、LocalSend-1.18.2.dmg）；官网同时提供 iOS/Android 商店版本。覆盖 Windows/macOS/Linux/Android/iOS，故记全平台。"
+    },
+    {
+      "id": "pcl-ce",
+      "systems": ["Windows"],
+      "architectures": ["x64", "arm64"],
+      "supplement": "由社区维护的 Minecraft 启动器，只提供 Windows 桌面版，安装包分别适配 64 位与 ARM 架构电脑；内置下载与模组管理，可自动补全游戏所需运行环境。",
+      "intro": "PCL CE 是 PCL2 的社区版，由社区开发者维护，特色是让玩家提前体验上游尚未合并的新功能与修复。它支持多个游戏版本与存档的管理，内置资源搜索下载、模组与整合包安装，能够自动检测并补全所需的 Java 运行环境，还针对模组依赖、崩溃日志等常见问题做了优化。界面延续了原版简洁清爽、启动快速的风格，适合已经习惯 PCL 操作方式、希望第一时间用上新特性并愿意反馈问题的 Minecraft 玩家。",
+      "note": "来源：官方仓库 PCL-Community/PCL2-CE（重定向到 PCL-CE）Release v2.15.0 产物 PCL2_CE_Release_x64.exe 与 PCL2_CE_Release_ARM64.exe；基于 .NET 10 WPF，仅 Windows。官网 ce.pclc.cc。"
+    },
+    {
+      "id": "steam",
+      "systems": ["Windows", "macOS", "Linux"],
+      "architectures": ["x64", "arm64"],
+      "supplement": "全球主流的游戏发行平台，官方提供 Windows、macOS 与 Linux 桌面客户端；此外还有手机端应用，可用于聊天、令牌与浏览商店，游戏库和好友数据在各端同步。",
+      "intro": "Steam 是全球规模领先的 PC 游戏数字发行平台，把商店、游戏库、社区与好友系统整合在一起。用户可以在其中购买和下载游戏、领取免费内容、参与创意工坊与社区讨论，并通过云存档在不同设备间同步进度；成就、截图、直播和好友语音让游戏过程更具社交乐趣。客户端支持自动更新、下载队列管理和远程畅玩，手机端应用则能确认登录、浏览商店和管理令牌。无论偶尔买一款单机大作，还是长期投入联机游戏，都能用它统一管理游戏与好友。",
+      "note": "来源：Steam 官方客户端下载页 https://store.steampowered.com/about/（Windows / macOS / Linux(SteamOS) 桌面客户端）。注：本机网络对 *.steampowered.com 全部 DNS 屏蔽，页面无法直接抓取，平台结论取自官方下载页已知内容；架构按 64 位客户端口径记 x64 与 arm64，未收录缺乏官方确认的架构项。"
+    },
+    {
+      "id": "watt-toolkit",
+      "systems": ["Windows", "macOS", "Linux"],
+      "architectures": ["x64", "arm64", "Apple Silicon"],
+      "supplement": "面向国内用户的 Steam 辅助工具箱，提供 Windows、macOS、Linux 桌面版，可加速社区页面并管理账号、令牌与成就；需配合已安装的 Steam 使用，Windows ARM 暂未支持。",
+      "intro": "Watt Toolkit（原 Steam++）是一款开源的多功能工具箱，主要面向国内网络环境下的 Steam 玩家。它通过本地反向代理改善 Steam 社区、创意工坊等页面的访问体验，也支持部分海外站点加速；此外还提供多账号快速切换、游戏成就管理、本地两步验证令牌和游戏窗口化等实用工具。所有处理都在本机完成，令牌等敏感信息不会上传。适合经常访问 Steam 社区、想集中管理账号与成就的用户，使用前需先安装官方 Steam 客户端。",
+      "note": "来源：官方 Release 3.1.0 产物 Steam++_v3.1.0_win_x64.7z/.exe、Steam++_v3.1.0_linux_x64.tgz、Steam++_v3.1.0_macos.dmg；官方仓库 README「系统要求」表列 Windows x64、Linux x64/Arm64、macOS x64，官方 download-guide.md 另列 macos_arm64，并注明 Windows ARM64 暂未支持。README 曾列 Android（x64/Arm64/Arm32），但最新 Release 无 Android 产物，故未计入 systems。"
+    },
+    {
+      "id": "pcl2",
+      "systems": ["Windows"],
+      "architectures": [],
+      "supplement": "经典 Minecraft 启动器，官方仅提供 Windows 桌面版，下载后可绿色免安装直接运行；内置下载、模组与整合包管理，并会自动检测补全运行环境，暂无手机端与网页版。",
+      "intro": "PCL2（Plain Craft Launcher 2）是一款人气很高的 Minecraft 启动器，以启动速度快、界面清爽和上手门槛低受到玩家欢迎。它支持原版及各主流模组加载器的版本安装与切换，内置模组、整合包、资源包和光影的搜索下载，能够自动检测并补全游戏所需的 Java 运行环境，游戏崩溃后还会提供日志分析和排查建议。启动器免安装、占用空间小，配置与存档都在本地，适合希望少折腾配置、专注于游戏的 Minecraft 玩家。",
+      "note": "来源：官方站点 https://meloong.com/PCL（作者龙腾猫跃，下载按钮指向其爱发电发布页）；官方源码仓库 Meloong-Git/PCL 主工程为 .NET Framework 4.8 + WPF WinExe（TargetFrameworkVersion v4.8，引用 WindowsBase/PresentationFramework），仅 Windows。官方未按 CPU 架构分发（PlatformTarget=AnyCPU、Prefer32Bit=false，产物无 x64/ARM64 区分），架构按规则留空。"
+    },
+    {
+      "id": "afdian",
+      "systems": ["iOS", "Android", "web"],
+      "architectures": [],
+      "supplement": "面向创作者的赞助与会员订阅平台，官方提供 iOS 与 Android 手机应用，也可以直接用浏览器访问网页版；没有桌面客户端，登录、支付与查看内容均可多端进行。",
+      "intro": "爱发电是一个连接创作者与粉丝的赞助与会员订阅平台。创作者可以发布创作计划并设置不同价位的赞助档位，粉丝按月或按次付费支持，并在订阅期内查看对应档位的专享内容，如文章、图片、音频和视频等。平台支持微信、支付宝等常见支付方式，提供付费内容加密和私信沟通能力，方便双方长期互动。它适合插画、写作、播客、独立开发等各类创作者，也适合希望持续支持喜爱作者的粉丝，在网页和手机应用上都能使用。",
+      "note": "来源：官方用户帮助 https://guide.afdian.com/faq/faq-for-users（原文「爱发电的 APP 在哪里下载？Android & iOS：https://afdian.com/app 或各大应用商店搜索爱发电」）+ 资源链接 https://ifdian.net/；官方有 iOS/Android App 与网页版，无桌面客户端，故记 iOS/Android/web。"
+    },
+    {
+      "id": "epic-games",
+      "systems": ["Windows", "macOS"],
+      "architectures": ["x64"],
+      "supplement": "官方游戏商城与启动器，提供 Windows 与 macOS 桌面客户端用于购买、下载和管理游戏；可在网页端领取免费游戏，手机端商店目前仅在部分地区开放。",
+      "intro": "Epic Games 是知名游戏发行平台与虚幻引擎的开发商，其桌面启动器提供从购买、下载到管理的完整游戏体验，并长期每周限时免费赠送游戏。商店内既有第三方大作也有大量独立作品，购买后可在库中安装并自动更新，同时支持好友列表、语音聊天与成就系统，跨平台联机让不同设备的玩家也能一起游玩。除客户端外，还可以通过网页浏览商店、领取免费游戏和管理账号，适合关注首发大作、独立游戏以及免费福利的玩家。",
+      "note": "来源：Epic Games 官方启动器（epicgames.com，下载页 store.epicgames.com/download），官方支持 Windows 10+ 与 macOS。架构：Windows 启动器为 x64；macOS 版官方页面未标注架构，第三方报道称 2025-11 起原生适配 Apple Silicon，未获官方页面确认，故只保留 x64。（官方配置要求帮助页在当前网络返回 403，无法抓取）"
+    },
+    {
+      "id": "wegame",
+      "systems": ["Windows", "macOS"],
+      "architectures": ["x64", "arm64", "Apple Silicon"],
+      "supplement": "腾讯旗下的游戏平台，官方提供 Windows 客户端与 Mac 端，Mac 版还区分 Intel 与 M 系列芯片两种安装包；可用于管理游戏、查看时长与好友动态，暂无 Linux 版本。",
+      "intro": "WeGame 是腾讯推出的游戏平台，面向国内玩家提供游戏下载、更新、启动与社区服务。用户可以在平台内购买或领取游戏，统一管理已安装的作品并查看游玩时长，还能浏览攻略、直播和好友动态，方便找到同好一起开黑；内置的辅助工具与网络优化也让部分网游的启动、更新更顺畅。除电脑客户端外，官方还提供 Mac 版本供苹果电脑用户使用，适合经常游玩腾讯系网游、希望在国内网络环境下获得便捷下载和社区体验的玩家。",
+      "note": "来源：WeGame 官网 https://www.wegame.com.cn/ 客户端下载：Windows 客户端 + Mac 端，Mac 端明确提供「Intel 版」与「M 系列版」两种芯片版本，故 x64 + arm64(Apple Silicon)。无 Linux 客户端；掌上 WeGame 移动端已下线。"
+    },
+    {
+      "id": "python",
+      "systems": ["Windows", "macOS", "Linux"],
+      "architectures": ["x64", "x86", "arm64", "Apple Silicon"],
+      "supplement": "通用编程语言运行环境，官方为 Windows 提供常规与 ARM 架构安装包，为 macOS 提供适配 Intel 与 Apple Silicon 的安装包；Linux 可通过源码或系统仓库安装。",
+      "intro": "Python 是一门语法简洁、易读易学的高级编程语言，广泛应用于数据分析、人工智能、Web 开发、自动化脚本、科学计算和编程教学等场景。它拥有成熟的标准库和庞大的第三方生态，多数常见需求都能找到现成的库直接调用，配合交互式解释器和包管理工具，从写第一个小程序到搭建大型项目都比较顺畅。Python 支持面向对象、函数式等多种编程风格，跨平台表现一致，既适合零基础入门者，也适合需要快速完成数据处理与原型开发的工程师和科研人员。",
+      "note": "来源：官方 python.org/downloads/windows/（Windows installer 64-bit / 32-bit / ARM64）与 python.org/downloads/macos/（macOS universal2 安装包，同时含 Intel 与 Apple Silicon）；Linux 由官方源码及发行版提供。官方无 Android/iOS 版本。"
+    },
+    {
+      "id": "bilibili",
+      "systems": ["全平台"],
+      "architectures": [],
+      "supplement": "国内主流的视频与弹幕社区，在浏览器访问官网即可观看、投稿和互动；官方另有 Windows、macOS 电脑客户端与 iOS、Android 手机 App，账号、收藏与观看记录多端同步。",
+      "intro": "哔哩哔哩（B 站）是国内知名的视频与弹幕社区，内容覆盖动画、游戏、科技、知识、生活、音乐、影视等众多分区。用户既可以观看视频，也能投稿创作、发布动态与专栏，并通过弹幕、评论、投币、收藏和关注与其他观众互动；直播、番剧追更、课程学习和视频合集等功能，让平台兼具娱乐与学习属性。同一账号在网页、电脑客户端和手机应用之间同步，收藏、历史与关注列表可以随时接着看，适合喜欢弹幕文化、乐于参与社区讨论或希望边玩边学的用户。",
+      "note": "来源：资源链接 https://www.bilibili.com/（网页版）+ 官方 PC 客户端（Windows/macOS，见 microsoft/winget-pkgs 官方清单 Bilibili.Bilibili，https://raw.githubusercontent.com/microsoft/winget-pkgs/master/manifests/b/Bilibili/Bilibili/1.18.0/Bilibili.Bilibili.installer.yaml）+ 官方 iOS/Android App；桌面客户端 + 移动 App + 网页版全覆盖，故记全平台。"
+    },
+    {
+      "id": "douyin",
+      "systems": ["全平台"],
+      "architectures": [],
+      "supplement": "短视频平台，用浏览器打开官网即可浏览、搜索和发布内容，扫码登录后与手机端数据同步；官方另有电脑版客户端与 iOS、Android 手机 App，适合在大屏上观看和做创作管理。",
+      "intro": "抖音是一个以短视频为核心的创作与分享平台，用户可以拍摄、剪辑并发布短视频，也能通过直播与观众实时互动。内容覆盖生活记录、美食、旅行、才艺、知识科普、影视剪辑等众多领域，依靠推荐机制把作品分发给可能感兴趣的观众；平台还提供滤镜、特效、配乐和字幕等创作工具，没有剪辑基础也能快速做出成片。除观看和发布，还能关注创作者、评论互动、参与话题活动，并在网页版、电脑客户端和手机应用上登录同一账号。",
+      "note": "来源：资源链接 https://www.douyin.com/（网页版）+ 官方电脑版下载页 https://www.douyin.com/downloadpage/pc + 官方 iOS/Android App；桌面客户端 + 移动 App + 网页版全覆盖，故记全平台。"
+    },
+    {
+      "id": "blender",
+      "systems": ["Windows", "macOS", "Linux"],
+      "architectures": ["x64", "arm64", "Apple Silicon"],
+      "supplement": "开源三维创作软件，官方提供 Windows、macOS 与 Linux 桌面版，Windows ARM 电脑和 Apple Silicon 机型也有对应安装包；另提供免安装压缩包与微软商店等分发方式。",
+      "intro": "Blender 是一款完全开源且免费的三维创作套件，流程覆盖建模、雕刻、材质贴图、动画绑定、特效模拟、渲染与视频剪辑。它内置 Cycles 与 EEVEE 等渲染引擎，支持 Python 脚本与插件扩展，社区活跃、教程丰富；凭借完整而持续迭代的功能，被广泛用于动画短片、游戏美术、产品与建筑可视化、概念设计等领域。由于免费又功能齐全，它既适合想入门三维创作的学生与爱好者，也适合希望以较低成本完成专业项目的工作室和独立创作者。",
+      "note": "来源：blender.org/download 官方下载页：Windows Installer(.msi)/Portable(.zip) x64、Windows ARM Installer/Portable arm64、macOS Apple Silicon(.dmg)、Linux x64(.tar.xz)，另有 Steam / Microsoft Store / Snap 分发。当前官方 macOS 仅提供 Apple Silicon 版本。"
+    }
+  ]
+}

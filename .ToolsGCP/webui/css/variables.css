@@ -1,0 +1,481 @@
+/* ============================================================================
+ * ToolsGCP · CSS 设计令牌（单一真源，对应 Python constants.py + theme_tokens）
+ * ============================================================================
+ * 尺寸全部取自原版常量，不许凭感觉改：
+ *   标题栏 48 / 窗口按钮 46×32 / 侧栏 48 ↔ 240（flyout，不挤压内容）/
+ *   搜索页内容边距 (24,30,24,30) 行距 20 / 搜索框 320~720 居中 /
+ *   更多筛选120×34（箭头 12px 在右、展开转 180°）/ 排序下拉 min 160 /
+ *   视图切换 68×30 / 筛选面板圆角 8、组标题列 52、胶囊高 26（宽=字+26）/
+ *   卡片 磁贴 196×min272 间距14、网格 149×min168 间距12、内边距 16、
+ *   右上按钮 26（图标16）网格 22/14、分隔线 1px、hover 只做 140ms 灰阶叠色 /
+ *   分组标题行 40、组间距 16 / 设置 侧栏 196、内容 880、行高 48/60、控件宽 200、
+ *   卡片圆角 10、内边距 20、板块间距 32、卡片间距 16 / 滚动条 8（圆角 4）。
+ * 配色：深色底是**中性灰**（#1C1C1C / #272727），不是蓝紫 —— 原版设计就是中性灰。
+ * 现代化：暗黑 + 毛玻璃 + 柔和阴影 + 圆角，但**只加质感，不改尺寸与层级关系**。
+ * ==========================================================================*/
+
+:root {
+  /* ---------- 字体 ----------*/
+  --ui-font: "Microsoft YaHei UI", "Microsoft YaHei", "Segoe UI", system-ui, sans-serif;
+
+  /* ---------- 窗口主题效果（设置 → 外观 → 主题效果：云母 / 毛玻璃 / 亚克力） ----------
+     默认云母：标题栏与侧栏带一点底噪，正文区完全干净（不让内容区发糊）。
+     三档的**实际数值**在文件下半部分主题效果一节；这里只有"没有 data-fx 时"的兜底。*/
+  --fx: "mica";                  /* mica | glass | acrylic*/
+  --fx-blur: 0px;                /* 面板背面模糊半径（云母：不糊）*/
+  --fx-sat: 100%;
+  --fx-opacity: 1;               /* 标题栏/侧栏/弹层底的不透明度*/
+  --fx-noise-base: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='.045'/%3E%3C/svg%3E");
+  /* 亚克力噪点重调：
+     原来这条的 rect opacity 是 .12，再乘上 #app：after 的 opacity .9 ⇒ 颗粒又粗又重，
+     观感像"脏点 / 磨砂纸"。Windows 11 Acrylic 的噪点其实是**很细很淡**的一层：
+     这里把 rect opacity 降到 .05（合理区间 .04~.06），背景 grain 另由 --fx-bg-grain 控制。
+     面板底噪（.fx-noise：before）和背景颗粒（#app：after）共用这一个令牌，所以两处一起变淡。*/
+  --fx-noise-strong: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='.05'/%3E%3C/svg%3E");
+  --fx-noise: var(--fx-noise-base);   /* 面板底噪（云母一点点 / 亚克力更强 / 毛玻璃无）*/
+  --fx-extra: none;              /* 面板上边缘 1px 高光/暗边（box-shadow，可多条）*/
+  --fx-card-blur: 10px;          /* 卡片 / 设置卡片的模糊半径*/
+  --fx-panel-alpha: .73;         /* 卡片 / 面板底色不透明度（跟主题色，见下半部分）*/
+  /* —— 背景层（#app：before / ：after）强度：不透明的背景后面没有可模糊的内容 ——*/
+  --fx-bg-tint: 9%;              /* 主色柔光①（旧版 #app 第一层就是 9%）*/
+  --fx-bg-tint-2: 6%;            /* 主色柔光②（旧版 #app 第二层就是 6%）*/
+  --fx-bg-blob: 0%;              /* 追加的彩色光斑：毛玻璃/亚克力才点亮*/
+  --fx-bg-grid: 0%;              /* 22px 细网格：给面板模糊提供高频细节*/
+  --fx-bg-grain: 0;              /* 背景颗粒（#app：after 的 opacity）*/
+
+  --glass: rgba(255, 255, 255, 0.045);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-strong: rgba(32, 32, 32, 0.78);
+  --blur: 18px;
+
+  /* ---------- 深色（DARK 色板 + 毛玻璃层） ----------*/
+  --page: #1c1c1c;
+  --page-2: #202020;
+  --card-solid: #272727;
+  --card: rgba(255, 255, 255, 0.045);
+  --card-border: #343434;
+  --card-glass: rgba(39, 39, 39, 0.72);
+  --text: #e8e8e8;
+  --text-secondary: #a0a0a0;
+  --text-disabled: #6e6e6e;
+  --divider: #2e2e2e;
+  --icon: #c9c9c9;
+  /* 进度条轨道底色。
+     ⚠️ 这个变量以前**从来没定义过**，而 download-bar / setting-progress /
+        r24 的进度条都在用裸 var(--track) —— 未定义的变量会让那条声明整体失效，
+        轨道背景变成透明，于是深色底上进度条看不见（下载页进度条不显示的根因）。
+        这里补上真值，所有用 var(--track) 的地方一次性修好。*/
+  --track: rgba(255, 255, 255, 0.14);
+
+  --accent: #6e93ff;
+  --accent-strong: #86a6ff;
+  --accent-soft: rgba(110, 147, 255, 0.16);
+  --accent-ink: #10131c;
+  --danger: #f16a6e;
+  --success: #4cc46a;
+  --warning: #e0a33a;
+
+  --hover: rgba(255, 255, 255, 0.06);
+  --hover-strong: rgba(255, 255, 255, 0.10);
+  --tint-dark: rgba(255, 255, 255, 0.13);
+  --glass: rgba(255, 255, 255, 0.045);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-strong: rgba(32, 32, 32, 0.78);
+  --blur: 18px;
+
+  --shadow-card: 0 6px 20px rgba(0, 0, 0, 0.22);
+  --shadow-hover: 0 14px 30px rgba(0, 0, 0, 0.30);
+  --shadow-float: 0 18px 46px rgba(0, 0, 0, 0.46), 0 2px 8px rgba(0, 0, 0, 0.26);
+  --ring: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+
+  /* ---------- 原版尺寸常量 ----------*/
+  --tb-height: 48px;
+  /* 标题栏按钮是正方形圆润角轮廓（.tb-btn 直接写像素 32×28），
+     令牌同步成同一组数值，避免以后有人读到 46×32 又按老版"贴边等宽"去改。*/
+  --tb-btn-w: 32px;
+  --tb-btn-h: 28px;
+  --nav-collapsed: 48px;
+  --nav-expanded: 240px;
+  --nav-item-h: 36px;
+  --page-margin: 24px;
+  --content-margin: 30px;
+  --content-max: 880px;
+  --settings-side: 196px;
+  --fav-side: 230px;
+  --card-radius: 10px;
+  --card-padding: 16px;
+  --row-height: 48px;
+  --row-height-desc: 60px;
+  --control-width: 200px;
+  --section-gap: 32px;
+  --card-gap: 16px;
+  --scrollbar: 8px;
+
+  /* 悬浮球恒定色（不跟组件配色档，与原版一致）*/
+  --ball-a: #5b8def;
+  --ball-b: #8a6bef;
+  --ball-liquid: #7fd4ff;
+}
+
+:root[data-theme="light"] {
+  --page: #f3f4f7;
+  --page-2: #eceef3;
+  --card-solid: #ffffff;
+  --card: rgba(255, 255, 255, 0.78);
+  --card-border: #e6e9f0;
+  --card-glass: rgba(255, 255, 255, 0.74);
+  --text: #1f2329;
+  --text-secondary: #6b7280;
+  --text-disabled: #9aa1ac;
+  --divider: #eff1f5;
+  --icon: #4b4f58;
+  /* 浅色主题的进度条轨道（深色主题的定义见上面）*/
+  --track: rgba(0, 0, 0, 0.09);
+
+  --accent: #009faa;
+  --accent-strong: #00b3c0;
+  --accent-soft: rgba(0, 159, 170, 0.10);
+  --accent-ink: #ffffff;
+  --danger: #e5484d;
+  --success: #2fa36b;
+  --warning: #d98e04;
+
+  --hover: rgba(0, 0, 0, 0.04);
+  --hover-strong: rgba(0, 0, 0, 0.07);
+  --tint-dark: rgba(0, 0, 0, 0.10);
+  --glass: rgba(0, 0, 0, 0.035);
+  --glass-border: rgba(15, 23, 42, 0.08);
+  --glass-strong: rgba(250, 251, 253, 0.80);
+  --shadow-card: 0 6px 18px rgba(15, 23, 42, 0.07);
+  --shadow-hover: 0 14px 28px rgba(15, 23, 42, 0.12);
+  --shadow-float: 0 18px 42px rgba(15, 23, 42, 0.16), 0 2px 8px rgba(15, 23, 42, 0.08);
+  --ring: inset 0 0 0 1px rgba(15, 23, 42, 0.03);
+}
+
+/* 组件配色三档（settings/theme.py ACCENT_PRESETS：蓝 / 紫罗兰 / Claude 橙）*/
+:root[data-accent="blue"]   { --accent: #6e93ff; --accent-strong: #86a6ff; --accent-soft: rgba(110, 147, 255, .16); --accent-ink: #10131c; }
+:root[data-accent="purple"] { --accent: #a488ff; --accent-strong: #b9a3ff; --accent-soft: rgba(164, 136, 255, .16); --accent-ink: #150f28; }
+:root[data-accent="orange"] { --accent: #e08a63; --accent-strong: #eb9f7c; --accent-soft: rgba(224, 138, 99, .16); --accent-ink: #241108; }
+:root[data-theme="light"][data-accent="blue"]   { --accent: #009faa; --accent-strong: #00b3c0; --accent-soft: rgba(0, 159, 170, .10); --accent-ink: #fff; }
+:root[data-theme="light"][data-accent="purple"] { --accent: #8b6cf6; --accent-strong: #9c80ff; --accent-soft: rgba(139, 108, 246, .10); --accent-ink: #fff; }
+:root[data-theme="light"][data-accent="orange"] { --accent: #d97757; --accent-strong: #e2876a; --accent-soft: rgba(217, 119, 87, .10); --accent-ink: #fff; }
+
+/* ===================== 主题效果（云母 / 毛玻璃 / 亚克力） =====================
+   三档要肉眼可见不同，光改模糊半径是不够的。真正决定观感的是四件事：
+     ① 面板（标题栏 / 侧栏 / 弹层 / 卡片）的**模糊半径 + 底色不透明度**；
+     ② 面板背后**必须有一层可以被模糊的东西** —— 见下面的 #app：before 背景层
+        （旧版看不出差别的根因：body/#app 是不透明渐变，backdrop-filter 背后空空如也）；
+     ③ 底噪：云母一点点 / 毛玻璃干净 / 亚克力更明显；
+     ④ 面板上边缘的 1px 高光描边：亚克力最亮。
+   尺寸、层级、内容可读性一个字都不动 —— 模糊只作用在面板**背后**的像素上，
+   文字与卡片内容永远清晰（内容区不发糊）。*/
+
+/* —— 云母（默认）：背景层极淡、面板接近实色 —— 与旧版观感一致 ——
+   ⚠️ 这一档**故意不覆盖 --card-glass / --blur**：直接用主题原值（深色 rgba(39,39,39,.72)、
+      浅色 rgba(255,255,255,.74)），保证云母档相对改动前是"逐像素一致"而不是"看起来差不多"。
+      卡片模糊半径那一条除外（见下面 .card 规则），它的原值本来就是 10px。*/
+:root[data-fx="mica"] {
+  --fx-blur: 0px; --fx-sat: 100%; --fx-opacity: 1;
+  --fx-noise: var(--fx-noise-base); --fx-extra: none;
+  --fx-card-blur: 10px;
+  --fx-bg-tint: 9%; --fx-bg-tint-2: 6%; --fx-bg-blob: 0%; --fx-bg-grid: 0%; --fx-bg-grain: 0;
+}
+/* —— 毛玻璃（液态玻璃 Liquid Glass）——
+   要点：高透明 + 很强的背景模糊 + **顶部一道柔和高光**（模拟玻璃边缘折射），
+   饱和度高一点让透过来的颜色更"活"；不加噪点（噪点是亚克力的特征）。*/
+:root[data-fx="glass"] {
+  --fx-blur: 38px; --fx-sat: 200%; --fx-opacity: .46;
+  --fx-noise: none;
+  --fx-extra: inset 0 1px 0 rgba(255, 255, 255, .26),
+              inset 0 -1px 0 rgba(0, 0, 0, .26),
+              inset 0 0 0 1px rgba(255, 255, 255, .06);
+  --blur: 34px; --fx-card-blur: 28px; --fx-panel-alpha: .38;
+  --fx-bg-tint: 32%; --fx-bg-tint-2: 22%; --fx-bg-blob: 34%; --fx-bg-grid: 0%; --fx-bg-grain: .18;
+}
+/* —— 亚克力（Windows 11 Acrylic）——
+   参数校准记录。之前的取值有问题：
+     · --fx-opacity .80 / --fx-panel-alpha .78 ⇒ 面板几乎不透明，"糊"与"透"都看不出来；
+     · 底噪 rect opacity .12 + 背景 grain .9 ⇒ 颗粒又粗又重，像脏点/磨砂纸；
+     · 顶部高光 .30 太亮，压在颗粒上更显"塑料感"。
+   现在按 Win11 Acrylic 的真实观感取值（括号里是校准区间）：
+     · 背景模糊 32px（30~34）+ 饱和 130%（125~135）；
+     · 面板底色不透明度 .63（.58~.68），标题栏/侧栏 --fx-opacity .62；
+     · 颗粒**细而淡**：--fx-noise-strong 的 rect opacity 已降到 .05，背景 grain .45（.4~.5）；
+     · 顶部 1px 高光收到 .16（玻璃档仍是 .26，两档不会混同）。
+   与毛玻璃的分工保持不变：毛玻璃=高透明 + 强模糊 + 亮高光 + 无噪点；
+   亚克力=更实一点 + 细噪点 + 收敛的高光。*/
+:root[data-fx="acrylic"] {
+  --fx-blur: 32px; --fx-sat: 130%; --fx-opacity: .62;
+  --fx-noise: var(--fx-noise-strong);
+  --fx-extra: inset 0 1px 0 rgba(255, 255, 255, .16),
+              inset 0 -1px 0 rgba(0, 0, 0, .14),
+              inset 0 0 0 1px rgba(255, 255, 255, .045);
+  --blur: 32px; --fx-card-blur: 30px; --fx-panel-alpha: .63;
+  --fx-bg-tint: 20%; --fx-bg-tint-2: 14%; --fx-bg-blob: 22%; --fx-bg-grid: 0%; --fx-bg-grain: .45;
+}
+/* ⚠️ 毛玻璃 / 亚克力不能只对背景生效 —— 很多组件本体还是云母效果。
+   下面这批**面板型**组件本体（卡片类 / 选择条 / 表格 / 部署面板）统一接管：
+   半透明底色 + 背景模糊 + 高光边。云母档不受影响（选择器带 data-fx 且排除 mica）。
+   ===========================================================================
+   按钮配色踩坑记录（毛玻璃/亚克力下按钮发灰、看不清字 —— 设置→功能的验证、
+   GCP-AI 的保存、历史对话、提交反馈的前往反馈都中招）：
+   根因：曾把 `.btn` / `.input` / `.combo-trigger` / `.segmented` 也塞进了这条
+   `background: color-mix(卡片色…)` + `border-color` + `box-shadow` 的兜底里，而它的
+   特异性是 (0,4,0) —— 比 `.btn-primary`(0,1,0)、`.btn.is-on`(0,2,0)、`.btn:hover`(0,2,0)、
+   `.input:focus`(0,2,0) **全都高**，于是：
+     · `.btn-primary` 的强调色渐变被换成灰色卡片底 ⇒ 深色 accent-ink 文字压灰底，
+       表现为"发灰、看不清字"；
+     · `.btn.is-on` / `.btn:hover` / `.input:focus` 的状态色（蓝底 / 悬停 / 焦点描边）
+       被同一条规则钉死 ⇒ 毛玻璃/亚克力档下按钮像是"死的"；
+     · `.log-item` 也吃到了 blur + 卡片底 + 阴影 ⇒ "双层底/阴影穿帮"。
+   修法（只动"底色"这一件事，不去碰交互态）：
+     ① 面板型组件继续走下面的完整接管（底色 + 模糊 + 描边 + 阴影）；
+     ② **交互控件（按钮 / 输入 / 下拉 / 分段）只加背景模糊，不覆盖 background、
+        border-color、box-shadow** —— 它们的底色与状态色继续由 components.css 的
+        `.btn` / `.btn-primary` / `.input:focus` 等自己决定，所以强调色按钮永远是强调色，
+        悬停与焦点也永远有效；
+     ③ `.log-item` 从这条里**移除**（日志列表按"行"而不是"卡片"呈现，见 layout.css 的
+        日志修复区；在毛玻璃/亚克力档给它加卡片底+阴影正是"双层底穿帮"的成因）。*/
+:root[data-theme][data-fx="glass"] .selection-bar,
+:root[data-theme][data-fx="glass"] .list-widget,
+:root[data-theme][data-fx="glass"] .plugin-card,
+:root[data-theme][data-fx="glass"] .notice-card,
+:root[data-theme][data-fx="glass"] .maker-card,
+:root[data-theme][data-fx="glass"] .deploy-wrap .panel,
+:root[data-theme][data-fx="acrylic"] .selection-bar,
+:root[data-theme][data-fx="acrylic"] .list-widget,
+:root[data-theme][data-fx="acrylic"] .plugin-card,
+:root[data-theme][data-fx="acrylic"] .notice-card,
+:root[data-theme][data-fx="acrylic"] .maker-card,
+:root[data-theme][data-fx="acrylic"] .deploy-wrap .panel {
+  background: color-mix(in srgb, var(--card-solid) calc(var(--fx-panel-alpha) * 100%), transparent);
+  backdrop-filter: blur(var(--fx-card-blur)) saturate(var(--fx-sat));
+  -webkit-backdrop-filter: blur(var(--fx-card-blur)) saturate(var(--fx-sat));
+  border-color: var(--glass-border);
+  box-shadow: var(--fx-extra), var(--shadow-card);
+}
+/* ② 交互控件：**只加模糊**（背景模糊的是控件背后的像素，不影响它自己的底色）。
+   ⚠️ 千万别在这里写 background / border-color / box-shadow：那会把 .btn-primary 的
+      强调色渐变、.btn:hover、.input:focus 的描边一起压掉（上面按钮踩坑记录的根因）。
+   ⚠️ **不要把 .seg-item 放进这条**：给每个 .seg-item 单独加 backdrop-filter，
+   每个分段项就变成独立的后背模糊根，在分段条上画出一个个方块状底影，
+   看起来就像"每一项都有个被选中的底"。模糊只保留在**容器** .segmented 一层即可。*/
+:root[data-theme][data-fx="glass"] .btn,
+:root[data-theme][data-fx="glass"] .input,
+:root[data-theme][data-fx="glass"] .combo-trigger,
+:root[data-theme][data-fx="glass"] .segmented,
+:root[data-theme][data-fx="acrylic"] .btn,
+:root[data-theme][data-fx="acrylic"] .input,
+:root[data-theme][data-fx="acrylic"] .combo-trigger,
+:root[data-theme][data-fx="acrylic"] .segmented {
+  backdrop-filter: blur(calc(var(--fx-card-blur) * .6)) saturate(var(--fx-sat));
+  -webkit-backdrop-filter: blur(calc(var(--fx-card-blur) * .6)) saturate(var(--fx-sat));
+}
+/* 派生量：标题栏 / 侧栏 / 弹层都从这里取，改一档全局一致*/
+:root { --tb-blur: var(--fx-blur); --tb-opacity: var(--fx-opacity); }
+:root[data-theme="dark"] {
+  --tb-bg: color-mix(in srgb, var(--page-2) calc(var(--fx-opacity) * 100%), transparent);
+  --tb-border: color-mix(in srgb, #fff calc(var(--fx-opacity) * 7%), transparent);
+}
+:root[data-theme="light"] {
+  --tb-bg: color-mix(in srgb, #ffffff calc(var(--fx-opacity) * 100%), transparent);
+  --tb-border: color-mix(in srgb, #0f172a calc(var(--fx-opacity) * 8%), transparent);
+}
+
+/* 面板 / 卡片底色：颜色跟主题走（--card-solid 已按明暗主题给值），只按档位改不透明度。
+   ⚠️ 云母档**不在**这里（列不进选择器）：它要的就是主题原值，改一点点都算回归。
+   ⚠️ 选择器必须带 [data-theme]：`:root[data-theme="light"]` 那条 --card-glass 的特异性是
+      (0,2,0)，只有 (0,3,0) 才压得住，否则浅色主题下三档的底色会被它改回原样。*/
+:root[data-theme][data-fx="glass"],
+:root[data-theme][data-fx="acrylic"] {
+  --card-glass: color-mix(in srgb, var(--card-solid) calc(var(--fx-panel-alpha) * 100%), transparent);
+}
+/* 卡片 / 设置页卡片：模糊半径也吃档位。
+   ⚠️ components.css 的 .card 与 layout.css 的 .settings-card 都把模糊写死成 10px，
+      而本文件先加载 —— 只能靠更具体的选择器压过去（两者都不带 backdrop-filter 的状态样式，
+      所以这样覆盖不会弄丢 :hover / .is-selected）。*/
+:root[data-theme][data-fx] .card,
+:root[data-theme][data-fx] .settings-card {
+  backdrop-filter: blur(var(--fx-card-blur)) saturate(140%);
+  -webkit-backdrop-filter: blur(var(--fx-card-blur)) saturate(140%);
+}
+/* 高光描边也画到卡片上。用 ：after 而不是给 .card 加 box-shadow：
+   .card:hover / .card.is-selected 会覆盖 box-shadow，压过去会把卡片状态样式弄丢。*/
+:root[data-theme][data-fx] .card::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit;
+  pointer-events: none; box-shadow: var(--fx-extra);
+}
+
+/* ===========================================================================
+ * 背景层（#app：before / ：after）—— **唯一"可以被模糊的东西"**
+ * 
+ * 旧版看不出三档差别的原因就在这里：body / #app 铺的是不透明渐变，
+ * .titlebar / .nav / .more-pop 上的 backdrop-filter 背后**没有任何内容**，
+ * 于是模糊 26px 和模糊 0px 是同一片纯色。
+ * 现在把底色从 #app 搬到 #app：before：
+ *   · fixed + inset:0 + z-index:-1 → 铺满视口、永远在所有内容之下（滚动时像壁纸）；
+ *   · 云母档 blob/grid 强度为 0，只剩旧版那两层主色柔光 + 底色 ⇒ 默认观感不变；
+ *   · 毛玻璃/亚克力档点亮彩色光斑 + 22px 细网格 ⇒ 面板一糊就是明显磨砂感。
+ * ⚠️ 必须同时把 body / #app 的底色变透明，否则白干：绘制顺序是
+ *    根背景 → 负 z-index 子树 → 普通块级背景，负 z-index 的伪元素会被
+ *    不透明的 body / #app 底色整块盖住。
+ * =========================================================================*/
+:root { background: var(--page); }        /* 兜底：万一首帧内联底色没写上，也不是白屏*/
+html body { background: transparent; }
+:root body #app { background: transparent; }
+:root #app::before {
+  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background-image:
+    /* 彩色光斑（毛玻璃/亚克力点亮；云母档 --fx-bg-blob:0% ⇒ 这几层整层透明）
+       ⚠️ 只用蓝 / 紫罗兰 / 青这一族色（--ball-a / --ball-b / --ball-liquid），
+          不要绿黄橙：本项目深色底的中性灰是硬要求，这里只是压在灰底上的**半透明**光斑。*/
+    radial-gradient(760px 520px at 12% 4%, color-mix(in srgb, var(--accent) var(--fx-bg-blob), transparent), transparent 70%),
+    radial-gradient(640px 480px at 98% 12%, color-mix(in srgb, var(--ball-b) var(--fx-bg-blob), transparent), transparent 68%),
+    radial-gradient(760px 560px at 74% 96%, color-mix(in srgb, var(--ball-liquid) var(--fx-bg-blob), transparent), transparent 68%),
+    radial-gradient(620px 460px at 2% 88%, color-mix(in srgb, var(--ball-a) var(--fx-bg-blob), transparent), transparent 68%),
+    /* ⚠️ 不要加 22px 细网格层：毛玻璃/亚克力背景上出现网格是错的（不像 Windows 材质）。*/
+    /* 旧版 #app 原有的两处主色柔光（云母档照旧数值，所以默认观感不变）*/
+    radial-gradient(900px 520px at 8% -12%, color-mix(in srgb, var(--accent) var(--fx-bg-tint), transparent), transparent 62%),
+    radial-gradient(760px 460px at 104% 2%, color-mix(in srgb, var(--accent) var(--fx-bg-tint-2), transparent), transparent 60%),
+    /* 底色（不透明）—— 旧版 #app 的最后一层*/
+    linear-gradient(180deg, var(--page-2), var(--page) 40%);
+}
+/* 背景颗粒单独立一层，免得和上面那串渐变挤在同一条 background-repeat 上*/
+:root #app::after {
+  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background-image: var(--fx-noise-strong); background-repeat: repeat;
+  background-size: 120px 120px;
+  opacity: var(--fx-bg-grain);
+}
+
+/* 底噪：只加在标题栏 / 侧栏 / 弹层上（正文区不加，内容不糊）*/
+.fx-noise { position: relative; }
+.fx-noise::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background-image: var(--fx-noise); background-repeat: repeat;
+  opacity: 0; transition: opacity 180ms ease;
+}
+/* 只在真的想要底噪的元素上点亮（云母一点点；亚克力换成 --fx-noise-strong 更明显；毛玻璃档是 none）*/
+.titlebar.fx-noise::before,
+.nav.is-expanded.fx-noise::before,
+.more-pop.fx-noise::before { opacity: 1; }
+
+/* ===========================================================================
+ * 修复区 · 弹层 / 浮层材质令牌（云母档 = 改动前原值，不动观感）
+ * 
+ * 症状：搜索框 / 下拉弹层 .combo-pop / 右键菜单 .card-menu / toast / 对话框 .modal /
+ *       托盘菜单 .tray-menu 在主题效果 = 毛玻璃 / 亚克力下几乎没变化。
+ * 根因（grep 证据）：这些组件的模糊半径和底色不透明度是各处**写死**的 ——
+ *   · components.css:77   .combo-pop  blur(22px) + color-mix(card-solid 96%)
+ *   · components.css:329  .card-menu  blur(22px) + color-mix(card-solid 96%)
+ *   · overlays.css:10     .tray-menu  blur(20px) + rgba(43,43,43,.98)
+ *   · overlays.css:35     .modal      var(--card-solid)（全不透明，根本没有 backdrop-filter）
+ *   · overlays.css:80     .toast      blur(18px) 写死
+ *   · layout.css:11       .search-box color-mix(card-solid 84%)（没有 backdrop-filter）
+ * 底色 96%~100% 不透明 ⇒ 背后那一层模糊根本看不见，所以换档没感觉。
+ * 修法：统一到下面这组跟档位联动的令牌；各组件在各自文件末尾的修复区改用令牌。
+ * 云母档数值刻意等于原值，保证默认档逐像素一致（项目既有原则）。
+ * =========================================================================*/
+:root {
+  --pop-blur: 22px;         /* 浮层背面模糊半径（mica = 原 combo-pop / card-menu 的 22px）*/
+  --pop-sat: 160%;          /* 浮层饱和度（glass / acrylic 跟随 --fx-sat）*/
+  --pop-alpha: .96;         /* 浮层底色不透明度（mica = 原 96%）*/
+  --pop-shadow: var(--shadow-float);
+  --tray-blur: 20px;        /* 托盘菜单（原写死 20px）*/
+  --tray-alpha: .98;        /* 托盘菜单底色（原 rgba(43,43,43,.98)）*/
+  --toast-blur: 18px;       /* toast（原写死 18px；底色继续用 --card-glass，本来就跟着档位）*/
+  --toast-sat: 150%;        /* toast 原写死 saturate(150%)，与弹层的 160% 不同，单独留一个令牌*/
+  --modal-alpha: 1;         /* 对话框底色（原 = 实色 --card-solid）*/
+  --search-alpha: .84;      /* 搜索框底色（原 color-mix(card-solid 84%)）*/
+  --search-blur: 0px;       /* 云母：搜索框不加模糊（= 改动前）*/
+}
+:root[data-fx="glass"] {
+  --pop-blur: 40px; --pop-sat: var(--fx-sat); --pop-alpha: .50;
+  --tray-blur: 40px; --tray-alpha: .55;
+  --toast-blur: 34px;
+  --toast-sat: var(--fx-sat);
+  --modal-alpha: .82;
+  --search-alpha: .42; --search-blur: 30px;
+  --pop-shadow: var(--fx-extra), var(--shadow-float);
+}
+/* 亚克力浮层令牌跟着新材质走（模糊 32 / 底色更透 / 饱和 130）。
+   浮层（下拉弹层、右键菜单）字多、选项密，所以底色比面板略实一点（.70 而不是 .63），
+   保证在浅色内容上也不会把选项文字压灰 —— 这是"可读性优先"的刻意取舍。*/
+:root[data-fx="acrylic"] {
+  --pop-blur: 32px; --pop-sat: var(--fx-sat); --pop-alpha: .70;
+  --tray-blur: 32px; --tray-alpha: .74;
+  --toast-blur: 30px;
+  --toast-sat: var(--fx-sat);
+  --modal-alpha: .86;
+  --search-alpha: .60; --search-blur: 32px;
+  --pop-shadow: var(--fx-extra), var(--shadow-float);
+}
+/* 自定义属性里的 var() 会在使用处递归替换，所以 --pop-shadow 带 --fx-extra（含逗号列表）是安全的；
+   但**不要**把 `var(--fx-extra), var(--shadow-float)` 直接写进 box-shadow ——
+   云母档 --fx-extra: none 与别的阴影并列会让整条 box-shadow 失效（none 不能出现在列表里）。*/
+
+/* ===========================================================================
+ * 修复区 · 材质联动令牌（分段切换 / 下拉触发 / AI 抽屉与历史 / 收藏页）
+ * 
+ * 症状：
+ *   · 搜索框、下拉框、收藏夹页的部分 UI 对毛玻璃 / 亚克力不适配；
+ *   · 视图切换 / 顶部分段切换等同类型控件要有切换动画；
+ *   · 历史对话、GCP-AI 右侧栏悬浮窗对毛玻璃 / 亚克力不起作用。
+ * 病根（grep 证据）：这几类组件的底色/模糊是各自**写死**的，或者被更早的特异性规则压住：
+ *   · .segmented 容器 background: var(--glass)（4.5% 白，玻璃两档下像"每项都有个底"）；
+ *   · .combo-trigger background: color-mix(card-solid 74%)（没有 backdrop-filter）；
+ *   · .ai-drawer / .ai-history 是 linear-gradient + --card-solid（完全不透明，没有模糊）；
+ *   · .fav-side / .list-widget / .selection-bar 虽然吃了 --card-glass，但没有高光描边，
+ *     而且收藏页的列表是"面板里再套一层卡片"，玻璃档下会变成双层磨砂（很脏）。
+ * 修法：**只在这一处定义数值**，组件在各自文件末尾的材质联动修复区取令牌。
+ *   · 云母档：令牌默认值 = 改动前原值（--seg-* / --combo-* 直接给原值），
+ *     而"只对玻璃两档生效"的规则（--ai-* / --fav-*）在云母档**根本不匹配** ⇒ 逐像素不变；
+ *   · 毛玻璃：高透明 + 强模糊 + 亮高光；亚克力：更实 + 细噪点 + 收敛高光（见上面 acrylic 块）。
+ * 为什么 --combo-* 用"底色不透明度"而不是直接写色值：跟 --search-* / --pop-* 保持一致，
+ *   换主题（深/浅色）时颜色继续由 --card-solid 自己跟，不会写死成深色。
+ * =========================================================================*/
+:root {
+  /* 分段切换（云母 = 改动前：容器 var(--glass)、hover var(--hover)、
+     选中 thumb = accent-soft + 26% 强调描边）*/
+  --seg-bg: var(--glass);
+  --seg-border: var(--glass-border);
+  --seg-hover: var(--hover);
+  --seg-thumb-bg: var(--accent-soft);
+  --seg-thumb-ring: color-mix(in srgb, var(--accent) 26%, transparent);
+  /* 下拉触发器（云母 = 改动前的 74% 实色、不加模糊）*/
+  --combo-alpha: .74;
+  --combo-blur: 0px;
+  --combo-sat: 100%;
+  /* 下面这几个只在 glass / acrylic 的规则里用，云母档不参与，兜底值取"等价实色"*/
+  --ai-alpha: 1;
+  --ai-blur: 0px;
+  --ai-sat: 100%;
+  --ai-hist-alpha: 1;
+  --fav-panel-alpha: 1;
+  --fav-panel-blur: 0px;
+  --fav-panel-sat: 100%;
+  --fav-nest-alpha: 1;
+}
+:root[data-fx="glass"] {
+  /* 容器只留"极淡底 + 1px 描边"，不再是一块 4.5% 白板*/
+  --seg-bg: rgba(255, 255, 255, .035);
+  --seg-border: rgba(255, 255, 255, .16);
+  --seg-hover: transparent;                       /* 未选中项 hover 不做底色（玻璃档下 hover 底容易被误认为"已选中"）*/
+  --seg-thumb-bg: color-mix(in srgb, var(--accent) 30%, transparent);
+  --seg-thumb-ring: color-mix(in srgb, #fff 32%, transparent);
+  --combo-alpha: .46; --combo-blur: 30px; --combo-sat: var(--fx-sat);
+  --ai-alpha: .64; --ai-blur: 30px; --ai-sat: 180%; --ai-hist-alpha: .80;
+  --fav-panel-alpha: .52; --fav-panel-blur: 30px; --fav-panel-sat: var(--fx-sat);
+  --fav-nest-alpha: .24;
+}
+:root[data-fx="acrylic"] {
+  --seg-bg: rgba(255, 255, 255, .045);
+  --seg-border: rgba(255, 255, 255, .14);
+  --seg-hover: rgba(255, 255, 255, .05);          /* 亚克力只给一点点 hover 提示*/
+  --seg-thumb-bg: color-mix(in srgb, var(--accent) 34%, transparent);
+  --seg-thumb-ring: color-mix(in srgb, #fff 26%, transparent);
+  --combo-alpha: .66; --combo-blur: 32px; --combo-sat: var(--fx-sat);
+  --ai-alpha: .72; --ai-blur: 32px; --ai-sat: 130%; --ai-hist-alpha: .84;
+  --fav-panel-alpha: .62; --fav-panel-blur: 30px; --fav-panel-sat: var(--fx-sat);
+  --fav-nest-alpha: .30;
+}

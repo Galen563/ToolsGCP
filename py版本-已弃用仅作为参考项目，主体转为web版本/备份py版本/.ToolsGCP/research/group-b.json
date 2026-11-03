@@ -1,0 +1,101 @@
+{
+  "group": "B",
+  "items": [
+    {
+      "id": "unity",
+      "systems": ["Windows", "macOS", "Linux"],
+      "architectures": ["x64", "arm64", "Apple Silicon"],
+      "supplement": "Unity 官方编辑器提供 Windows、macOS 与 Linux 三个桌面版本，其中 Windows on Arm 和 Apple 芯片 Mac 都有原生版本。除桌面端外，还能把作品发布到手机、网页和主机等平台。",
+      "intro": "Unity 是一款面向游戏与实时三维内容开发的跨平台引擎，广泛用于 2D/3D 游戏、AR/VR 应用和交互式展示项目。它提供可视化编辑器、物理与动画系统、材质与光照工具，并内置资源商店和云端协作能力，开发者可以用同一套项目面向手机、桌面、网页和主机发布。对希望从零学习游戏开发、或需要成熟商业化工具链的团队都很合适。",
+      "note": "来源：Unity 官方《System requirements for Unity 6.6》(docs.unity3d.com/Manual/system-requirements.html)。编辑器支持 Windows 10 21H1+/11、macOS Ventura 13+、Linux Ubuntu 22.04/24.04；架构 x64、Windows on Arm 的 Arm64（需 Unity Hub 3.7.0 Beta1+）、macOS Apple Silicon。Android/iOS/WebGL 等属官方构建目标而非官方客户端分发，未计入 systems（口径同 lead 裁决）。"
+    },
+    {
+      "id": "godot",
+      "systems": ["Windows", "macOS", "Linux", "Android", "iOS", "web"],
+      "architectures": ["x64", "x86", "arm64", "arm", "Apple Silicon"],
+      "supplement": "除 Windows、macOS、Linux 桌面版外，官方还直接提供可在手机上运行的 Android 编辑器和浏览器内打开的网页版编辑器，作品也能导出到 iOS 等更多平台；引擎免费开源，压缩包解压即用。",
+      "intro": "Godot 是一款完全免费、开源的游戏引擎，采用节点与场景的组织方式，脚本语言轻量易上手，也支持 C# 等方案。它内置 2D 与 3D 渲染、物理、动画、界面和音频工具，项目文件为纯文本，便于版本管理与团队协作；除桌面端外还提供手机端与浏览器内编辑器，作品可导出到多个平台。适合独立开发者、学生和小团队从原型一路做到正式作品。",
+      "note": "来源：Godot 官网下载页 godotengine.org/download/*。编辑器：Windows(x86_64/x86_32/arm64)、macOS(Universal，Apple Silicon+Intel)、Linux(x86_64/x86_32/arm64/arm32)、Android(Play Store/APK 官方编辑器，arm64/arm32/x86_64/x86_32)、网页编辑器(editor.godotengine.org)。iOS 为官方导出目标（无 iOS 编辑器）。"
+    },
+    {
+      "id": "trae",
+      "systems": ["全平台"],
+      "architectures": ["x64", "Apple Silicon"],
+      "supplement": "桌面端覆盖 Windows、macOS 与 Linux，另提供网页版和手机端 App，同一账号可多端协同；需要注意 macOS 版只提供 Apple 芯片版本，Intel Mac 用户暂无法使用。",
+      "intro": "Trae 是字节跳动推出的 AI 编程与办公工具，包含面向开发的 IDE 和面向文档、数据分析的办公平台。它支持用自然语言描述需求，由 AI 直接生成或修改代码，也能自动拆解并执行任务，同时保留传统编辑器界面与工作模式切换。产品覆盖桌面端、网页端与手机端，账号数据可多端同步。适合希望把重复性编码和日常文档工作交给 AI、同时保留人工验收环节的开发者与办公用户。",
+      "note": "来源：官方下载中心 trae.cn/download 与 trae.ai/download。TraeCode 桌面端：Windows x64、macOS（仅 Apple Silicon）、Linux .deb/.rpm(x64)；TraeWork 另有网页版 work.trae.cn 与 iOS/Android 移动端（Google Play 包名 com.bytedance.trae.overseas）。桌面+移动+网页全覆盖，故记 全平台。移动端架构官方未标注。"
+    },
+    {
+      "id": "hmcl",
+      "systems": ["Windows", "macOS", "Linux"],
+      "architectures": ["x64", "x86", "arm64", "arm"],
+      "supplement": "官方以 Java 通用包的形式分发，Windows、macOS 与 Linux（含 FreeBSD）都能运行，对 CPU 架构没有特殊要求；Windows 用户可直接下载安装包，其他平台使用通用 jar 或启动脚本。",
+      "intro": "HMCL 是一款开源、免费的 Minecraft 启动器，可以在图形界面里集中管理多个游戏版本与实例，并一键安装 Forge、Fabric、OptiFine 等常见模组加载器。它还提供模组与整合包管理、账号登录（含离线模式）、游戏参数调整和自动更新等能力，界面简洁、中文支持完善。作为纯 Java 编写的老牌启动器，它对系统要求较低、更新活跃，各类 Minecraft 玩家都能快速上手。",
+      "note": "来源：官网下载页 hmcl.huangyuhui.net/download。Windows 7+(.exe)；macOS 13+(.jar)；Universal Linux、FreeBSD(Java 17+ 的 .jar/.sh)。官方以 Java 通用包分发（页面标注 Universal），字节码与 CPU 架构无关，x64/x86/arm64/arm 均可运行。"
+    },
+    {
+      "id": "sjmcl",
+      "systems": ["Windows", "macOS", "Linux"],
+      "architectures": ["x64", "x86", "arm64", "Apple Silicon"],
+      "supplement": "官方为 Windows、macOS、Linux 都提供了安装包：Windows 端分 x86、x64 与 ARM64，macOS 区分 Apple 芯片与 Intel，Linux 提供 deb、rpm 和便携版。",
+      "intro": "SJMC Launcher 是由上海交通大学 Minecraft 社开发的开源启动器，主打跨平台的现代化体验。它支持集中管理多个游戏目录与实例，统一整理存档、模组、资源包、光影和截图，内置从 CurseForge、Modrinth 等平台下载客户端、加载器与整合包的能力，并支持微软账户登录和第三方认证服务。界面清爽、更新及时，还提供命令行安装与扩展机制，适合校园玩家和习惯多实例管理的社区用户。",
+      "note": "来源：官网文档 mc.sjtu.cn/sjmcl/docs/install.html「支持的平台」表。Windows 10+ 支持 aarch64/i686/x86_64（安装器与便携版）；macOS 10.15+ 支持 aarch64/x86_64（.app/.dmg）；Linux 支持 aarch64/x86_64（.deb/.rpm/便携二进制）。"
+    },
+    {
+      "id": "verse",
+      "systems": ["Windows", "macOS", "Linux"],
+      "architectures": ["x64", "Apple Silicon"],
+      "supplement": "官网目前主要放出 Windows 版启动器下载，安卓端标注为制作中、尚未发布；官方开源仓库同时声明支持 Windows、macOS 与 Linux，并提供 dmg、AppImage、deb、rpm 等对应安装包。",
+      "intro": "Verse 是一款开源的 Minecraft 启动器，界面现代、操作直观，目标是让玩家更轻松地管理游戏。它支持多个游戏版本与实例的集中管理，提供账户登录、模组与整合包安装、下载源选择和自动更新等常用能力，并提供插件机制方便扩展功能。项目仍在持续迭代，社区反馈渠道畅通。适合希望用一款轻量、界面好看的启动器来整理自己的 Minecraft 环境的玩家。",
+      "note": "来源：官方仓库 cnklpz/versePc 的 README（平台徽章与「系统要求」表）：Windows 10 (x64)、macOS 10.15 (Intel/Apple Silicon)、Linux 64 位发行版，产物为 exe/dmg/zip/AppImage/deb/rpm。官网 verselauncher.cn 目前只放出 PC(Windows) 版下载，安卓端标注「正在制作中」尚未发布。"
+    },
+    {
+      "id": "bakaxl",
+      "systems": ["Windows"],
+      "architectures": [],
+      "supplement": "当前正式版仅支持 Windows，普通玩家下载官网版本即可；官方预览版已额外提供 Linux 与 macOS 构建，Windows 端也出现了 Arm64 版本，适合用 ARM 设备的玩家尝鲜。",
+      "intro": "BakaXL 是一款面向 Minecraft 玩家的启动器，以简洁的界面和活跃的社区功能为特色。它支持管理多个游戏版本与账户、安装常见模组加载器、整理整合包与游戏资源，并提供个性化主题、正版与离线登录等选项，上手门槛较低。除了游戏管理，它还带有社区公告与帮助入口，方便玩家获取使用指引。适合喜欢界面清爽、愿意跟随官方更新节奏的普通玩家。",
+      "note": "来源：官网 bakaxl.com 分发的是正式版 BakaXL 3，仅 Windows；架构官方未标注，留空。备注：官方 4.0 预览版（官方发布，见 cnb.cool/BakaXL/BakaXL releases 与 GitHub Releases）已提供 Windows x86_64/arm64、Linux x86_64(.deb)、macOS Universal(x64+Apple Silicon) 跨平台构建，按 lead 裁决只认正式版，故未计入。"
+    },
+    {
+      "id": "pyisland",
+      "systems": ["Windows"],
+      "architectures": [],
+      "supplement": "这是运行在 Windows 上的桌面灵动岛工具，官方提供下载与源码，基于 Python + PySide6 实现，明确要求 Windows 10/11；另有 Tauri、Electron 等分支可选，没有网页版或手机端。",
+      "intro": "Pyisland 是一款运行在 Windows 上的桌面灵动岛工具，把手机上常见的动态岛交互带到电脑桌面。它以悬浮胶囊的形式常驻屏幕边缘，点击即可展开控制面板，集中查看并操作无线网络、蓝牙、电池等系统状态，还提供屏幕亮度调节、剪贴板链接识别和内置 AI 助手等功能。界面简洁、响应流畅，适合喜欢桌面常驻小组件、希望快速查看和控制系统状态的 Windows 用户。",
+      "note": "来源：官网 pyisland.com（「用 Python 开发，运行在 Windows 上的现代灵动岛」）与官方仓库 README：明确要求 Windows 10/11（Python 3.11+/3.13+、PySide6，另有 Tauri/Electron 分支）。官方未标注 CPU 架构，按规则留空。注：条目现有 description 写的是「Python 编程学习平台」，与官网现状不符，疑似过时，已报 lead 核对。"
+    },
+    {
+      "id": "geek-uninstaller",
+      "systems": ["Windows"],
+      "architectures": ["x86", "x64"],
+      "supplement": "仅支持 Windows，官方称兼容 32 位与 64 位系统（Windows 7 至 11）；在 64 位系统上会以原生 64 位程序运行，下载压缩包解压后即可直接使用。",
+      "intro": "Geek Uninstaller 是一款轻量、免安装的 Windows 软件卸载工具，可替代系统自带的卸载入口。它能列出已安装程序并快速卸载，卸载后自动扫描注册表和硬盘中的残留文件与无效项，支持强制移除卸载失败或已损坏的软件，也能管理 Windows 应用商店应用。程序小巧、启动快、几乎不占系统资源，适合需要经常清理软件、保持系统整洁的普通用户和运维人员。",
+      "note": "来源：官网下载页 geekuninstaller.com/download 的 Compatibility 说明：「32 & 64-bit Windows 11/10/7/8/8.1」，在 x64 Windows 上以原生 64 位应用运行。"
+    },
+    {
+      "id": "tiez",
+      "systems": ["Windows", "macOS", "Android"],
+      "architectures": ["x64", "Apple Silicon"],
+      "supplement": "官方网站现在提供的是 TieZ 剪贴板管理工具：桌面端支持 Windows 10/11 与 macOS（含 Apple 芯片与 Intel），另有 Android 手机端配套 App，可同步剪贴板、局域网传文件与云端同步。",
+      "intro": "TieZ 是一款跨平台剪贴板管理工具，用来保存并快速找回复制过的内容。它统一记录文本、代码、链接、图片、文件和富文本，支持全文搜索、标签与类型筛选、固定条目和顺序粘贴，还能为不同类型内容指定默认打开程序。工具提供全局快捷键呼出、贴边停靠与本地数据持久化，并通过 WebDAV 在设备间同步，手机端 App 可与电脑互传剪贴板和文件。适合频繁复制粘贴、需要在多设备间流转内容的用户。",
+      "note": "来源：官网 tiez.name666.top（中/英文下载区）：Windows 10/11 x64（安装版 TieZ_0.3.3_x64-setup.exe、便携版）、macOS「支持 Apple Silicon 与 Intel 芯片」、Android 移动端（官方仓库 jimuzhe/tiez-mobile；该仓库另有 iOS 构建流程，但官网未列出 iOS）。另需注意：该站点现为剪贴板管理工具 TieZ，与条目现有「实用工具集合网站」描述不符，已由 lead 另派 task-5 独立复核。"
+    },
+    {
+      "id": "memreduct",
+      "systems": ["Windows"],
+      "architectures": ["x64", "arm64"],
+      "supplement": "仅支持 Windows，官方要求 64 位或 ARM64 系统（Windows 7 至 11），不支持 32 位；提供安装版与便携版，便携模式下可在程序目录放置配置文件来保存设置。",
+      "intro": "Mem Reduct 是一款轻量级的 Windows 内存优化工具，用于实时监控并清理系统内存。它通过系统底层接口释放工作集、待机列表和缓存等区域，可在托盘常驻显示当前内存占用，并支持按时间间隔或占用阈值自动清理、把清理结果记录到文件以及命令行调用。软件小巧轻便、后台占用极低，设置可保存在程序目录实现便携使用。适合内存较小或长时间运行大型程序的电脑，用来缓解卡顿。",
+      "note": "来源：官方仓库 henrypp/memreduct README 的 System requirements：「Windows 7, 8, 8.1, 10, 11 (64-bit/ARM64)」，需支持 SSE2 的 CPU；官方 v3.4 release note 载明「added arm64 binaries (portable only)」。不支持 32 位与 macOS/Linux。注：条目现有 URL memreduct.org 自述为 fan website（粉丝站），不作为官方依据。"
+    },
+    {
+      "id": "obs",
+      "systems": ["Windows", "macOS", "Linux"],
+      "architectures": ["x64", "Apple Silicon"],
+      "supplement": "官方提供 Windows、macOS 与 Linux 版本，macOS 区分 Intel 与 Apple 芯片两种安装包，Linux 通过官方 Flatpak 和 Ubuntu PPA 分发；Windows 端目前只有 64 位版本。",
+      "intro": "OBS Studio 是一款免费、开源的直播与录屏软件，广泛用于游戏直播、课程录制和视频创作。它支持多场景切换、窗口与游戏画面捕获、摄像头和麦克风混音、实时滤镜与转场，并可通过插件扩展功能；内置推流设置，能一键把画面推送到常见直播平台，也可直接录制保存到本地。界面布局可自定义，社区教程与插件资源丰富，适合主播、教师、内容创作者以及需要录制演示的普通用户。",
+      "note": "来源：官网下载页 obsproject.com/download：Windows 10/11 仅 x64 安装包与 zip；macOS 提供 Intel(x86_64) 与 Apple Silicon(arm64) 两个 dmg；Linux 官方渠道为 Flathub Flatpak 与 Ubuntu PPA(x86_64)。无 32 位支持，Linux/Windows ARM64 尚无官方构建。"
+    }
+  ]
+}

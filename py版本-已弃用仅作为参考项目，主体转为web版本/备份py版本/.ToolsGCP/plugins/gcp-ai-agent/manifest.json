@@ -1,0 +1,20 @@
+{
+  "id": "gcp-ai-agent",
+  "name": {
+    "简体中文": "GCP-AI Agent",
+    "繁體中文": "GCP-AI Agent",
+    "English": "GCP-AI Agent"
+  },
+  "version": "1.0.0",
+  "author": "ToolsGCP",
+  "description": {
+    "简体中文": "让你的 AI 成为你的双手：开启后，直接在任意一个 GCP-AI 聊天界面里说话，它就能替你操作 ToolsGCP —— 搜索资源、打开详情、切换页面、调整设置，并且动手时尽量少花 Token。这里只是它的配置界面，可以逐项开关 AI 的每一只「手」。",
+    "繁體中文": "讓你的 AI 成為你的雙手：開啟後，直接在任何一個 GCP-AI 聊天介面裡說話，它就能替你操作 ToolsGCP —— 搜尋資源、開啟詳情、切換頁面、調整設定，動手時盡量少花 Token。這裡只是它的設定介面，可以逐項開關 AI 的每一隻「手」。",
+    "English": "Give your AI a pair of hands: once enabled, just talk in either GCP-AI chat interface and it can operate ToolsGCP for you — search resources, open details, switch pages and change settings, while spending as few tokens as possible. This is only its configuration screen, where you can toggle each of the AI's \"hands\"."
+  },
+  "entry": "app.py",
+  "icon": "assets/icon.png",
+  "builtin": true,
+  "default_disabled": true,
+  "enabled_setting": "gcp_ai_agent_enabled"
+}

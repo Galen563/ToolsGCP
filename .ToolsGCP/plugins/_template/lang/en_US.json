@@ -1,0 +1,25 @@
+{
+  "nav_title": "My Plugin",
+  "nav_home": "Home",
+  "nav_stats": "Stats",
+
+  "title": "My Plugin",
+  "intro": "This is the ToolsGCP plugin template. Edit app.py / ui / core and it becomes your own plugin.",
+
+  "stats_line": "{total} resources, {categories} categories, {repo} with a code repository",
+  "open_times": "This plugin has been opened {n} time(s) (stored in its own data folder)",
+
+  "stats_title": "Statistics",
+  "search_placeholder": "Type a keyword and press Enter",
+  "search_button": "Search",
+
+  "cfg_title_suffix": "· Settings",
+  "cfg_enable": "Enable this plugin",
+  "cfg_enable_tip": "The switch writes straight into ToolsGCP's settings (key name: manifest.enabled_setting)",
+  "cfg_preview_tip": "Preview mode: this page was opened directly in a browser, so the desktop API is unavailable and all settings are read-only.",
+  "cfg_back": "Back to plugin list",
+  "cfg_meta_id": "Plugin id",
+  "cfg_meta_version": "Version",
+  "cfg_meta_locale": "Language",
+  "cfg_meta_key": "Settings key"
+}

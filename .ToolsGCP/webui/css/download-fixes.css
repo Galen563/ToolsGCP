@@ -1,0 +1,112 @@
+/* ===========================================================================
+ * 下载 / Releases 下载页补丁样式
+ * 
+ * 放在所有既有 CSS 之后引入。
+ *
+ * 覆盖内容：
+ *   ① Releases 版本标签配色（预发布 = 橙黄 / 正式版 = 绿）
+ *   ② 下载页（左侧栏里的一个**普通页面**，不再是盖住内容的浮层）
+ *   ③ 下载红点的飞行动画
+ * =========================================================================*/
+
+/* ---------- ① Releases 版本标签 ----------
+   规则：预发布版本打橙黄标签，正式版打绿色正式版标签。
+   ⚠️ .tag 本身是灰底小胶囊（components.css），这里只覆盖背景/文字/边框色。
+   ⚠️⚠️ 颜色**必须**走主题变量（--success / --warning），不能写死 GitHub 那套深色值：
+      以前这里硬编码 #3fb950 / #e8a33d + rgba 底色，浅色主题（--page 是 #f3f4f7）下
+      绿/橙字压在半透明白底上几乎没有对比度 —— 就是用户说的"浅色主题下正式版和
+      预发布标签颜色显示不正确"。variables.css 给深/浅两套都定义过这两个变量
+      （深色 #4cc46a/#e0a33a，浅色 #2fa36b/#d98e04），底色沿用站内其它徽标的
+      `color-mix(... 16%)` 算法（见 components.css 的 .badge.is-on），
+      这样两套主题下都是"同色系但按当前主题取深浅"。*/
+/* ⚠️⚠️ 选择器**必须**带 `:root` + `.tag` 前缀抬特异性到 0,4,0 —— 只换颜色变量是不够的。
+   上一版只把颜色换成主题变量，用户还是"看不到正确颜色"，真正原因是**特异性**：
+   components.css:348 有一条 `:root[data-theme="light"] .tag`（0,3,0：伪类 :root +
+   属性选择器 + 类），而 `.release-badge.is-prerelease` 只有 0,2,0 ——
+   浅色主题下那条灰底规则直接赢，标签被刷回 color-mix(--text 8%) 的灰胶囊
+   + #3c3c3c 深灰字，绿/橙根本没机会显示。深色主题没有对应的 .tag 覆盖规则，
+   所以深色一直正常 —— 这正是"只有浅色看不到正确颜色"的原因。
+   加前缀后不依赖 CSS 加载顺序（variables.css:287 那条注释踩过同一个坑）。
+   改这里前后都验一次：按 index.html 的真实 <link> 顺序收集所有命中
+   .tag / .release-badge 的规则，按 (id, 类, 元素) 排序，确认胜出的是下面这两条。 */
+:root .tag.release-badge { font-weight: 600; }
+:root .tag.release-badge.is-prerelease {
+  background: color-mix(in srgb, var(--warning) 16%, transparent);
+  color: var(--warning);
+  border: 1px solid color-mix(in srgb, var(--warning) 34%, transparent);
+}
+:root .tag.release-badge.is-stable {
+  background: color-mix(in srgb, var(--success) 15%, transparent);
+  color: var(--success);
+  border: 1px solid color-mix(in srgb, var(--success) 32%, transparent);
+}
+
+/* ---------- ② 下载页 ----------
+   下载页是左侧栏里的**普通页面**（page === 'download'），不是盖住内容的浮层。
+   ⚠️ overlays.css 里的 .download-page 已经改成普通弹性列，这里只补一点间距。*/
+.download-page .download-page-head { padding: 14px 24px 12px; }
+.download-page .download-page-body { padding: 16px 24px 24px; }
+/* 空状态时也别显得太空*/
+.download-page .download-row:last-child { margin-bottom: 0; }
+
+/* ---------- ③ 下载红点 ----------
+   效果：点击下载时出现一个带数字的红点，从点击位置飞出、跳到左侧栏更多里。
+   ⚠️ 起点/终点坐标都由 JS 给（--fly-tx/--fly-ty 是终点绝对坐标），
+      位置过渡用 left/top（浏览器补间），缩放/淡入淡出交给 keyframes。*/
+.download-badge-fly {
+  position: fixed; z-index: 160;
+  margin-left: -6px; margin-top: -6px;      /* 以红点中心对齐坐标（红点 11px，取半）*/
+  pointer-events: none;
+  transition: left 620ms cubic-bezier(.22,.8,.2,1), top 620ms cubic-bezier(.22,.8,.2,1);
+  animation: downloadBadgeFly 640ms cubic-bezier(.22,.8,.2,1) both;
+}
+.download-badge-count {
+  /* 11px，和 .nav-badge 同一尺寸（红点"飞"到侧栏时大小不跳变）；字号 8px。*/
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 11px; height: 11px; padding: 0 2.5px; border-radius: 6px;
+  background: #fa5151; color: #fff; font-size: 8px; font-weight: 700; line-height: 1;
+  box-shadow: 0 2px 8px rgba(250, 81, 81, .45);
+}
+@keyframes downloadBadgeFly {
+  0%   { transform: scale(.4); opacity: 0; }
+  30%  { transform: scale(1.25); opacity: 1; }
+  75%  { opacity: 1; }
+  100% { transform: scale(.7); opacity: 0; }
+}
+
+/* 更多浮层里的下载条目上的红点位置（公告页那套 .nav-badge 是 absolute，
+   在浮层里要改成行内，否则会飘到浮层外面）*/
+.more-pop .nav-badge {
+  position: static; margin-left: auto; box-shadow: none;
+}
+
+/* ---------- 下载红点从更多按钮飞到浮层里的下载项 ----------
+   期望：有下载任务时侧栏更多图标右上角显示红点；点开悬浮菜单后，
+        红点快速移动到下载条目对应的最右侧位置。
+   ⚠️ 实现：红点渲染**两次**（侧栏更多按钮上 + 浮层下载项里），
+      靠 opacity + transform 的过渡做"快速移动"的观感：
+        · 浮层没开 → 侧栏那个可见（右上角），浮层那个透明；
+        · 浮层开了 → 侧栏那个淡出并**放大一点**（像"飞走"了），
+          浮层那个从**左侧滑入**（像"飞到"了）。
+   ⚠️ 侧栏展开时 .nav-badge 是 static（贴文字右侧），收起时是 absolute（图标右上角）
+      —— 那是 base.css 里 `.nav.is-expanded .nav-badge` 的既有规则，这里不动。*/
+.nav-badge-dl {
+  transition: opacity 160ms ease, transform 200ms cubic-bezier(.22,.8,.2,1);
+}
+/* 浮层打开了 → 侧栏那个"飞走"*/
+.nav-badge-dl.is-moved {
+  opacity: 0;
+  transform: scale(.4);
+  pointer-events: none;
+}
+/* 浮层里那个"飞来"*/
+.more-pop .nav-badge-dl.is-here {
+  opacity: 1;
+  transform: none;
+  animation: navBadgeFlyIn 220ms cubic-bezier(.22,.8,.2,1) both;
+}
+@keyframes navBadgeFlyIn {
+  0%   { opacity: 0; transform: translateX(-14px) scale(.5); }
+  60%  { opacity: 1; transform: translateX(2px) scale(1.15); }
+  100% { opacity: 1; transform: none; }
+}

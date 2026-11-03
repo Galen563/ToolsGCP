@@ -1,0 +1,125 @@
+name: Build & Release
+
+# =============================================================================
+# 这是什么（说明）
+# -----------------------------------------------------------------------------
+# GitHub Actions 的自动打包工作流：
+#   · 触发条件：推一个 v* 的标签（例如 v1.1.4），或者在 Actions 页面手动运行；
+#   · 干什么：在 GitHub 的 windows-latest 机器上装依赖 → 自检 → 用 PyInstaller
+#             把 **web 版**（pywebview 壳 + webui/ 前端）打成 Windows 程序
+#             → 生成 SHA256 → 上传构建产物 → 如果是标签，再自动发到 Release。
+#   · 注意：**它不会在你自己电脑上跑**，只有你 push 到 GitHub 之后才会执行。
+#           如果你只在本地用（直接 `python ToolsGCP.pyw`），这个文件完全不影响你。
+# =============================================================================
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:            # 允许在 GitHub 网页上手动点「Run workflow」
+
+permissions:
+  contents: write               # 发布 Release 需要写权限
+
+jobs:
+  build:
+    runs-on: windows-latest
+    env:
+      PYTHONUTF8: "1"           # 中文路径/中文日志在 CI 上不要因为编码炸掉
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: 安装依赖
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: 代码自检（py 语法 + 前端 JS 语法 + 所有 JSON 可解析）
+        run: |
+          python -m compileall -q ".ToolsGCP/desktop" ".ToolsGCP/modules" ToolsGCP.pyw
+          node --check .ToolsGCP/webui/js/app.js
+          node --check .ToolsGCP/webui/js/icons.js
+          python -c "import json,glob; [json.load(open(f,encoding='utf-8')) for f in glob.glob('.ToolsGCP/**/*.json', recursive=True)]; print('JSON OK')"
+
+      # ⚠️ 用 --onedir（不是 --onefile）：
+      #    desktop/webhost.py 是拿 **exe 所在目录** 拼 .ToolsGCP 与 webui 的绝对路径，
+      #    onefile 会把这些东西解压到临时目录，webhost 就找不到静态文件/图标/资源库了。
+      #    onedir 打出来是一个文件夹：ToolsGCP.exe + .ToolsGCP/ + webui/ + _internal/，
+      #    和"绿色包"的使用方式一致（用户双击 exe 即可）。
+      - name: 打包为 Windows 目录包
+        run: |
+          pyinstaller --noconfirm --clean --onedir --windowed `
+            --name ToolsGCP `
+            --add-data ".ToolsGCP;.ToolsGCP" `
+            --paths ".ToolsGCP" `
+            --hidden-import desktop.shell `
+            --hidden-import desktop.api `
+            --hidden-import webview.platforms.winforms `
+            --hidden-import webview.platforms.edgechromium `
+            --hidden-import bottle `
+            --hidden-import clr `
+            --hidden-import PIL.Image `
+            --hidden-import PIL.ImageDraw `
+            --exclude-module PyQt5 `
+            --exclude-module PyQt5.sip `
+            --exclude-module PyQt5.QtCore `
+            --exclude-module PyQt5.QtWidgets `
+            --exclude-module PyQt5.QtGui `
+            --exclude-module PyQt6 `
+            --exclude-module PySide2 `
+            --exclude-module PySide6 `
+            --exclude-module qfluentwidgets `
+            --exclude-module pymodels.splash_screen `
+            --hidden-import PIL.Image `
+            ToolsGCP.pyw
+
+      - name: 生成校验值
+        shell: pwsh
+        run: |
+          $exe = "dist/ToolsGCP/ToolsGCP.exe"
+          if (-not (Test-Path $exe)) { throw "打包产物不存在: $exe" }
+          Get-FileHash $exe -Algorithm SHA256 |
+            ForEach-Object { "$($_.Hash)  ToolsGCP.exe" } |
+            Out-File -Encoding ascii dist/SHA256SUMS.txt
+          Get-Content dist/SHA256SUMS.txt
+
+      - name: 准备云端资源库附件（ToolsGCP-Resources.json）
+        run: |
+          # 设置 → 资源来源 → 云端 会去 Release 里找这个文件（见
+          # .ToolsGCP/modules/pymodels/core/cloud_resource_source.py）。
+          # 以前只发 exe/zip，云端永远 NO_ASSET；这里把它一起发出去。
+          Copy-Item ".ToolsGCP/ToolsGCP-Resources.json" "dist/ToolsGCP-Resources.json" -Force
+          Get-Item dist/ToolsGCP-Resources.json | Select-Object Name, Length
+
+      - name: 打包成 zip（目录包整体压缩）
+        shell: pwsh
+        run: |
+          Compress-Archive -Path dist/ToolsGCP -DestinationPath dist/ToolsGCP-windows-x64.zip -Force
+          Get-Item dist/ToolsGCP-windows-x64.zip | Select-Object Name, Length
+
+      - name: 上传构建产物（每次运行都能在 Actions 页面下载）
+        uses: actions/upload-artifact@v4
+        with:
+          name: ToolsGCP-windows
+          path: |
+            dist/ToolsGCP-windows-x64.zip
+            dist/ToolsGCP-Resources.json
+            dist/SHA256SUMS.txt
+
+      - name: 发布到 Release（只在打标签时）
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/ToolsGCP-windows-x64.zip
+            dist/ToolsGCP-Resources.json
+            dist/SHA256SUMS.txt
+          generate_release_notes: true

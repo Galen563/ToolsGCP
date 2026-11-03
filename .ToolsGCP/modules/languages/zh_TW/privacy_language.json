@@ -1,0 +1,13 @@
+{
+  "privacy_agree_btn": "同意",
+  "privacy_agreed_toast": "已記錄同意，感謝支持",
+  "privacy_consent_text": "我已閱讀並同意 ToolsGCP 的《用戶使用協議》和《隱私政策及免責聲明》。",
+  "privacy_dialog_and": "和",
+  "privacy_dialog_lead": "使用本程式前請先閱讀並同意以下條款：",
+  "privacy_dialog_period": "。",
+  "privacy_dialog_title": "用戶協議與隱私政策",
+  "privacy_link_privacy_policy": "隱私政策及免責聲明",
+  "privacy_link_user_agreement": "用戶使用協議",
+  "privacy_reject_btn": "拒絕並退出",
+  "privacy_rejected": "未同意使用者協議，程式將退出"
+}

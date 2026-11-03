@@ -1,0 +1,52 @@
+/* ===========================================================================
+ * 资源库加载遮罩 / 提示框微调补丁样式
+ * 
+ * ① 云端资源库加载遮罩（搜索页 / 定制页 / 收藏页）
+ * ② 提示框位置相关的微调（左侧两个位置避开侧栏）
+ * =========================================================================*/
+
+/* ---------- ① 资源库加载遮罩 ----------
+   行为：云端资源库还没加载出来时，用遮罩挡住内容区，并显示带动态省略号的
+   正在寻找资源文件...文字提示（三个点动态变化）。
+   ⚠️ 遮罩盖在**内容区**上（左侧栏仍可见可点 —— 用户可能想去设置里换镜像源）。
+   ⚠️ 层级：要在模态弹窗（140）之下、页面内容之上。*/
+.resource-loading {
+  position: absolute; inset: 0; z-index: 130;
+  display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--page) 72%, transparent);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  animation: fadeIn 160ms ease both;
+}
+.resource-loading-card {
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  padding: 26px 34px; border-radius: 14px;
+  border: 1px solid var(--glass-border); background: var(--card-glass);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  box-shadow: var(--shadow-float);
+  max-width: min(460px, calc(100vw - 48px));
+  text-align: center;
+}
+.resource-loading-text {
+  font-size: 14px; color: var(--text);
+  display: inline-flex; align-items: baseline;
+}
+/* 动态点：宽度固定（不然文字会左右抖）*/
+.dots {
+  display: inline-block; width: 2.4em; text-align: left;
+  font-variant-numeric: tabular-nums; color: var(--text-secondary);
+}
+.resource-loading-bar {
+  width: 220px; height: 4px; border-radius: 2px;
+  background: var(--track); overflow: hidden;
+}
+.resource-loading-bar > span {
+  display: block; width: 40%; height: 100%; border-radius: 2px;
+  background: var(--accent);
+  animation: resourceLoadingSlide 1.2s cubic-bezier(.4,0,.2,1) infinite;
+}
+@keyframes resourceLoadingSlide {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(250%); }
+}
+.resource-loading-card .is-warn { color: var(--warning); }

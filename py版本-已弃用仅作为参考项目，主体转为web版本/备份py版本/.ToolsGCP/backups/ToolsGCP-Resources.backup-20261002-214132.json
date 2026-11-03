@@ -1,0 +1,1131 @@
+{
+  "schema_version": "2.0.0",
+  "metadata": {
+    "name": "ToolsGCP Resources",
+    "description": "ToolsGCP 资源索引文件",
+    "icon_dir": ".ToolsGCP/Icon",
+    "updated_at": "2026-10-02T20:51:15+08:00",
+    "total_count": 48
+  },
+  "resources": [
+    {
+      "id": "localsend",
+      "code": "TG-000001",
+      "name": "LocalSend",
+      "category": "工具",
+      "tags": [
+        "工具",
+        "传输"
+      ],
+      "icon": "localsend.png",
+      "url": "https://localsend.org/",
+      "github": "https://github.com/localsend/localsend",
+      "description": "跨平台局域网文件传输工具，支持高效、安全、无需互联网的文件共享。",
+      "supplement": "官方提供 Windows、macOS、Linux 桌面版，并有 Android 与 iOS 手机客户端；同一局域网内的设备可直接互传文件，不需要账号，也不依赖公网服务器。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "全平台"
+      ],
+      "architectures": [
+        "x64",
+        "arm64",
+        "arm",
+        "Apple Silicon"
+      ]
+    },
+    {
+      "id": "pcl-ce",
+      "code": "TG-000002",
+      "name": "PCL CE",
+      "category": "游戏",
+      "tags": [
+        "游戏",
+        "MC启动器"
+      ],
+      "icon": "PCLCE.png",
+      "url": "https://ce.pclc.cc",
+      "github": "https://github.com/PCL-Community/PCL-CE",
+      "description": "Minecraft 启动器，提供更多功能和自定义选项。",
+      "supplement": "由社区维护的 Minecraft 启动器，只提供 Windows 桌面版，安装包分别适配 64 位与 ARM 架构电脑；内置下载与模组管理，可自动补全游戏所需运行环境。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows"
+      ],
+      "architectures": [
+        "x64",
+        "arm64"
+      ]
+    },
+    {
+      "id": "steam",
+      "code": "TG-000003",
+      "name": "Steam",
+      "category": "游戏",
+      "tags": [
+        "游戏",
+        "启动器",
+        "官方"
+      ],
+      "icon": "Steam.png",
+      "url": "https://store.steampowered.com/",
+      "description": "游戏数字发行平台，提供游戏购买、下载、社区等功能。",
+      "supplement": "全球主流的游戏发行平台，官方提供 Windows、macOS 与 Linux 桌面客户端；此外还有手机端应用，可用于聊天、令牌与浏览商店，游戏库和好友数据在各端同步。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Linux"
+      ],
+      "architectures": [
+        "x64",
+        "arm64"
+      ]
+    },
+    {
+      "id": "watt-toolkit",
+      "code": "TG-000004",
+      "name": "Watt Toolkit",
+      "category": "工具",
+      "tags": [
+        "游戏",
+        "工具",
+        "网络"
+      ],
+      "icon": "Watt Toolkit.png",
+      "url": "https://steampp.net/",
+      "github": "https://github.com/BeyondDimension/SteamTools",
+      "description": "Steam++，一款开源的Steam增强工具，提供网络加速、社区功能增强等服务。",
+      "supplement": "面向国内用户的 Steam 辅助工具箱，提供 Windows、macOS、Linux 桌面版，可加速社区页面并管理账号、令牌与成就；需配合已安装的 Steam 使用，Windows ARM 暂未支持。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Linux"
+      ],
+      "architectures": [
+        "x64",
+        "arm64",
+        "Apple Silicon"
+      ]
+    },
+    {
+      "id": "pcl2",
+      "code": "TG-000005",
+      "name": "PCL2",
+      "category": "游戏",
+      "tags": [
+        "游戏",
+        "MC启动器"
+      ],
+      "icon": "PCL2.png",
+      "url": "https://meloong.com/PCL",
+      "github": "https://github.com/Meloong-Git/PCL",
+      "author_url": "https://ifdian.net/p/0164034c016c11ebafcb52540025c377",
+      "description": "Minecraft启动器，提供游戏版本管理、模组下载、整合包安装等功能。",
+      "supplement": "经典 Minecraft 启动器，官方仅提供 Windows 桌面版，下载后可绿色免安装直接运行；内置下载、模组与整合包管理，并会自动检测补全运行环境，暂无手机端与网页版。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows"
+      ]
+    },
+    {
+      "id": "afdian",
+      "code": "TG-000006",
+      "name": "爱发电",
+      "category": "平台",
+      "tags": [
+        "平台",
+        "创作",
+        "赞助",
+        "官方"
+      ],
+      "icon": "ifdian.png",
+      "url": "https://ifdian.net/",
+      "description": "创作者赞助与会员订阅平台，支持持续创作支持。",
+      "supplement": "面向创作者的赞助与会员订阅平台，官方提供 iOS 与 Android 手机应用，也可以直接用浏览器访问网页版；没有桌面客户端，登录、支付与查看内容均可多端进行。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "iOS",
+        "Android",
+        "web"
+      ]
+    },
+    {
+      "id": "epic-games",
+      "code": "TG-000007",
+      "name": "Epic Games",
+      "category": "游戏",
+      "tags": [
+        "游戏",
+        "启动器",
+        "官方"
+      ],
+      "icon": "Epic.png",
+      "url": "https://www.epicgames.com",
+      "description": "游戏数字发行平台，提供游戏购买、免费领取及社交功能。",
+      "supplement": "官方游戏商城与启动器，提供 Windows 与 macOS 桌面客户端用于购买、下载和管理游戏；可在网页端领取免费游戏，手机端商店目前仅在部分地区开放。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS"
+      ],
+      "architectures": [
+        "x64"
+      ]
+    },
+    {
+      "id": "wegame",
+      "code": "TG-000008",
+      "name": "WeGame",
+      "category": "游戏",
+      "tags": [
+        "游戏",
+        "启动器",
+        "官方"
+      ],
+      "icon": "WeGame.png",
+      "url": "https://www.wegame.com",
+      "description": "游戏发行平台，提供游戏下载、社区、直播等功能。",
+      "supplement": "腾讯旗下的游戏平台，官方提供 Windows 客户端与 Mac 端，Mac 版还区分 Intel 与 M 系列芯片两种安装包；可用于管理游戏、查看时长与好友动态，暂无 Linux 版本。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS"
+      ],
+      "architectures": [
+        "x64",
+        "arm64",
+        "Apple Silicon"
+      ]
+    },
+    {
+      "id": "python",
+      "code": "TG-000009",
+      "name": "Python",
+      "category": "编程",
+      "tags": [
+        "编程语言",
+        "官方"
+      ],
+      "icon": "Python.png",
+      "url": "https://www.python.org/",
+      "github": "https://github.com/python/cpython",
+      "description": "简洁易学的高级编程语言，支持多种编程范式，拥有丰富的标准库和第三方生态。",
+      "supplement": "通用编程语言运行环境，官方为 Windows 提供常规与 ARM 架构安装包，为 macOS 提供适配 Intel 与 Apple Silicon 的安装包；Linux 可通过源码或系统仓库安装。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Linux"
+      ],
+      "architectures": [
+        "x64",
+        "x86",
+        "arm64",
+        "Apple Silicon"
+      ]
+    },
+    {
+      "id": "bilibili",
+      "code": "TG-000010",
+      "name": "哔哩哔哩",
+      "category": "视频平台",
+      "tags": [
+        "视频平台",
+        "官方"
+      ],
+      "icon": "bilibili.png",
+      "url": "https://www.bilibili.com/",
+      "description": "视频弹幕社区，提供动画、游戏、科技、生活等领域的视频内容与互动。",
+      "supplement": "国内主流的视频与弹幕社区，在浏览器访问官网即可观看、投稿和互动；官方另有 Windows、macOS 电脑客户端与 iOS、Android 手机 App，账号、收藏与观看记录多端同步。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "全平台"
+      ]
+    },
+    {
+      "id": "douyin",
+      "code": "TG-000011",
+      "name": "抖音",
+      "category": "视频平台",
+      "tags": [
+        "视频平台",
+        "官方"
+      ],
+      "icon": "douyin.png",
+      "url": "https://www.douyin.com/",
+      "description": "短视频创作与分享平台，提供视频编辑、直播、社交等功能。",
+      "supplement": "短视频平台，用浏览器打开官网即可浏览、搜索和发布内容，扫码登录后与手机端数据同步；官方另有电脑版客户端与 iOS、Android 手机 App，适合在大屏上观看和做创作管理。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "全平台"
+      ]
+    },
+    {
+      "id": "blender",
+      "code": "TG-000012",
+      "name": "Blender",
+      "category": "建筑/设计",
+      "tags": [
+        "建筑/设计",
+        "官方"
+      ],
+      "icon": "Blender.png",
+      "url": "https://www.blender.org/",
+      "github": "https://github.com/blender/blender",
+      "description": "开源的三维创作套件，支持建模、动画、渲染、仿真、视频编辑等功能。",
+      "supplement": "开源三维创作软件，官方提供 Windows、macOS 与 Linux 桌面版，Windows ARM 电脑和 Apple Silicon 机型也有对应安装包；另提供免安装压缩包与微软商店等分发方式。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Linux"
+      ],
+      "architectures": [
+        "x64",
+        "arm64",
+        "Apple Silicon"
+      ]
+    },
+    {
+      "id": "unity",
+      "code": "TG-000013",
+      "name": "Unity",
+      "category": "游戏引擎",
+      "tags": [
+        "游戏引擎",
+        "官方"
+      ],
+      "icon": "Unity.png",
+      "url": "https://unity.com/",
+      "description": "跨平台游戏引擎，支持2D/3D游戏开发、AR/VR内容创作。",
+      "supplement": "Unity 官方编辑器提供 Windows、macOS 与 Linux 三个桌面版本，其中 Windows on Arm 和 Apple 芯片 Mac 都有原生版本。除桌面端外，还能把作品发布到手机、网页和主机等平台。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Linux"
+      ],
+      "architectures": [
+        "x64",
+        "arm64",
+        "Apple Silicon"
+      ]
+    },
+    {
+      "id": "godot",
+      "code": "TG-000014",
+      "name": "Godot",
+      "category": "游戏引擎",
+      "tags": [
+        "游戏引擎",
+        "官方"
+      ],
+      "icon": "Godot.png",
+      "url": "https://godotengine.org/",
+      "github": "https://github.com/godotengine/godot",
+      "description": "开源跨平台游戏引擎，支持2D/3D游戏开发，使用节点系统架构。",
+      "supplement": "除 Windows、macOS、Linux 桌面版外，官方还直接提供可在手机上运行的 Android 编辑器和浏览器内打开的网页版编辑器，作品也能导出到 iOS 等更多平台；引擎免费开源，压缩包解压即用。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Linux",
+        "Android",
+        "iOS",
+        "web"
+      ],
+      "architectures": [
+        "x64",
+        "x86",
+        "arm64",
+        "arm",
+        "Apple Silicon"
+      ]
+    },
+    {
+      "id": "trae",
+      "code": "TG-000015",
+      "name": "Trae",
+      "category": "编程",
+      "tags": [
+        "IDE编辑器",
+        "编程"
+      ],
+      "icon": "trae.png",
+      "url": "https://www.trae.cn/",
+      "description": "字节跳动推出的 AI 原生 IDE，可在国际版与国内版之间切换。",
+      "supplement": "桌面端覆盖 Windows、macOS 与 Linux，另提供网页版和手机端 App，同一账号可多端协同；需要注意 macOS 版只提供 Apple 芯片版本，Intel Mac 用户暂无法使用。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "全平台"
+      ],
+      "architectures": [
+        "x64",
+        "Apple Silicon"
+      ],
+      "default_variant": "cn",
+      "variants": [
+        {
+          "key": "cn",
+          "label": "国内版",
+          "url": "https://www.trae.cn/"
+        },
+        {
+          "key": "global",
+          "label": "国际版",
+          "url": "https://www.trae.ai/"
+        }
+      ]
+    },
+    {
+      "id": "hmcl",
+      "code": "TG-000016",
+      "name": "HMCL",
+      "category": "游戏",
+      "tags": [
+        "游戏",
+        "MC启动器"
+      ],
+      "icon": "HMCL.png",
+      "url": "https://hmcl.huangyuhui.net/",
+      "github": "https://github.com/HMCL-dev/HMCL",
+      "description": "开源的 Minecraft 启动器，支持离线模式、多人联机和 Mod 管理。",
+      "supplement": "官方以 Java 通用包的形式分发，Windows、macOS 与 Linux（含 FreeBSD）都能运行，对 CPU 架构没有特殊要求；Windows 用户可直接下载安装包，其他平台使用通用 jar 或启动脚本。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Linux"
+      ],
+      "architectures": [
+        "x64",
+        "x86",
+        "arm64",
+        "arm"
+      ]
+    },
+    {
+      "id": "sjmcl",
+      "code": "TG-000017",
+      "name": "SJMCL",
+      "category": "游戏",
+      "tags": [
+        "游戏",
+        "MC启动器"
+      ],
+      "icon": "SJMCL.png",
+      "url": "https://mc.sjtu.cn/sjmcl/",
+      "github": "https://github.com/UNIkeEN/SJMCL",
+      "description": "上海交通大学 Minecraft 社开发的开源启动器，面向校园和社区用户。",
+      "supplement": "官方为 Windows、macOS、Linux 都提供了安装包：Windows 端分 x86、x64 与 ARM64，macOS 区分 Apple 芯片与 Intel，Linux 提供 deb、rpm 和便携版。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Linux"
+      ],
+      "architectures": [
+        "x64",
+        "x86",
+        "arm64",
+        "Apple Silicon"
+      ]
+    },
+    {
+      "id": "verse",
+      "code": "TG-000018",
+      "name": "Verse",
+      "category": "游戏",
+      "tags": [
+        "游戏",
+        "MC启动器"
+      ],
+      "icon": "Verse.png",
+      "url": "https://www.verselauncher.cn/",
+      "github": "https://github.com/cnklpz/versePc",
+      "description": "开源的 Minecraft 启动器，提供现代化的界面和便捷的游戏管理。",
+      "supplement": "官网目前主要放出 Windows 版启动器下载，安卓端标注为制作中、尚未发布；官方开源仓库同时声明支持 Windows、macOS 与 Linux，并提供 dmg、AppImage、deb、rpm 等对应安装包。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Linux"
+      ],
+      "architectures": [
+        "x64",
+        "Apple Silicon"
+      ]
+    },
+    {
+      "id": "bakaxl",
+      "code": "TG-000019",
+      "name": "BakaXL",
+      "category": "游戏",
+      "tags": [
+        "游戏",
+        "MC启动器"
+      ],
+      "icon": "BakaXL.png",
+      "url": "https://www.bakaxl.com/",
+      "github": "https://github.com/BakaXL-Launcher/BakaXL",
+      "description": "开源的 Minecraft 启动器，以简洁界面和社区功能为特色。",
+      "supplement": "当前正式版仅支持 Windows，普通玩家下载官网版本即可；官方预览版已额外提供 Linux 与 macOS 构建，Windows 端也出现了 Arm64 版本，适合用 ARM 设备的玩家尝鲜。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows"
+      ]
+    },
+    {
+      "id": "pyisland",
+      "code": "TG-000020",
+      "name": "Pyisland",
+      "category": "编程",
+      "tags": [
+        "编程",
+        "学习"
+      ],
+      "icon": "Pyisland.png",
+      "url": "https://pyisland.com/",
+      "github": "https://github.com/Python-island/Python-island",
+      "description": "Python 编程学习平台，提供互动式教程和编程练习。",
+      "supplement": "这是运行在 Windows 上的桌面灵动岛工具，官方提供下载与源码，基于 Python + PySide6 实现，明确要求 Windows 10/11；另有 Tauri、Electron 等分支可选，没有网页版或手机端。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows"
+      ]
+    },
+    {
+      "id": "geek-uninstaller",
+      "code": "TG-000021",
+      "name": "Geek Uninstaller",
+      "category": "工具",
+      "tags": [
+        "工具",
+        "卸载"
+      ],
+      "icon": "Geek Uninstaller.png",
+      "url": "https://geekuninstaller.com",
+      "description": "轻量级软件卸载工具，支持强制卸载和清理残留文件。",
+      "supplement": "仅支持 Windows，官方称兼容 32 位与 64 位系统（Windows 7 至 11）；在 64 位系统上会以原生 64 位程序运行，下载压缩包解压后即可直接使用。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows"
+      ],
+      "architectures": [
+        "x86",
+        "x64"
+      ]
+    },
+    {
+      "id": "tiez",
+      "code": "TG-000022",
+      "name": "TieZ",
+      "category": "工具",
+      "tags": [
+        "工具",
+        "实用"
+      ],
+      "icon": "Tiez.png",
+      "url": "https://tiez.name666.top/",
+      "github": "https://github.com/jimuzhe/tiez-clipboard",
+      "description": "跨平台剪贴板管理工具，支持历史记录、搜索标签、局域网传输与 WebDAV 云同步。",
+      "supplement": "官方网站现在提供的是 TieZ 剪贴板管理工具：桌面端支持 Windows 10/11 与 macOS（含 Apple 芯片与 Intel），另有 Android 手机端配套 App，可同步剪贴板、局域网传文件与云端同步。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Android"
+      ],
+      "architectures": [
+        "x64",
+        "x86",
+        "Apple Silicon"
+      ]
+    },
+    {
+      "id": "memreduct",
+      "code": "TG-000023",
+      "name": "Memreduct",
+      "category": "工具",
+      "tags": [
+        "工具",
+        "系统",
+        "优化"
+      ],
+      "icon": "memreduct.png",
+      "github": "https://github.com/henrypp/memreduct",
+      "description": "轻量级内存优化工具，实时监控和清理系统内存。",
+      "supplement": "仅支持 Windows，官方要求 64 位或 ARM64 系统（Windows 7 至 11），不支持 32 位；提供安装版与便携版，便携模式下可在程序目录放置配置文件来保存设置。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows"
+      ],
+      "architectures": [
+        "x64",
+        "arm64"
+      ]
+    },
+    {
+      "id": "obs",
+      "code": "TG-000024",
+      "name": "OBS",
+      "category": "工具",
+      "tags": [
+        "视频",
+        "直播",
+        "录屏"
+      ],
+      "icon": "OBS.png",
+      "url": "https://obsproject.com/",
+      "github": "https://github.com/obsproject/obs-studio",
+      "description": "开源的直播和录屏软件，支持多场景切换和实时混音。",
+      "supplement": "官方提供 Windows、macOS 与 Linux 版本，macOS 区分 Intel 与 Apple 芯片两种安装包，Linux 通过官方 Flatpak 和 Ubuntu PPA 分发；Windows 端目前只有 64 位版本。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Linux"
+      ],
+      "architectures": [
+        "x64",
+        "Apple Silicon"
+      ]
+    },
+    {
+      "id": "human-benchmark",
+      "code": "TG-000025",
+      "name": "Human Benchmark",
+      "category": "工具",
+      "tags": [
+        "趣味",
+        "测试"
+      ],
+      "icon": "humanbenchmark.png",
+      "url": "https://humanbenchmark.com/",
+      "description": "认知能力测试网站，提供反应速度、记忆力等基准测试。",
+      "supplement": "打开网页就能做反应速度、记忆力、专注力等认知小测试，成绩可与全球用户对比。无需安装任何程序，电脑和手机浏览器都能直接使用，目前没有官方客户端。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "web"
+      ]
+    },
+    {
+      "id": "huorong",
+      "code": "TG-000026",
+      "name": "火绒安全软件",
+      "category": "工具",
+      "tags": [
+        "工具",
+        "安全",
+        "官方"
+      ],
+      "icon": "huorong.png",
+      "url": "https://www.huorong.cn/",
+      "description": "国产安全软件，提供病毒防护、弹窗拦截和系统工具。",
+      "supplement": "面向个人用户的免费终端安全软件，安装后即可获得病毒查杀与实时防护。官方按设备类型分别打包：常见的 64 位和 32 位电脑各有一版，采用 ARM 架构的 Windows 设备也有专用安装包。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows"
+      ],
+      "architectures": [
+        "x64",
+        "x86",
+        "arm64"
+      ]
+    },
+    {
+      "id": "mctier",
+      "code": "TG-000027",
+      "name": "MCTier",
+      "category": "游戏",
+      "tags": [
+        "游戏",
+        "工具"
+      ],
+      "icon": "MCTierIcon.png",
+      "url": "https://mctier.pmhs.top/",
+      "description": "Minecraft 服务器列表和排名工具，方便查找优质服务器。",
+      "supplement": "把分散的电脑和手机拉进同一个虚拟局域网，方便跨网络联机、语音、传文件和共享屏幕。电脑端与安卓端可同处一个大厅；Linux 版仍处于实验阶段、部分功能受限，暂不支持苹果设备。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "Android",
+        "Linux"
+      ],
+      "architectures": [
+        "x64",
+        "arm64"
+      ]
+    },
+    {
+      "id": "wallpaper-engine",
+      "code": "TG-000028",
+      "name": "Wallpaper Engine",
+      "category": "个性化",
+      "tags": [
+        "个性化",
+        "壁纸"
+      ],
+      "icon": "wallpaper_engine.gif",
+      "url": "https://www.wallpaperengine.io/",
+      "description": "动态壁纸软件，支持创建和使用动态桌面壁纸。",
+      "supplement": "让 Windows 桌面用上动态壁纸，可订阅创意工坊里的大量作品，运行时几乎不影响游戏性能。手机端是免费伴侣应用，能把电脑上的壁纸无线传到安卓设备使用；暂不支持苹果系统与 iOS。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "Android"
+      ],
+      "architectures": [
+        "x64",
+        "x86"
+      ]
+    },
+    {
+      "id": "nexbox",
+      "code": "TG-000029",
+      "name": "NexBox",
+      "category": "工具",
+      "tags": [
+        "工具"
+      ],
+      "icon": "NexBox.png",
+      "url": "https://nexbox.top/",
+      "github": "https://github.com/MuLiuSaMa/NexBox",
+      "description": "开源的综合工具箱软件，提供多种实用功能集成。",
+      "supplement": "为玩家准备的一体化工具箱，把硬件监控、系统优化、显示增强、游戏辅助和音乐播放收进一个界面。纯本地运行、核心功能无需联网，安装后双击即可使用，目前只有 Windows 版。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows"
+      ],
+      "architectures": [
+        "x64"
+      ]
+    },
+    {
+      "id": "nvidia-app",
+      "code": "TG-000030",
+      "name": "NVIDIA APP",
+      "category": "工具",
+      "tags": [
+        "工具",
+        "驱动",
+        "官方"
+      ],
+      "icon": "NVIDIA App.png",
+      "url": "https://www.nvidia.cn/software/nvidia-app/",
+      "description": "NVIDIA 推出的统一 GPU 控制中心，整合驱动更新、游戏优化、录屏和 AI 滤镜等功能。",
+      "supplement": "面向 GeForce 用户的官方显卡配套应用，可统一更新驱动、自动优化游戏设置，并录制或直播画面。目前只提供 Windows 版，需要配合 NVIDIA 显卡使用，没有网页版和手机端。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows"
+      ]
+    },
+    {
+      "id": "mineradio",
+      "code": "TG-000031",
+      "name": "Mineradio",
+      "category": "工具",
+      "tags": [
+        "工具",
+        "音乐"
+      ],
+      "icon": "MR.png",
+      "url": "https://mineradio.cn/",
+      "github": "https://github.com/XxHuberrr/Mineradio",
+      "description": "开源的音乐播放和电台工具，提供在线音乐收听和播放管理功能。",
+      "supplement": "开源免费的本地音乐播放器，支持多种无损格式、内嵌与外置歌词和桌面歌词，界面带有可视化效果。官方提供 Windows、Mac 桌面版和安卓版，也有网页版可直接体验。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Android",
+        "web"
+      ]
+    },
+    {
+      "id": "claude",
+      "code": "TG-000032",
+      "name": "Claude",
+      "category": "AI",
+      "tags": [
+        "AI",
+        "聊天"
+      ],
+      "icon": "Claude.png",
+      "url": "https://claude.com/",
+      "description": "Anthropic 开发的 AI 助手，擅长长文本理解、推理和代码生成。",
+      "supplement": "提供电脑客户端，也有手机应用和网页版，登录同一账号即可随处继续对话。桌面端对硬件较宽容：苹果电脑的 Apple 芯片与 Intel 机型都能装，Windows 的 64 位和 ARM 设备也各有对应版本。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "iOS",
+        "Android",
+        "web"
+      ],
+      "architectures": [
+        "x64",
+        "arm64",
+        "Apple Silicon"
+      ]
+    },
+    {
+      "id": "gemini",
+      "code": "TG-000033",
+      "name": "Gemini",
+      "category": "AI",
+      "tags": [
+        "AI",
+        "聊天"
+      ],
+      "icon": "Gemini.png",
+      "url": "https://gemini.google.com/",
+      "description": "Google 开发的多模态 AI 助手，支持文本、图像和代码处理。",
+      "supplement": "谷歌的 AI 助手，打开网页就能直接对话和生成内容。官方也提供了 iOS 与安卓手机应用，并为 Windows 和 Mac 推出了桌面应用，可按手头设备任选一种方式使用。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "iOS",
+        "Android",
+        "web"
+      ]
+    },
+    {
+      "id": "grok",
+      "code": "TG-000034",
+      "name": "Grok",
+      "category": "AI",
+      "tags": [
+        "AI",
+        "聊天"
+      ],
+      "icon": "Grok.png",
+      "url": "https://grok.com/",
+      "description": "xAI 开发的 AI 助手，以幽默风格和实时信息获取能力为特色。",
+      "supplement": "目前以网页版和官方手机应用为主，登录后即可对话、生成图片，桌面浏览器与手机都能随时使用。官方尚未推出正式的电脑客户端。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "web",
+        "iOS",
+        "Android"
+      ]
+    },
+    {
+      "id": "chatgpt",
+      "code": "TG-000035",
+      "name": "ChatGPT",
+      "category": "AI",
+      "tags": [
+        "AI",
+        "聊天"
+      ],
+      "icon": "ChatGPT.png",
+      "url": "https://chatgpt.com/",
+      "description": "OpenAI 开发的 AI 对话助手，支持文本、图像和代码生成。",
+      "supplement": "既可在网页上直接使用，也提供 Windows 与 Mac 电脑客户端以及 iOS、安卓手机应用。登录同一账号后，各端的对话记录可以接着继续。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "iOS",
+        "Android",
+        "web"
+      ]
+    },
+    {
+      "id": "deepseek",
+      "code": "TG-000036",
+      "name": "DeepSeek",
+      "category": "AI",
+      "tags": [
+        "AI",
+        "聊天"
+      ],
+      "icon": "DeepSeek.png",
+      "url": "https://www.deepseek.com/",
+      "chat_url": "https://chat.deepseek.com/",
+      "description": "深度求索开发的 AI 助手，擅长推理和代码生成。",
+      "supplement": "除网页版外，官方还提供 iOS、安卓手机应用和桌面客户端。电脑端安装时注意匹配机型：Windows 版面向 64 位系统，Mac 版需要 Apple 芯片并运行较新的 macOS。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "iOS",
+        "Android",
+        "web"
+      ],
+      "architectures": [
+        "x64",
+        "Apple Silicon"
+      ]
+    },
+    {
+      "id": "kimi",
+      "code": "TG-000037",
+      "name": "Kimi",
+      "category": "AI",
+      "tags": [
+        "AI",
+        "聊天"
+      ],
+      "icon": "kimi.png",
+      "url": "https://www.kimi.com/",
+      "description": "月之暗面开发的长文本 AI 助手，支持超长上下文和文档解读。",
+      "supplement": "官方提供 Windows 与 macOS 桌面客户端，Mac 分公司芯片与 Intel 两个版本，另有 iOS、Android、鸿蒙手机应用，网页版可直接对话。手机、电脑与网页之间的聊天记录可以同步，桌面端还支持挂载本地文件夹与浏览器自动化。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Android",
+        "iOS",
+        "web",
+        "其他"
+      ],
+      "architectures": [
+        "x64",
+        "Apple Silicon"
+      ]
+    },
+    {
+      "id": "qwen-studio",
+      "code": "TG-000038",
+      "name": "Qwen Studio",
+      "category": "AI",
+      "tags": [
+        "AI",
+        "聊天"
+      ],
+      "icon": "Qwen Studio.png",
+      "url": "https://qwen.ai/",
+      "chat_url": "https://chat.qwen.ai/",
+      "description": "阿里巴巴开发的通义千问 AI 平台。",
+      "supplement": "以网页版为主要入口，打开站点即可直接对话，不需要安装任何客户端，跨设备用浏览器访问即可。目前未在官方渠道见到与本站点同名的桌面端或手机客户端。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "web"
+      ]
+    },
+    {
+      "id": "qianwen",
+      "code": "TG-000039",
+      "name": "千问",
+      "category": "AI",
+      "tags": [
+        "AI",
+        "聊天"
+      ],
+      "icon": "qwen.png",
+      "url": "https://www.qianwen.com/",
+      "description": "通义千问在线对话平台，提供智能问答和创作辅助。",
+      "supplement": "官方同时提供电脑客户端、Mac 客户端以及 iOS、Android 手机应用，网页版也能直接使用。内置对话问答、文档解读、PPT 生成与定时任务等能力，电脑与手机之间的使用记录可以衔接。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Android",
+        "iOS",
+        "web"
+      ]
+    },
+    {
+      "id": "doubao",
+      "code": "TG-000040",
+      "name": "豆包",
+      "category": "AI",
+      "tags": [
+        "AI",
+        "聊天"
+      ],
+      "icon": "doubao.png",
+      "url": "https://www.doubao.com/",
+      "description": "字节跳动开发的 AI 助手，支持对话、创作和图像生成。",
+      "supplement": "官方提供 Windows 与 macOS 桌面客户端，以及 iOS、Android 手机应用，网页版可直接使用。桌面端支持悬浮球快捷唤起，手机与电脑的对话记录可以接着聊，Mac 安装包同时适配 Intel 与 Apple 芯片。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Android",
+        "iOS",
+        "web"
+      ],
+      "architectures": [
+        "x64",
+        "Apple Silicon"
+      ]
+    },
+    {
+      "id": "witch-clipboard",
+      "code": "TG-000041",
+      "name": "Witch Clipboard",
+      "category": "工具",
+      "tags": [
+        "工具"
+      ],
+      "icon": "Witch Clipboard.png",
+      "github": "https://github.com/witchscottishfoldcat/WitchClipboard",
+      "description": "桌面剪贴板管理器。自动分类、来源搜索、关联配置、本地加密与端到端加密同步",
+      "supplement": "目前只发行 Windows 版本，既有安装包也有免安装便携包，另有面向 Windows ARM 设备的实验性构建，macOS 与 Linux 暂无官方版本。剪贴板历史默认只保存在本机并加密，可选加密云同步与局域网传输。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows"
+      ],
+      "architectures": [
+        "x64",
+        "arm64"
+      ]
+    },
+    {
+      "id": "lightc",
+      "code": "TG-000042",
+      "name": "LightC",
+      "category": "工具",
+      "tags": [
+        "工具",
+        "清理"
+      ],
+      "icon": "LightC-2.png",
+      "url": "https://www.lightc.app/",
+      "github": "https://github.com/Chunyu33/light-c",
+      "author_url": "https://space.bilibili.com/387797235",
+      "description": "LightC 是一款 Windows 桌面工具，提供安全垃圾清理、磁盘分析和系统维护功能",
+      "supplement": "专为 Windows 打造，只提供 64 位版本，官网给出标准安装包、绿色便携包和内置运行环境的离线安装包三种选择。没有手机端和网页版，使用前建议先备份重要数据。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows"
+      ],
+      "architectures": [
+        "x64"
+      ]
+    },
+    {
+      "id": "ai-cubby",
+      "code": "TG-000043",
+      "name": "AI 小抽屉",
+      "category": "工具",
+      "tags": [
+        "工具"
+      ],
+      "icon": "AI 小抽屉.png",
+      "url": "https://www.aicubby.app/",
+      "github": "https://github.com/miragecoa/AI-Cubby",
+      "description": "把散落的文件、应用、备注和使用记录整理成一个完全本地的私人资源库，让你想得起来，就找得到。",
+      "supplement": "目前仅提供 Windows 版本，官网同时给出免安装的便携压缩包，解压即可使用，无需注册账号。数据全部保存在本地，macOS 与 Linux 支持仍在官方规划中。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows"
+      ],
+      "architectures": [
+        "x64"
+      ]
+    },
+    {
+      "id": "class-widgets-2",
+      "code": "TG-000044",
+      "name": "Class-Widgets-2",
+      "category": "工具",
+      "tags": [
+        "工具"
+      ],
+      "icon": "Class-Widgets-2.png",
+      "github": "https://github.com/RinLit-233-shiroko/Class-Widgets-2",
+      "author_url": "https://space.bilibili.com/569522843",
+      "description": "课程表",
+      "supplement": "官方同时发布 Windows 与 macOS 版本：Windows 提供安装程序和免安装压缩包，macOS 分别给出 Intel 与 Apple 芯片两种安装镜像。暂时没有手机端和网页版，程序会内置更新功能。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS"
+      ],
+      "architectures": [
+        "x64",
+        "Apple Silicon"
+      ]
+    },
+    {
+      "id": "recordly",
+      "code": "TG-000045",
+      "name": "Recordly",
+      "category": "剪辑",
+      "tags": [
+        "工具",
+        "剪辑"
+      ],
+      "icon": "Recordly.png",
+      "url": "https://recordly.dev/",
+      "github": "https://github.com/webadderallorg/Recordly",
+      "description": "Recordly是一款开源屏幕录制和编辑工具，适用于制作演示视频、产品视频等。 接受 PR。",
+      "supplement": "提供 Windows、macOS 与 Linux 桌面客户端，Mac 区分 Intel 与 Apple 芯片，Windows 为安装程序，Linux 为免安装的镜像文件。官方还给出 Homebrew 与 AUR 两种包管理器安装方式，没有手机端和网页版。",
+      "listed_at": "2026-09-21 22:35:47",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Linux"
+      ],
+      "architectures": [
+        "x64",
+        "Apple Silicon"
+      ]
+    },
+    {
+      "id": "minecraftworldbrowser",
+      "code": "TG-000046",
+      "name": "Minecraft Java 世界浏览器",
+      "category": "工具",
+      "tags": [
+        "游戏",
+        "工具",
+        "MC"
+      ],
+      "icon": "Minecraft Java 世界浏览器.png",
+      "github": "https://github.com/Aaron88915/MinecraftWorldBrowser",
+      "description": "MinecraftWorldBrowser是集中查找、浏览、筛选、备份和恢复散落在不同启动器与实例中的 Minecraft Java 世界。",
+      "supplement": "以单个免安装的 Windows 程序分发，下载后双击即可运行，需要系统已启用 .NET Framework 运行环境，建议 Windows 10 或更高版本。没有网页版和手机版，扫描过程只读取文件。",
+      "listed_at": "2026-09-21 22:47:23",
+      "systems": [
+        "Windows"
+      ]
+    },
+    {
+      "id": "steelylink-tools",
+      "code": "TG-000047",
+      "name": "SteelyLink-Tools",
+      "category": "工具",
+      "tags": [
+        "工具"
+      ],
+      "icon": "SteelyLink-Tools.png",
+      "url": "https://tools.steelylink.com/",
+      "github": "https://github.com/SteelyLink/SteelyLink-Tools",
+      "description": "111 个专业在线工具，从不接触你的文件。每一个工具都完整运行在你自己的浏览器里。 不上传、不注册、不追踪、不收费。",
+      "supplement": "纯网页工具集，全部功能都在浏览器本地运行，文件不会被上传，也无需注册或安装客户端。电脑和手机浏览器打开网页即可直接使用，关闭页面后不留下数据。",
+      "listed_at": "2026-09-21 23:02:59",
+      "systems": [
+        "web"
+      ]
+    },
+    {
+      "id": "fileconverter",
+      "code": "TG-000048",
+      "name": "FileConverter",
+      "category": "工具",
+      "tags": [
+        "工具"
+      ],
+      "icon": "FileConverter.png",
+      "url": "https://file-converter.io/",
+      "github": "https://github.com/Tichau/FileConverter",
+      "description": "文件转换器是一个非常简单的工具，允许你通过Windows资源管理器的右键菜单转换和压缩一个或多个文件。",
+      "supplement": "只支持 Windows，装好后通过资源管理器右键菜单批量转换和压缩文件，无需打开主界面操作。官方主推 64 位安装包，旧版本另有 32 位安装包可供老机器使用，没有网页版和手机版。",
+      "listed_at": "2026-09-21 23:11:06",
+      "systems": [
+        "Windows"
+      ],
+      "architectures": [
+        "x64",
+        "x86"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,101 @@
+{
+  "group": "C",
+  "items": [
+    {
+      "id": "human-benchmark",
+      "systems": ["web"],
+      "architectures": [],
+      "supplement": "打开网页就能做反应速度、记忆力、专注力等认知小测试，成绩可与全球用户对比。无需安装任何程序，电脑和手机浏览器都能直接使用，目前没有官方客户端。",
+      "intro": "Human Benchmark 是一个在线认知能力测试站点，打开网页即可开始，无需注册或安装。平台提供反应速度、序列记忆、数字记忆、视觉记忆、打字速度、瞄准和色觉等多种小测试，每项通常只花一到几分钟，结束后会给出成绩以及在全部参与者中的百分位排名，方便了解自己的各项表现并与其他用户对比。测试都在浏览器中运行，电脑和手机都能直接打开，也适合当作日常小游戏来放松和提神。",
+      "note": "来源：官网 humanbenchmark.com。纯网页认知测试站（页面为前端渲染，仅交互式网页测试），无官方桌面/移动客户端，也未发现官方应用商店条目。"
+    },
+    {
+      "id": "huorong",
+      "systems": ["Windows"],
+      "architectures": ["x64", "x86", "arm64"],
+      "supplement": "面向个人用户的免费终端安全软件，安装后即可获得病毒查杀与实时防护。官方按设备类型分别打包：常见的 64 位和 32 位电脑各有一版，采用 ARM 架构的 Windows 设备也有专用安装包。",
+      "intro": "火绒安全软件是面向个人用户的免费终端安全产品，以轻巧、低占用和无广告打扰为特色。它提供病毒与木马查杀、实时防护、U 盘保护、弹窗拦截、恶意网址拦截，并附带系统修复、启动项管理、垃圾清理等常用工具，日常运行时几乎不占用资源。界面简洁，不会捆绑其他软件，也不推送弹窗广告，装上即可使用，各类防护的默认配置对普通用户足够友好。适合希望电脑安静稳定运行、又需要可靠基础防护的家庭与办公用户。",
+      "note": "来源：官网 huorong.cn 首页下载区（个人版 火绒安全软件6.0）。官方明确提供三种安装包：64位版（X86 64位）、32位版（X86 32位）、ARM版（Windows ARM）。同站的火绒应用商店亦为 Windows PC 版；无 macOS/Linux/移动端个人版。"
+    },
+    {
+      "id": "mctier",
+      "systems": ["Windows", "Android", "Linux"],
+      "architectures": ["x64", "arm64"],
+      "supplement": "把分散的电脑和手机拉进同一个虚拟局域网，方便跨网络联机、语音、传文件和共享屏幕。电脑端与安卓端可同处一个大厅；Linux 版仍处于实验阶段、部分功能受限，暂不支持苹果设备。",
+      "intro": "MCTier 是一款虚拟局域网组网工具，把处于不同网络环境的电脑和手机拉进同一个「大厅」，让原本无法直连的设备像在同一局域网内互相访问。组网基于 EasyTier，无需公网 IP 即可优先直连，条件不允许时自动转为中继。大厅内集成实时语音与语音小队、文字聊天、文件共享、屏幕共享、双向远程控制和内置变声器，并提供公开大厅广场、连接诊断与游戏快连等联机辅助。既适合和朋友联机玩局域网游戏，也适合跨网传文件、共享屏幕或远程协助他人。",
+      "note": "来源：官网 mctier.pmhs.top 下载区与平台边界表。Windows 10/11 64 位（安装包+便携版，对应 x64）；Android 8.0+ APK（官方标注面向 ARM64 手机平板，对应 arm64）；Linux 为实验性支持，面向 Debian/Ubuntu 家族 x86_64（其余能力受限）。官网明确「目前不提供 iOS 或 macOS 安装包」。"
+    },
+    {
+      "id": "wallpaper-engine",
+      "systems": ["Windows", "Android"],
+      "architectures": ["x64", "x86"],
+      "supplement": "让 Windows 桌面用上动态壁纸，可订阅创意工坊里的大量作品，运行时几乎不影响游戏性能。手机端是免费伴侣应用，能把电脑上的壁纸无线传到安卓设备使用；暂不支持苹果系统与 iOS。",
+      "intro": "Wallpaper Engine 是一款让 Windows 桌面动起来的动态壁纸软件，支持把视频、网页、3D 场景和带交互效果的作品设为壁纸，也可用内置编辑器把图片做成动画作品，并订阅创意工坊中的大量免费资源。它对性能做了优化，可在运行游戏或最大化窗口时自动暂停，笔记本改用电池供电时也会停止，还能让雷蛇、海盗船等灯效硬件与壁纸联动。官方另提供免费手机伴侣应用，可将电脑上收藏的壁纸无线传输到安卓设备使用，适合注重桌面个性化又不愿明显牺牲性能的用户。",
+      "note": "来源：官网 wallpaperengine.io 与官方帮助 help.wallpaperengine.io。桌面端为 Windows（Steam 购买），官方帮助《32-Bit & 64-Bit Version》说明同时提供 32 位与 64 位版本，故 x86/x64；另有免费 Android 伴侣应用（要求 Android 10+，APK/Google Play），其 CPU 架构官方未标明故不计入。官方明确「目前仅支持 Windows 和 Android，无 Linux/macOS 计划」，且说明 iOS 不支持真动态壁纸，故无 iOS。"
+    },
+    {
+      "id": "nexbox",
+      "systems": ["Windows"],
+      "architectures": ["x64"],
+      "supplement": "为玩家准备的一体化工具箱，把硬件监控、系统优化、显示增强、游戏辅助和音乐播放收进一个界面。纯本地运行、核心功能无需联网，安装后双击即可使用，目前只有 Windows 版。",
+      "intro": "NexBox（新境盒）是一款面向 PC 玩家的免费开源游戏工具箱，把过去需要安装多个软件才能完成的事集中到一个界面。它提供 CPU、显卡、内存、硬盘的实时监控与温度趋势，以及磁盘与内存清理、网络和电源优化、启动项管理等系统优化项；还内置显示滤镜与色温调节、游戏准星、游戏内悬浮面板、分辨率与 DLSS 预设管理、Steam 与 Epic 库管理等工具，并附带音乐播放器。软件占用低、核心功能纯本地运行，适合想一站式打理游戏环境、不愿被全家桶打扰的玩家。",
+      "note": "来源：官网 nexbox.top 下载页（download.html）。官方系统要求写明「Windows 10 / 11 · x86_64」，仅提供 Windows 正式版（另有即将上线的 Microsoft Store 版）。无 macOS/Linux/移动端。"
+    },
+    {
+      "id": "nvidia-app",
+      "systems": ["Windows"],
+      "architectures": [],
+      "supplement": "面向 GeForce 用户的官方显卡配套应用，可统一更新驱动、自动优化游戏设置，并录制或直播画面。目前只提供 Windows 版，需要配合 NVIDIA 显卡使用，没有网页版和手机端。",
+      "intro": "NVIDIA App 是 NVIDIA 官方推出的统一显卡配套应用，用来替代过去的 GeForce Experience。安装后可以一键更新显卡驱动，自动为游戏套用画质与性能优化设置，并在同一界面调整分辨率、刷新率、G-SYNC、DSR 等显示选项。它还支持 ShadowPlay 录屏与截图、直播推流，以及 AI 滤镜和游戏内性能浮层监控。需要搭配 NVIDIA 显卡使用，适合希望用官方工具统一管理驱动与游戏设置、并顺手录制画面的 GeForce 用户。",
+      "note": "来源：NVIDIA 官方 nvidia.cn/software/nvidia-app/ 及官方「系统要求」页。官方仅提供 Windows 版（Windows 10/11），无 macOS/Linux/移动版。官方系统要求页正文为动态渲染且本环境抓取被截断，未能读到明确的位数/架构声明，按「拿不准留空」处理。"
+    },
+    {
+      "id": "mineradio",
+      "systems": ["Windows", "macOS", "Android", "web"],
+      "architectures": [],
+      "supplement": "开源免费的本地音乐播放器，支持多种无损格式、内嵌与外置歌词和桌面歌词，界面带有可视化效果。官方提供 Windows、Mac 桌面版和安卓版，也有网页版可直接体验。",
+      "intro": "Mineradio 是一款免费开源的音乐播放器，界面带有跟随节奏变化的可视化效果，主打本地音乐播放与沉浸式听歌体验。它支持 MP3、FLAC、WAV、OGG、AAC、APE、DSD 等多种无损与常见格式，能读取音频内嵌的歌词和封面，也支持外置歌词文件与桌面歌词显示；并提供迷你模式、播放列表与收藏管理、均衡器等功能，整体轻量无广告。官方提供 Windows 与 Mac 桌面版和安卓版，另有网页版可直接体验，适合平时收听本地音乐收藏、在意界面观感的用户。",
+      "note": "来源：官网 mineradio.cn（页面标题与下载区标注「Windows/Mac/Android/网页版」，官方站点自述平台）。官网未标明各平台安装包的 CPU 架构（页面正文抓取被截断，GitHub Release 域名在本环境不可解析），故架构留空。"
+    },
+    {
+      "id": "claude",
+      "systems": ["Windows", "macOS", "iOS", "Android", "web"],
+      "architectures": ["x64", "arm64", "Apple Silicon"],
+      "supplement": "提供电脑客户端，也有手机应用和网页版，登录同一账号即可随处继续对话。桌面端对硬件较宽容：苹果电脑的 Apple 芯片与 Intel 机型都能装，Windows 的 64 位和 ARM 设备也各有对应版本。",
+      "intro": "Claude 是 Anthropic 推出的 AI 助手，擅长长文档理解、逻辑推理与代码编写，支持上传 PDF、图片等文件后围绕内容提问，也能通过 Artifacts 直接生成并预览网页、图表和文档。它提供电脑客户端、手机应用和网页版，登录同一账号即可在各端继续之前的对话；桌面端带有可随时唤起的快捷窗口，也可通过扩展连接本地文件与外部工具。日常可用于资料整理、翻译润色和写代码，适合需要处理长篇材料、希望回答严谨且乐于核对依据的知识工作者、开发者和学生。",
+      "note": "来源：Anthropic 官方文档 claude.com/docs/third-party/claude-desktop/installation 的系统要求表：macOS 14+ / Windows 10 build 19041+；CPU 架构 macOS「Apple silicon 或 Intel (x64)」、Windows「x64 或 Arm64」；离线安装包亦按 win32/x64、win32/arm64、darwin/arm64、darwin/x64 区分。桌面安装包由 claude.com/download 提供（.dmg / .msix）；另有官方 iOS/Android 应用与 claude.ai 网页版。"
+    },
+    {
+      "id": "gemini",
+      "systems": ["Windows", "macOS", "iOS", "Android", "web"],
+      "architectures": [],
+      "supplement": "谷歌的 AI 助手，打开网页就能直接对话和生成内容。官方也提供了 iOS 与安卓手机应用，并为 Windows 和 Mac 推出了桌面应用，可按手头设备任选一种方式使用。",
+      "intro": "Gemini 是 Google 推出的多模态 AI 助手，可以理解文字、图片、音频和视频，并据此回答或生成内容。它支持长文档与多文件上传分析、联网检索、代码生成与调试，还能与 Gmail、Google 文档、日历等服务联动，方便在既有工作流中直接调用；配合图像与视频生成能力，也能应付创意类需求。除了在浏览器中打开即用，官方还提供 iOS 与安卓手机应用，以及 Windows 和 Mac 桌面应用，适合已在使用 Google 生态、需要多模态分析与日常写作辅助的用户。",
+      "note": "来源：Google 官方渠道——gemini.google.com/app/download（官方标题「Gemini app on iOS and Android」）、Google 官方支持文章《How to use the Gemini app for Windows》、Google 官方博客 blog.google / Workspace Updates《The Gemini app for Mac》。桌面端（Windows/Mac）与移动端（iOS/Android）及网页版均有官方入口；官方未公布桌面客户端的 CPU 架构，故留空。"
+    },
+    {
+      "id": "grok",
+      "systems": ["web", "iOS", "Android"],
+      "architectures": [],
+      "supplement": "目前以网页版和官方手机应用为主，登录后即可对话、生成图片，桌面浏览器与手机都能随时使用。官方尚未推出正式的电脑客户端。",
+      "intro": "Grok 是 xAI 推出的 AI 助手，以风格活泼、敢说敢答和较强的实时信息获取能力为特色，可以直接读取 X（原推特）上的公开讨论，帮助了解最新热点与舆论走向。它能完成问答、写作、翻译、代码生成等常见任务，也支持图片理解与图像生成，并带有深度检索模式，方便围绕一个话题收集多方信息。使用上以网页版和官方手机应用为主，登录账号后即可对话和生成内容，暂未推出正式的电脑客户端，适合关注实时资讯、喜欢轻松交流风格的用户。",
+      "note": "来源：grok.com 网页版；官方应用商店条目——App Store「Grok - AI Assistant」id6670324846、Google Play 包名 ai.x.grok（xAI）。未取得官方 Windows/macOS 桌面客户端的权威确认（仅有第三方报道称 xAI 在推进桌面端），故不计入；移动端亦未公布 CPU 架构，留空。"
+    },
+    {
+      "id": "chatgpt",
+      "systems": ["Windows", "macOS", "iOS", "Android", "web"],
+      "architectures": [],
+      "supplement": "既可在网页上直接使用，也提供 Windows 与 Mac 电脑客户端以及 iOS、安卓手机应用。登录同一账号后，各端的对话记录可以接着继续。",
+      "intro": "ChatGPT 是 OpenAI 推出的 AI 对话助手，可用于写作、翻译、编程、数据分析和日常答疑。它能理解上传的图片与文档，围绕文件内容提问或总结，也能生成图像并通过联网搜索获取较新的信息；付费方案还可使用更强的模型以及语音、视频等实时对话功能。使用方式上，既可以直接在浏览器中打开，也提供 Windows 与 Mac 电脑客户端以及 iOS、安卓手机应用，登录同一账号即可在各端同步历史对话，适合学生、开发者和需要日常文字与信息处理助手的普通用户。",
+      "note": "来源：OpenAI 官方帮助中心文章《Using the ChatGPT Windows app》《Downloading the ChatGPT macOS app》《What are the system requirements for the ChatGPT macOS app?》《ChatGPT iOS App FAQ》，以及 chatgpt.com 网页版。桌面（Windows/macOS）与移动（iOS/Android）客户端均有官方文档。官方帮助页正文在本环境被 Cloudflare 拦截，未能读到明确的架构/位数声明，故架构留空。"
+    },
+    {
+      "id": "deepseek",
+      "systems": ["Windows", "macOS", "iOS", "Android", "web"],
+      "architectures": ["x64", "Apple Silicon"],
+      "supplement": "除网页版外，官方还提供 iOS、安卓手机应用和桌面客户端。电脑端安装时注意匹配机型：Windows 版面向 64 位系统，Mac 版需要 Apple 芯片并运行较新的 macOS。",
+      "intro": "DeepSeek 是深度求索推出的 AI 助手，以推理能力和代码编写见长，回答问题时会把思考过程展开，便于核对与学习。它能完成问答、写作、翻译、数学与逻辑推理、代码生成与调试等任务，支持上传文档后围绕内容提问，并可通过联网搜索补充较新信息。除网页版外，官方还提供 iOS、安卓手机应用以及电脑客户端，桌面端可后台运行并读写本地文件，适合处理耗时较长的任务，对需要长文本处理、编程辅助或希望免费体验较强推理模型的用户比较友好。",
+      "note": "来源：官网 deepseek.com/download。DeepSeek Harness 桌面端：Windows 版 dsh-latest-windows-x64.exe（x64）、macOS 版 dsh-latest-macos-arm64.dmg（官方标注 Apple 芯片、macOS 13+，即 Apple Silicon）；另有官方 iOS（App Store）与 Android（deepseek.apk）客户端及网页版。Android APK 的 CPU 架构官方未标注，未计入。"
+    }
+  ]
+}

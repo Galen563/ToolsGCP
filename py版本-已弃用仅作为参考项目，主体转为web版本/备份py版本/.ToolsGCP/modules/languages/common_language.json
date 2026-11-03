@@ -1,0 +1,392 @@
+{
+  "tip_success": {
+    "简体中文": "成功",
+    "繁體中文": "成功",
+    "English": "Success"
+  },
+  "tip_error": {
+    "简体中文": "错误",
+    "繁體中文": "錯誤",
+    "English": "Error"
+  },
+  "tip_warning": {
+    "简体中文": "提示",
+    "繁體中文": "提示",
+    "English": "Notice"
+  },
+  "tip_info": {
+    "简体中文": "信息",
+    "繁體中文": "資訊",
+    "English": "Info"
+  },
+  "enabled": {
+    "简体中文": "已开启",
+    "繁體中文": "已開啟",
+    "English": "On"
+  },
+  "disabled": {
+    "简体中文": "已关闭",
+    "繁體中文": "已關閉",
+    "English": "Off"
+  },
+  "term_AI": {
+    "简体中文": "AI",
+    "繁體中文": "AI",
+    "English": "AI"
+  },
+  "term_工具": {
+    "简体中文": "工具",
+    "繁體中文": "工具",
+    "English": "Tools"
+  },
+  "term_游戏": {
+    "简体中文": "游戏",
+    "繁體中文": "遊戲",
+    "English": "Games"
+  },
+  "term_平台": {
+    "简体中文": "平台",
+    "繁體中文": "平台",
+    "English": "Platforms"
+  },
+  "term_编程": {
+    "简体中文": "编程",
+    "繁體中文": "程式設計",
+    "English": "Programming"
+  },
+  "term_游戏引擎": {
+    "简体中文": "游戏引擎",
+    "繁體中文": "遊戲引擎",
+    "English": "Game engines"
+  },
+  "term_视频平台": {
+    "简体中文": "视频平台",
+    "繁體中文": "影音平台",
+    "English": "Video platforms"
+  },
+  "term_建筑/设计": {
+    "简体中文": "建筑/设计",
+    "繁體中文": "建築/設計",
+    "English": "Architecture & design"
+  },
+  "term_个性化": {
+    "简体中文": "个性化",
+    "繁體中文": "個人化",
+    "English": "Personalization"
+  },
+  "term_其他": {
+    "简体中文": "其他",
+    "繁體中文": "其他",
+    "English": "Other"
+  },
+  "term_剪辑": {
+    "简体中文": "剪辑",
+    "繁體中文": "剪輯",
+    "English": "Video editing"
+  },
+  "term_音频": {
+    "简体中文": "音频",
+    "繁體中文": "音訊",
+    "English": "Audio"
+  },
+  "term_图像": {
+    "简体中文": "图像",
+    "繁體中文": "圖像",
+    "English": "Images"
+  },
+  "term_设计": {
+    "简体中文": "设计",
+    "繁體中文": "設計",
+    "English": "Design"
+  },
+  "term_办公": {
+    "简体中文": "办公",
+    "繁體中文": "辦公",
+    "English": "Office"
+  },
+  "term_学习": {
+    "简体中文": "学习",
+    "繁體中文": "學習",
+    "English": "Learning"
+  },
+  "term_网络": {
+    "简体中文": "网络",
+    "繁體中文": "網路",
+    "English": "Network"
+  },
+  "term_系统": {
+    "简体中文": "系统",
+    "繁體中文": "系統",
+    "English": "System"
+  },
+  "term_安全": {
+    "简体中文": "安全",
+    "繁體中文": "安全",
+    "English": "Security"
+  },
+  "term_驱动": {
+    "简体中文": "驱动",
+    "繁體中文": "驅動",
+    "English": "Drivers"
+  },
+  "term_开发工具": {
+    "简体中文": "开发工具",
+    "繁體中文": "開發工具",
+    "English": "Developer tools"
+  },
+  "term_数据库": {
+    "简体中文": "数据库",
+    "繁體中文": "資料庫",
+    "English": "Databases"
+  },
+  "term_聊天": {
+    "简体中文": "聊天",
+    "繁體中文": "聊天",
+    "English": "Chat"
+  },
+  "term_音乐": {
+    "简体中文": "音乐",
+    "繁體中文": "音樂",
+    "English": "Music"
+  },
+  "term_阅读": {
+    "简体中文": "阅读",
+    "繁體中文": "閱讀",
+    "English": "Reading"
+  },
+  "term_下载工具": {
+    "简体中文": "下载工具",
+    "繁體中文": "下載工具",
+    "English": "Download tools"
+  },
+  "term_压缩解压": {
+    "简体中文": "压缩解压",
+    "繁體中文": "壓縮解壓",
+    "English": "Archivers"
+  },
+  "term_远程控制": {
+    "简体中文": "远程控制",
+    "繁體中文": "遠端控制",
+    "English": "Remote control"
+  },
+  "term_虚拟机": {
+    "简体中文": "虚拟机",
+    "繁體中文": "虛擬機",
+    "English": "Virtual machines"
+  },
+  "term_直播": {
+    "简体中文": "直播",
+    "繁體中文": "直播",
+    "English": "Live streaming"
+  },
+  "term_浏览器": {
+    "简体中文": "浏览器",
+    "繁體中文": "瀏覽器",
+    "English": "Browsers"
+  },
+  "term_IDE编辑器": {
+    "简体中文": "IDE编辑器",
+    "繁體中文": "IDE 編輯器",
+    "English": "IDE"
+  },
+  "term_MC": {
+    "简体中文": "MC",
+    "繁體中文": "MC",
+    "English": "Minecraft"
+  },
+  "term_MC启动器": {
+    "简体中文": "MC启动器",
+    "繁體中文": "MC 啟動器",
+    "English": "MC launcher"
+  },
+  "term_壁纸": {
+    "简体中文": "壁纸",
+    "繁體中文": "桌布",
+    "English": "Wallpaper"
+  },
+  "term_编程语言": {
+    "简体中文": "编程语言",
+    "繁體中文": "程式語言",
+    "English": "Programming languages"
+  },
+  "term_测试": {
+    "简体中文": "测试",
+    "繁體中文": "測試",
+    "English": "Testing"
+  },
+  "term_传输": {
+    "简体中文": "传输",
+    "繁體中文": "傳輸",
+    "English": "Transfer"
+  },
+  "term_创作": {
+    "简体中文": "创作",
+    "繁體中文": "創作",
+    "English": "Creation"
+  },
+  "term_官方": {
+    "简体中文": "官方",
+    "繁體中文": "官方",
+    "English": "Official"
+  },
+  "term_录屏": {
+    "简体中文": "录屏",
+    "繁體中文": "螢幕錄影",
+    "English": "Screen recording"
+  },
+  "term_启动器": {
+    "简体中文": "启动器",
+    "繁體中文": "啟動器",
+    "English": "Launcher"
+  },
+  "term_清理": {
+    "简体中文": "清理",
+    "繁體中文": "清理",
+    "English": "Cleanup"
+  },
+  "term_趣味": {
+    "简体中文": "趣味",
+    "繁體中文": "趣味",
+    "English": "Fun"
+  },
+  "term_实用": {
+    "简体中文": "实用",
+    "繁體中文": "實用",
+    "English": "Utility"
+  },
+  "term_视频": {
+    "简体中文": "视频",
+    "繁體中文": "影片",
+    "English": "Video"
+  },
+  "term_卸载": {
+    "简体中文": "卸载",
+    "繁體中文": "解除安裝",
+    "English": "Uninstall"
+  },
+  "term_优化": {
+    "简体中文": "优化",
+    "繁體中文": "最佳化",
+    "English": "Optimization"
+  },
+  "term_赞助": {
+    "简体中文": "赞助",
+    "繁體中文": "贊助",
+    "English": "Sponsorship"
+  },
+  "term_全平台": {
+    "简体中文": "全平台",
+    "繁體中文": "全平台",
+    "English": "All platforms"
+  },
+  "term_web": {
+    "简体中文": "网页",
+    "繁體中文": "網頁",
+    "English": "Web"
+  },
+  "term_自定义": {
+    "简体中文": "自定义",
+    "繁體中文": "自訂",
+    "English": "Custom"
+  },
+  "term_不开源": {
+    "简体中文": "不开源",
+    "繁體中文": "不開源",
+    "English": "Closed source"
+  },
+  "term_GitHub": {
+    "简体中文": "GitHub",
+    "繁體中文": "GitHub",
+    "English": "GitHub"
+  },
+  "term_GitCode": {
+    "简体中文": "GitCode",
+    "繁體中文": "GitCode",
+    "English": "GitCode"
+  },
+  "term_Gitee": {
+    "简体中文": "Gitee",
+    "繁體中文": "Gitee",
+    "English": "Gitee"
+  },
+  "term_GitLab": {
+    "简体中文": "GitLab",
+    "繁體中文": "GitLab",
+    "English": "GitLab"
+  },
+  "list_separator": {
+    "简体中文": "、",
+    "繁體中文": "、",
+    "English": ", "
+  },
+  "group_suffix": {
+    "简体中文": "：",
+    "繁體中文": "：",
+    "English": ": "
+  },
+  "and_separator": {
+    "简体中文": "、",
+    "繁體中文": "、",
+    "English": ", "
+  },
+  "term_Windows": {
+    "简体中文": "Windows",
+    "繁體中文": "Windows",
+    "English": "Windows"
+  },
+  "term_macOS": {
+    "简体中文": "macOS",
+    "繁體中文": "macOS",
+    "English": "macOS"
+  },
+  "term_Linux": {
+    "简体中文": "Linux",
+    "繁體中文": "Linux",
+    "English": "Linux"
+  },
+  "term_Android": {
+    "简体中文": "Android",
+    "繁體中文": "Android",
+    "English": "Android"
+  },
+  "term_iOS": {
+    "简体中文": "iOS",
+    "繁體中文": "iOS",
+    "English": "iOS"
+  },
+  "term_x64": {
+    "简体中文": "x64",
+    "繁體中文": "x64",
+    "English": "x64"
+  },
+  "term_x86": {
+    "简体中文": "x86",
+    "繁體中文": "x86",
+    "English": "x86"
+  },
+  "term_arm64": {
+    "简体中文": "arm64",
+    "繁體中文": "arm64",
+    "English": "arm64"
+  },
+  "term_arm": {
+    "简体中文": "arm",
+    "繁體中文": "arm",
+    "English": "arm"
+  },
+  "term_Apple Silicon": {
+    "简体中文": "Apple Silicon",
+    "繁體中文": "Apple Silicon",
+    "English": "Apple Silicon"
+  },
+  "switch_on_text": {
+    "简体中文": "开",
+    "繁體中文": "開",
+    "English": "On"
+  },
+  "switch_off_text": {
+    "简体中文": "关",
+    "繁體中文": "關",
+    "English": "Off"
+  }
+}

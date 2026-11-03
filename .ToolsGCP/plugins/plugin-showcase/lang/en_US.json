@@ -1,0 +1,16 @@
+{
+  "title": "Plugin Showcase",
+  "hint": "This page lists everything a plugin can access: plugin info, the ToolsGCP resource library, and its own writable folder. Copy it and replace the page with your own feature.",
+  "info_id": "Plugin id",
+  "info_version": "Version",
+  "info_author": "Author",
+  "info_locale": "Current language",
+  "info_data_dir": "My writable folder",
+  "res_total": "Resources in library",
+  "res_categories": "Categories",
+  "res_site": "With official site",
+  "res_repo": "With repository",
+  "res_top": "Top categories",
+  "click_me": "Click me (writes the count into my own data file)",
+  "count_now": "You clicked {count} times. That number lives in context.data_dir."
+}

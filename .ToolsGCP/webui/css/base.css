@@ -1,0 +1,547 @@
+/* ============================================================================
+ * ToolsGCP · 基础重置与通用工具类
+ * ============================================================================*/
+
+* { box-sizing: border-box; }
+html, body, #app { height: 100%; width: 100%; margin: 0; padding: 0; }
+/* ⚠️ 必须 !important —— 后面布局辅助里的 `.app-root, #app { display: flex }` 比 [v-cloak]
+   (0,1,0) 更靠后且同为普通声明；不加 important 时在部分内核上会被它压回去，
+   启动瞬间就会露出未挂载的 {{ t(...) }} / {{ bootText }} 与 v-if 弹层。*/
+[v-cloak] { display: none !important; }
+
+body {
+  font-family: var(--ui-font);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--page);
+  overflow: hidden;
+  cursor: default;
+  user-select: none;
+  -webkit-user-select: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+button { font: inherit; color: inherit; border: 0; background: none; padding: 0; cursor: default; }
+/* ⚠️ 上面这条把全局按钮设成了默认箭头，导致"鼠标悬浮在 UI 上不是手型"。
+   这里把所有可点元素统一回手型；禁用态仍保持默认箭头。*/
+button:not(:disabled):not(.is-disabled),
+a[href],
+[role="button"],
+.nav-item, .nav-burger, .more-item, .list-item, .card, .card-btn, .icon-btn,
+.seg-item, .chip, .combo-trigger, .combo-item, .tb-btn, .switch,
+.note-btn, .copy-btn, .copy-number, .detail-link, .card-menu-item, .tray-item,
+.filter-btn, .search-clear, .search-go, .sel-check, .card-select, .card-select input,
+.interest-chip, .plugin-card, .q[role="button"] { cursor: pointer; }
+button:disabled, .is-disabled, .is-disabled * { cursor: default; }
+input, textarea, select { font: inherit; }
+img { -webkit-user-drag: none; user-select: none; }
+a { color: var(--accent); text-decoration: none; }
+h1, h2, h3, p, ul { margin: 0; }
+ul { padding: 0; list-style: none; }
+::selection { background: var(--accent-soft); color: var(--text); }
+
+/* ===================== 焦点可见性 =====================
+   症状：按几个键就会把整片展开的 UI "框选住"，观感很差。
+   做法：**非输入控件一律不画焦点框** —— 按钮 / 导航项 / 卡片 / 列表项 / 下拉触发器就算被
+   Tab 或宿主程序聚焦，也不再出现那个 2px 框（那圈框正是"被框选住"观感的一部分）。
+   只有真正打字的地方（input / textarea / select）保留键盘焦点环：
+   用的是 :focus-visible，鼠标点进去不会亮框，键盘 Tab 进去才亮。*/
+:focus { outline: none; }
+:focus-visible { outline: none; }
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 88%, transparent);
+  outline-offset: 1px;
+}
+
+/* ===================== 文本选择（同上：不画焦点框那套） =====================
+   UI 骨架（侧栏 / 标题栏 / 内容区 / 各类控件外壳）**禁止选中**：
+   按几个键就整块蓝底高亮 UI 的观感就是这么来的。
+   ⚠️ 只列"容器与控件外壳"，文字内容一律靠下面那条 text 白名单放行，
+      新增组件时记得把类名补进这两组之一，否则要么选不中、要么又能框住整片 UI。*/
+.app-root, #app, .nav, .titlebar, .content, .page, .btn, .icon-btn, .card, .setting-row,
+.list-item, .chip, .tag, .combo-trigger, .combo-pop, .toast, .card-menu, .more-pop, .tray-menu,
+.modal, .toolbar-row, .filter-btn, .seg-item, .nav-item, .more-item, .log-item, .qq-row,
+.log-list, .card-head, .card-foot, .card-head * {
+  user-select: none; -webkit-user-select: none;
+}
+/* 允许选中的"内容文字"：输入类 + 长文正文（复制日志 / 公告 / 详情简介 / 开发指南…）*/
+input, textarea, select, [contenteditable="true"],
+.selectable,
+.log-preview,
+.notice-body,
+.dev-guide,
+.maker-preview,
+.detail-desc,
+code, pre { user-select: text; -webkit-user-select: text; }
+
+.sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+.ic { display: inline-block; vertical-align: middle; fill: none; stroke: currentColor;
+      stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex: 0 0 auto; }
+.ic use, .ic path, .ic rect, .ic circle { fill: none; stroke: inherit; }
+.ic.is-solid use { fill: currentColor; stroke: none; }
+.text-accent { color: var(--accent); }
+
+/* 滚动条 8px / 圆角 4（原版同款）*/
+::-webkit-scrollbar { width: var(--scrollbar); height: var(--scrollbar); }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--text) 24%, transparent);
+  border-radius: 4px; min-height: 30px;
+}
+::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--text) 40%, transparent); }
+::-webkit-scrollbar-thumb:active { background: color-mix(in srgb, var(--text) 52%, transparent); }
+::-webkit-scrollbar-corner { background: transparent; }
+
+/* ============================================================================
+ * z-index 层级表（层级只在本文件维护，其它地方引用变量，不要再写裸数字）
+ * 
+ *  44  --z-backdrop      更多的透明遮罩：只吃**内容区**的点击，必须低于侧栏，
+ *                        否则遮罩会盖住侧栏 →点不动导航项
+ *  46  --z-nav           收起态侧栏：低于内容区（不遮挡卡片）
+ *  50  --z-content       内容区
+ *  58  --z-nav-expanded  展开态侧栏：要盖在内容区之上 → 必须 > 内容区
+ *  60  --z-more-pop      更多弹层：高于展开态侧栏、低于顶部栏
+ *  70  --z-titlebar      顶部栏：高于侧栏与内容区
+ *  更高层级在 components/overlays 里：模态 140、toast 160、
+ *  右键/托盘菜单 200/260、tooltip 300 —— 它们都是 position:fixed，天然盖住侧栏。
+ * ==========================================================================*/
+:root {
+  --z-backdrop: 44;
+  --z-nav: 46;
+  --z-content: 50;
+  --z-nav-expanded: 58;
+  --z-more-pop: 60;
+  --z-titlebar: 70;
+}
+
+/* ===================== 布局辅助 =====================*/
+.app-root, #app { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+#app {
+  background:
+    radial-gradient(900px 520px at 8% -12%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 62%),
+    radial-gradient(760px 460px at 104% 2%, color-mix(in srgb, var(--accent) 6%, transparent), transparent 60%),
+    linear-gradient(180deg, var(--page-2), var(--page) 40%);
+}
+.app-body { flex: 1 1 auto; min-height: 0; display: flex; position: relative; overflow: hidden; }
+.nav-rail { flex: 0 0 var(--nav-collapsed); width: var(--nav-collapsed); }
+.content { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; overflow: hidden; position: relative; z-index: var(--z-content); }
+
+.page { position: absolute; inset: 0; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.page-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; }
+.narrow { max-width: var(--content-max); margin: 0 auto; padding: 24px var(--content-margin) 44px; }
+.narrow-wide { max-width: 1080px; margin: 0 auto; padding: 30px var(--page-margin) 44px; display: flex; flex-direction: column; gap: 18px; }
+.muted { color: var(--text-secondary); }
+.grow { flex: 1 1 auto; }
+.grow-list { flex: 1 1 auto; min-height: 0; }
+
+.row { display: flex; align-items: center; }
+.row-4 { gap: 4px; } .row-6 { gap: 6px; } .row-8, .gap8 { gap: 8px; } .gap10 { gap: 10px; } .gap12 { gap: 12px; } .gap18 { gap: 18px; }
+.right { justify-content: flex-end; } .right-row { justify-content: flex-end; }
+.center { text-align: center; }
+.pad20 { padding: 20px; } .pad40 { padding: 40px 20px; } .pad12 { padding: 12px; }
+.ellipsis { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+
+.sub-title { font-size: 16px; font-weight: 600; letter-spacing: .01em; }
+.section-title { font-size: 20px; font-weight: 600; margin-bottom: 12px; }
+.strong { font-size: 14px; font-weight: 600; }
+.body-1 { font-size: 13px; color: var(--text); line-height: 1.65; }
+.body-2 { font-size: 12.5px; color: var(--text-secondary); line-height: 1.6; margin-top: 6px; }
+.cap { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+.tiny { font-size: 11px; }
+.accent-label { font-size: 12px; color: var(--accent); font-weight: 600; }
+.hairline { height: 1px; background: var(--divider); flex: 1 1 auto; }
+.hairline.thin { margin: 6px 0; flex: none; width: 100%; }
+.center-col { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.glyph { display: inline-flex; align-items: center; justify-content: center; width: 100%; height: 100%;
+  font-size: 15px; font-weight: 700; color: var(--text-secondary); }
+
+/* 玻璃面板*/
+.panel {
+  background: var(--card-glass);
+  border: 1px solid var(--card-border);
+  border-radius: var(--card-radius);
+  backdrop-filter: blur(var(--blur)) saturate(150%);
+  -webkit-backdrop-filter: blur(var(--blur)) saturate(150%);
+  box-shadow: var(--shadow-card), var(--ring);
+  padding: 20px;
+}
+
+/* ===================== 标题栏 =====================*/
+.titlebar {
+  flex: 0 0 auto; height: var(--tb-height); display: flex; align-items: center;
+  position: relative; z-index: var(--z-titlebar);
+  background: var(--tb-bg);
+  border-bottom: 1px solid var(--tb-border);
+  box-shadow: var(--fx-extra);
+  backdrop-filter: blur(var(--tb-blur)) saturate(var(--fx-sat));
+  -webkit-backdrop-filter: blur(var(--tb-blur)) saturate(var(--fx-sat));
+}
+.titlebar-left { display: flex; align-items: center; gap: 10px; padding-left: 14px; min-width: 0; }
+.titlebar-icon { width: 18px; height: 18px; object-fit: contain; pointer-events: none;
+  filter: drop-shadow(0 0 10px var(--accent-soft)); }
+.titlebar-title { font-size: 14px; font-weight: 600; letter-spacing: .01em; }
+.titlebar-drag { flex: 1 1 auto; height: 100%; }
+/* 窗口按钮组：贴右端但留 8px 呼吸距（关闭按钮不再顶到屏幕边缘）。
+   三个按钮是 32×28 的圆润方角 + 1px 细描边（"轮廓"感），平时透明底，
+   hover 才填底色并隐去描边；关闭键 hover 走 Windows 的红色 #c42b1c。
+   ⚠️ 尺寸用像素写死（不再吃 --tb-btn-w/h 的 46×32）—— 那套是老版"贴边等宽"的按钮，
+      和"方形圆润角"的观感不是一回事。变量已同步改成 32/28，避免两处事实打架。*/
+.titlebar-buttons { display: flex; align-items: center; gap: 6px; padding-right: 8px; }
+.tb-btn {
+  width: 32px; height: 28px; border-radius: 8px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--glass-border);
+  background: transparent; color: var(--text-secondary);
+  margin: 0;
+  transition: background 90ms ease, color 90ms ease, border-color 90ms ease;
+}
+.tb-btn:hover { background: var(--hover); color: var(--text); border-color: transparent; }
+.tb-btn:active { background: var(--hover-strong); }
+.tb-btn.tb-close:hover { background: #c42b1c; color: #fff; border-color: #c42b1c; }
+.tb-btn.tb-close:active { background: #a3241a; border-color: #a3241a; color: #fff; }
+.app-root.is-fullscreen .titlebar, #app.is-fullscreen .titlebar,
+.titlebar.is-hidden { display: none; }
+#app.is-maximized .titlebar { border-bottom-color: color-mix(in srgb, var(--glass-border) 70%, transparent); }
+
+/* ===================== 左侧导航（48 ↔ 240 flyout） =====================*/
+/* 侧栏与右侧内容之间那条明显的界面：一条 1px 竖线，收起/展开态都在
+   （原版 FluentWindow 的导航面板右边界就是这样一条线）*/
+:root { --divider-strong: #2e2e2e; }
+:root[data-theme="light"] { --divider-strong: #e6e9f0; }
+/* 左侧栏占位轨：只负责占住收起态那 48px 与那条 1px 竖线，故意保持静态定位
+   （面板本体 .nav 是 position:absolute，层级由上面的 z-index 表决定）*/
+.nav-rail {
+  flex: 0 0 var(--nav-collapsed); width: var(--nav-collapsed);
+  border-right: 1px solid var(--divider-strong);
+}
+.content { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+
+/* 更多弹层：贴左侧栏右边缘，和侧栏顶对齐（不要压到标题栏）*/
+.more-pop {
+  position: absolute; left: calc(var(--nav-collapsed) + 8px); bottom: 56px; min-width: 158px; padding: 6px;
+  z-index: var(--z-more-pop); display: flex; flex-direction: column; gap: 2px;
+  border-radius: 12px; border: 1px solid var(--glass-border);
+  background: var(--tb-bg);
+  backdrop-filter: blur(var(--tb-blur)) saturate(var(--fx-sat));
+  -webkit-backdrop-filter: blur(var(--tb-blur)) saturate(var(--fx-sat));
+  box-shadow: var(--shadow-float);
+  transform-origin: left bottom; animation: popIn 170ms cubic-bezier(.22,.8,.2,1) both;
+}
+.more-pop.fx-noise::before { opacity: 1; }
+
+.nav {
+  position: absolute; left: 0; top: 0; bottom: 0; width: var(--nav-collapsed); z-index: var(--z-nav);
+  display: flex; flex-direction: column; padding: 4px 0 8px; overflow: hidden;
+  background: transparent; border-right: 1px solid transparent;
+  transition: width 220ms cubic-bezier(.22,.72,.18,1), background 180ms ease,
+              border-color 180ms ease, box-shadow 220ms ease;
+}
+.nav.is-expanded {
+  width: var(--nav-expanded);
+  /* 展开后必须盖在内容区之上（--z-nav-expanded > --z-content），
+     但仍低于顶部栏(--z-titlebar)与各类弹层（.more-pop / 模态 / toast / tooltip）*/
+  z-index: var(--z-nav-expanded);
+  background: var(--tb-bg);
+  border-right-color: var(--divider-strong);
+  box-shadow: 22px 0 48px rgba(0, 0, 0, .30);
+  backdrop-filter: blur(var(--tb-blur)) saturate(var(--fx-sat));
+  -webkit-backdrop-filter: blur(var(--tb-blur)) saturate(var(--fx-sat));
+}
+/* 云母底噪：只加在展开后的侧栏上*/
+.nav.is-expanded.fx-noise::before { opacity: 1; }.nav-head { flex: 0 0 auto; padding: 2px 0 4px; }
+.nav-burger {
+  width: 36px; height: 36px; margin: 0 6px; display: flex; align-items: center; justify-content: center;
+  border-radius: 9px; color: var(--text-secondary);
+  transition: background 130ms ease, color 130ms ease, transform 160ms ease;
+}
+.nav-burger:hover { background: var(--hover); color: var(--text); }
+.nav-burger:active { transform: scale(.94); }
+/* 汉堡按钮永远不画焦点环：宿主/Alt+Tab 回窗口时会把它当成"第一个可聚焦控件"而框住它，
+   这个框必须去掉。它是纯鼠标控件（键盘可用 Ctrl+B 之类的入口），所以这里直接取消焦点视觉；
+   同时 index.html 上加了 tabindex="-1"，不再进 Tab 顺序。*/
+.nav-burger:focus, .nav-burger:focus-visible { outline: none; }
+.nav-group { display: flex; flex-direction: column; gap: 2px; }
+.nav-divider { height: 1px; margin: 8px 12px; background: var(--divider); opacity: 0; transition: opacity 160ms ease; }
+.nav.is-expanded .nav-divider { opacity: 1; }
+.nav-spacer { flex: 1 1 auto; }
+
+/* 左右内边距 8.5px（原 10px）：收起态导航项外框 = (48 - 1px 右边框) - 6*2 = 35px 宽，
+   图标 18px 时 8.5 + 18 + 8.5 = 35 ⇒ 图标水平正中（dxCenter = 0）；
+   展开态文字左边界仍有 8.5px，不顶边。*/
+.nav-item {
+  position: relative; height: var(--nav-item-h); margin: 0 6px; padding: 0 8.5px;
+  display: flex; align-items: center; gap: 12px; border-radius: 9px;
+  color: var(--text-secondary); white-space: nowrap; overflow: hidden;
+  /* ⚠️ 这里**刻意没有 background 的过渡**：
+     选中框的背景要**瞬时**换过去（跟页面切换同一帧），滑动感只留给 .nav-indicator。*/
+  transition: color 140ms ease, transform 140ms ease;
+}
+.nav-item:hover { background: var(--hover); color: var(--text); }
+.nav-item:active { transform: scale(.985); }
+/* 选中态 = **中性浅色底**（不是蓝色）。
+   · 深色主题：白 6%（--hover 同款"一点点浅"）；
+   · 浅色主题：黑 6%（--hover 在浅色主题下就是黑 4%，这里取 6% 让选中比 hover 稍重）。
+   这里**不带 transition**（上面的 .nav-item 已把 background 过渡去掉），所以切换页面时
+   选中框瞬间落到目标项；蓝色的滑动标记由 .nav-indicator 单独负责。*/
+.nav-item.is-active {
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+  color: var(--text);
+}
+.nav-item.is-active:hover { background: color-mix(in srgb, var(--text) 9%, transparent); }
+.nav-pill {
+  position: absolute; left: -6px; top: 50%; width: 3px; height: 0; border-radius: 0 3px 3px 0;
+  background: var(--accent); transform: translateY(-50%);
+  transition: height 200ms cubic-bezier(.22,.8,.2,1);
+}
+.nav-item.is-active .nav-pill { height: 18px; }
+
+/* ===========================================================================
+ * 修复区 · 侧栏选中标：**浅色框瞬时切换 + 只有蓝色小标在动**
+ * 
+ * 期望行为：
+ *   · 选中框不用蓝色，而是背景色加一点点浅色（中性浅色底）；
+ *   · 选中框是"直接切换到对应页面"——瞬时换，不做滑动；
+ *   · 只有蓝色小标才是动态变化的，而且要有拉伸效果：
+ *     前身先冲出去、后身固定不动，然后像弹簧一样跟上。
+ * 三件事的分工（与 app.js 的 syncNavIndicator 严格对齐，别改坏其中任何一边）：
+ *   ① 选中框的**中性浅色底** → .nav-item.is-active（上面，无 transition，瞬时切换）；
+ *   ② 会动的**蓝色小标** → 就是本元素**本身**：3px 宽、蓝色、圆头；
+ *   ③ 拉伸/弹簧 → app.js 逐帧写 `transform: translateY(top px)` + `height: height px`，
+ *      其中 height 在 6px ~ 18px+ 之间变化（前沿先冲出去、后沿弹簧跟上）。
+ *      ⚠️ 所以这里**绝不能**给它 `left/right` 拉满宽度、也不能把可见的竖条画在 ：before 上
+ *         —— 那样 height 动画就只剩"一条 18px 固定高度的条在跳"，拉伸效果会消失。
+ *      ⚠️ 也不要写 transition：JS 是 rAF 逐帧驱动，CSS 再叠一条会互相打架（拖尾/抖动）。
+ * left: 6px 与 .nav-item 的 margin: 0 6px 对齐 ⇒ 小标正好贴在条目左边缘（原版 .nav-pill 的位置）；
+ * z-index: 0 + .nav-item z-index: 1 ⇒ 条目文字/图标压在小标之上；pointer-events: none 永不吃点击。
+ * =========================================================================*/
+.nav-indicator {
+  position: absolute; left: 6px; top: 0; width: 3px;   /* ★ 3px 竖条本体，宽度不参与动画*/
+  border-radius: 0 3px 3px 0;                          /* 贴边一侧直角、朝内一侧圆头（原版形态）*/
+  background: var(--accent);                           /* 蓝色小标 = 全站唯一的选中动画元素*/
+  opacity: 0; pointer-events: none;                    /* 首帧量好前不显示，也不会挡住点击*/
+  z-index: 0; will-change: transform, height;
+}
+.nav-indicator.is-ready { opacity: 1; }
+/* 条目内容压在选中块之上*/
+.nav-item { z-index: 1; }
+/* 旧的两套静态选中标（.nav-pill 竖条 + is-active 底色）退场，避免和滑动块重叠。
+   上面 `.nav-item.is-active .nav-pill { height: 18px }` 保留但不生效（display:none 优先）。*/
+.nav-pill { display: none; }
+.nav-icon { position: relative; z-index: 1; }
+/* 图标尺寸：index.html 里写死了 width/height="17"，
+   所以在 CSS 里统一放大到 18px（不改 viewBox / 不改 symbol，只改渲染盒）。
+   36px 行高里上下各留 9px；收起态 48px 宽时左右各留 15px（item 6~42，图标 15~33）⇒ 居中。*/
+.nav-item .nav-icon, .nav-item svg.ic { width: 18px; height: 18px; }
+.nav-item.is-active .nav-icon { color: var(--accent); }
+.nav-label {
+  font-size: 13px; opacity: 0; transform: translateX(-6px); width: 1px; overflow: hidden;
+  transition: opacity 170ms ease 40ms, transform 200ms ease 30ms;
+}
+.nav.is-expanded .nav-label { opacity: 1; transform: translateX(0); width: auto; }
+/* 未读红点：⚠️ 必须**压在图标上面**（z-index 高于 nav-icon），不是垫在图标底下。
+   图标放大到 18px 后（收起态图标盒 15~33 / 9~27），红点默认 15×15：
+   top/right 各 4px ⇒ 红点压在图标右上角（红点中心 ≈ 图标右上角外侧一点），不越出导航项。
+   尺寸逐步收到 11px + 8px 字号（红点太大、数字太粗会被当成 UI 噪音）。
+   和 .download-badge-count 保持同一尺寸（飞行时不跳变）。*/
+.nav-badge {
+  position: absolute; top: 4px; right: 3px; min-width: 11px; height: 11px; padding: 0 2.5px;
+  display: inline-flex; align-items: center; justify-content: center; border-radius: 6px;
+  background: #fa5151; color: #fff; font-size: 8px; font-weight: 700; line-height: 1;
+  box-shadow: 0 0 0 2px var(--page);
+  z-index: 20;                       /* nav-icon 的 z-index 是 1，这里必须更高*/
+}
+.nav.is-expanded .nav-badge { position: static; margin-left: auto; box-shadow: none; }
+/* 更多遮罩：全屏吃掉内容区的点击（收起侧栏），但必须低于 .nav，
+   否则展开/收起状态下点侧栏导航都会被它吞掉*/
+.pop-backdrop { position: absolute; inset: 0; z-index: var(--z-backdrop); background: transparent; }
+
+.more-item {
+  height: 30px; padding: 0 10px; display: flex; align-items: center; gap: 10px;
+  border-radius: 8px; color: var(--text-secondary); font-size: 12.5px; white-space: nowrap;
+  transition: background 120ms ease, color 120ms ease;
+}
+.more-item:hover { background: var(--hover); color: var(--text); }
+/* 与侧栏选中态保持一致 —— 更多弹层里的当前页面也用中性浅底，不再用蓝色块。*/
+.more-item.is-active { background: color-mix(in srgb, var(--text) 6%, transparent); color: var(--text); }
+/* 更多浮层的图标：index.html 里写死 14px → 统一放大到 15px，
+   与 12.5px 文字、30px 行高比例一致（同样只改渲染盒，不动 symbol）。*/
+.more-item .ic { width: 15px; height: 15px; }
+
+/* ===========================================================================
+ * 修复区 · 竖排 flex 容器里的 .hairline 不再被拉成一大块空白
+ * 
+ * .hairline 的基础规则是 `flex: 1 1 auto`（见本文件布局辅助一节），那是给 .row 里的
+ * **横向**分隔线用的（行方向 grow = 占满剩余宽度，正确）。
+ * 但下面这些容器都是竖排 flex，同一个 flex:1 会让这条 1px 线在**主轴(高)**方向
+ * 一起抢剩余空间 —— 1px 的线被拉到几百像素高，就是资源浏览顶部有一大块
+ * 空白占位（以及插件页标题下的空白）的由来：
+ *   · index.html  <div class="maker-root">     → <div class="hairline">   ← 直接原因
+ *   · index.html  <div class="plugin-wrap">    → <div class="hairline">
+ *   · AI 面板（.ai-drawer / .ai-embedded / .ai-history）已有各自的修复规则，见 components.css
+ * 证据：layout.css `.maker-root { display:flex; flex-direction:column; height:100% }`、
+ *       layout.css `.plugin-wrap { display:flex; flex-direction:column }`、
+ *       本文件 `.hairline { flex: 1 1 auto }`。
+ * 修法：用 max-height 把它的主轴最终尺寸钉死在 1px —— 竖排里不再膨胀，
+ *       行方向（横向 grow + 高度 1px）的用法完全不受影响；.hairline.thin 早已 flex:none，
+ *       带上 max-height:1px 也无副作用。为可读性再补两条显式规则。
+ * =========================================================================*/
+.hairline { max-height: 1px; }
+.maker-root > .hairline,
+.plugin-wrap > .hairline { flex: 0 0 auto; height: 1px; min-height: 1px; width: 100%; }
+
+/* ===========================================================================
+ * 修复区 · 标题栏三个窗口按钮去掉"方框轮廓"
+ * 
+ * 全屏 / 最小化 / 关闭三个按钮外面那圈描边要去掉。
+ * 之前 .tb-btn 是32×28 圆润方角 + 1px 细描边的轮廓按钮，
+ * 描边来自本文件 `.tb-btn { border: 1px solid var(--glass-border) }`。现在：
+ *   · 平时 = 无边框、透明底、只有图标（hover 才出现圆角底色块）；
+ *   · hover / active **只加底色，不加任何框**（关闭键的 Windows 红 #c42b1c 保留）；
+ *   · 键盘焦点环也不画：宿主程序 Alt+Tab 回来时这几个按钮会被当成"首个可聚焦控件"
+ *     框住（焦点可见性一节就是修这个观感），这里对 .tb-btn 再显式钉一次 outline:none。
+ * 做法：border 宽度归零（不是 border-color:transparent）—— 透明边仍占 2px，
+ *   按钮视觉中心会偏 1px；归零后图标才是真正居中。
+ * ⚠️ 保留 border-radius 与过渡：hover 底色块仍是圆角，观感和其它 icon-btn 一致。
+ * =========================================================================*/
+.tb-btn {
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+}
+.tb-btn:hover { background: var(--hover); color: var(--text); border: 0; }
+.tb-btn:active { background: var(--hover-strong); border: 0; }
+.tb-btn.tb-close:hover { background: #c42b1c; color: #fff; border: 0; }
+.tb-btn.tb-close:active { background: #a3241a; color: #fff; border: 0; }
+.tb-btn:focus,
+.tb-btn:focus-visible { outline: none; }
+/* 图标尺寸统一：模板里给的是 width/height="12"，这里钉住渲染盒，避免以后换图标时大小漂移*/
+.tb-btn .ic { width: 12px; height: 12px; }
+
+/* ===========================================================================
+ * 修复区 · 标题栏三个窗口按钮曾按 Windows 11 原生 caption 风格改造
+ * 
+ * 参考实现（Win11 caption）的核心就三点：**贴边等宽方块 + 无圆角 + 整块 hover 填充**。
+ * 把"圆润方角小图标按钮"的观感改成 caption：
+ *   · .titlebar-buttons：gap 0、去掉右侧 8px 呼吸距 ⇒ 三个按钮连成一条贴到窗口右上角；
+ *   · .tb-btn：46 宽 × **铺满标题栏高度**、border-radius 0、无边框、透明底；
+ *     普通键 hover = var(--hover)、active = var(--hover-strong)；
+ *     关闭键 hover = #c42b1c、active = #a3241a（Win11 的红色，不是纯红）；
+ *   · 图标 11×11（icons.js 用 24 网格：min=横线 / fullscreen=镂空方块 /
+ *     fullscreen_exit=双镂空方块 / close=X），在 46×47 的块里居中。
+ * ⚠️ 高度为什么写 100% 而不是写死 48px：标题栏 `.titlebar` 是 height:48 + 1px 下边框
+ *    （box-sizing:border-box）⇒ 内容盒只有 47px。写 48 会往下溢出 1px，hover 填充会
+ *    盖掉标题栏底部那条分隔线（看起来像"底部缺一像素"）。用 align-self:stretch + 100%
+ *    让按钮正好 47px 铺满，既不超出标题栏，也保留底部分隔线。
+ * ⚠️ outline 仍然保持 none（焦点可见性一节的结论：宿主 Alt+Tab 回窗口时会框住首个可聚焦控件）。
+ * =========================================================================*/
+.titlebar-buttons {
+  gap: 0;
+  padding-right: 0;
+  align-self: stretch;      /* 让容器撑满标题栏内容高（47px），按钮才能 100% 铺满*/
+  height: 100%;
+  align-items: stretch;
+  flex: 0 0 auto;           /* 窗口再窄也不许压缩这三个按钮（先压 .titlebar-drag）*/
+}
+.tb-btn {
+  width: 46px;
+  height: 100%;
+  max-height: var(--tb-height);
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 0;         /* 原生 caption 没有圆角*/
+  background: transparent;
+  color: var(--text-secondary);
+  transition: background 90ms ease, color 90ms ease;
+}
+.tb-btn:hover { background: var(--hover); color: var(--text); }
+.tb-btn:active { background: var(--hover-strong); }
+.tb-btn.tb-close:hover { background: #c42b1c; color: #fff; }
+.tb-btn.tb-close:active { background: #a3241a; color: #fff; }
+.tb-btn:focus,
+.tb-btn:focus-visible { outline: none; }
+.tb-btn .ic { width: 11px; height: 11px; }
+
+/* ===========================================================================
+ * 修复区 · 标题栏按钮是正方形圆润角形状（当前形态）
+ * 
+ * 上面 caption 一节那种 46×47 贴边直角块**不是**最终形态。最终要的是
+ * 32×28 圆润方角的**形状** + 不显示轮廓的**观感**两者结合：
+ * 做法（全部只覆盖 layout 尺寸，不碰图标/颜色语义）：
+ *   · 按钮组 gap 6、右侧留 8px 呼吸距，垂直居中（不再 stretch 铺满 47px）；
+ *   · .tb-btn 32×28、圆角 8、border:0、透明底；hover/active 只给圆角底色块；
+ *     关闭键 hover/active 保留 Win11 红；
+ *   · 12px 图标在 32×28 里居中；outline 仍然 none。
+ * =========================================================================*/
+.titlebar-buttons {
+  gap: 6px;
+  padding-right: 8px;
+  align-self: center;
+  height: auto;
+  align-items: center;
+  flex: 0 0 auto;
+}
+.tb-btn {
+  width: 32px;
+  height: 28px;
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  transition: background 90ms ease, color 90ms ease;
+}
+.tb-btn:hover { background: var(--hover); color: var(--text); border: 0; }
+.tb-btn:active { background: var(--hover-strong); border: 0; }
+.tb-btn.tb-close:hover { background: #c42b1c; color: #fff; border: 0; }
+.tb-btn.tb-close:active { background: #a3241a; color: #fff; border: 0; }
+.tb-btn:focus,
+.tb-btn:focus-visible { outline: none; }
+.tb-btn .ic { width: 12px; height: 12px; }
+
+/* ===========================================================================
+ * 无边框窗口的缩放热区（配合 index.html 里的 .win-resize 和
+ *       desktop/api 的 window.start_resize）
+ * 
+ * 为什么放页面里：WebView2 铺满整个窗口（不再内缩出 6px 边框带，那圈底色
+ * 在任何主题/材质下都匹配不上内容，就是"四周白边/黑边、还加粗了"的来源）。
+ * 鼠标永远落在 WebView2 子窗口上，父窗口收不到 WM_NCHITTEST，所以可缩放边缘只能
+ * 由页面里的透明热区来"接"：按下时把方向交给后端，由系统模态循环完成缩放。
+ *
+ * 尺寸：边 6px、角 10x10（比边的热区大一点，角落更好抓）；全部透明，看不到任何线。
+ * 层级 130：高于页面/插件页（120），低于模态（140）/toast/提示（160+）。
+ * 光标：直接给 CSS cursor，WebView2 会用它（不用后端 SetCursor）。
+ * ⚠️ 不要给这些元素加背景/边框 —— 一加就会变成那条被抱怨的"边框"。
+ * =========================================================================*/
+.win-resize { position: fixed; inset: 0; z-index: 130; pointer-events: none; }
+.win-resize .wr { position: absolute; pointer-events: auto; display: block; }
+.win-resize .wr-t { top: 0; left: 0; right: 0; height: 6px; cursor: ns-resize; }
+.win-resize .wr-b { bottom: 0; left: 0; right: 0; height: 6px; cursor: ns-resize; }
+.win-resize .wr-l { left: 0; top: 0; bottom: 0; width: 6px; cursor: ew-resize; }
+.win-resize .wr-r { right: 0; top: 0; bottom: 0; width: 6px; cursor: ew-resize; }
+.win-resize .wr-tl { top: 0; left: 0; width: 10px; height: 10px; cursor: nwse-resize; }
+.win-resize .wr-tr { top: 0; right: 0; width: 10px; height: 10px; cursor: nesw-resize; }
+.win-resize .wr-bl { bottom: 0; left: 0; width: 10px; height: 10px; cursor: nesw-resize; }
+.win-resize .wr-br { bottom: 0; right: 0; width: 10px; height: 10px; cursor: nwse-resize; }
+
+/* ===========================================================================
+ * 切页/打开配置页后的静默运动
+ * 
+ * 由 app.js 的 silentMotion() 在 page 切换 / 打开插件配置页时给 <html> 加
+ * `is-silent-motion`（约 120ms）。这期间关掉开关/分段/导航指示标的过渡与动画，
+ * 防止"进入页面/配置页时开关又把开启动画播一遍"。
+ * =========================================================================*/
+html.is-silent-motion .switch,
+html.is-silent-motion .switch-knob,
+html.is-silent-motion .seg-thumb,
+html.is-silent-motion .seg-item,
+html.is-silent-motion .nav-indicator,
+html.is-silent-motion .combo-trigger,
+html.is-silent-motion .combo-pop {
+  transition: none !important;
+  animation: none !important;
+}
+

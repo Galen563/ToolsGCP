@@ -1,0 +1,17 @@
+{
+  "ctrl_open_tip": "Ctrl+click: open quietly without switching away",
+  "feedback_back": "Back",
+  "feedback_body_1": "Before submitting feedback, please check for duplicates. If a duplicate exists, please do not submit again to avoid burdening the maintainer.",
+  "feedback_body_2": "Note: All feedback is listed at the end of this page. For more, please visit GitHub.",
+  "feedback_click_to_close": "Click the image to go back",
+  "feedback_failed": "Failed to open, please check your default browser",
+  "feedback_go": "Go to Feedback",
+  "feedback_opened": "Opened in browser",
+  "feedback_title": "Submit Feedback",
+  "feedback_toast_title": "Feedback",
+  "qq_copied": "Copied",
+  "qq_copy_number": "Copy group number",
+  "qq_copy_tip": "Copy group number {number}",
+  "qq_group_label": "Official QQ group (feedback): ",
+  "qq_report_label": "Report group: "
+}

@@ -1,0 +1,12 @@
+# ToolsGCP 运行依赖
+#
+# 安装（国内网络建议加镜像）：
+#   pip install -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple/
+#
+# 这两个是运行本程序（ToolsGCP.pyw）的唯一必需依赖。
+
+PyQt5>=5.15.9,<5.16
+PyQt-Fluent-Widgets>=1.11,<2
+
+# --- 可选：打包成 exe 时才需要 ---
+# pyinstaller>=6.0

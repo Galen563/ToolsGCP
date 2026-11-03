@@ -1,0 +1,72 @@
+/* ===========================================================================
+ * 收藏页（收藏夹）专用样式
+ * 
+ * 本文件只放**收藏页**的改动样式，避免污染 components.css / layout.css。
+ * 由 index.html 的 <head> 在所有既有 CSS **之后**引入（保证覆盖顺序）。
+ *
+ * 覆盖内容：
+ *   ① 侧栏标题行（标题 + 两个只有图标的按钮：加号 / 批量移动）
+ *   ② 卡片网格：宽度由 JS 算（内联 width），这里只保证"不拉伸"
+ *   ③ 收藏夹右键菜单（重命名 / 删除，删除红色）
+ * =========================================================================*/
+
+/* ---------- ① 侧栏标题行 ----------
+   标题收藏夹在左，两个 icon-only 按钮在右（新建 = 加号、批量移动 = 文件夹+箭头）。
+   新建收藏夹用**只有图标的加号按钮**放在标题右侧；批量移动同样是纯图标按钮，排在新建右边。*/
+.fav-side-head {
+  display: flex; align-items: center; gap: 4px;
+  padding: 0 4px 2px;
+  margin-bottom: 4px;
+}
+.fav-side-head .sub-title { padding: 0; }
+.fav-side-head .icon-btn {
+  width: 28px; height: 28px; flex: 0 0 auto;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 8px; border: none; background: transparent;
+  color: var(--text-secondary);
+  transition: background 120ms ease, color 120ms ease;
+}
+.fav-side-head .icon-btn:hover { background: var(--hover); color: var(--text); }
+.fav-side-head .icon-btn.is-on { background: var(--accent-soft); color: var(--accent); }
+
+/* ---------- ② 卡片网格：CSS Grid 等分（不拉伸、也不会是 0 宽）----------
+   ⚠️⚠️ 修面条bug 的**根本办法**：
+      之前是 JS 算 itemW → 内联 style 设 width。JS 量容器宽度要等页面挂载 +
+      收藏数据回来，那之前 itemW=0 → 卡片渲染成0 宽 × 196 高= 面条。
+      现在改成 **CSS Grid**：JS 只给列数（--fav-cols），宽度交给 1fr 等分。
+      ⇒ 宽度**永远**是容器的等分，结构上不可能出现 0 宽。
+      ⇒ 每条轨道等宽 ⇒ 最后一行剩下的卡片**不会被拉伸**填满整排
+         （这正是 flex 的 `flex: 1 1 272px` 做不到的）。
+   ⚠️ 作用域限定在 .fav-main，**不影响定制页**（定制页也用 .grid-static）。*/
+.fav-main .grid-static.fav-grid {
+  display: grid;
+  /* 列数由 JS 给（--fav-cols）；兜底 3 列，量不到时布局依然正常*/
+  grid-template-columns: repeat(var(--fav-cols, 3), minmax(0, 1fr));
+  /* 卡片宽度上限 400px（和搜索页的 maxCardW 一致）：列数算错了也不会太宽*/
+  justify-content: start;
+}
+.fav-main .grid-static.fav-grid > .card {
+  /* Grid item 默认 stretch（会撑满轨道）—— 这正是我们要的等分宽度*/
+  width: auto;
+  max-width: 400px;                  /* 与搜索页 maxCardW 一致*/
+  min-width: 0;                      /* 允许轨道被压缩时内容收缩，不撑破网格*/
+}
+.fav-main .grid-static.fav-grid > .card .card-desc { min-height: 0; }
+.fav-main .grid-static.fav-grid > .card .card-foot { flex: 0 0 auto; }
+
+/* ---------- ③ 收藏夹右键菜单 ----------
+   复用 .card-menu 的浮层样式（position/阴影/圆角都在 components.css 里），
+   这里只加删除项的红色（图标 + 文字都要红）。*/
+.fav-menu .card-menu-item.is-danger { color: var(--danger); }
+.fav-menu .card-menu-item.is-danger .ic { color: var(--danger); }
+.fav-menu .card-menu-item.is-danger:hover {
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
+  color: var(--danger);
+}
+/* 禁用态（默认收藏夹不可改名/删除）*/
+.fav-menu .card-menu-item:disabled,
+.fav-menu .card-menu-item.is-danger:disabled {
+  opacity: .42; cursor: default; color: var(--text-disabled);
+}
+.fav-menu .card-menu-item:disabled .ic,
+.fav-menu .card-menu-item.is-danger:disabled .ic { color: var(--text-disabled); }

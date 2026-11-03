@@ -1,0 +1,21 @@
+{
+  "mark_read": "Mark as read",
+  "notice_all_read_done": "All announcements marked as read",
+  "notice_btn_later": "Later",
+  "notice_btn_view": "View",
+  "notice_dialog_hint": "After you mark all as read, the unread number in the sidebar is cleared.",
+  "notice_dialog_more": "{n} more unread announcement(s) — open the Notice page to read them.",
+  "notice_dialog_title": "New announcement",
+  "notice_empty": "No announcements yet",
+  "notice_empty_hint": "New announcements will show up here.",
+  "notice_item_meta": "{author} · #{number}",
+  "notice_load_failed": "Could not load announcements. Check your network and try again.",
+  "notice_loading": "Loading announcements…",
+  "notice_mark_all_read": "Mark all read",
+  "notice_open_in_github": "View on GitHub",
+  "notice_refresh": "Refresh",
+  "notice_title": "Notice",
+  "notice_unread_count": "{n} unread",
+  "read": "Read",
+  "unread": "Unread"
+}

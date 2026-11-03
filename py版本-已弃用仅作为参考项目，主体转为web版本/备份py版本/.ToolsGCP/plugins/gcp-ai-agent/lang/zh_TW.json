@@ -1,0 +1,47 @@
+{
+  "title": "GCP-AI Agent",
+  "intro": "開啟後，直接在任何一個 GCP-AI 聊天介面裡說話，它就能替你操作 ToolsGCP。這裡只是它的設定介面。",
+
+  "sec_switch": "總開關",
+  "sec_switch_desc": "開啟後 GCP-AI 才能動手操作 ToolsGCP；關閉後它只會正常聊天。這個開關和設定裡的是同一個。",
+  "switch_on": "已開啟",
+  "switch_off": "已關閉",
+  "switch_hint_on": "GCP-AI 現在可以替你操作 ToolsGCP。",
+  "switch_hint_off": "GCP-AI 現在只會聊天；你讓它做事時，它會把你引導回這裡開啟。",
+  "switch_unavailable": "Agent 暫時不可用（主視窗還沒準備好）。稍後再開啟這個頁面試試。",
+  "switch_toggle_failed": "切換開關失敗：{error}",
+
+  "sec_modules": "更多模組",
+  "sec_modules_desc": "AI 的每一隻「手」都在裡面，可以逐項開關。總開關開啟時，裡面預設全部開啟。",
+  "btn_open_modules": "進入更多模組",
+  "modules_enabled_count": "已開啟 {on} / {total} 項",
+  "modules_title": "更多模組",
+  "modules_desc": "關掉的模組不會發提示給 AI，也不會被執行 —— 既省 Token，也免得它去點一隻不存在的手。",
+  "btn_back": "返回",
+  "btn_all_on": "全部開啟",
+  "btn_all_off": "全部關閉",
+  "modules_empty": "還沒有註冊任何模組。Agent 現在只能聊天。",
+  "modules_all_on": "已全部開啟",
+  "modules_all_off": "已全部關閉",
+  "module_danger": "謹慎操作",
+  "module_source": "來源 {source}",
+  "module_params": "（{params}）",
+  "module_toggle_failed": "切換這一項失敗：{error}",
+
+  "sec_actions": "最近動作",
+  "sec_actions_desc": "Agent 每一次動手都會記在這裡，最新的在最上面（只留最近的幾條，關掉程式就沒了）。",
+  "btn_refresh": "重新整理",
+  "btn_clear": "清空",
+  "actions_empty": "還沒有動作。去聊天介面讓 AI 幫你做點事，這裡就會熱鬧起來。",
+  "actions_cleared": "已清空最近動作",
+  "actions_clear_failed": "清空失敗：{error}",
+  "action_line": "{ts}  {mark}  {tool} — {detail}",
+  "mark_ok": "✔",
+  "mark_fail": "✘",
+
+  "sec_stats": "統計",
+  "stats_line": "模組 {tools} 個 · 累計呼叫 {total} 次",
+  "stats_calls": "各模組呼叫次數：{calls}",
+
+  "refresh_failed": "讀取 Agent 狀態失敗：{error}"
+}

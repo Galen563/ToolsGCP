@@ -1,0 +1,16 @@
+{
+  "title": "插件示例",
+  "hint": "这一页列出了插件能拿到的全部东西：插件信息、ToolsGCP 的资源库、以及自己的可写目录。照着改成你的功能即可。",
+  "info_id": "插件 id",
+  "info_version": "版本",
+  "info_author": "作者",
+  "info_locale": "当前语言",
+  "info_data_dir": "我的可写目录",
+  "res_total": "资源库条目总数",
+  "res_categories": "类别数",
+  "res_site": "有官网的",
+  "res_repo": "有代码仓库的",
+  "res_top": "最多的类别",
+  "click_me": "点我（会把次数写进我自己的数据文件）",
+  "count_now": "你已经点了 {count} 次，这个数字存在 context.data_dir 里。"
+}

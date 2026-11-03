@@ -1,0 +1,15 @@
+{
+  "nav_title": "我的插件",
+  "nav_home": "首页",
+  "nav_stats": "统计",
+
+  "title": "我的插件",
+  "intro": "这是 ToolsGCP 插件模板。改 app.py / ui / core 里的代码，就能变成你自己的插件。",
+
+  "stats_line": "资源库共 {total} 个程序，{categories} 个类别，{repo} 个有代码仓库",
+  "open_times": "这个插件已经被打开 {n} 次（存在插件自己的 data 目录里）",
+
+  "stats_title": "统计分析",
+  "search_placeholder": "输入关键词，回车搜索资源库",
+  "search_button": "搜索"
+}

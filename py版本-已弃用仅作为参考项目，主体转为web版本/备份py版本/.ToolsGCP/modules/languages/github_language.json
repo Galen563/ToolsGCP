@@ -1,0 +1,112 @@
+{
+  "github_title": {
+    "简体中文": "Github",
+    "繁體中文": "Github",
+    "English": "Github"
+  },
+  "repository": {
+    "简体中文": "代码仓库",
+    "繁體中文": "代碼倉庫",
+    "English": "Repository"
+  },
+  "open_github": {
+    "简体中文": "打开Github页面",
+    "繁體中文": "打開Github頁面",
+    "English": "Open Github Page"
+  },
+  "developer": {
+    "简体中文": "开发者：Galen563",
+    "繁體中文": "開發者：Galen563",
+    "English": "Developer: Galen563"
+  },
+  "dev_team": {
+    "简体中文": "开发人员：Galen563 (1人)",
+    "繁體中文": "開發人員：Galen563 (1人)",
+    "English": "Development Team: Galen563 (1 person)"
+  },
+  "visit_github": {
+    "简体中文": "作者Github：",
+    "繁體中文": "作者Github：",
+    "English": "Author GitHub: "
+  },
+  "repo_link": {
+    "简体中文": "Github：",
+    "繁體中文": "Github：",
+    "English": "Github: "
+  },
+  "tools_intro_title": {
+    "简体中文": "ToolsGCP介绍：",
+    "繁體中文": "ToolsGCP介紹：",
+    "English": "About ToolsGCP:"
+  },
+  "tools_intro_point1": {
+    "简体中文": "- 免费开源工具集合",
+    "繁體中文": "- 免費開源工具集合",
+    "English": "- Free and open-source tool collection"
+  },
+  "tools_intro_point2": {
+    "简体中文": "- 用于解决日常电脑软件查找问题",
+    "繁體中文": "- 用於解決日常電腦軟件查找問題",
+    "English": "- Solves daily computer software search problems"
+  },
+  "tools_intro_point3": {
+    "简体中文": "- 提供软件下载、安装、介绍、使用方法",
+    "繁體中文": "- 提供軟件下載、安裝、介紹、使用方法",
+    "English": "- Provides software download, installation, introduction, and usage methods"
+  },
+  "tools_intro_point4": {
+    "简体中文": "- 放置下载到盗版、广告软件、找不到",
+    "繁體中文": "- 放置下載到盜版、廣告軟件、找不到",
+    "English": "- Prevents downloading pirated or adware software"
+  },
+  "tools_intro_point5": {
+    "简体中文": "- 提供资源获取等功能",
+    "繁體中文": "- 提供資源獲取等功能",
+    "English": "- Provides resource acquisition and other functions"
+  },
+  "sponsor_title": {
+    "简体中文": "赞助",
+    "繁體中文": "贊助",
+    "English": "Sponsor"
+  },
+  "sponsor_note_title": {
+    "简体中文": "赞助时记得写备注",
+    "繁體中文": "贊助時記得寫備註",
+    "English": "Remember to add a payment note"
+  },
+  "sponsor_note": {
+    "简体中文": "备注里请写上你的昵称（必填）和实际金额，方便作者核对并郑重致谢。",
+    "繁體中文": "備註裡請寫上你的暱稱（必填）和實際金額，方便作者核對並鄭重致謝。",
+    "English": "Please put your nickname (required) and the actual amount in the note, so the author can verify the payment and thank you properly."
+  },
+  "click_to_zoom": {
+    "简体中文": "点击放大图片",
+    "繁體中文": "點擊放大圖片",
+    "English": "Click to enlarge"
+  },
+  "sponsor_qr_alt": {
+    "简体中文": "赞助二维码",
+    "繁體中文": "贊助二維碼",
+    "English": "Sponsor QR Code"
+  },
+  "image_viewer_title": {
+    "简体中文": "ToolsGCP 赞助",
+    "繁體中文": "ToolsGCP 贊助",
+    "English": "ToolsGCP Sponsor"
+  },
+  "click_to_close": {
+    "简体中文": "点击图片任意位置关闭",
+    "繁體中文": "點擊圖片任意位置關閉",
+    "English": "Click anywhere on the image to close"
+  },
+  "avatar_alt": {
+    "简体中文": "Galen563",
+    "繁體中文": "Galen563",
+    "English": "Galen563"
+  },
+  "close": {
+    "简体中文": "返回",
+    "繁體中文": "返回",
+    "English": "Back"
+  }
+}

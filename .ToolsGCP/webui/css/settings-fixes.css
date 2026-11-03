@@ -1,0 +1,51 @@
+/* ===========================================================================
+ * 设置页补丁样式
+ * 
+ * 放在所有既有 CSS 之后引入。
+ *
+ * 覆盖内容：
+ *   ① 资源来源 / 资源目录 / 云端资源库状态的**缩进**关系
+ *      （缩进 20px，表示这些行归属于上面那个下拉框）
+ *   ② 云端资源库状态行的排版（文字 + 右侧重试图标）
+ *   ③ 滑块行（多线程下载 / 失败重试次数）的控件区放宽
+ *      （默认 200px 里塞了滑块+数字框+单位，能"拉"的范围太小）
+ * =========================================================================*/
+
+/* ---------- ① 归属缩进 ----------
+   ⚠️ 模板里给这些行加了 `indent: true`，模板会加 `.setting-row.is-indent`
+      （layout.css 已有 padding-left:20px）。这里补一条更明确的规则，
+      免得哪天 layout.css 那条被改掉。
+   ⚠️ 云端资源库：…那行是 `row.type === 'cloud-status'`，
+      它在模板里走的是**独立分支**（v-else-if），但仍然在 .setting-row 内部，
+      所以 is-indent 一样生效。*/
+.setting-row.is-indent > .setting-note { padding-left: 0; }
+
+/* ---------- ② 云端资源库状态行 ----------
+   排版：云端资源库…这行文字略向右缩进，表示它归属于上面的资源来源。
+   文字要能换行（版本号 + 条数 + 更新时间可能很长），右边那个重试图标固定在最右。*/
+.cloud-status-note {
+  display: flex; align-items: flex-start; gap: 8px;
+  line-height: 1.6;
+}
+.cloud-status-note .cloud-status-text {
+  flex: 1 1 auto; min-width: 0;
+  /* 长文本换行而不是把图标挤走*/
+  overflow-wrap: anywhere;
+}
+.cloud-status-note .icon-btn {
+  width: 26px; height: 26px; flex: 0 0 auto;
+  align-self: center;
+}
+
+/* ---------- ③ 滑块行（多线程下载 / 失败重试次数）----------
+   形态：数字输入框 + 可拖动的 range 滑块组合。
+   ⚠️ 默认 .setting-control 只有 200px 宽（layout.css:576），而 .range-wrap 里
+      固定要放：range 滑块 + 46px 数字输入框 + 单位文字（约 36px）+ 2 个 8px 间距
+      ≈ 98px —— 留给真正能"拉"的 range 只有 ~100px，手感太差。
+   修法：和 layout.css 里 `.setting-control:has(.hotkey-wrap)`（快捷键行）**同款**写法 ——
+      用 :has() 只把**含 range-wrap 的行**的控件区放宽，其它设置行的 200px 一个都不动。
+   ⚠️ 这里只改控件区宽度，不改 .range 的 max-width:250px（components.css:200），
+      所以滑块本身仍是原版那个 250px 宽，不会撑破卡片。*/
+.setting-control:has(.range-wrap) {
+  width: auto; flex: 1 1 auto; min-width: 300px;
+}

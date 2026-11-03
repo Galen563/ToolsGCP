@@ -1,0 +1,9 @@
+{
+  "id": "plugin-showcase",
+  "name": "插件示例",
+  "version": "1.0.0",
+  "author": "Galen563",
+  "description": "照着这个例子写你自己的插件：多文件结构、多语言、读写自己的配置、用资源库数据。",
+  "entry": "app.py",
+  "icon": "assets/icon.png"
+}

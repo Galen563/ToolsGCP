@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark" data-fx="mica">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>我的插件 · 配置</title>
+<!--  插件配置页模板（Web 版 / iframe 独立运行）
+   ⚠️ 为什么需要这个文件：**Web 版根本不加载 app.py**（主线程不许 import PyQt5，
+      见 AGENTS.md 第 8 节），它只认 manifest.json 里的三样东西：
+        · `config_page`      → 宿主用 iframe 打开这一页（/res/plugins/<id>/<config_page>）
+        · `enabled_setting`  → 插件卡片上那个开关对应的设置键
+        · `default_disabled` → 没有开关键时的默认状态
+      所以只抄 _template 的 py 版部分，在 Web 版里会得到一个"列表里有、⚙ 是灰的、
+      开关拨不动"的空壳插件。这个文件就是补那一条腿的。
+   ⚠️ 三条硬规矩（照 gcp-ai-agent / gcp-plugin-maker 的既有实现走）：
+      1) 不依赖 webui 的 CSS/JS、不联网、无构建 —— 样式全部自带；
+      2) 数据只走 host 的 `window.pywebview.api.settings.get/set`
+         （iframe 里没有 window.pywebview，pywebview 只往主框架注入，所以回退 parent）；
+      3) 主题/语言由宿主 postMessage 推过来（`toolsgcp-theme`），本页首帧先读父文档兜底。
+-->
+<script>
+  /* 首帧主题：优先跟父文档已解析好的 <html data-theme>（主程序 applyAppearance 写的）。
+     ⚠️ 不能只信本页的 matchMedia：主程序「强制深色 / 跟随系统」时，matchMedia 看的是
+        Windows 系统主题，两者可能相反 —— 那一帧会先画成浅色、整页发白。 */
+  (function () {
+    function luminance(color) {
+      var m = String(color || '').match(/rgba?\(([^)]+)\)/);
+      if (!m) return -1;
+      var p = m[1].split(',').map(function (x) { return parseFloat(x); });
+      if (p.length > 3 && p[3] === 0) return -1;
+      var ch = [p[0], p[1], p[2]].map(function (v) {
+        v /= 255;
+        return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+      });
+      return 0.2126 * ch[0] + 0.7152 * ch[1] + 0.0722 * ch[2];
+    }
+    var theme = '';
+    try {
+      var host = window.parent && window.parent !== window ? window.parent : null;
+      if (host && host.document && host.document.documentElement) {
+        var root = host.document.documentElement;
+        var attr = root.getAttribute('data-theme');
+        if (attr === 'dark' || attr === 'light') theme = attr;
+        if (!theme && host.getComputedStyle) {
+          var lum = luminance(host.getComputedStyle(root).backgroundColor);
+          if (lum < 0) lum = luminance(host.getComputedStyle(host.document.body).backgroundColor);
+          if (lum >= 0) theme = lum < 0.4 ? 'dark' : 'light';
+        }
+      }
+    } catch (e) { /* 跨源：忽略，走下面的回退 */ }
+    if (!theme) {
+      var dark = true;
+      try {
+        if (window.matchMedia) dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      } catch (e) { dark = true; }
+      theme = dark ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', theme);
+  })();
+</script>
+<style>
+  /* 自带主题变量：深/浅两套（与主程序 variables.css 同源取值，但**不引用**它，
+     这样这一页单独用浏览器打开也能看）。 */
+  :root { color-scheme: dark; }
+  html[data-theme="light"] { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 22px 24px 28px; font-size: 13px; line-height: 1.7;
+    font-family: "Microsoft YaHei UI", "Microsoft YaHei", "Segoe UI", system-ui, sans-serif;
+    background: var(--page); color: var(--text);
+  }
+  html[data-theme="dark"] {
+    --page: #1c1c1c; --card: #26262a; --border: #35353b;
+    --text: #eaeaea; --text2: #a8a8b0; --accent: #4cc46a; --danger: #f16a6e;
+  }
+  html[data-theme="light"] {
+    --page: #f3f4f7; --card: #ffffff; --border: #e6e9f0;
+    --text: #1f2329; --text2: #6b7280; --accent: #2fa36b; --danger: #e5484d;
+  }
+  h1 { margin: 0 0 4px; font-size: 16px; }
+  .sub { margin: 0 0 18px; color: var(--text2); font-size: 12px; }
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 16px; margin-bottom: 12px;
+  }
+  .row { display: flex; align-items: center; gap: 12px; }
+  .row + .row { margin-top: 12px; }
+  .label { flex: 1 1 auto; }
+  .tip { color: var(--text2); font-size: 11.5px; margin-top: 2px; }
+  .kv { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 4px 14px; }
+  .kv dt { color: var(--text2); }
+  .kv dd { margin: 0; word-break: break-all; }
+  /* 开关：与主程序同款尺寸，纯 CSS（不引任何库） */
+  .switch {
+    flex: 0 0 auto; width: 44px; height: 22px; padding: 0; border-radius: 11px;
+    border: 1px solid var(--border); background: var(--page); position: relative;
+    cursor: pointer; transition: background 140ms ease, border-color 140ms ease;
+  }
+  .switch.is-on { background: var(--accent); border-color: var(--accent); }
+  .switch-knob {
+    position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%;
+    background: #fff; transition: transform 160ms cubic-bezier(.22,.8,.2,1);
+  }
+  .switch.is-on .switch-knob { transform: translateX(22px); }
+  .switch:disabled { opacity: .5; cursor: not-allowed; }
+  .btn {
+    height: 30px; padding: 0 14px; border-radius: 6px; font-size: 12.5px; cursor: pointer;
+    border: 1px solid var(--border); background: var(--card); color: var(--text);
+  }
+  .btn:hover { border-color: var(--accent); }
+  .foot { display: flex; gap: 10px; margin-top: 16px; }
+  .notice {
+    display: none; margin-bottom: 14px; padding: 8px 12px; border-radius: 8px;
+    background: rgba(224, 163, 58, .14); border: 1px solid rgba(224, 163, 58, .4);
+    color: var(--text); font-size: 12px;
+  }
+  html[data-theme="light"] .notice { background: rgba(217, 142, 4, .10); }
+  .is-preview .notice { display: block; }
+</style>
+</head>
+<body>
+<div class="notice" id="previewTip" data-i18n="cfg_preview_tip">预览模式：这一页现在是用浏览器直接打开的，拿不到桌面端接口，所有设置只读。</div>
+
+<h1 id="title">我的插件</h1>
+<p class="sub" id="intro">插件自己的配置界面。</p>
+
+<div class="card">
+  <div class="row">
+    <div class="label">
+      <div id="lblDemo" data-i18n="cfg_enable">启用本插件</div>
+      <div class="tip" id="tipDemo" data-i18n="cfg_enable_tip">开关直接写进主程序的设置里（键名见 manifest 的 enabled_setting）</div>
+    </div>
+    <button class="switch" id="swDemo" type="button" aria-checked="false"><span class="switch-knob"></span></button>
+  </div>
+</div>
+
+<div class="card">
+  <dl class="kv">
+    <dt data-i18n="cfg_meta_id">插件 id</dt><dd id="infoId">—</dd>
+    <dt data-i18n="cfg_meta_version">版本</dt><dd id="infoVersion">—</dd>
+    <dt data-i18n="cfg_meta_locale">语言</dt><dd id="infoLocale">—</dd>
+    <dt data-i18n="cfg_meta_key">设置键</dt><dd id="infoKey">—</dd>
+  </dl>
+</div>
+
+<div class="foot">
+  <button class="btn" id="btnClose" type="button" data-i18n="cfg_back">返回插件列表</button>
+</div>
+
+<script>
+  /* =====================================================================
+     与宿主的接口（这一段两个内置插件是同一套，改这里请同步它们）
+     ===================================================================== */
+  var PLUGIN_ID = 'REPLACE-WITH-YOUR-PLUGIN-ID';   /* ← 复制模板后必改这里（和 manifest.id 一致） */
+  /* ⚠️ 兜底键名：真正生效的是 manifest.enabled_setting，这里只是它缺失时用。
+     两处都要跟着插件 id 改，否则从模板复制出来的插件会共用同一个开关。 */
+  var ENABLED_KEY = 'plugin_my_plugin_enabled';
+
+  var state = { api: null, manifest: {}, locale: '简体中文', busy: false, strings: {} };
+
+  /* ---------------------------------------------------------------------
+     本页文案走 lang/*.json —— 模板自己的规矩就是"界面里没有写死的句子"，
+     config.html 当然也该遵守。iframe 的地址是 /res/plugins/<id>/config.html，
+     所以相对路径 'lang/zh_CN.json' 正好命中 webhost 的 /res/plugins/<rel:path> 路由。
+     ⚠️ 兜底顺序和 core/i18n.py 一致：当前语言 → zh_CN → 键名本身。
+     --------------------------------------------------------------------- */
+  var LOCALE_TO_FILE = { '简体中文': 'zh_CN', '繁體中文': 'zh_TW', 'English': 'en_US' };
+
+  function $(id) { return document.getElementById(id); }
+
+  function localeFile() {
+    return LOCALE_TO_FILE[state.locale] || 'zh_CN';
+  }
+
+  function t(key) {
+    /* 找不到就回退到 HTML 里原本写的那句话（见 applyI18n 里的默认值缓存），
+       绝不把键名甩给用户看。 */
+    return state.strings[key];
+  }
+
+  /* 首帧把 HTML 里写好的中文兜底文案存下来：lang/*.json 缺键/拉不到时用它。 */
+  var i18nDefaults = {};
+  function captureDefaults() {
+    var nodes = document.querySelectorAll('[data-i18n]');
+    for (var i = 0; i < nodes.length; i += 1) {
+      var k = nodes[i].getAttribute('data-i18n');
+      if (!(k in i18nDefaults)) i18nDefaults[k] = nodes[i].textContent;
+    }
+  }
+
+  function applyI18n() {
+    var nodes = document.querySelectorAll('[data-i18n]');
+    for (var i = 0; i < nodes.length; i += 1) {
+      var k = nodes[i].getAttribute('data-i18n');
+      var text = t(k);
+      if (text === undefined) text = i18nDefaults[k];
+      if (text !== undefined) nodes[i].textContent = text;
+    }
+    /* 标题：插件名（manifest.name，本身支持多语言字典）+ 「· 配置」 */
+    $('title').textContent = pickI18n(state.manifest.name, '我的插件');
+    var suffix = t('cfg_title_suffix') || i18nDefaults['cfg_title_suffix'] || '';
+    $('intro').textContent = pickI18n(state.manifest.description, '');
+    $('infoLocale').textContent = state.locale;
+    /* 浏览器标签页标题：宿主那套是 "ToolsGCP · xx"，这里保持同一风格 */
+    try { document.title = $('title').textContent + ' ' + suffix; } catch (e) {}
+  }
+
+  function loadStrings() {
+    var file = localeFile();
+    /* 三份都拉一遍再合并？不必 —— 只拉当前语言，缺的键回退 zh_CN（与 core/i18n.py 同语义）。 */
+    function grab(name) {
+      return fetch('lang/' + name + '.json', { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.json() : {}; })
+        .catch(function () { return {}; });
+    }
+    if (file === 'zh_CN') return grab('zh_CN').then(function (d) { state.strings = d || {}; });
+    return Promise.all([grab('zh_CN'), grab(file)]).then(function (pair) {
+      var base = pair[0] || {}, cur = pair[1] || {};
+      var merged = {};
+      for (var k in base) { if (Object.prototype.hasOwnProperty.call(base, k)) merged[k] = base[k]; }
+      for (var k2 in cur) { if (Object.prototype.hasOwnProperty.call(cur, k2)) merged[k2] = cur[k2]; }
+      state.strings = merged;
+    });
+  }
+
+  function pickI18n(value, fallback) {
+    /* name/description 允许写成字符串或 {简体中文:…, English:…}（和宿主 app.js 同款规则） */
+    if (!value) return fallback || '';
+    if (typeof value === 'string') return value;
+    var order = [state.locale, '简体中文'];
+    for (var i = 0; i < order.length; i += 1) {
+      if (value[order[i]]) return value[order[i]];
+    }
+    for (var k in value) { if (Object.prototype.hasOwnProperty.call(value, k)) return value[k]; }
+    return fallback || '';
+  }
+
+  function findApi() {
+    try { if (window.pywebview && window.pywebview.api) return window.pywebview.api; } catch (e) {}
+    try {
+      var host = window.parent;
+      if (host && host !== window && host.pywebview && host.pywebview.api) return host.pywebview.api;
+    } catch (e) {}
+    return null;
+  }
+
+  function waitForApi(timeoutMs) {
+    var found = findApi();
+    if (found) return Promise.resolve(found);
+    return new Promise(function (resolve) {
+      var done = false, timer = 0, timeout = 0;
+      function cleanup() {
+        try { window.removeEventListener('pywebviewready', check); } catch (e) {}
+        if (timer) window.clearInterval(timer);
+        if (timeout) window.clearTimeout(timeout);
+      }
+      function finish(v) { if (done) return; done = true; cleanup(); resolve(v || null); }
+      function check() { var api = findApi(); if (api) finish(api); }
+      try { window.addEventListener('pywebviewready', check); } catch (e) {}
+      timer = window.setInterval(check, 120);
+      timeout = window.setTimeout(function () { finish(findApi()); }, timeoutMs || 2500);
+    });
+  }
+
+  /* 布尔归一化：旧配置里可能是字符串 "false"，`!!` 会把它当"开"（与宿主 settingOn 一致） */
+  function settingOn(value) {
+    if (value === true) return true;
+    if (value === false || value === null || value === undefined) return false;
+    if (typeof value === 'number') return value !== 0;
+    if (typeof value === 'string') return ['true', '1', 'yes', 'on'].indexOf(value.trim().toLowerCase()) >= 0;
+    return false;
+  }
+
+  function renderSwitch(on) {
+    var el = $('swDemo');
+    el.classList.toggle('is-on', !!on);
+    el.setAttribute('aria-checked', on ? 'true' : 'false');
+  }
+
+  async function loadAll() {
+    try {
+      var res = await fetch('manifest.json', { cache: 'no-store' });
+      if (res.ok) state.manifest = await res.json();
+    } catch (e) { /* 读不到就用默认值，不许整页空白 */ }
+    /* 文案：先拉当前语言的 lang/*.json（缺键自动回退 zh_CN），再统一刷一遍 DOM。
+       ⚠️ 顺序不能反：applyI18n 会写 title/intro，需要 manifest 已经读到。 */
+    await loadStrings();
+    applyI18n();
+    $('infoId').textContent = state.manifest.id || PLUGIN_ID;
+    $('infoVersion').textContent = state.manifest.version || '—';
+    $('infoKey').textContent = state.manifest.enabled_setting || ENABLED_KEY;
+
+    var key = state.manifest.enabled_setting || ENABLED_KEY;
+    if (!state.api) { renderSwitch(!state.manifest.default_disabled); return; }
+    try {
+      var got = await state.api.settings.get(key);
+      var value = (got && got.ok) ? got.value : undefined;
+      if (value === undefined || value === null) value = !state.manifest.default_disabled;
+      renderSwitch(settingOn(value));
+    } catch (e) { renderSwitch(!state.manifest.default_disabled); }
+  }
+
+  async function save(next) {
+    if (state.busy || !state.api) return;
+    state.busy = true;
+    renderSwitch(next);
+    try {
+      var key = state.manifest.enabled_setting || ENABLED_KEY;
+      var res = await state.api.settings.set(key, next);
+      if (!res || res.ok === false) throw new Error((res && res.error) || 'unknown');
+    } catch (e) {
+      renderSwitch(!next);       /* 写失败要弹回去，别让开关显示成"已生效"的假象 */
+    } finally {
+      state.busy = false;
+    }
+  }
+
+  /* 宿主推主题/语言（app.js 的 pluginThemePayload）：语言变了就重画文案 */
+  window.addEventListener('message', function (event) {
+    var data = event && event.data;
+    if (!data || data.type !== 'toolsgcp-theme') return;
+    if (data.theme) document.documentElement.setAttribute('data-theme', data.theme);
+    if (data.fx) document.documentElement.setAttribute('data-fx', data.fx);
+    if (data.accent) document.documentElement.setAttribute('data-accent', data.accent);
+    if (data.language && data.language !== state.locale) {
+      /* 语言变了：重新拉一份 lang/<新语言>.json 再整页重刷（只补两条会把
+         data-i18n 的那些行留在旧语言上，界面上就出现中英夹杂）。 */
+      state.locale = data.language;
+      loadStrings().then(applyI18n);
+    }
+  });
+
+  $('swDemo').addEventListener('click', function () {
+    save(!this.classList.contains('is-on'));
+  });
+  $('btnClose').addEventListener('click', function () {
+    /* 关掉本页：postMessage 给宿主，app.js 的 toolsgcp-close-plugin 监听会收起 pluginPage */
+    try {
+      window.parent.postMessage({ type: 'toolsgcp-close-plugin', id: PLUGIN_ID }, '*');
+    } catch (e) { /* 独立打开时没有父窗口，忽略 */ }
+  });
+
+  waitForApi().then(function (api) {
+    state.api = api;
+    if (!api) document.documentElement.classList.add('is-preview');
+    /* ⚠️ 必须在这里、第一次 applyI18n 之前抓默认文案：那时 DOM 里还是 HTML 写的原话。 */
+    captureDefaults();
+    return loadAll();
+  });
+</script>
+</body>
+</html>

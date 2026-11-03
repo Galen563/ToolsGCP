@@ -1,0 +1,337 @@
+{
+  "search_placeholder": {
+    "简体中文": "搜索工具、功能或设置...",
+    "繁體中文": "搜尋工具、功能或設定...",
+    "English": "Search tools, features or settings..."
+  },
+  "search_title": {
+    "简体中文": "搜索",
+    "繁體中文": "搜尋",
+    "English": "Search"
+  },
+  "searching": {
+    "简体中文": "正在搜索",
+    "繁體中文": "正在搜尋",
+    "English": "Searching for"
+  },
+  "more_filters": {
+    "简体中文": "更多筛选",
+    "繁體中文": "更多篩選",
+    "English": "More Filters"
+  },
+  "filter_tip": {
+    "简体中文": "筛选条件区域",
+    "繁體中文": "篩選條件區域",
+    "English": "Filter criteria area"
+  },
+  "sort_label": {
+    "简体中文": "排序",
+    "繁體中文": "排序",
+    "English": "Sort by"
+  },
+  "sort_category": {
+    "简体中文": "类别",
+    "繁體中文": "類別",
+    "English": "Category"
+  },
+  "sort_all": {
+    "简体中文": "全部",
+    "繁體中文": "全部",
+    "English": "All"
+  },
+  "sort_az": {
+    "简体中文": "A-Z",
+    "繁體中文": "A-Z",
+    "English": "A-Z"
+  },
+  "sort_za": {
+    "简体中文": "Z-A",
+    "繁體中文": "Z-A",
+    "English": "Z-A"
+  },
+  "empty_state": {
+    "简体中文": "暂无内容",
+    "繁體中文": "暫無內容",
+    "English": "No items"
+  },
+  "select_all": {
+    "简体中文": "全选",
+    "繁體中文": "全選",
+    "English": "Select All"
+  },
+  "from_folder": {
+    "简体中文": "从收藏夹导入",
+    "繁體中文": "從收藏夾匯入",
+    "English": "From folder"
+  },
+  "choose_folder": {
+    "简体中文": "选择收藏夹…",
+    "繁體中文": "選擇收藏夾…",
+    "English": "Choose folder…"
+  },
+  "add_to_deploy": {
+    "简体中文": "添加到部署清单",
+    "繁體中文": "新增到部署清單",
+    "English": "Add to Deploy List"
+  },
+  "cancel": {
+    "简体中文": "取消",
+    "繁體中文": "取消",
+    "English": "Cancel"
+  },
+  "nothing_selected": {
+    "简体中文": "还没有勾选任何应用",
+    "繁體中文": "還沒有勾選任何應用",
+    "English": "Nothing selected"
+  },
+  "filter_hint": {
+    "简体中文": "点下面的条件筛选，每组单选；点「全部」取消该组筛选",
+    "繁體中文": "點下面的條件篩選，每組單選；點「全部」取消該組篩選",
+    "English": "Pick a condition below. One per row; click All to clear that row."
+  },
+  "filter_all": {
+    "简体中文": "全部",
+    "繁體中文": "全部",
+    "English": "All"
+  },
+  "filter_category": {
+    "简体中文": "类别",
+    "繁體中文": "類別",
+    "English": "Category"
+  },
+  "filter_tag": {
+    "简体中文": "标签",
+    "繁體中文": "標籤",
+    "English": "Tag"
+  },
+  "filter_source": {
+    "简体中文": "来源",
+    "繁體中文": "來源",
+    "English": "Source"
+  },
+  "filter_favorite": {
+    "简体中文": "收藏",
+    "繁體中文": "收藏",
+    "English": "Favorites"
+  },
+  "source_site": {
+    "简体中文": "有官网",
+    "繁體中文": "有官網",
+    "English": "Has site"
+  },
+  "source_repo": {
+    "简体中文": "有代码仓库",
+    "繁體中文": "有程式碼倉庫",
+    "English": "Has repo"
+  },
+  "source_download": {
+    "简体中文": "可自动下载",
+    "繁體中文": "可自動下載",
+    "English": "Auto-downloadable"
+  },
+  "favorite_only": {
+    "简体中文": "仅看收藏",
+    "繁體中文": "僅看收藏",
+    "English": "Favorites only"
+  },
+  "back_tip": {
+    "简体中文": "退出 Esc",
+    "繁體中文": "退出 Esc",
+    "English": "Back (Esc)"
+  },
+  "favorited": {
+    "简体中文": "已收藏",
+    "繁體中文": "已收藏",
+    "English": "Favorited"
+  },
+  "unfavorite_tip": {
+    "简体中文": "点击取消收藏",
+    "繁體中文": "點擊取消收藏",
+    "English": "Click to remove from favorites"
+  },
+  "favorite": {
+    "简体中文": "收藏",
+    "繁體中文": "收藏",
+    "English": "Favorite"
+  },
+  "favorite_tip": {
+    "简体中文": "加入收藏",
+    "繁體中文": "加入收藏",
+    "English": "Add to favorites"
+  },
+  "filter_updated": {
+    "简体中文": "更新时间",
+    "繁體中文": "更新時間",
+    "English": "Updated"
+  },
+  "updated_latest": {
+    "简体中文": "最新",
+    "繁體中文": "最新",
+    "English": "Latest"
+  },
+  "updated_10d": {
+    "简体中文": "10 天前",
+    "繁體中文": "10 天前",
+    "English": "Last 10 days"
+  },
+  "updated_30d": {
+    "简体中文": "30 天前",
+    "繁體中文": "30 天前",
+    "English": "Last 30 days"
+  },
+  "updated_180d": {
+    "简体中文": "半年前",
+    "繁體中文": "半年前",
+    "English": "Last 6 months"
+  },
+  "filter_system": {
+    "简体中文": "适用系统",
+    "繁體中文": "適用系統",
+    "English": "Platform"
+  },
+  "filter_arch": {
+    "简体中文": "CPU 架构",
+    "繁體中文": "CPU 架構",
+    "English": "Architecture"
+  },
+  "arch_x64": {
+    "简体中文": "x64",
+    "繁體中文": "x64",
+    "English": "x64"
+  },
+  "result_count": {
+    "简体中文": "已搜索到 {n} 个相关内容",
+    "繁體中文": "已搜尋到 {n} 個相關內容",
+    "English": "Found {n} related item(s)"
+  },
+  "view_grid_tip": {
+    "简体中文": "网格视图：一行 6 张小卡片，只显示收藏按钮",
+    "繁體中文": "網格檢視：一行 6 張小卡片，只顯示收藏按鈕",
+    "English": "Grid view: 6 compact cards per row, favorites only"
+  },
+  "view_tile_tip": {
+    "简体中文": "磁贴视图：一行 4 张大卡片",
+    "繁體中文": "磁貼檢視：一行 4 張大卡片",
+    "English": "Tile view: 4 large cards per row"
+  },
+  "section_intro": {
+    "简体中文": "应用介绍",
+    "繁體中文": "應用介紹",
+    "English": "About"
+  },
+  "section_detail": {
+    "简体中文": "详细信息",
+    "繁體中文": "詳細資訊",
+    "English": "Details"
+  },
+  "no_intro": {
+    "简体中文": "这个资源还没有填写应用介绍。",
+    "繁體中文": "這個資源還沒有填寫應用介紹。",
+    "English": "No description has been provided for this resource yet."
+  },
+  "variant_label": {
+    "简体中文": "版本",
+    "繁體中文": "版本",
+    "English": "Variant"
+  },
+  "row_systems": {
+    "简体中文": "适用系统",
+    "繁體中文": "適用系統",
+    "English": "Platform"
+  },
+  "row_architectures": {
+    "简体中文": "CPU 架构",
+    "繁體中文": "CPU 架構",
+    "English": "Architecture"
+  },
+  "row_category": {
+    "简体中文": "类别",
+    "繁體中文": "類別",
+    "English": "Category"
+  },
+  "row_listed_at": {
+    "简体中文": "上架时间",
+    "繁體中文": "上架時間",
+    "English": "Listed"
+  },
+  "row_url": {
+    "简体中文": "官网",
+    "繁體中文": "官網",
+    "English": "Website"
+  },
+  "row_github": {
+    "简体中文": "GitHub",
+    "繁體中文": "GitHub",
+    "English": "GitHub"
+  },
+  "search_done": {
+    "简体中文": "已搜索到 {n} 个相关内容",
+    "繁體中文": "已搜尋到 {n} 個相關內容",
+    "English": "Found {n} related item(s)"
+  },
+  "card_open_repo": {
+    "简体中文": "打开代码仓库",
+    "繁體中文": "開啟程式碼倉庫",
+    "English": "Open repository"
+  },
+  "card_link_tip": {
+    "简体中文": "Ctrl+左键：静默打开，不切走",
+    "繁體中文": "Ctrl+左鍵：靜默開啟，不切走",
+    "English": "Ctrl+click: open quietly without switching away"
+  },
+  "card_open_site": {
+    "简体中文": "打开官网",
+    "繁體中文": "開啟官網",
+    "English": "Open website"
+  },
+  "card_favorite_add": {
+    "简体中文": "加入收藏",
+    "繁體中文": "加入收藏",
+    "English": "Add to favorites"
+  },
+  "card_favorite_added": {
+    "简体中文": "已收藏（点击取消收藏）",
+    "繁體中文": "已收藏（點擊取消收藏）",
+    "English": "Saved (click to remove)"
+  },
+  "detail_copy_link": {
+    "简体中文": "复制链接",
+    "繁體中文": "複製連結",
+    "English": "Copy link"
+  },
+  "detail_copied": {
+    "简体中文": "已复制",
+    "繁體中文": "已複製",
+    "English": "Copied"
+  },
+  "detail_back": {
+    "简体中文": "返回",
+    "繁體中文": "返回",
+    "English": "Back"
+  },
+  "detail_favorite": {
+    "简体中文": "收藏",
+    "繁體中文": "收藏",
+    "English": "Favorite"
+  },
+  "detail_link_tip": {
+    "简体中文": "\n左键：在浏览器打开；Ctrl+左键：静默打开，不切走",
+    "繁體中文": "\n左鍵：在瀏覽器開啟；Ctrl+左鍵：靜默開啟，不切走",
+    "English": "\nLeft click: open in browser; Ctrl+Left click: open quietly"
+  },
+  "row_author": {
+    "简体中文": "作者",
+    "繁體中文": "作者",
+    "English": "Author"
+  },
+  "row_chat": {
+    "简体中文": "聊天",
+    "繁體中文": "聊天",
+    "English": "Chat"
+  },
+  "detail_code_label": {
+    "简体中文": "编码：{code}",
+    "繁體中文": "編碼：{code}",
+    "English": "Code: {code}"
+  }
+}

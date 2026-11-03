@@ -1,0 +1,13 @@
+# 兜底拦截：脚本从本目录运行时误建的 .ToolsGCP
+#
+# 背景：constants.py 里 SCRIPT_DIR = dirname(sys.argv[0])，而日志 / 配置 / 数据目录
+# 都从它派生。所以**任何**放在 .ToolsGCP/tools/ 下、又没有先设 sys.argv[0] 的脚本，
+# 一启动就会在本目录里再造一份 .ToolsGCP（logs/system_log.log 之类）。
+# 真踩过一次：一个临时校验脚本留下了 .ToolsGCP/tools/.ToolsGCP/logs/system_log.log。
+#
+# 本目录里的长期脚本（detail_preview.py / smoke_detail.py）已经在 import pymodels
+# 之前把 sys.argv[0] 指回项目根，正常不会走到这里；这条是给"临时脚本 / 以后新加的
+# 脚本忘了设"准备的第二道防线（本目录自己的脚本仍然会被正常跟踪）。
+.ToolsGCP/
+__pycache__/
+_out/

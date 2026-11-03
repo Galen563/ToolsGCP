@@ -1,0 +1,217 @@
+{
+  "search": {
+    "简体中文": "搜索",
+    "繁體中文": "搜尋",
+    "English": "Search"
+  },
+  "home": {
+    "简体中文": "首页",
+    "繁體中文": "首頁",
+    "English": "Home"
+  },
+  "tools_gcp": {
+    "简体中文": "收藏",
+    "繁體中文": "收藏",
+    "English": "Favorites"
+  },
+  "gcp_workshop": {
+    "简体中文": "GCP工坊",
+    "繁體中文": "GCP工坊",
+    "English": "GCP Workshop"
+  },
+  "ai_page": {
+    "简体中文": "AI",
+    "繁體中文": "AI",
+    "English": "AI"
+  },
+  "workshop_subtitle": {
+    "简体中文": "Galne563 自制（页面内容待补充）。",
+    "繁體中文": "Galne563 自製（頁面內容待補充）。",
+    "English": "Built by Galne563 (content to be added)."
+  },
+  "workshop_open": {
+    "简体中文": "打开",
+    "繁體中文": "開啟",
+    "English": "Open"
+  },
+  "workshop_submit": {
+    "简体中文": "提交软件",
+    "繁體中文": "提交軟體",
+    "English": "Submit software"
+  },
+  "workshop_submit_desc": {
+    "简体中文": "填一张投稿表单，把想收录的软件写进资源库",
+    "繁體中文": "填一張投稿表單，把想收錄的軟體寫進資源庫",
+    "English": "Fill in a submission form and add an app to the library"
+  },
+  "workshop_log_desc": {
+    "简体中文": "看程序运行记录、导出日志，排查问题时用",
+    "繁體中文": "看程式執行記錄、匯出日誌，排查問題時用",
+    "English": "Read or export run logs when something goes wrong"
+  },
+  "workshop_plugins_desc": {
+    "简体中文": "安装、管理插件，给程序加新功能",
+    "繁體中文": "安裝、管理外掛，給程式加新功能",
+    "English": "Install and manage plugins to extend the app"
+  },
+  "workshop_deploy_desc": {
+    "简体中文": "把勾选的软件整理成部署清单，一键下载安装",
+    "繁體中文": "把勾選的軟體整理成部署清單，一鍵下載安裝",
+    "English": "Turn selected apps into a deploy list and install them in one go"
+  },
+  "workshop_settings_desc": {
+    "简体中文": "主题、下载源、快捷键、GCP-AI 等全部设置",
+    "繁體中文": "主題、下載來源、快速鍵、GCP-AI 等全部設定",
+    "English": "Theme, download sources, hotkeys, GCP-AI and everything else"
+  },
+  "deploy": {
+    "简体中文": "应用部署",
+    "繁體中文": "應用部署",
+    "English": "App Deploy"
+  },
+  "github": {
+    "简体中文": "Github",
+    "繁體中文": "Github",
+    "English": "Github"
+  },
+  "plugins": {
+    "简体中文": "插件",
+    "繁體中文": "外掛",
+    "English": "Plugins"
+  },
+  "log": {
+    "简体中文": "查看日志",
+    "繁體中文": "查看日誌",
+    "English": "View Logs"
+  },
+  "feedback": {
+    "简体中文": "反馈",
+    "繁體中文": "反饋",
+    "English": "Feedback"
+  },
+  "settings": {
+    "简体中文": "设置",
+    "繁體中文": "設定",
+    "English": "Settings"
+  },
+  "more": {
+    "简体中文": "更多",
+    "繁體中文": "更多",
+    "English": "More"
+  },
+  "more_tip": {
+    "简体中文": "更多（反馈 / 查看日志 / 插件 / 提交软件）",
+    "繁體中文": "更多（意見 / 檢視日誌 / 外掛 / 提交軟體）",
+    "English": "More (Feedback / Logs / Plugins / Submit software)"
+  },
+  "show_main_window": {
+    "简体中文": "呼出主窗口",
+    "繁體中文": "呼出主視窗",
+    "English": "Show Main Window"
+  },
+  "show_search_box": {
+    "简体中文": "呼出搜索框",
+    "繁體中文": "呼出搜尋框",
+    "English": "Open Search Box"
+  },
+  "show_ai_search": {
+    "简体中文": "呼出AI",
+    "繁體中文": "呼出AI",
+    "English": "Open AI"
+  },
+  "exit": {
+    "简体中文": "退出",
+    "繁體中文": "退出",
+    "English": "Exit"
+  },
+  "hidden_to_tray": {
+    "简体中文": "程序已隐藏到托盘",
+    "繁體中文": "程式已隱藏到系統匣",
+    "English": "Program hidden to tray"
+  },
+  "search_plugin": {
+    "简体中文": "搜索插件（名称 / id / 作者）",
+    "繁體中文": "搜尋外掛（名稱 / id / 作者）",
+    "English": "Search plugins"
+  },
+  "no_match": {
+    "简体中文": "没有匹配的插件，换个关键词试试。",
+    "繁體中文": "沒有符合的外掛，換個關鍵字試試。",
+    "English": "No matching plugin."
+  },
+  "toggle_tip": {
+    "简体中文": "打开 / 关闭这个插件",
+    "繁體中文": "開啟 / 關閉此外掛",
+    "English": "Enable / disable this plugin"
+  },
+  "toggle_hint": {
+    "简体中文": "启用",
+    "繁體中文": "啟用",
+    "English": "Enable"
+  },
+  "switch_on": {
+    "简体中文": "已开启",
+    "繁體中文": "已開啟",
+    "English": "On"
+  },
+  "switch_off": {
+    "简体中文": "已关闭",
+    "繁體中文": "已關閉",
+    "English": "Off"
+  },
+  "notice": {
+    "简体中文": "公告",
+    "繁體中文": "公告",
+    "English": "Notice"
+  },
+  "submit_software": {
+    "简体中文": "提交软件",
+    "繁體中文": "提交軟體",
+    "English": "Submit software"
+  },
+  "submit_software_tip": {
+    "简体中文": "打开资源制作器，做一个投稿用的 resource.json",
+    "繁體中文": "開啟資源製作器，做一個投稿用的 resource.json",
+    "English": "Open the resource maker to prepare a submission"
+  },
+  "resource_maker": {
+    "简体中文": "提交软件",
+    "繁體中文": "提交軟體",
+    "English": "Submit software"
+  },
+  "resource_maker_tip": {
+    "简体中文": "写一份资源投稿（resource.json）并合进资源库",
+    "繁體中文": "寫一份資源投稿（resource.json）並合進資源庫",
+    "English": "Author a resource.json and merge it into the library"
+  },
+  "status_enabled": {
+    "简体中文": "已启用",
+    "繁體中文": "已啟用",
+    "English": "Enabled"
+  },
+  "status_disabled": {
+    "简体中文": "已禁用",
+    "繁體中文": "已禁用",
+    "English": "Disabled"
+  },
+  "status_error": {
+    "简体中文": "加载失败",
+    "繁體中文": "載入失敗",
+    "English": "Failed to load"
+  },
+  "customize": {
+    "简体中文": "定制页",
+    "繁體中文": "定制頁",
+    "English": "Customize"
+  },
+  "resource_maker_load_failed": {
+    "简体中文": "资源制作器页面加载失败，详见日志。",
+    "繁體中文": "資源製作器頁面載入失敗，詳見日誌。",
+    "English": "Could not load the resource maker page. See the log for details."
+  },
+  "ai_ball_tip": {
+    "简体中文": "GCP-AI（点击打开 / 收起，可在设置里改快捷键）",
+    "繁體中文": "GCP-AI（點一下開啟 / 收起，可在設定裡改快捷鍵）",
+    "English": "GCP-AI (click to open / close; the shortcut can be changed in Settings)"
+  }
+}

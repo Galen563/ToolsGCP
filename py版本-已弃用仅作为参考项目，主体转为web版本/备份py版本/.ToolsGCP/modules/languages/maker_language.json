@@ -1,0 +1,1282 @@
+{
+  "title": {
+    "简体中文": "提交软件",
+    "繁體中文": "提交軟體",
+    "English": "Submit software"
+  },
+  "subtitle": {
+    "简体中文": "制作 / 浏览 / 合并 ToolsGCP 资源库里的条目；改动写进 .ToolsGCP/ToolsGCP-Resources.json，写盘前自动备份。",
+    "繁體中文": "製作 / 瀏覽 / 合併 ToolsGCP 資源庫裡的條目；改動寫進 .ToolsGCP/ToolsGCP-Resources.json，寫入前自動備份。",
+    "English": "Create, browse and merge entries in the ToolsGCP library. Changes are written to .ToolsGCP/ToolsGCP-Resources.json with automatic backups."
+  },
+  "library_tip": {
+    "简体中文": "资源库固定是程序目录下的 .ToolsGCP/ToolsGCP-Resources.json，制作器不会另外生成一份；\n每次写盘前会自动备份到同级 backups/ 目录，只保留最近 20 份。",
+    "繁體中文": "資源庫固定是程式目錄下的 .ToolsGCP/ToolsGCP-Resources.json，製作器不會另外生成一份；\n每次寫入前會自動備份到同級 backups/ 目錄，只保留最近 20 份。",
+    "English": "The library is always .ToolsGCP/ToolsGCP-Resources.json in the app folder; the maker never creates a second copy.\nEvery write is backed up to backups/ (the latest 20 are kept)."
+  },
+  "section_form": {
+    "简体中文": "投稿表单",
+    "繁體中文": "投稿表單",
+    "English": "Submit form"
+  },
+  "section_browser": {
+    "简体中文": "资源浏览",
+    "繁體中文": "資源瀏覽",
+    "English": "Browse library"
+  },
+  "section_batch": {
+    "简体中文": "批量合成",
+    "繁體中文": "批次合成",
+    "English": "Batch merge"
+  },
+  "section_help": {
+    "简体中文": "使用说明",
+    "繁體中文": "使用說明",
+    "English": "Help"
+  },
+  "all_categories": {
+    "简体中文": "全部类别",
+    "繁體中文": "全部分類",
+    "English": "All categories"
+  },
+  "append_local": {
+    "简体中文": "追加到本机资源库",
+    "繁體中文": "追加到本機資源庫",
+    "English": "Append to local library"
+  },
+  "arch": {
+    "简体中文": "CPU 架构",
+    "繁體中文": "CPU 架構",
+    "English": "CPU architecture"
+  },
+  "author_page": {
+    "简体中文": "作者主页",
+    "繁體中文": "作者首頁",
+    "English": "Author page"
+  },
+  "basic_info": {
+    "简体中文": "基本信息",
+    "繁體中文": "基本資訊",
+    "English": "Basics"
+  },
+  "category": {
+    "简体中文": "类别",
+    "繁體中文": "分類",
+    "English": "Category"
+  },
+  "chat_url": {
+    "简体中文": "聊天地址",
+    "繁體中文": "聊天位址",
+    "English": "Chat / community"
+  },
+  "clear_form": {
+    "简体中文": "清空表单",
+    "繁體中文": "清空表單",
+    "English": "Clear form"
+  },
+  "code": {
+    "简体中文": "编码",
+    "繁體中文": "編碼",
+    "English": "Code"
+  },
+  "delete_selected": {
+    "简体中文": "删除选中条目",
+    "繁體中文": "刪除選中條目",
+    "English": "Delete selected"
+  },
+  "description": {
+    "简体中文": "简介",
+    "繁體中文": "簡介",
+    "English": "Description"
+  },
+  "download": {
+    "简体中文": "下载直链",
+    "繁體中文": "下載直連",
+    "English": "Direct download"
+  },
+  "follow_category": {
+    "简体中文": "跟随类别",
+    "繁體中文": "跟隨分類",
+    "English": "Follow category"
+  },
+  "github": {
+    "简体中文": "开源仓库",
+    "繁體中文": "開源倉庫",
+    "English": "Repository"
+  },
+  "icon": {
+    "简体中文": "图标",
+    "繁體中文": "圖示",
+    "English": "Icon"
+  },
+  "id": {
+    "简体中文": "标识 id *",
+    "繁體中文": "識別碼 id *",
+    "English": "ID *"
+  },
+  "import_image": {
+    "简体中文": "导入图片",
+    "繁體中文": "匯入圖片",
+    "English": "Import image"
+  },
+  "load_existing": {
+    "简体中文": "载入现有资源来编辑",
+    "繁體中文": "載入現有資源來編輯",
+    "English": "Load an existing entry"
+  },
+  "load_into_form": {
+    "简体中文": "载入到制作资源",
+    "繁體中文": "載入到製作資源",
+    "English": "Load into the form"
+  },
+  "name": {
+    "简体中文": "名称",
+    "繁體中文": "名稱",
+    "English": "Name"
+  },
+  "name_required": {
+    "简体中文": "名称 *",
+    "繁體中文": "名稱 *",
+    "English": "Name *"
+  },
+  "open_library": {
+    "简体中文": "打开资源库文件",
+    "繁體中文": "開啟資源庫檔案",
+    "English": "Open library file"
+  },
+  "platforms": {
+    "简体中文": "适用系统",
+    "繁體中文": "適用系統",
+    "English": "Platforms"
+  },
+  "reload": {
+    "简体中文": "重新载入",
+    "繁體中文": "重新載入",
+    "English": "Reload"
+  },
+  "save_as_new": {
+    "简体中文": "另存为独立资源库",
+    "繁體中文": "另存為獨立資源庫",
+    "English": "Save as a separate library"
+  },
+  "supplement": {
+    "简体中文": "补充",
+    "繁體中文": "補充",
+    "English": "Extra notes"
+  },
+  "intro": {
+    "简体中文": "应用介绍",
+    "繁體中文": "應用介紹",
+    "English": "About"
+  },
+  "tip_intro": {
+    "简体中文": "可选。存进 JSON 的 intro 字段：卡片和列表都不显示，\n只在详情页「应用介绍」区块里当正文用；\n留空时详情页会退回显示上面的「简介」",
+    "繁體中文": "可選。存進 JSON 的 intro 欄位：卡片和列表都不顯示，\n只在詳情頁「應用介紹」區塊裡當正文用；\n留空時詳情頁會退回顯示上面的「簡介」",
+    "English": "Optional. Stored in the JSON 'intro' field: never shown on cards or in the list,\nused as the body of the detail page's \"About\" block.\nIf left empty the detail page falls back to the description above."
+  },
+  "详情页「应用介绍」里显示的正文（没有可留空）：这软件是干什么的、主要功能、适合谁用、有什么特色……\n比上面的简介详细，可以写几段": {
+    "简体中文": "详情页「应用介绍」里显示的正文（没有可留空）：这软件是干什么的、主要功能、适合谁用、有什么特色……\n比上面的简介详细，可以写几段",
+    "繁體中文": "詳情頁「應用介紹」裡顯示的正文（沒有可留空）：這軟體是幹什麼的、主要功能、適合誰用、有什麼特色……\n比上面的簡介詳細，可以寫幾段",
+    "English": "Body text of the detail page's \"About\" block (optional): what it is, key features, who it is for…\nLonger than the description above; a few paragraphs are fine."
+  },
+  "（偏短，建议再写详细些）": {
+    "简体中文": "（偏短，建议再写详细些）",
+    "繁體中文": "（偏短，建議再寫詳細些）",
+    "English": " (a bit short — consider writing more)"
+  },
+  "tags": {
+    "简体中文": "标签",
+    "繁體中文": "標籤",
+    "English": "Tags"
+  },
+  "url": {
+    "简体中文": "官网",
+    "繁體中文": "官網",
+    "English": "Website"
+  },
+  "zh_cn": {
+    "简体中文": "简体中文",
+    "繁體中文": "簡體中文",
+    "English": "Simplified Chinese"
+  },
+  "gen_draft": {
+    "简体中文": "生成稿件（发给作者）",
+    "繁體中文": "生成稿件（發給作者）",
+    "English": "Generate draft (send to author)"
+  },
+  "lang_fields": {
+    "简体中文": "多语言字段",
+    "繁體中文": "多語言欄位",
+    "English": "Localized fields"
+  },
+  "lang_fields_hint": {
+    "简体中文": "按语言分别填写名称与简介",
+    "繁體中文": "按語言分別填寫名稱與簡介",
+    "English": "Provide name and description per language"
+  },
+  "links_desc": {
+    "简体中文": "链接与简介",
+    "繁體中文": "連結與簡介",
+    "English": "Links & description"
+  },
+  "links_only": {
+    "简体中文": "链接",
+    "繁體中文": "連結",
+    "English": "Links"
+  },
+  "no_image": {
+    "简体中文": "尚未选择图片",
+    "繁體中文": "尚未選擇圖片",
+    "English": "No image selected"
+  },
+  "other_links": {
+    "简体中文": "其它链接（可留空）",
+    "繁體中文": "其它連結（可留空）",
+    "English": "Other links (optional)"
+  },
+  "output": {
+    "简体中文": "产出",
+    "繁體中文": "產出",
+    "English": "Output"
+  },
+  "ph_author_page": {
+    "简体中文": "作者主页（没有可留空）",
+    "繁體中文": "作者首頁（沒有可留空）",
+    "English": "Author page (optional)"
+  },
+  "ph_chat": {
+    "简体中文": "聊天/交流地址（没有可留空）",
+    "繁體中文": "聊天/交流位址（沒有可留空）",
+    "English": "Chat / community link (optional)"
+  },
+  "ph_desc": {
+    "简体中文": "留空即同上",
+    "繁體中文": "留空即同上",
+    "English": "blank = above"
+  },
+  "ph_download": {
+    "简体中文": "安装包直链（没有可留空，部署模式会自动查 GitHub Release）",
+    "繁體中文": "安裝包直連（沒有可留空，部署模式會自動查 GitHub Release）",
+    "English": "Direct installer link (optional; deploy mode looks up GitHub releases)"
+  },
+  "ph_github": {
+    "简体中文": "owner/repo（也可直接粘贴完整地址）",
+    "繁體中文": "owner/repo（也可直接貼上完整網址）",
+    "English": "owner/repo (or paste the full URL)"
+  },
+  "ph_id": {
+    "简体中文": "英文小写，例如 localsend",
+    "繁體中文": "英文小寫，例如 localsend",
+    "English": "Lowercase, e.g. localsend"
+  },
+  "ph_name": {
+    "简体中文": "例如：LocalSend",
+    "繁體中文": "例如：LocalSend",
+    "English": "e.g. LocalSend"
+  },
+  "ph_name_l10n": {
+    "简体中文": "留空即同上",
+    "繁體中文": "留空即同上",
+    "English": "blank = above"
+  },
+  "ph_tags": {
+    "简体中文": "例如：工具, 系统, 官方",
+    "繁體中文": "例如：工具, 系統, 官方",
+    "English": "e.g. tools, system, official"
+  },
+  "ph_url": {
+    "简体中文": "https://example.com（没有可留空）",
+    "繁體中文": "https://example.com（沒有可留空）",
+    "English": "https://example.com (optional)"
+  },
+  "preview": {
+    "简体中文": "实时预览",
+    "繁體中文": "即時預覽",
+    "English": "Live preview"
+  },
+  "preview_desc": {
+    "简体中文": "（简介）",
+    "繁體中文": "（簡介）",
+    "English": "(description)"
+  },
+  "preview_name": {
+    "简体中文": "（名称）",
+    "繁體中文": "（名稱）",
+    "English": "(name)"
+  },
+  "search_library": {
+    "简体中文": "按编码 / 名称 / 标签 / id 搜索",
+    "繁體中文": "按編碼 / 名稱 / 標籤 / id 搜尋",
+    "English": "Search by code / name / tag / id"
+  },
+  "then_do_one": {
+    "简体中文": "填好必填项后，下面任选一项产出即可（不必全做）。",
+    "繁體中文": "填好必填項後，下面任選一項產出即可（不必全做）。",
+    "English": "Once the required fields are filled, pick any one action below (no need to do them all)."
+  },
+  "tip_code": {
+    "简体中文": "系统自动分配的唯一编码（可留空），部署清单靠它指代程序",
+    "繁體中文": "系統自動分配的唯一編碼（可留空），部署清單靠它指代程式",
+    "English": "System-assigned unique code (optional); deploy manifests reference it"
+  },
+  "tip_download": {
+    "简体中文": "填了它，部署模式就会直接下载这个文件；留空则自动用 GitHub 最新 Release",
+    "繁體中文": "填了它，部署模式就會直接下載這個檔案；留空則自動用 GitHub 最新 Release",
+    "English": "Deploy mode downloads this file directly; empty means the latest GitHub release"
+  },
+  "tip_follow_category": {
+    "简体中文": "把标签恢复成当前类别，之后切类别又会自动跟着变",
+    "繁體中文": "把標籤還原成目前分類，之後切分類又會自動跟著變",
+    "English": "Restore tags from the current category (keeps following it)"
+  },
+  "tip_import": {
+    "简体中文": "导入后会自动复制到图标目录，并改成「名称」里写的名字",
+    "繁體中文": "匯入後會自動複製到圖示目錄，並改成「名稱」裡寫的名字",
+    "English": "The image is copied into the icon folder and renamed after the name field"
+  },
+  "tip_none": {
+    "简体中文": "点一下选中／取消；留空表示没填",
+    "繁體中文": "點一下選中／取消；留空表示沒填",
+    "English": "Click to toggle; empty means not set"
+  },
+  "tip_none_decided": {
+    "简体中文": "点一下选中／取消；留空表示还没确定",
+    "繁體中文": "點一下選中／取消；留空表示還沒確定",
+    "English": "Click to toggle; empty means undecided"
+  },
+  "zh_tw": {
+    "简体中文": "繁體中文",
+    "繁體中文": "繁體中文",
+    "English": "Traditional Chinese"
+  },
+  "JSON 文件 (*.json)": {
+    "简体中文": "JSON 文件 (*.json)",
+    "繁體中文": "JSON 檔案 (*.json)",
+    "English": "JSON files (*.json)"
+  },
+  "ToolsGCP 资源索引文件": {
+    "简体中文": "ToolsGCP 资源索引文件",
+    "繁體中文": "ToolsGCP 資源索引檔案",
+    "English": "ToolsGCP resource index"
+  },
+  "https://你的仓库地址": {
+    "简体中文": "https://你的仓库地址",
+    "繁體中文": "https://你的倉庫位址",
+    "English": "https://your-repo-url"
+  },
+  "① 选择合成模式": {
+    "简体中文": "① 选择合成模式",
+    "繁體中文": "① 選擇合成模式",
+    "English": "1. Choose merge mode"
+  },
+  "② 选择要合成的 JSON 文件": {
+    "简体中文": "② 选择要合成的 JSON 文件",
+    "繁體中文": "② 選擇要合成的 JSON 檔案",
+    "English": "2. Pick the JSON files"
+  },
+  "③ 输出位置": {
+    "简体中文": "③ 输出位置",
+    "繁體中文": "③ 輸出位置",
+    "English": "3. Output location"
+  },
+  "④ 检查并执行": {
+    "简体中文": "④ 检查并执行",
+    "繁體中文": "④ 檢查並執行",
+    "English": "4. Review and run"
+  },
+  "⚠️ 读不了的文件：": {
+    "简体中文": "⚠️ 读不了的文件：",
+    "繁體中文": "⚠️ 讀不了的檔案：",
+    "English": "⚠️ Unreadable files:"
+  },
+  "「名称」不能留空": {
+    "简体中文": "「名称」不能留空",
+    "繁體中文": "「名稱」不能留空",
+    "English": "Name cannot be empty"
+  },
+  "「名称」必填": {
+    "简体中文": "「名称」必填",
+    "繁體中文": "「名稱」必填",
+    "English": "Name is required"
+  },
+  "「官网」没写 http://，已按 https:// 处理": {
+    "简体中文": "「官网」没写 http://，已按 https:// 处理",
+    "繁體中文": "「官網」沒寫 http://，已按 https:// 處理",
+    "English": "No http:// in the website field — https:// was added"
+  },
+  "「官网」留空了，卡片上会没有「官网」按钮": {
+    "简体中文": "「官网」留空了，卡片上会没有「官网」按钮",
+    "繁體中文": "「官網」留空了，卡片上不會有「官網」按鈕",
+    "English": "Website left empty — the card will have no website button"
+  },
+  "「开源仓库」留空了，卡片上会没有仓库按钮": {
+    "简体中文": "「开源仓库」留空了，卡片上会没有仓库按钮",
+    "繁體中文": "「開源倉庫」留空了，卡片上不會有倉庫按鈕",
+    "English": "Repository left empty — the card will have no repo button"
+  },
+  "「标识 id」只能包含小写字母、数字和连字符": {
+    "简体中文": "「标识 id」只能包含小写字母、数字和连字符",
+    "繁體中文": "「識別碼 id」只能包含小寫字母、數字和連字號",
+    "English": "The ID may only contain lowercase letters, digits and hyphens"
+  },
+  "「标识 id」必填": {
+    "简体中文": "「标识 id」必填",
+    "繁體中文": "「識別碼 id」必填",
+    "English": "ID is required"
+  },
+  "「简介」留空了，卡片上只有名称": {
+    "简体中文": "「简介」留空了，卡片上只有名称",
+    "繁體中文": "「簡介」留空了，卡片上只有名稱",
+    "English": "Description left empty — the card shows only the name"
+  },
+  "「类别」留空了，这条不会出现在类别分组里": {
+    "简体中文": "「类别」留空了，这条不会出现在类别分组里",
+    "繁體中文": "「分類」留空了，這條不會出現在分類分組裡",
+    "English": "Category left empty — the entry will not appear under a category"
+  },
+  "产出卡片": {
+    "简体中文": "产出卡片",
+    "繁體中文": "產出卡片",
+    "English": "Output card"
+  },
+  "会把合进来的条目直接写进本机资源库，写入前会自动备份一份。": {
+    "简体中文": "会把合进来的条目直接写进本机资源库，写入前会自动备份一份。",
+    "繁體中文": "會把合併進來的條目直接寫進本機資源庫，寫入前會自動備份一份。",
+    "English": "Merged entries are written straight into the local library with an automatic backup."
+  },
+  "保存到": {
+    "简体中文": "保存到",
+    "繁體中文": "儲存到",
+    "English": "Save to"
+  },
+  "保存合并结果": {
+    "简体中文": "保存合并结果",
+    "繁體中文": "儲存合併結果",
+    "English": "Save merged result"
+  },
+  "信息完整，可以生成/追加了。": {
+    "简体中文": "信息完整，可以生成/追加了。",
+    "繁體中文": "資訊完整，可以生成/追加了。",
+    "English": "Everything is filled in — ready to generate or append."
+  },
+  "先在表格里点一行，再点「载入到制作资源」": {
+    "简体中文": "先在表格里点一行，再点「载入到制作资源」",
+    "繁體中文": "先在表格裡點一行，再點「載入到製作資源」",
+    "English": "Click a row in the table, then \"Load into the form\""
+  },
+  "先在表格里选一行": {
+    "简体中文": "先在表格里选一行",
+    "繁體中文": "先在表格裡選一行",
+    "English": "Select a row in the table first"
+  },
+  "先添加要合成的 JSON": {
+    "简体中文": "先添加要合成的 JSON",
+    "繁體中文": "先加入要合成的 JSON",
+    "English": "Add the JSON files to merge first"
+  },
+  "先选一个保存位置": {
+    "简体中文": "先选一个保存位置",
+    "繁體中文": "先選一個儲存位置",
+    "English": "Choose a save location first"
+  },
+  "全部保留（重新分配编码）": {
+    "简体中文": "全部保留（重新分配编码）",
+    "繁體中文": "全部保留（重新分配編碼）",
+    "English": "Keep everything (reassign codes)"
+  },
+  "写入失败": {
+    "简体中文": "写入失败",
+    "繁體中文": "寫入失敗",
+    "English": "Write failed"
+  },
+  "出错了": {
+    "简体中文": "出错了",
+    "繁體中文": "出錯了",
+    "English": "Something went wrong"
+  },
+  "删除": {
+    "简体中文": "删除",
+    "繁體中文": "刪除",
+    "English": "Delete"
+  },
+  "删除条目": {
+    "简体中文": "删除条目",
+    "繁體中文": "刪除條目",
+    "English": "Delete entry"
+  },
+  "判断重复的依据：编码相同，或者标识 id 相同": {
+    "简体中文": "判断重复的依据：编码相同，或者标识 id 相同",
+    "繁體中文": "判斷重複的依據：編碼相同，或者識別碼 id 相同",
+    "English": "Duplicates are detected by identical code or identical id"
+  },
+  "单条资源稿件，可直接提交给 ToolsGCP 作者": {
+    "简体中文": "单条资源稿件，可直接提交给 ToolsGCP 作者",
+    "繁體中文": "單條資源稿件，可直接提交給 ToolsGCP 作者",
+    "English": "A single-entry draft you can send to the ToolsGCP author"
+  },
+  "原位置": {
+    "简体中文": "原位置",
+    "繁體中文": "原位置",
+    "English": "Original"
+  },
+  "双击这里可以换一张图片": {
+    "简体中文": "双击这里可以换一张图片",
+    "繁體中文": "點兩下這裡可以換一張圖片",
+    "English": "Double-click to pick another image"
+  },
+  "取消": {
+    "简体中文": "取消",
+    "繁體中文": "取消",
+    "English": "Cancel"
+  },
+  "只生成一个新文件，本机资源库不受影响，之后可以再导进来。": {
+    "简体中文": "只生成一个新文件，本机资源库不受影响，之后可以再导进来。",
+    "繁體中文": "只生成一個新檔案，本機資源庫不受影響，之後可以再匯進來。",
+    "English": "Only a new file is created — the local library is untouched."
+  },
+  "合成模式": {
+    "简体中文": "合成模式",
+    "繁體中文": "合成模式",
+    "English": "Merge mode"
+  },
+  "合成模式卡片": {
+    "简体中文": "合成模式卡片",
+    "繁體中文": "合成模式卡片",
+    "English": "Merge mode card"
+  },
+  "图标文件不存在（重新导入一次图片）": {
+    "简体中文": "图标文件不存在（重新导入一次图片）",
+    "繁體中文": "圖示檔案不存在（重新匯入一次圖片）",
+    "English": "The icon file is missing (import the image again)"
+  },
+  "图标目录": {
+    "简体中文": "图标目录",
+    "繁體中文": "圖示目錄",
+    "English": "Icon folder"
+  },
+  "图片已导入": {
+    "简体中文": "图片已导入",
+    "繁體中文": "圖片已匯入",
+    "English": "Image imported"
+  },
+  "图片已换好": {
+    "简体中文": "图片已换好",
+    "繁體中文": "圖片已換好",
+    "English": "Image replaced"
+  },
+  "图片没能复制进图标目录，请再试一次。": {
+    "简体中文": "图片没能复制进图标目录，请再试一次。",
+    "繁體中文": "圖片沒能複製進圖示目錄，請再試一次。",
+    "English": "The image could not be copied into the icon folder — please try again."
+  },
+  "图片没能存进图标目录，已中止写入（资源库没有被改动）": {
+    "简体中文": "图片没能存进图标目录，已中止写入（资源库没有被改动）",
+    "繁體中文": "圖片沒能存進圖示目錄，已中止寫入（資源庫沒有被改動）",
+    "English": "The image could not be stored — write aborted (library unchanged)"
+  },
+  "图片没能跟着改名": {
+    "简体中文": "图片没能跟着改名",
+    "繁體中文": "圖片沒能跟著改名",
+    "English": "Could not rename the image"
+  },
+  "基本信息卡片": {
+    "简体中文": "基本信息卡片",
+    "繁體中文": "基本資訊卡片",
+    "English": "Basics card"
+  },
+  "备份失败，已中止写入": {
+    "简体中文": "备份失败，已中止写入",
+    "繁體中文": "備份失敗，已中止寫入",
+    "English": "Backup failed — write aborted"
+  },
+  "备份失败，已中止写入（资源库没有被改动）": {
+    "简体中文": "备份失败，已中止写入（资源库没有被改动）",
+    "繁體中文": "備份失敗，已中止寫入（資源庫沒有被改動）",
+    "English": "Backup failed — write aborted (library unchanged)"
+  },
+  "备份失败，已中止删除": {
+    "简体中文": "备份失败，已中止删除",
+    "繁體中文": "備份失敗，已中止刪除",
+    "English": "Backup failed — delete aborted"
+  },
+  "多个 JSON 合并成新文件": {
+    "简体中文": "多个 JSON 合并成新文件",
+    "繁體中文": "多個 JSON 合併成新檔案",
+    "English": "Merge multiple JSON files into one"
+  },
+  "多语言字段卡片": {
+    "简体中文": "多语言字段卡片",
+    "繁體中文": "多語言欄位卡片",
+    "English": "Localized fields card"
+  },
+  "完成": {
+    "简体中文": "完成",
+    "繁體中文": "完成",
+    "English": "Done"
+  },
+  "实时预览卡片": {
+    "简体中文": "实时预览卡片",
+    "繁體中文": "即時預覽卡片",
+    "English": "Live preview card"
+  },
+  "已修改": {
+    "简体中文": "已修改",
+    "繁體中文": "已修改",
+    "English": "Modified"
+  },
+  "已写入资源库": {
+    "简体中文": "已写入资源库",
+    "繁體中文": "已寫入資源庫",
+    "English": "Written to library"
+  },
+  "已删除": {
+    "简体中文": "已删除",
+    "繁體中文": "已刪除",
+    "English": "Deleted"
+  },
+  "已生成独立资源库": {
+    "简体中文": "已生成独立资源库",
+    "繁體中文": "已生成獨立資源庫",
+    "English": "Standalone library created"
+  },
+  "已载入": {
+    "简体中文": "已载入",
+    "繁體中文": "已載入",
+    "English": "Loaded"
+  },
+  "已选择「不开源」": {
+    "简体中文": "已选择「不开源」",
+    "繁體中文": "已選擇「不開源」",
+    "English": "Marked as closed source"
+  },
+  "开始合成": {
+    "简体中文": "开始合成",
+    "繁體中文": "開始合成",
+    "English": "Start merging"
+  },
+  "打不开": {
+    "简体中文": "打不开",
+    "繁體中文": "打不開",
+    "English": "Cannot open"
+  },
+  "执行卡片": {
+    "简体中文": "执行卡片",
+    "繁體中文": "執行卡片",
+    "English": "Run card"
+  },
+  "找不到这条资源": {
+    "简体中文": "找不到这条资源",
+    "繁體中文": "找不到這條資源",
+    "English": "Entry not found"
+  },
+  "换一张图片（改图标）": {
+    "简体中文": "换一张图片（改图标）",
+    "繁體中文": "換一張圖片（改圖示）",
+    "English": "Change image (icon)"
+  },
+  "无编码": {
+    "简体中文": "无编码",
+    "繁體中文": "無編碼",
+    "English": "No code"
+  },
+  "本机资源库是空的，没有可载入的条目。": {
+    "简体中文": "本机资源库是空的，没有可载入的条目。",
+    "繁體中文": "本機資源庫是空的，沒有可載入的條目。",
+    "English": "The local library is empty."
+  },
+  "没有选中任何条目": {
+    "简体中文": "没有选中任何条目",
+    "繁體中文": "沒有選中任何條目",
+    "English": "Nothing selected"
+  },
+  "添加文件": {
+    "简体中文": "添加文件",
+    "繁體中文": "加入檔案",
+    "English": "Add files"
+  },
+  "清空": {
+    "简体中文": "清空",
+    "繁體中文": "清空",
+    "English": "Clear"
+  },
+  "清空列表": {
+    "简体中文": "清空列表",
+    "繁體中文": "清空列表",
+    "English": "Clear list"
+  },
+  "点「预览结果」看看会合并进来多少条。": {
+    "简体中文": "点「预览结果」看看会合并进来多少条。",
+    "繁體中文": "點「預覽結果」看看會合併進來多少條。",
+    "English": "Click \"Preview result\" to see how many entries will be merged."
+  },
+  "目标资源库": {
+    "简体中文": "目标资源库",
+    "繁體中文": "目標資源庫",
+    "English": "Target library"
+  },
+  "确定要清空当前填写的所有内容吗？": {
+    "简体中文": "确定要清空当前填写的所有内容吗？",
+    "繁體中文": "確定要清空目前填寫的所有內容嗎？",
+    "English": "Clear everything you have filled in?"
+  },
+  "确认合成": {
+    "简体中文": "确认合成",
+    "繁體中文": "確認合成",
+    "English": "Confirm merge"
+  },
+  "移除选中": {
+    "简体中文": "移除选中",
+    "繁體中文": "移除選中",
+    "English": "Remove selected"
+  },
+  "稿件已生成": {
+    "简体中文": "稿件已生成",
+    "繁體中文": "稿件已生成",
+    "English": "Draft generated"
+  },
+  "补充说明卡片": {
+    "简体中文": "补充说明卡片",
+    "繁體中文": "補充說明卡片",
+    "English": "Extra notes card"
+  },
+  "覆盖": {
+    "简体中文": "覆盖",
+    "繁體中文": "覆蓋",
+    "English": "Overwrite"
+  },
+  "覆盖已有资源": {
+    "简体中文": "覆盖已有资源",
+    "繁體中文": "覆蓋已有資源",
+    "English": "Overwrite existing"
+  },
+  "说明.txt": {
+    "简体中文": "说明.txt",
+    "繁體中文": "說明.txt",
+    "English": "README.txt"
+  },
+  "请先处理这些问题": {
+    "简体中文": "请先处理这些问题",
+    "繁體中文": "請先處理這些問題",
+    "English": "Fix these first"
+  },
+  "读取资源库并填表": {
+    "简体中文": "读取资源库并填表",
+    "繁體中文": "讀取資源庫並填表",
+    "English": "Reading the library"
+  },
+  "资源库条目": {
+    "简体中文": "资源库条目",
+    "繁體中文": "資源庫條目",
+    "English": "Library entries"
+  },
+  "资源库没有被改动": {
+    "简体中文": "资源库没有被改动",
+    "繁體中文": "資源庫沒有被改動",
+    "English": "The library was not modified"
+  },
+  "资源库里的唯一标识，只允许小写字母/数字/连字符": {
+    "简体中文": "资源库里的唯一标识，只允许小写字母/数字/连字符",
+    "繁體中文": "資源庫裡的唯一識別碼，只允許小寫字母/數字/連字號",
+    "English": "Unique id inside the library: lowercase letters, digits and hyphens only"
+  },
+  "跳过重复（推荐）": {
+    "简体中文": "跳过重复（推荐）",
+    "繁體中文": "跳過重複（推薦）",
+    "English": "Skip duplicates (recommended)"
+  },
+  "软件的名字；导入图片后图片会被自动改成这个名字": {
+    "简体中文": "软件的名字；导入图片后图片会被自动改成这个名字",
+    "繁體中文": "軟體的名稱；匯入圖片後圖片會被自動改成這個名稱",
+    "English": "The app name; imported images are renamed after it"
+  },
+  "载入现有资源": {
+    "简体中文": "载入现有资源",
+    "繁體中文": "載入現有資源",
+    "English": "Load an existing entry"
+  },
+  "输出位置卡片": {
+    "简体中文": "输出位置卡片",
+    "繁體中文": "輸出位置卡片",
+    "English": "Output location card"
+  },
+  "还没导入图片，卡片上会显示成默认图标": {
+    "简体中文": "还没导入图片，卡片上会显示成默认图标",
+    "繁體中文": "還沒匯入圖片，卡片上會顯示成預設圖示",
+    "English": "No image imported yet — the card shows the default icon"
+  },
+  "还没选文件": {
+    "简体中文": "还没选文件",
+    "繁體中文": "還沒選檔案",
+    "English": "No files selected"
+  },
+  "这一格没有改": {
+    "简体中文": "这一格没有改",
+    "繁體中文": "這一格沒有改",
+    "English": "This cell was not changed"
+  },
+  "这个图片文件不存在": {
+    "简体中文": "这个图片文件不存在",
+    "繁體中文": "這個圖片檔案不存在",
+    "English": "This image file does not exist"
+  },
+  "这个文件不存在": {
+    "简体中文": "这个文件不存在",
+    "繁體中文": "這個檔案不存在",
+    "English": "This file does not exist"
+  },
+  "追加到本机资源库（默认）": {
+    "简体中文": "追加到本机资源库（默认）",
+    "繁體中文": "追加到本機資源庫（預設）",
+    "English": "Append to local library (default)"
+  },
+  "选好平台后会自动补上前缀；卡片右下角会出现仓库按钮": {
+    "简体中文": "选好平台后会自动补上前缀；卡片右下角会出现仓库按钮",
+    "繁體中文": "選好平台後會自動補上前綴；卡片右下角會出現倉庫按鈕",
+    "English": "The prefix is added automatically; a repo button appears on the card"
+  },
+  "选择…": {
+    "简体中文": "选择…",
+    "繁體中文": "選擇…",
+    "English": "Choose…"
+  },
+  "选择文件卡片": {
+    "简体中文": "选择文件卡片",
+    "繁體中文": "選擇檔案卡片",
+    "English": "File selection card"
+  },
+  "选择新 JSON 的保存位置": {
+    "简体中文": "选择新 JSON 的保存位置",
+    "繁體中文": "選擇新 JSON 的儲存位置",
+    "English": "Choose where to save the new JSON"
+  },
+  "选择稿件输出目录": {
+    "简体中文": "选择稿件输出目录",
+    "繁體中文": "選擇稿件輸出目錄",
+    "English": "Choose the output folder"
+  },
+  "选择要合成的 JSON": {
+    "简体中文": "选择要合成的 JSON",
+    "繁體中文": "選擇要合成的 JSON",
+    "English": "Choose JSON files to merge"
+  },
+  "选择要编辑的资源：": {
+    "简体中文": "选择要编辑的资源：",
+    "繁體中文": "選擇要編輯的資源：",
+    "English": "Choose an entry to edit:"
+  },
+  "重复条目": {
+    "简体中文": "重复条目",
+    "繁體中文": "重複條目",
+    "English": "Duplicate entries"
+  },
+  "重复的覆盖旧条目": {
+    "简体中文": "重复的覆盖旧条目",
+    "繁體中文": "重複的覆蓋舊條目",
+    "English": "Overwrite old entries on duplicates"
+  },
+  "链接与简介卡片": {
+    "简体中文": "链接与简介卡片",
+    "繁體中文": "連結與簡介卡片",
+    "English": "Links & description card"
+  },
+  "预览结果": {
+    "简体中文": "预览结果",
+    "繁體中文": "預覽結果",
+    "English": "Preview result"
+  },
+  "（无标签）": {
+    "简体中文": "（无标签）",
+    "繁體中文": "（無標籤）",
+    "English": "(no tags)"
+  },
+  "追加模式：把投稿的条目合进本机资源库，已经有的编码会自动跳过。\n新建模式：把多个投稿文件合并成一个新的 JSON，原来的文件不动。": {
+    "简体中文": "追加模式：把投稿的条目合进本机资源库，已经有的编码会自动跳过。\n新建模式：把多个投稿文件合并成一个新的 JSON，原来的文件不动。",
+    "繁體中文": "追加模式：把投稿的條目合併進本機資源庫，已經有的編碼會自動跳過。\n新建模式：把多個投稿檔案合併成一個新的 JSON，原來的檔案不動。",
+    "English": "Append: merge submitted entries into the local library, skipping existing codes.\nNew file: merge several submissions into one new JSON, leaving the originals alone."
+  },
+  "双击单元格直接修改内容，改完自动保存（写入前会自动备份到 backups/）；双击「图标」列的格子可以重新挑一张图片（自动存进图标目录并改成应用名）；\n「上架时间」是新资源入库的时间；想大改就选中一行点「载入到制作资源」。": {
+    "简体中文": "双击单元格直接修改内容，改完自动保存（写入前会自动备份到 backups/）；双击「图标」列的格子可以重新挑一张图片（自动存进图标目录并改成应用名）；\n「上架时间」是新资源入库的时间；想大改就选中一行点「载入到制作资源」。",
+    "繁體中文": "點兩下儲存格直接修改內容，改完自動儲存（寫入前會自動備份到 backups/）；點兩下「圖示」欄的格子可以重新挑一張圖片（自動存進圖示目錄並改成應用程式名稱）；\n「上架時間」是新資源入庫的時間；想大改就選中一行點「載入到製作資源」。",
+    "English": "Double-click a cell to edit it (saved automatically, with a backup in backups/); double-click the icon column to pick another image (copied to the icon folder and renamed);\n\"listed at\" is when the entry was added — select a row and click \"Load into the form\" for bigger edits."
+  },
+  "可选。简介写不下的内容放这里；\n存进 JSON 的 supplement 字段，主程序卡片不会显示它": {
+    "简体中文": "可选。简介写不下的内容放这里；\n存进 JSON 的 supplement 字段，主程序卡片不会显示它",
+    "繁體中文": "可選。簡介寫不下的內容放這裡；\n存進 JSON 的 supplement 欄位，主程式卡片不會顯示它",
+    "English": "Optional. For anything that does not fit in the description;\nstored in the JSON 'supplement' field and never shown on cards"
+  },
+  "可选。应用介绍里放不下的补充内容；\n存进 JSON 的 supplement 字段，详情页接在应用介绍下面": {
+    "简体中文": "可选。应用介绍里放不下的补充内容；\n存进 JSON 的 supplement 字段，详情页接在应用介绍下面",
+    "繁體中文": "可選。應用介紹裡放不下的補充內容；\n存進 JSON 的 supplement 欄位，詳情頁接在應用介紹下面",
+    "English": "Optional. Anything that does not fit in the About text;\nstored in the JSON 'supplement' field and shown right below it on the detail page"
+  },
+  "补充说明（没有可留空）：使用场景、注意事项、系统要求……\n会写进 JSON 的 supplement 字段，接在应用介绍下面显示": {
+    "简体中文": "补充说明（没有可留空）：使用场景、注意事项、系统要求……\n会写进 JSON 的 supplement 字段，接在应用介绍下面显示",
+    "繁體中文": "補充說明（沒有可留空）：使用場景、注意事項、系統需求……\n會寫進 JSON 的 supplement 欄位，接在應用介紹下面顯示",
+    "English": "Extra notes (optional): use cases, caveats, requirements…\nStored in the JSON 'supplement' field and shown right below the About text."
+  },
+  "可选。点卡片上的「官网」时跳转的地址；\n只写 example.com 也行，保存时会自动补上 https://": {
+    "简体中文": "可选。点卡片上的「官网」时跳转的地址；\n只写 example.com 也行，保存时会自动补上 https://",
+    "繁體中文": "可選。點卡片上的「官網」時跳轉的網址；\n只寫 example.com 也行，儲存時會自動補上 https://",
+    "English": "Optional. Where the card's website button leads;\n'example.com' is fine — https:// is added automatically"
+  },
+  "默认跟着「类别」自动填；你自己改过之后就不再自动覆盖，\n想恢复联动就点右边的「跟随类别」。写「官方」会显示成金色标签": {
+    "简体中文": "默认跟着「类别」自动填；你自己改过之后就不再自动覆盖，\n想恢复联动就点右边的「跟随类别」。写「官方」会显示成金色标签",
+    "繁體中文": "預設跟著「分類」自動填；你自己改過之後就不再自動覆蓋，\n想恢復連動就點右邊的「跟隨分類」。寫「官方」會顯示成金色標籤",
+    "English": "Filled automatically from the category until you edit it yourself;\nclick \"Follow category\" to restore the link. Writing \"官方\" shows a gold badge"
+  },
+  "可选。导入的图片会自动存到 .ToolsGCP/Icon，\n并按「名称」自动改名，不用自己整理文件名。\n支持 png / jpg / gif / ico / webp / svg，建议 256x256 以上": {
+    "简体中文": "可选。导入的图片会自动存到 .ToolsGCP/Icon，\n并按「名称」自动改名，不用自己整理文件名。\n支持 png / jpg / gif / ico / webp / svg，建议 256x256 以上",
+    "繁體中文": "可選。匯入的圖片會自動存到 .ToolsGCP/Icon，\n並按「名稱」自動改名，不用自己整理檔名。\n支援 png / jpg / gif / ico / webp / svg，建議 256x256 以上",
+    "English": "Optional. Imported images go to .ToolsGCP/Icon and are renamed after the name field.\nSupports png / jpg / gif / ico / webp / svg; 256x256 or larger recommended"
+  },
+  "可多选；留空表示没填。例如 Windows 版常见 x64 / x86，\n手机端常见 arm64": {
+    "简体中文": "可多选；留空表示没填。例如 Windows 版常见 x64 / x86，\n手机端常见 arm64",
+    "繁體中文": "可多選；留空表示沒填。例如 Windows 版常見 x64 / x86，\n手機端常見 arm64",
+    "English": "Multi-select, empty means unset. Windows builds are often x64 / x86,\nmobile builds arm64"
+  },
+  "可多选；不选就是留空。\n现在只存进 JSON，主程序搜索页也能按它筛": {
+    "简体中文": "可多选；不选就是留空。\n现在只存进 JSON，主程序搜索页也能按它筛",
+    "繁體中文": "可多選；不選就是留空。\n現在只存進 JSON，主程式搜尋頁也能按它篩",
+    "English": "Multi-select, empty means unset.\nStored in JSON; the search page can filter by it"
+  },
+  "决定它显示在搜索页的哪个分组下，也可以直接输入新类别；\n填好后标签会自动跟着写": {
+    "简体中文": "决定它显示在搜索页的哪个分组下，也可以直接输入新类别；\n填好后标签会自动跟着写",
+    "繁體中文": "決定它顯示在搜尋頁的哪個分組下，也可以直接輸入新分類；\n填好後標籤會自動跟著寫",
+    "English": "Decides which group it appears under on the search page; you can type a new category\nand tags follow automatically"
+  },
+  "默认关闭。开启后可以分别填写简体中文 / 繁體中文 / English 的名称与简介，\n导出的 JSON 里这些字段会写成带语言键的对象。\n如果不确定外语怎么写，就保持关闭，别硬翻。": {
+    "简体中文": "默认关闭。开启后可以分别填写简体中文 / 繁體中文 / English 的名称与简介，\n导出的 JSON 里这些字段会写成带语言键的对象。\n如果不确定外语怎么写，就保持关闭，别硬翻。",
+    "繁體中文": "預設關閉。開啟後可以分別填寫簡體中文 / 繁體中文 / English 的名稱與簡介，\n匯出的 JSON 裡這些欄位會寫成帶語言鍵的物件。\n如果不確定外語怎麼寫，就保持關閉，別硬翻。",
+    "English": "Off by default. When enabled you can fill the name and description for Simplified Chinese / Traditional Chinese / English separately;\nthe exported JSON stores them as language-keyed objects.\nIf you are unsure about the translation, just leave it off."
+  },
+  "help_text": {
+    "简体中文": "ToolsGCP 资源制作器 —— 使用说明\n\n【这个工具是干什么的】\n  把\"我想让 ToolsGCP 收录这个软件\"变成一份规范的数据。\n  填完表单后可以：生成稿件发给作者、直接追加进本地资源库、或另存为一份私有资源库。\n\n【哪些是必填的】\n  只有两项是必填：名称、标识 id。\n  其它全部可以留空（留空的字段不会写进 JSON，卡片上也不会显示那一项）。\n  留空时程序只是提示一句，不会拦着你产出。\n\n【怎么填】\n  · 名称：软件的名字，会和官方叫法保持一致。填这里的时候，标识 id 会自动跟着生成。\n  · 标识 id：资源库里的唯一标识，只允许小写字母/数字/连字符。\n  · 简介：一句话说明这个软件是什么，显示在卡片上、也是详情页头部那一行小字。\n  · 应用介绍：详情页「应用介绍」区块的正文，比简介详细（可以写几段：主要功能、特色、适合谁用），\n          存进 JSON 的 intro 字段，卡片和列表都不显示。留空时详情页会退回显示「简介」。\n  · 补充：应用介绍里放不下的补充内容（使用场景、系统要求、注意事项……），\n          存进 JSON 的 supplement 字段，详情页接在应用介绍下面另起一段显示。\n  · 官网：只写 example.com 也会自动补成 https://。\n  · 类别：决定它显示在搜索页的哪个分组下，也可以自己输入新类别。\n  · 标签：默认跟着「类别」自动填；你自己改过标签以后就不再自动覆盖，\n         想恢复联动就点标签右边的「跟随类别」按钮。写「官方」会显示成金色。\n\n【图片（图标）怎么弄】\n  点「导入图片」选一张图就行，剩下的交给程序：\n  · 图片会自动复制到资源库的图标目录（.ToolsGCP/Icon）；\n  · 不管原图叫什么名字，都会被改成「名称」里写的那个名字（例如 LocalSend.png）；\n  · 之后改「名称」，图标文件也会跟着改名，不用你手动去文件夹里改；\n  · 如果这个名字已经被别的资源占着，会自动加 -2、-3，绝不覆盖别人的图；\n  · 复制完会再核对一遍文件，确认真的写进目录里了。\n  建议用 256x256 以上的正方形 PNG，背景透明最好看；gif 也可以（卡片上会动）。\n\n【上架时间（listed_at）】\n  新资源第一次写进资源库时会自动记下时间（例如 2026-09-21 00:40:14），\n  编辑已有条目不会改动它。搜索页的「更多筛选 → 更新时间」就是按它筛的。\n\n【编码（code）是什么】\n  每条资源会分配一个唯一编码（TG-000001 这种）。部署清单就是靠编码来指代程序的，\n  所以请不要随便改已有资源的编码。\n\n【几种产出方式的区别】\n  · 写入资源库：直接改你本机的 .ToolsGCP/ToolsGCP-Resources.json（始终是这一个文件，不会\n              再生成新的资源库 JSON）；改动前会自动备份到 .ToolsGCP/backups/ 并在那里轮换。\n  · 生成稿件：输出到 ResourceDrafts/<id>/ 下，含 resource.json 和图片，\n              还会打一个同名 zip，直接把这个 zip 发给作者就行。\n  · 另存为独立资源库：生成一份只含这条资源的完整 JSON，\n              适合做自己的私有资源库（图片会一起复制过去）。\n\n【浏览 / 删除页怎么用】\n  · 双击某个单元格（名称、类别、标签、官网、仓库、简介、上架时间……）就地变成输入框，改完自动保存；\n  · 双击「图标」那一格会弹出选图窗口，选完自动存进图标目录并改成应用名；\n  · 名称那一格不允许清空；其它可选字段清空就等于把它从 JSON 里删掉；\n  · 想大改就选中一行点「载入到制作资源」，或者右键选「载入到制作资源」；\n  · 每次修改写盘前都会自动备份，删条目也会顺手清理没人再用的图片。\n\n【提示】\n  表单里改了任何内容，右侧预览都会实时更新；点「生成/追加」前会自动做一次校验。\n",
+    "繁體中文": "ToolsGCP 資源製作器 —— 使用說明\n\n【這個工具是幹什麼的】\n  把「我想讓 ToolsGCP 收錄這個軟體」變成一份規範的資料。\n  填完表單後可以：生成稿件寄給作者、直接追加進本機資源庫、或另存為一份私有資源庫。\n\n【哪些是必填的】\n  只有兩項是必填：名稱、識別碼 id。\n  其它全部可以留空（留空的欄位不會寫進 JSON，卡片上也不會顯示那一項）。\n  留空時程式只是提示一句，不會攔著你產出。\n\n【怎麼填】\n  · 名稱：軟體的名字，會和官方叫法保持一致。填這裡的時候，識別碼 id 會自動跟著生成。\n  · 識別碼 id：資源庫裡的唯一識別碼，只允許小寫字母/數字/連字號。\n  · 簡介：一句話說明這個軟體是什麼，顯示在卡片上、也是詳情頁頂部那一行小字。\n  · 應用介紹：詳情頁「應用介紹」區塊的正文，比簡介詳細（可以寫幾段：主要功能、特色、適合誰用），\n          存進 JSON 的 intro 欄位，卡片和列表都不顯示。留空時詳情頁會退回顯示「簡介」。\n  · 補充：應用介紹裡放不下的補充內容（使用場景、系統需求、注意事項……），\n          存進 JSON 的 supplement 欄位，詳情頁接在應用介紹下面另起一段顯示。\n  · 官網：只寫 example.com 也會自動補成 https://。\n  · 分類：決定它顯示在搜尋頁的哪個分組下，也可以自己輸入新分類。\n  · 標籤：預設跟著「分類」自動填；你自己改過標籤以後就不再自動覆蓋，\n         想恢復連動就點標籤右邊的「跟隨分類」按鈕。寫「官方」會顯示成金色。\n\n【圖片（圖示）怎麼弄】\n  點「匯入圖片」選一張圖就行，剩下的交給程式：\n  · 圖片會自動複製到資源庫的圖示目錄（.ToolsGCP/Icon）；\n  · 不管原圖叫什麼名字，都會被改成「名稱」裡寫的那個名字（例如 LocalSend.png）；\n  · 之後改「名稱」，圖示檔案也會跟著改名，不用你手動去資料夾裡改；\n  · 如果這個名字已經被別的資源占著，會自動加 -2、-3，絕不覆蓋別人的圖；\n  · 複製完會再核對一遍檔案，確認真的寫進目錄裡了。\n  建議用 256x256 以上的正方形 PNG，背景透明最好看；gif 也可以（卡片上會動）。\n\n【上架時間（listed_at）】\n  新資源第一次寫進資源庫時會自動記下時間（例如 2026-09-21 00:40:14），\n  編輯已有條目不會改動它。搜尋頁的「更多篩選 → 更新時間」就是按它篩的。\n\n【編碼（code）是什麼】\n  每條資源會分配一個唯一編碼（TG-000001 這種）。部署清單就是靠編碼來指代程式的，\n  所以請不要隨便改已有資源的編碼。\n\n【幾種產出方式的區別】\n  · 寫入資源庫：直接改你本機的 .ToolsGCP/ToolsGCP-Resources.json（始終是這一個檔案，不會\n              再生成新的資源庫 JSON）；改動前會自動備份到 .ToolsGCP/backups/ 並在那裡輪換。\n  · 生成稿件：輸出到 ResourceDrafts/<id>/ 下，含 resource.json 和圖片，\n              還會打一個同名 zip，直接把這個 zip 寄給作者就行。\n  · 另存為獨立資源庫：生成一份只含這條資源的完整 JSON，\n              適合做自己的私有資源庫（圖片會一起複製過去）。\n\n【瀏覽 / 刪除頁怎麼用】\n  · 點兩下某個儲存格（名稱、分類、標籤、官網、倉庫、簡介、上架時間……）就地變成輸入框，改完自動儲存；\n  · 點兩下「圖示」那一格會彈出選圖視窗，選完自動存進圖示目錄並改成應用程式名稱；\n  · 名稱那一格不允許清空；其它可選欄位清空就等於把它從 JSON 裡刪掉；\n  · 想大改就選中一行點「載入到製作資源」，或者按右鍵選「載入到製作資源」；\n  · 每次修改寫入前都會自動備份，刪條目也會順手清理沒人再用的圖片。\n\n【提示】\n  表單裡改了任何內容，右側預覽都會即時更新；點「生成/追加」前會自動做一次校驗。\n",
+    "English": "ToolsGCP Resource Maker — Help\n\n[What this tool does]\n  Turns \"I want ToolsGCP to list this app\" into clean, structured data.\n  When the form is filled in you can: generate a draft and send it to the author,\n  append it to your local library, or save it as a private library.\n\n[Required fields]\n  Only two fields are required: Name and ID.\n  Everything else may be left empty (empty fields are not written to the JSON and\n  are not shown on the card). Empty fields only produce a hint — they never block you.\n\n[How to fill it in]\n  · Name: the app name, matching the official spelling. The ID is generated from it as you type.\n  · ID: unique inside the library; lowercase letters, digits and hyphens only.\n  · Description: one line saying what the app is — shown on the card and as the small line in\n    the detail page header.\n  · About: the body of the detail page's \"About\" block, longer than the description (a few\n    paragraphs on features, what makes it special, who it is for); stored in the JSON \"intro\"\n    field and never shown on cards or in the list. If empty, the detail page falls back to\n    the description.\n  · Extra notes: anything that does not fit in the About text (use cases, requirements,\n    caveats…); stored in the JSON \"supplement\" field and shown as a second paragraph right\n    below the About text on the detail page.\n  · Website: \"example.com\" is fine — https:// is added automatically.\n  · Category: decides which group it appears under on the search page; you can type a new one.\n  · Tags: filled automatically from the category until you edit them yourself;\n    click \"Follow category\" to restore the link. \"官方\" shows as a gold badge.\n\n[Images (icons)]\n  Click \"Import image\" and pick a file — the tool does the rest:\n  · the image is copied into the library icon folder (.ToolsGCP/Icon);\n  · whatever the file was called, it is renamed after the Name field (e.g. LocalSend.png);\n  · renaming the entry later renames the icon too — no manual file juggling;\n  · if the name is taken, -2 / -3 is appended; existing icons are never overwritten;\n  · the file is verified after copying.\n  A square PNG of 256x256 or larger with transparency looks best; GIF works too (it animates).\n\n[Listed at (listed_at)]\n  Recorded automatically when an entry is first written to the library (e.g. 2026-09-21 00:40:14);\n  editing an existing entry does not change it. The search page's\n  \"More filters → Updated\" uses this field.\n\n[What is the code?]\n  Every entry gets a unique code (like TG-000001). Deploy manifests refer to apps by code,\n  so please do not change the code of an existing entry.\n\n[Output options]\n  · Write to library: edits .ToolsGCP/ToolsGCP-Resources.json in place (always this one file,\n                      no second library is created); a backup is written to .ToolsGCP/backups/.\n  · Generate draft: writes ResourceDrafts/<id>/ with resource.json and the image, plus a zip of\n                    the same name — just send that zip to the author.\n  · Save as a standalone library: a complete JSON containing only this entry, handy as your own\n                    private library (the image is copied along).\n\n[Using the browse / delete page]\n  · Double-click a cell (name, category, tags, website, repo, description, listed at…) to edit it\n    in place; changes are saved automatically;\n  · double-clicking the icon cell opens the image picker and renames the icon automatically;\n  · the name cell cannot be emptied; clearing an optional field removes it from the JSON;\n  · for bigger edits select a row and click \"Load into the form\" (or right-click it);\n  · every write is backed up first, and deleting an entry also cleans up unused icons.\n\n[Tip]\n  Anything you change in the form updates the live preview on the right; a validation pass runs\n  before generating or appending.\n"
+  },
+  "files_selected": {
+    "简体中文": "已选 {n} 个文件",
+    "繁體中文": "已選 {n} 個檔案",
+    "English": "{n} file(s) selected"
+  },
+  "library_missing": {
+    "简体中文": "资源库还没建",
+    "繁體中文": "資源庫還沒建",
+    "English": "Library not created yet"
+  },
+  "library_tooltip": {
+    "简体中文": "（「追加到本机资源库」会新建一份；写盘前自动备份到 backups/）",
+    "繁體中文": "（「追加到本機資源庫」會新建一份；寫入前自動備份到 backups/）",
+    "English": "(Appending creates it; every write is backed up to backups/)"
+  },
+  "library_count": {
+    "简体中文": "资源库 {n} 条",
+    "繁體中文": "資源庫 {n} 條",
+    "English": "Library: {n} entries"
+  },
+  "library_path_hint": {
+    "简体中文": "资源库：{path}\n当前共 {n} 条",
+    "繁體中文": "資源庫：{path}\n目前共 {n} 條",
+    "English": "Library: {path}\n{n} entries in total"
+  },
+  "ph_desc_main": {
+    "简体中文": "一句话说明它是什么、能干什么（可留空）",
+    "繁體中文": "一句話說明它是什麼、能做什麼（可留空）",
+    "English": "One line about what it is and what it does (optional)"
+  },
+  "ph_intro_main": {
+    "简体中文": "详情页「应用介绍」里显示的正文（没有可留空）：这软件是干什么的、主要功能、适合谁用、有什么特色……\n比上面的简介详细，可以写几段",
+    "繁體中文": "詳細頁「應用介紹」裡顯示的正文（沒有可留空）：這軟體是做什麼的、主要功能、適合誰用、有什麼特色……\n比上面的簡介詳細，可以寫幾段",
+    "English": "Body text shown in the \"About\" section on the detail page (optional): what the app does, its main features, who it is for, what makes it special…\nMore detailed than the description above; several paragraphs are fine"
+  },
+  "ph_supplement_main": {
+    "简体中文": "补充说明（没有可留空）：使用场景、注意事项、系统要求……",
+    "繁體中文": "補充說明（沒有可留空）：使用場景、注意事項、系統要求……",
+    "English": "Extra notes (optional): use cases, caveats, system requirements…"
+  },
+  "icon_dir_create_failed": {
+    "简体中文": "图标目录建不了：{err}",
+    "繁體中文": "圖示目錄無法建立：{err}",
+    "English": "Could not create the icon folder: {err}"
+  },
+  "icon_copy_failed": {
+    "简体中文": "图片复制失败：{err}",
+    "繁體中文": "圖片複製失敗：{err}",
+    "English": "Failed to copy the image: {err}"
+  },
+  "library_not_found_hint": {
+    "简体中文": "未找到本机资源库，\n「追加到本机资源库」会新建一份。",
+    "繁體中文": "找不到本機資源庫，\n「追加到本機資源庫」會新建一份。",
+    "English": "No local library found.\n\"Append to library\" will create one."
+  },
+  "pick_icon_dialog_title": {
+    "简体中文": "给「{name}」挑一张图片",
+    "繁體中文": "替「{name}」挑一張圖片",
+    "English": "Choose an image for \"{name}\""
+  },
+  "err_id_taken": {
+    "简体中文": "标识 id「{id}」已被占用（{name}）",
+    "繁體中文": "識別碼 id「{id}」已被佔用（{name}）",
+    "English": "The id \"{id}\" is already taken ({name})"
+  },
+  "err_code_taken": {
+    "简体中文": "编码「{code}」已被占用（{name}）",
+    "繁體中文": "編碼「{code}」已被佔用（{name}）",
+    "English": "The code \"{code}\" is already taken ({name})"
+  },
+  "warn_no_http_scheme": {
+    "简体中文": "「{label}」没写 http://，已按 https:// 处理",
+    "繁體中文": "「{label}」沒有寫 http://，已改用 https:// 處理",
+    "English": "\"{label}\" has no http:// prefix — https:// was assumed"
+  },
+  "status_all_ok_with_warns": {
+    "简体中文": "必填项都填好了，可以生成/追加。\n（另外：\n· {list}）",
+    "繁體中文": "必填欄位都填好了，可以生成／追加。\n（另外：\n· {list}）",
+    "English": "All required fields are filled in — you can generate or append.\n(Also:\n· {list})"
+  },
+  "errors_fix_first": {
+    "简体中文": "还有问题需要先修好：\n· {list}",
+    "繁體中文": "還有問題需要先修好：\n· {list}",
+    "English": "Please fix these problems first:\n· {list}"
+  },
+  "confirm_overwrite_entry": {
+    "简体中文": "资源库里已经有 id 为「{id}」的条目（{name}），要用现在的表单内容覆盖它吗？\n\n资源库文件：{path}",
+    "繁體中文": "資源庫裡已經有 id 為「{id}」的條目（{name}），要用現在的表單內容覆蓋它嗎？\n\n資源庫檔案：{path}",
+    "English": "The library already has an entry with id \"{id}\" ({name}). Overwrite it with the current form contents?\n\nLibrary file: {path}"
+  },
+  "backup_failed_abort": {
+    "简体中文": "备份失败，已中止写入（资源库没有被改动）\n{err}",
+    "繁體中文": "備份失敗，已中止寫入（資源庫沒有被改動）\n{err}",
+    "English": "Backup failed — the write was aborted (the library was left untouched)\n{err}"
+  },
+  "write_failed": {
+    "简体中文": "写入失败：{err}",
+    "繁體中文": "寫入失敗：{err}",
+    "English": "Write failed: {err}"
+  },
+  "written_to_library": {
+    "简体中文": "{name}（{code}）→ {n} 条",
+    "繁體中文": "{name}（{code}）→ {n} 條",
+    "English": "{name} ({code}) → {n} entries"
+  },
+  "draft_readme_head": {
+    "简体中文": "这是 {name} 的资源稿件，由 ToolsGCP 资源制作器生成。",
+    "繁體中文": "這是 {name} 的資源稿件，由 ToolsGCP 資源製作器生成。",
+    "English": "This is the resource draft for {name}, generated by the ToolsGCP Resource Maker."
+  },
+  "draft_readme_json": {
+    "简体中文": "resource.json —— 资源数据（单条）",
+    "繁體中文": "resource.json —— 資源資料（單筆）",
+    "English": "resource.json — the resource data (single entry)"
+  },
+  "draft_readme_icon_line": {
+    "简体中文": "Icon/{name} —— 图片（已按名称命名）",
+    "繁體中文": "Icon/{name} —— 圖片（已按名稱命名）",
+    "English": "Icon/{name} — the image (named after the app)"
+  },
+  "draft_readme_no_icon": {
+    "简体中文": "（这份稿件没有带图片）",
+    "繁體中文": "（這份稿件沒有附圖片）",
+    "English": "(This draft has no image)"
+  },
+  "draft_readme_howto": {
+    "简体中文": "提交方式：把整个文件夹（或下面的 zip）发给作者，\n或直接追加到你自己的 .ToolsGCP/ToolsGCP-Resources.json。",
+    "繁體中文": "提交方式：把整個資料夾（或下面的 zip）寄給作者，\n或直接追加到你自己的 .ToolsGCP/ToolsGCP-Resources.json。",
+    "English": "How to submit: send the whole folder (or the zip below) to the author,\nor append it to your own .ToolsGCP/ToolsGCP-Resources.json."
+  },
+  "zip_packed": {
+    "简体中文": "\n已打包：{path}",
+    "繁體中文": "\n已封裝：{path}",
+    "English": "\nPacked: {path}"
+  },
+  "zip_pack_failed": {
+    "简体中文": "\n（打包 zip 失败：{err}）",
+    "繁體中文": "\n（封裝 zip 失敗：{err}）",
+    "English": "\n(Failed to create the zip: {err})"
+  },
+  "column_listed_at": {
+    "简体中文": "上架时间",
+    "繁體中文": "上架時間",
+    "English": "Listed"
+  },
+  "browser_total": {
+    "简体中文": "共 {n} 条",
+    "繁體中文": "共 {n} 條",
+    "English": "{n} entries"
+  },
+  "browser_filtered": {
+    "简体中文": "，筛选出 {n} 条",
+    "繁體中文": "，篩選出 {n} 條",
+    "English": ", {n} shown"
+  },
+  "browser_shown": {
+    "简体中文": "筛选中 · 显示 {n} / 共 {total} 条",
+    "繁體中文": "篩選中 · 顯示 {n} / 共 {total} 條",
+    "English": "Filtered · showing {n} of {total}"
+  },
+  "browser_busy_filling": {
+    "简体中文": "{count}，正在填表 {n}/{total}…",
+    "繁體中文": "{count}，正在填表 {n}/{total}…",
+    "English": "{count}, filling the table {n}/{total}…"
+  },
+  "confirm_delete_entries": {
+    "简体中文": "确定要从资源库删除这些条目吗？\n{names}",
+    "繁體中文": "確定要從資源庫刪除這些條目嗎？\n{names}",
+    "English": "Delete these entries from the library?\n{names}"
+  },
+  "cell_changed_backup": {
+    "简体中文": "{column}：{value}（已自动备份资源库）",
+    "繁體中文": "{column}：{value}（已自動備份資源庫）",
+    "English": "{column}: {value} (library backed up automatically)"
+  },
+  "icon_replaced_backup": {
+    "简体中文": "{name} → {file}（已自动备份资源库）",
+    "繁體中文": "{name} → {file}（已自動備份資源庫）",
+    "English": "{name} → {file} (library backed up automatically)"
+  },
+  "entries_backed_up": {
+    "简体中文": "{n} 条（已自动备份资源库）",
+    "繁體中文": "{n} 條（已自動備份資源庫）",
+    "English": "{n} entries (library backed up automatically)"
+  },
+  "batch_files_hint": {
+    "简体中文": "可以一次选多个；文件里是列表或 {\"resources\": [...]} 都能识别。",
+    "繁體中文": "可以一次選多個；檔案裡是列表或 {\"resources\": [...]} 都能識別。",
+    "English": "You can select several at once; a plain list or {\"resources\": [...]} both work."
+  },
+  "merge_src_summary": {
+    "简体中文": "源文件 {files} 个，共 {n} 条：",
+    "繁體中文": "來源檔案 {files} 個，共 {n} 條：",
+    "English": "{files} source file(s), {n} entries in total:"
+  },
+  "merge_src_item": {
+    "简体中文": "    {name} — {n} 条",
+    "繁體中文": "    {name} — {n} 條",
+    "English": "    {name} — {n} entries"
+  },
+  "merge_more_files": {
+    "简体中文": "    …还有 {n} 个文件",
+    "繁體中文": "    …還有 {n} 個檔案",
+    "English": "    …and {n} more file(s)"
+  },
+  "merge_result": {
+    "简体中文": "结果：新增 {added} 条，跳过重复 {skipped} 条，覆盖 {overwritten} 条，重新编号 {recoded} 条",
+    "繁體中文": "結果：新增 {added} 條，跳過重複 {skipped} 條，覆蓋 {overwritten} 條，重新編號 {recoded} 條",
+    "English": "Result: {added} added, {skipped} duplicates skipped, {overwritten} overwritten, {recoded} re-coded"
+  },
+  "merge_count_change": {
+    "简体中文": "资源库将从 {before} 条变成 {after} 条",
+    "繁體中文": "資源庫將從 {before} 條變成 {after} 條",
+    "English": "The library will go from {before} to {after} entries"
+  },
+  "confirm_merge_write": {
+    "简体中文": "将把 {n} 条新条目写入本机资源库：\n{path}\n\n（写入前会自动备份一份）",
+    "繁體中文": "將把 {n} 條新條目寫入本機資源庫：\n{path}\n\n（寫入前會自動備份一份）",
+    "English": "{n} new entries will be written to the local library:\n{path}\n\n(A backup is made first)"
+  },
+  "merged_ok": {
+    "简体中文": "已合并 {n} 条到资源库（已自动备份到 backups/）",
+    "繁體中文": "已合併 {n} 條到資源庫（已自動備份到 backups/）",
+    "English": "Merged {n} entries into the library (backed up to backups/)"
+  },
+  "generated_ok": {
+    "简体中文": "已生成 {path}（{n} 条）",
+    "繁體中文": "已生成 {path}（{n} 條）",
+    "English": "Created {path} ({n} entries)"
+  },
+  "section_preparing": {
+    "简体中文": "正在准备「{title}」…",
+    "繁體中文": "正在準備「{title}」…",
+    "English": "Preparing \"{title}\"…"
+  },
+  "section_failed": {
+    "简体中文": "「{title}」没能准备出来",
+    "繁體中文": "「{title}」無法準備完成",
+    "English": "Could not prepare \"{title}\""
+  },
+  "step_progress": {
+    "简体中文": "{label}（第 {n}/{total} 步）",
+    "繁體中文": "{label}（第 {n}/{total} 步）",
+    "English": "{label} (step {n}/{total})"
+  },
+  "step_title_wrap": {
+    "简体中文": "「{title}」",
+    "繁體中文": "「{title}」",
+    "English": "\"{title}\""
+  },
+  "build_step_failed": {
+    "简体中文": "{label} 这一步出错了：{err}",
+    "繁體中文": "{label} 這一步出錯了：{err}",
+    "English": "{label}: this step failed — {err}"
+  },
+  "build_failed": {
+    "简体中文": "「{title}」构建失败：{err}",
+    "繁體中文": "「{title}」建置失敗：{err}",
+    "English": "Failed to build \"{title}\": {err}"
+  },
+  "finish_failed": {
+    "简体中文": "收尾时出错了：{err}",
+    "繁體中文": "收尾時出錯了：{err}",
+    "English": "Error while finishing up: {err}"
+  },
+  "init_failed": {
+    "简体中文": "「{title}」初始化失败：{err}",
+    "繁體中文": "「{title}」初始化失敗：{err}",
+    "English": "Failed to initialize \"{title}\": {err}"
+  },
+  "help_first_block_title": {
+    "简体中文": "使用说明",
+    "繁體中文": "使用說明",
+    "English": "Help"
+  },
+  "tip_success": {
+    "简体中文": "成功",
+    "繁體中文": "成功",
+    "English": "Success"
+  },
+  "tip_error": {
+    "简体中文": "错误",
+    "繁體中文": "錯誤",
+    "English": "Error"
+  },
+  "tip_warning": {
+    "简体中文": "提示",
+    "繁體中文": "提示",
+    "English": "Notice"
+  },
+  "tip_info": {
+    "简体中文": "信息",
+    "繁體中文": "資訊",
+    "English": "Info"
+  },
+  "image_saved_as": {
+    "简体中文": "已存为 {name}（{path}）",
+    "繁體中文": "已存為 {name}（{path}）",
+    "English": "Saved as {name} ({path})"
+  },
+  "image_filter": {
+    "简体中文": "图片文件 (*.png *.jpg *.jpeg *.gif *.ico *.bmp *.webp *.svg);;所有文件 (*.*)",
+    "繁體中文": "圖片檔案 (*.png *.jpg *.jpeg *.gif *.ico *.bmp *.webp *.svg);;所有檔案 (*.*)",
+    "English": "Image files (*.png *.jpg *.jpeg *.gif *.ico *.bmp *.webp *.svg);;All files (*.*)"
+  },
+  "lang_fields_tip": {
+    "简体中文": "默认开启：可以分别填写简体中文 / 繁體中文 / English 的名称、简介、应用介绍与补充说明，\n导出的 JSON 里这几个字段会写成带语言键的对象（{\"简体中文\": \"…\", \"English\": \"…\"}）。\n某一种语言留空就不写那一条 —— 程序会按当前语言自动回退到有内容的那一种。",
+    "繁體中文": "預設開啟：可以分別填寫簡體中文 / 繁體中文 / English 的名稱、簡介、應用介紹與補充說明，\n匯出的 JSON 裡這幾個欄位會寫成帶語言鍵的物件（{\"简体中文\": \"…\", \"English\": \"…\"}）。\n某一種語言留空就不寫那一條 —— 程式會依目前語言自動回退到有內容的那一種。",
+    "English": "On by default: fill in the name, description, about text and extra notes per language\n(Simplified Chinese / Traditional Chinese / English). In the exported JSON these fields become\nlanguage-keyed objects ({\"简体中文\": \"…\", \"English\": \"…\"}). A language you leave empty is simply\nnot written — the app falls back to whichever language does have content."
+  },
+  "ph_intro_l10n": {
+    "简体中文": "留空即同上",
+    "繁體中文": "留空即同上",
+    "English": "blank = above"
+  },
+  "ph_supplement_l10n": {
+    "简体中文": "留空即同上",
+    "繁體中文": "留空即同上",
+    "English": "blank = above"
+  },
+  "lang_fields_default_on": {
+    "简体中文": "多语言字段（三种语言一起提交）",
+    "繁體中文": "多語言欄位（三種語言一起提交）",
+    "English": "Localized fields (submit all three languages)"
+  }
+}

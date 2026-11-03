@@ -1,0 +1,169 @@
+/* ============================================================================
+ * ToolsGCP · 动画与过渡
+ * ============================================================================*/
+
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes popIn { from { opacity: 0; transform: translateY(6px) scale(.96); } to { opacity: 1; transform: none; } }
+/* 下拉框：从顶部纵向铺开（展开动画是自上而下，不是淡入）*/
+@keyframes comboIn { from { opacity: 0; transform: translateY(-7px) scaleY(.86); } to { opacity: 1; transform: none; } }
+@keyframes comboItemIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@keyframes cardIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+/* 列表切换（类别 / 视图）：整块轻微淡入上移，表示"内容换了一批"*/
+@keyframes listSwap { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+/* 卡片入场只由 .cards-anim 触发（JS 每会话只加一次）；不要写死在 .card 上，
+   否则切页 / 从任务栏还原窗口重绘 DOM 时会整屏重放。*/
+.vlist.cards-anim .card { animation: cardIn 220ms ease both; }
+.vlist.switch-anim { animation: listSwap 260ms cubic-bezier(.22,.8,.2,1) both; }
+@keyframes flashRow { 0%, 100% { background: transparent; } 30% { background: var(--accent-soft); } }
+@keyframes breathe { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-3px) scale(1.03); } }
+@keyframes bootSlide { 0% { transform: translateX(-120%); } 100% { transform: translateX(320%); } }
+@keyframes liquid { 0% { transform: rotate(0) scale(1); } 50% { transform: rotate(180deg) scale(1.06); } 100% { transform: rotate(360deg) scale(1); } }
+/* 悬浮球液态动效：整体慢速自转 + 高光呼吸（两个周期错开，避免机械感）*/
+@keyframes liquidSpin { 0% { transform: rotate(0deg) scale(1); } 50% { transform: rotate(180deg) scale(1.06); } 100% { transform: rotate(360deg) scale(1); } }
+@keyframes liquidPulse { 0% { transform: translate(-4%, 2%) scale(.92); opacity: .55; } 100% { transform: translate(5%, -3%) scale(1.08); opacity: .95; } }
+@keyframes ballIn { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: scale(1); } }
+/* 录制快捷键：输入框呼吸 + 顶部提示条的小圆点闪烁*/
+@keyframes recPulse { 0%, 100% { box-shadow: 0 0 0 3px rgba(255, 159, 67, .16); } 50% { box-shadow: 0 0 0 5px rgba(255, 159, 67, .30); } }
+@keyframes recBlink { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+
+.is-spin { animation: spin 900ms linear infinite; }
+
+/* ===================== 页面切换动画 =====================
+   进入：右侧滑入（沿用原版 PyQt search_interface.py 的 slide 动画方向）
+   退出：同方向但更快 —— 退出比进入短，切页才跟手。
+   ⚠️ `<transition name="page" mode="out-in">` 是先退后进，两段时长**相加**：
+   leave 160 + enter 200 ≈ 360ms 时，点卡片进详情页会明显感觉慢。
+   现在 leave 100 + enter 130/150 ≈ 230~250ms：保留滑入手感，明显更跟手。*/
+.page-enter-active { transition: opacity 130ms cubic-bezier(.33,0,.2,1), transform 150ms cubic-bezier(.33,0,.2,1); }
+.page-leave-active { transition: opacity 100ms cubic-bezier(.33,0,.2,1), transform 100ms cubic-bezier(.33,0,.2,1); }
+.page-enter-from { opacity: 0; transform: translateX(18px); }   /* 位移 28→18，更"跟手"*/
+.page-leave-to { opacity: 0; transform: translateX(14px); }
+
+/* 卡片点进去的资源详情页：整页右侧滑入（提速后 enter 170 / leave 110）*/
+.slide-in-enter-active { transition: transform 170ms cubic-bezier(.33,0,.2,1), opacity 170ms cubic-bezier(.33,0,.2,1); }
+.slide-in-leave-active { transition: transform 110ms cubic-bezier(.33,0,.2,1), opacity 110ms cubic-bezier(.33,0,.2,1); }
+.slide-in-enter-from { transform: translateX(100%); opacity: .4; }
+.slide-in-leave-to { transform: translateX(100%); opacity: .4; }
+
+/* ===========================================================================
+ * 修复区 · 页面切换后的残留底色框 / 卡住
+ * 
+ * 排查结论（逐条对照选择器）：
+ *   1) `.page`（base.css:113）本身**没有** background，也没有 will-change；
+ *      全站唯一的底色层是 `#app：before`（fixed + z-index:-1）。所以"残留底色"
+ *      不可能来自 .page 的背景色 —— 更可能是这一帧里 leave 的那层 .page
+ *      （position:absolute; inset:0，铺满 .content）停在 opacity:0 的中间态：
+ *      透明层不吃视觉，但**吃点击**，表现就是"切页后卡住"。
+ *   2) CSS 里没有任何 `filter` / `contain` / `transform: scale` 落在 .page / .page-scroll 上
+ *      （grep 过），不存在"模糊/缩放层没复位"的情况。
+ *   3) mode="out-in" 正常时两页不共存；但快速连点会打断 transitionend，Vue 可能
+ *      同时留着旧层。下面把层级与命中测试钉死，无论是否被打断都不会再卡。
+ * 另外显式声明 .page 底色透明：以后谁往 .page 挂底色，也不会在切换瞬间露成"一块框"。
+ * =========================================================================*/
+.page { background: transparent; }
+.page-leave-active { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+.page-enter-active { z-index: 1; }
+.page-enter-to, .page-leave-from { opacity: 1; transform: none; }
+.page-enter-active, .page-leave-active { backface-visibility: hidden; }
+
+/* 卡片本身的入场（虚拟列表滚出来时的轻微上浮）*/
+@keyframes cardIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+.fade-enter-active, .fade-leave-active { transition: opacity 180ms ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+.modal-enter-active, .modal-leave-active { transition: opacity 160ms ease; }
+.modal-enter-from, .modal-leave-to { opacity: 0; }
+.toast-enter-active, .toast-leave-active { transition: opacity 200ms ease, transform 220ms cubic-bezier(.22,.8,.2,1); }
+/* ⚠️ 提示框**从它所在的那一侧**滑出来（以前一律从右侧滑，观感不对）：
+     · 顶端居中 → 从**顶部往下**快速滑出；
+     · 右上 → 从右往左；右下 → 从下往上；
+     · 左上 → 从左往右；左下 → 从下往上。
+   ⚠️ 位置类名挂在 .toast-stack 上（is-top / is-tr / is-br / is-tl / is-bl），
+      所以这里按栈的类名给**不同的进入位移**。*/
+.toast-enter-from, .toast-leave-to { opacity: 0; transform: translateX(18px); }
+/* 顶端居中：从顶部往下快速滑出*/
+.toast-stack.is-top .toast-enter-from, .toast-stack.is-top .toast-leave-to {
+  opacity: 0; transform: translateY(-22px);
+}
+.toast-stack.is-top .toast-enter-active, .toast-stack.is-top .toast-leave-active {
+  transition: opacity 160ms ease, transform 190ms cubic-bezier(.22,.8,.2,1);
+}
+/* 右上：从右往左；右下：从下往上*/
+.toast-stack.is-tr .toast-enter-from, .toast-stack.is-tr .toast-leave-to {
+  opacity: 0; transform: translateX(22px);
+}
+.toast-stack.is-br .toast-enter-from, .toast-stack.is-br .toast-leave-to {
+  opacity: 0; transform: translateY(22px);
+}
+/* 左上：从左往右；左下：从下往上*/
+.toast-stack.is-tl .toast-enter-from, .toast-stack.is-tl .toast-leave-to {
+  opacity: 0; transform: translateX(-22px);
+}
+.toast-stack.is-bl .toast-enter-from, .toast-stack.is-bl .toast-leave-to {
+  opacity: 0; transform: translateY(22px);
+}
+
+/* AI 抽屉：从右滑入（原先只在旧 style.css 里，拆分时漏了）*/
+.drawer-enter-active, .drawer-leave-active { transition: transform 260ms cubic-bezier(.33,0,.2,1); }
+.drawer-enter-from, .drawer-leave-to { transform: translateX(100%); }
+.drawer-leave-active { transition-duration: 180ms; }
+
+/* 卡片右键菜单：轻微缩放淡入淡出*/
+.pop-enter-active { transition: opacity 130ms ease, transform 150ms cubic-bezier(.22,.8,.2,1); }
+.pop-leave-active { transition: opacity 90ms ease, transform 90ms ease; }
+.pop-enter-from, .pop-leave-to { opacity: 0; transform: scale(.96) translateY(-4px); }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+
+/* ===========================================================================
+ * UI 动画强度（设置 → 动画；<html data-motion="on|reduced|off">）
+ * 由 app.js 的 applyAppearance() 写入 <html data-motion>：
+ *   on      = 不覆盖（默认，全部动画）
+ *   reduced = 把**有限的**过渡 / 动画压到 ~110ms、delay 0（仍有反馈，是"加速"不是"消失"）
+ *             · 无限循环的装饰动画（启动呼吸、悬浮球液态、加载转圈、录制闪烁）保持原速：
+ *               把它们加速只会变成高频闪烁，与"减少动画"的目的相反；
+ *             · 左侧栏蓝色指示标是 JS rAF 驱动，CSS 管不到，reduced 下照常滑动。
+ *   off     = 除程序启动动画外全部关闭；左侧栏指示标由 app.js 瞬时跳转（animate=false）。
+ * 选择器用 body *（不是 #app *）：自绘下拉框 / 提示的弹层被 <teleport to="body"> 挪到
+ * #app 外面，用 #app 会漏掉它们。
+ * =========================================================================*/
+:root[data-motion="reduced"] body *,
+:root[data-motion="reduced"] body *::before,
+:root[data-motion="reduced"] body *::after {
+  animation-duration: 110ms !important;
+  animation-delay: 0ms !important;
+  transition-duration: 110ms !important;
+  transition-delay: 0ms !important;
+}
+/* --- reduced：恢复无限循环装饰动画各自的原速（数值与声明处一致，改那边记得同步这里） ---*/
+:root[data-motion="reduced"] .is-spin { animation-duration: 900ms !important; }
+:root[data-motion="reduced"] .ring { animation-duration: 720ms !important; }
+:root[data-motion="reduced"] .mini-progress.is-indeterminate span { animation-duration: 1100ms !important; }
+:root[data-motion="reduced"] .ball-liquid { animation-duration: 9s !important; }
+:root[data-motion="reduced"] .ball-liquid::after { animation-duration: 5.5s !important; }
+:root[data-motion="reduced"] .hotkey-input.is-recording { animation-duration: 1.4s !important; }
+:root[data-motion="reduced"] .hotkey-rec-dot { animation-duration: 1s !important; }
+:root[data-motion="reduced"] .boot-logo { animation-duration: 1.9s !important; }
+:root[data-motion="reduced"] .boot-bar span { animation-duration: 1.1s !important; }
+
+/* --- off：全部关掉，再单独恢复启动画面（动画关闭只作用于运行期 UI，程序启动动画保留） ---*/
+:root[data-motion="off"] body *,
+:root[data-motion="off"] body *::before,
+:root[data-motion="off"] body *::after {
+  animation: none !important;
+  transition: none !important;
+}
+/* 启动画面本身的淡入淡出（<transition name="fade"> 作用在 .boot-screen 上）*/
+:root[data-motion="off"] .boot-screen.fade-enter-active,
+:root[data-motion="off"] .boot-screen.fade-leave-active {
+  transition: opacity 180ms ease !important;
+}
+:root[data-motion="off"] .boot-screen .boot-logo {
+  animation: breathe 1.9s ease-in-out infinite !important;
+}
+:root[data-motion="off"] .boot-screen .boot-bar span {
+  animation: bootSlide 1.1s ease-in-out infinite !important;
+}

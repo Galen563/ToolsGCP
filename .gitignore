@@ -1,0 +1,56 @@
+# ===== Python =====
+__pycache__/
+plugins/*/__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+env/
+
+# ===== 构建产物 =====
+build/
+dist/
+*.spec
+*.exe
+*.msi
+
+# ===== 运行期数据（属于用户，不该进版本库）=====
+# 用户配置里可能含有加密后的密钥，绝对不要提交
+# 程序自己写出来的配置统一在 .ToolsGCP/config/ 下（见 core/data_dir.py）
+.ToolsGCP/config/
+.ToolsGCP/privacy_policy.json
+.ToolsGCP/logs/
+.ToolsGCP/ToolsGCP-Resources.backup-*.json
+# 图标目录（web 版由 .ToolsGCP/Icon 改名而来；图片属于随程序发布的资源，照常提交）
+# .ToolsGCP/images/icon/   ← 不忽略，这里只是说明位置
+
+# 本地导出的部署清单 / 资源稿件
+ToolsGCP-Deploy-*.json
+ResourceDrafts/
+
+# 自检脚本的渲染产物（项目资料-文档与开发测试/tools/detail_preview.py 生成，随时可重跑）
+项目资料-文档与开发测试/tools/_out/
+
+# 整理/维护脚本的临时产物
+项目资料-文档与开发测试/_tmp*/
+
+# ===== 编辑器 / 系统 =====
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+desktop.ini
+
+# 宣传片 UI 素材导出器的完整导出产物（体积大，可随时重跑工具生成）
+项目资料-文档与开发测试/tools/exported-ui-full/
+
+# 根目录/开发测试产生的临时探针与截图（不进版本库）
+/.tmp-*
+项目资料-文档与开发测试/_devtest/.tmp-*/
+
+# 宣传片素材样例（工具实际导出的子集，随仓库一起发布）
+!项目资料-文档与开发测试/tools/exported-ui-sample/
+
+# 素材导出器的临时产物（可随时重跑工具生成）
+/.tmp-exporter/

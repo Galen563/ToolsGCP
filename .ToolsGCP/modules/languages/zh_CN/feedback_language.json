@@ -1,0 +1,17 @@
+{
+  "ctrl_open_tip": "Ctrl+左键：静默打开，不切走",
+  "feedback_back": "返回",
+  "feedback_body_1": "在提交反馈之前，先查找一下是否存在重复反馈。如果有重复反馈，那么请不要再提交反馈，这样会加剧维护者的负担。",
+  "feedback_body_2": "注意：此页面末尾展示所有的反馈，如需查看更多反馈，请前往 GitHub。",
+  "feedback_click_to_close": "点击图片返回",
+  "feedback_failed": "打开失败，请检查默认浏览器",
+  "feedback_go": "前往反馈",
+  "feedback_opened": "已在浏览器中打开",
+  "feedback_title": "提交反馈",
+  "feedback_toast_title": "反馈",
+  "qq_copied": "已复制",
+  "qq_copy_number": "复制群号",
+  "qq_copy_tip": "复制群号 {number}",
+  "qq_group_label": "官方QQ改进/建议群：",
+  "qq_report_label": "投诉/举报群："
+}
