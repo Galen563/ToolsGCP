@@ -1,0 +1,22 @@
+{
+  "id": "gcp-plugin-maker",
+  "name": {
+    "简体中文": "插件制作辅助",
+    "繁體中文": "外掛製作輔助",
+    "English": "Plugin Maker Helper"
+  },
+  "version": "1.0.0",
+  "author": "Galen563",
+  "description": {
+    "简体中文": "用一句提示词让 AI 按模板生成一个新插件，并直接装进本机 ToolsGCP 的 plugins/ 目录。内置「Skill 技能」规则会替你守住底线：README 必须写得缜密，插件默认自带简体中文 / 繁體中文 / English 三套语言。",
+    "繁體中文": "用一句提示詞讓 AI 依模板產生一個新外掛，並直接裝進本機 ToolsGCP 的 plugins/ 目錄。內建「Skill 技能」規則會替你守住底線：README 必須寫得縝密，外掛預設自帶簡體中文 / 繁體中文 / English 三套語言。",
+    "English": "Turn one sentence into a working plugin: the AI scaffolds it from the template and installs it straight into this ToolsGCP's plugins/ folder. The built-in “Skill” rules keep the bar high — a thorough README and simplified-Chinese / traditional-Chinese / English support come by default."
+  },
+  "entry": "app.py",
+  "icon": "assets/icon.png",
+  "config_page": "config.html",
+  "builtin": true,
+  "default_disabled": true,
+  "enabled_setting": "gcp_plugin_maker_enabled",
+  "companion": "gcp-ai-agent"
+}

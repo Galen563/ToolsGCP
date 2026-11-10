@@ -1,0 +1,367 @@
+{
+  "sequence": {
+    "简体中文": "序数",
+    "繁體中文": "序數",
+    "English": "No."
+  },
+  "software_name": {
+    "简体中文": "软件名称",
+    "繁體中文": "軟件名稱",
+    "English": "Software Name"
+  },
+  "version": {
+    "简体中文": "版本",
+    "繁體中文": "版本",
+    "English": "Version"
+  },
+  "install_path": {
+    "简体中文": "安装路径",
+    "繁體中文": "安裝路徑",
+    "English": "Install Path"
+  },
+  "status": {
+    "简体中文": "状态",
+    "繁體中文": "狀態",
+    "English": "Status"
+  },
+  "operation": {
+    "简体中文": "操作",
+    "繁體中文": "操作",
+    "English": "Operation"
+  },
+  "edit": {
+    "简体中文": "编辑",
+    "繁體中文": "編輯",
+    "English": "Edit"
+  },
+  "delete": {
+    "简体中文": "删除",
+    "繁體中文": "刪除",
+    "English": "Delete"
+  },
+  "deploy": {
+    "简体中文": "部署",
+    "繁體中文": "部署",
+    "English": "Deploy"
+  },
+  "no_software": {
+    "简体中文": "暂无软件",
+    "繁體中文": "暫無軟件",
+    "English": "No software"
+  },
+  "export_mode": {
+    "简体中文": "导出模式",
+    "繁體中文": "導出模式",
+    "English": "Export Mode"
+  },
+  "deploy_mode": {
+    "简体中文": "部署模式",
+    "繁體中文": "部署模式",
+    "English": "Deploy Mode"
+  },
+  "mode_switched": {
+    "简体中文": "模式切换",
+    "繁體中文": "模式切換",
+    "English": "Mode Switched"
+  },
+  "current_mode": {
+    "简体中文": "当前模式",
+    "繁體中文": "當前模式",
+    "English": "Current Mode"
+  },
+  "code": {
+    "简体中文": "编码",
+    "繁體中文": "編碼",
+    "English": "Code"
+  },
+  "download_source": {
+    "简体中文": "下载来源",
+    "繁體中文": "下載來源",
+    "English": "Source"
+  },
+  "add_from_library": {
+    "简体中文": "从资源库添加",
+    "繁體中文": "從資源庫新增",
+    "English": "Add from Library"
+  },
+  "added_n_from_library": {
+    "简体中文": "已从资源库添加 {n} 条",
+    "繁體中文": "已從資源庫新增 {n} 條",
+    "English": "Added {n} item(s) from the library"
+  },
+  "add_manual": {
+    "简体中文": "手动添加",
+    "繁體中文": "手動新增",
+    "English": "Add Manually"
+  },
+  "pick_from_search": {
+    "简体中文": "从搜索页选择",
+    "繁體中文": "從搜尋頁選擇",
+    "English": "Pick from Search"
+  },
+  "import_favorites": {
+    "简体中文": "从收藏夹导入",
+    "繁體中文": "從收藏夾匯入",
+    "English": "Import Favorites"
+  },
+  "import_favorites_tip": {
+    "简体中文": "打开后，从搜索页选择时可以整夹导入收藏夹里的程序",
+    "繁體中文": "開啟後，從搜尋頁選擇時可以整夾匯入收藏夾裡的程式",
+    "English": "When enabled, you can import a whole favorites folder while picking"
+  },
+  "import_list": {
+    "简体中文": "导入清单",
+    "繁體中文": "匯入清單",
+    "English": "Import List"
+  },
+  "export_list": {
+    "简体中文": "导出清单",
+    "繁體中文": "匯出清單",
+    "English": "Export List"
+  },
+  "deploy_all": {
+    "简体中文": "一键部署",
+    "繁體中文": "一鍵部署",
+    "English": "Deploy All"
+  },
+  "clear_list": {
+    "简体中文": "清空列表",
+    "繁體中文": "清空列表",
+    "English": "Clear List"
+  },
+  "export_hint": {
+    "简体中文": "把本机常用软件整理成清单，导出后拷到新电脑",
+    "繁體中文": "把本機常用軟件整理成清單，匯出後拷到新電腦",
+    "English": "Build a list of your apps, export it, and copy it to the new PC"
+  },
+  "deploy_hint": {
+    "简体中文": "导入清单后一键自动下载 / 打开官网，快速还原环境",
+    "繁體中文": "匯入清單後一鍵自動下載 / 開啟官網，快速還原環境",
+    "English": "Import the list and deploy everything in one click"
+  },
+  "download": {
+    "简体中文": "下载",
+    "繁體中文": "下載",
+    "English": "Download"
+  },
+  "open_page": {
+    "简体中文": "打开官网",
+    "繁體中文": "開啟官網",
+    "English": "Open Website"
+  },
+  "ctrl_open_tip": {
+    "简体中文": "Ctrl+左键：静默打开，不切走",
+    "繁體中文": "Ctrl+左鍵：靜默開啟，不切走",
+    "English": "Ctrl+click: open quietly without switching away"
+  },
+  "skip": {
+    "简体中文": "跳过",
+    "繁體中文": "跳過",
+    "English": "Skip"
+  },
+  "empty_tip": {
+    "简体中文": "列表为空，先「从资源库添加」几条吧",
+    "繁體中文": "列表為空，先「從資源庫新增」幾條吧",
+    "English": "The list is empty. Add a few from the library first."
+  },
+  "exported": {
+    "简体中文": "清单已导出",
+    "繁體中文": "清單已匯出",
+    "English": "List exported"
+  },
+  "imported": {
+    "简体中文": "清单已导入",
+    "繁體中文": "清單已匯入",
+    "English": "List imported"
+  },
+  "import_failed": {
+    "简体中文": "导入失败",
+    "繁體中文": "匯入失敗",
+    "English": "Import failed"
+  },
+  "unknown_code": {
+    "简体中文": "资源库里没有这个编码",
+    "繁體中文": "資源庫裡沒有這個編碼",
+    "English": "Unknown code"
+  },
+  "deploy_done": {
+    "简体中文": "部署完成",
+    "繁體中文": "部署完成",
+    "English": "Deployment finished"
+  },
+  "download_dir": {
+    "简体中文": "选择下载目录",
+    "繁體中文": "選擇下載目錄",
+    "English": "Choose download folder"
+  },
+  "confirm_deploy": {
+    "简体中文": "开始部署",
+    "繁體中文": "開始部署",
+    "English": "Start Deployment"
+  },
+  "batch_running": {
+    "简体中文": "正在处理",
+    "繁體中文": "正在處理",
+    "English": "Processing"
+  },
+  "manual_add_title": {
+    "简体中文": "手动添加一行",
+    "繁體中文": "手動新增一行",
+    "English": "Add a row manually"
+  },
+  "pending": {
+    "简体中文": "待部署",
+    "繁體中文": "待部署",
+    "English": "Pending"
+  },
+  "search_placeholder": {
+    "简体中文": "按编码或名称搜索，例如 TG-000001 / Steam",
+    "繁體中文": "依編碼或名稱搜尋，例如 TG-000001 / Steam",
+    "English": "Search by code or name, e.g. TG-000001 / Steam"
+  },
+  "add": {
+    "简体中文": "添加",
+    "繁體中文": "新增",
+    "English": "Add"
+  },
+  "cancel": {
+    "简体中文": "取消",
+    "繁體中文": "取消",
+    "English": "Cancel"
+  },
+  "code_placeholder": {
+    "简体中文": "TG-000001（可留空）",
+    "繁體中文": "TG-000001（可留空）",
+    "English": "TG-000001 (optional)"
+  },
+  "software_name_placeholder": {
+    "简体中文": "软件名称",
+    "繁體中文": "軟體名稱",
+    "English": "Software name"
+  },
+  "confirm_clear": {
+    "简体中文": "清空",
+    "繁體中文": "清空",
+    "English": "Clear"
+  },
+  "start": {
+    "简体中文": "开始",
+    "繁體中文": "開始",
+    "English": "Start"
+  },
+  "picker_double_click_hint": {
+    "简体中文": "双击也能直接添加",
+    "繁體中文": "按兩下也能直接新增",
+    "English": "Double-click to add directly"
+  },
+  "picker_multi_hint": {
+    "简体中文": "可以多选（Ctrl / 点选多条，Shift 连选），双击也会直接添加",
+    "繁體中文": "可以多選（Ctrl / 點選多條，Shift 連選），按兩下也會直接新增",
+    "English": "Multi-select is supported (Ctrl/Shift-click); double-click also adds directly"
+  },
+  "already_in_list": {
+    "简体中文": "{code} 已经在清单里了",
+    "繁體中文": "{code} 已經在清單裡了",
+    "English": "{code} is already in the list"
+  },
+  "search_page_missing": {
+    "简体中文": "找不到搜索页",
+    "繁體中文": "找不到搜尋頁",
+    "English": "Search page not found"
+  },
+  "all_selected_in_list": {
+    "简体中文": "选中的应用都已在清单里",
+    "繁體中文": "選取的應用程式都已在清單裡",
+    "English": "All selected apps are already in the list"
+  },
+  "confirm_clear_list": {
+    "简体中文": "确定要清空当前清单吗？（本机保存的清单也会一起清空）",
+    "繁體中文": "確定要清空目前清單嗎？（本機儲存的清單也會一併清空）",
+    "English": "Clear the current list? (The list saved on this PC is cleared too)"
+  },
+  "export_failed": {
+    "简体中文": "{title}失败：{err}",
+    "繁體中文": "{title}失敗：{err}",
+    "English": "{title} failed: {err}"
+  },
+  "imported_count": {
+    "简体中文": "{title}：{n} 项",
+    "繁體中文": "{title}：{n} 項",
+    "English": "{title}: {n} item(s)"
+  },
+  "confirm_deploy_body": {
+    "简体中文": "将处理清单里的 {n} 个程序：\n· 能从 GitHub / 直链拿到安装包的会自动下载\n· 只能拿到官网的会帮你打开下载页面\n（开始前会让你选一个下载目录）",
+    "繁體中文": "將處理清單裡的 {n} 個程式：\n· 能從 GitHub / 直鏈取得安裝包的會自動下載\n· 只能取得官網的會幫你開啟下載頁面\n（開始前會讓你選一個下載目錄）",
+    "English": "{n} apps in the list will be processed:\n· those available from GitHub or a direct link are downloaded automatically\n· the rest open their download page for you\n(You will choose a download folder first)"
+  },
+  "name_label": {
+    "简体中文": "名称",
+    "繁體中文": "名稱",
+    "English": "Name"
+  },
+  "json_file_filter": {
+    "简体中文": "JSON 文件 (*.json)",
+    "繁體中文": "JSON 檔案 (*.json)",
+    "English": "JSON files (*.json)"
+  },
+  "source_direct": {
+    "简体中文": "直链",
+    "繁體中文": "直鏈",
+    "English": "Direct link"
+  },
+  "source_page": {
+    "简体中文": "官网",
+    "繁體中文": "官網",
+    "English": "Website"
+  },
+  "st_downloading": {
+    "简体中文": "下载中",
+    "繁體中文": "下載中",
+    "English": "Downloading"
+  },
+  "st_done": {
+    "简体中文": "已下载",
+    "繁體中文": "已下載",
+    "English": "Downloaded"
+  },
+  "st_opened": {
+    "简体中文": "已打开官网",
+    "繁體中文": "已開啟官網",
+    "English": "Website opened"
+  },
+  "st_skipped": {
+    "简体中文": "已跳过",
+    "繁體中文": "已跳過",
+    "English": "Skipped"
+  },
+  "st_failed": {
+    "简体中文": "失败",
+    "繁體中文": "失敗",
+    "English": "Failed"
+  },
+  "batch_done_summary": {
+    "简体中文": "自动下载完成 {done} 个，已打开官网 {opened} 个，失败 {failed} 个",
+    "繁體中文": "自動下載完成 {done} 個，已開啟官網 {opened} 個，失敗 {failed} 個",
+    "English": "{done} downloaded, {opened} website(s) opened, {failed} failed"
+  },
+  "tip_success": {
+    "简体中文": "成功",
+    "繁體中文": "成功",
+    "English": "Success"
+  },
+  "tip_error": {
+    "简体中文": "错误",
+    "繁體中文": "錯誤",
+    "English": "Error"
+  },
+  "tip_warning": {
+    "简体中文": "提示",
+    "繁體中文": "提示",
+    "English": "Notice"
+  },
+  "tip_info": {
+    "简体中文": "信息",
+    "繁體中文": "資訊",
+    "English": "Info"
+  }
+}

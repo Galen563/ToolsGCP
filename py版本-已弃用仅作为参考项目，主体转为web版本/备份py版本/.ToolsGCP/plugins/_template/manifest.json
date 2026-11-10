@@ -1,0 +1,9 @@
+{
+  "id": "my-plugin",
+  "name": "我的插件",
+  "version": "1.0.0",
+  "author": "你的名字",
+  "description": "一句话说明这个插件是干什么的",
+  "entry": "app.py",
+  "icon": "assets/icon.png"
+}

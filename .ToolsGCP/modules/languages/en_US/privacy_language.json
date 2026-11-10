@@ -1,0 +1,13 @@
+{
+  "privacy_agree_btn": "Agree",
+  "privacy_agreed_toast": "Consent recorded. Thank you!",
+  "privacy_consent_text": "I have read and agree to the ToolsGCP User Agreement and Privacy Policy & Disclaimer.",
+  "privacy_dialog_and": "and",
+  "privacy_dialog_lead": "Please read and agree to the following terms before using this program:",
+  "privacy_dialog_period": ".",
+  "privacy_dialog_title": "User Agreement & Privacy Policy",
+  "privacy_link_privacy_policy": "Privacy Policy & Disclaimer",
+  "privacy_link_user_agreement": "User Agreement",
+  "privacy_reject_btn": "Decline & Exit",
+  "privacy_rejected": "You did not agree to the User Agreement. The program will exit."
+}

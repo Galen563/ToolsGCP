@@ -1,0 +1,63 @@
+/* ===========================================================================
+ * 资源库加载遮罩 / 提示框微调补丁样式
+ *
+ * ① 云端资源库加载提示（搜索页 / 定制页 / 收藏页，**页面内嵌版**）
+ * ② 提示框位置相关的微调（左侧两个位置避开侧栏）
+ * =========================================================================*/
+
+/* ---------- ① 资源库加载提示（页面内嵌版） ----------
+   ⚠️ 需求（用户原话）：「程序启动时如果还在这个默认的加载页面，这个加载页面
+      不要用弹窗样式，而是在搜索页这个页面内的空白中心位置显示这个 UI，定制页同理。」
+   ⚠️ 以前它是 `#app` 顶层的一个**全屏浮层卡片**（毛玻璃 + 圆角 + 阴影 + backdrop-filter），
+      连标题栏和左侧导航都一起盖住 → 观感就是"弹了个窗"。
+   → 现在：
+     · 元素本身放在**各个页面的 section 内部**（index.html 里 <resource-loading />），
+       所以它天然只属于那一个页面 —— 不可能盖到别的页面上去；
+     · 视觉上**取消了"浮起来的卡片"观感**：无边框、无阴影、无毛玻璃、无背景色块，
+       只是**平铺**在页面内容中央的一段文字 + 一条细进度条 + 两个按钮；
+     · 背景**完全透明**（不再做半透明色覆盖 + blur），用户能看见后面的页面内容 ——
+       这正是"在页面内的空白中心位置显示"的含义。
+   ⚠️ 层级：要在模态弹窗（140）之下、页面内容之上。
+      现在它挂在 .page 内部（.page 是 position:absolute; inset:0），
+      所以 z-index 只在**该页之内**比较，不会压过标题栏/侧栏。 */
+.resource-loading {
+  position: absolute; inset: 0; z-index: 130;
+  display: flex; align-items: center; justify-content: center;
+  /* ⚠️ 背景完全透明：不遮住后面的页面内容（用户要求"页面内的空白中心位置"）。
+     原来是 color-mix(var(--page) 72%) + blur(6px) —— 那就是"弹窗卡片"的观感来源。 */
+  background: transparent;
+  pointer-events: none;          /* 不拦截点击：下面的内容仍然可以点 */
+  animation: fadeIn 160ms ease both;
+}
+/* 真正承载内容的一层：同样**没有任何**卡片装饰 */
+.resource-loading-inner {
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  padding: 20px 24px;
+  max-width: min(460px, calc(100vw - 48px));
+  text-align: center;
+  pointer-events: auto;          /* 按钮要能点 */
+}
+.resource-loading-text {
+  font-size: 14px; color: var(--text);
+  display: inline-flex; align-items: baseline;
+}
+/* 动态点：宽度固定（不然文字会左右抖）*/
+.dots {
+  display: inline-block; width: 2.4em; text-align: left;
+  font-variant-numeric: tabular-nums; color: var(--text-secondary);
+}
+/* 进度条：细一点、低调一点（以前 220px×4px 的实心块在页面中央有点抢眼）*/
+.resource-loading-bar {
+  width: 180px; height: 3px; border-radius: 2px;
+  background: var(--track); overflow: hidden;
+}
+.resource-loading-bar > span {
+  display: block; width: 40%; height: 100%; border-radius: 2px;
+  background: var(--accent);
+  animation: resourceLoadingSlide 1.2s cubic-bezier(.4,0,.2,1) infinite;
+}
+@keyframes resourceLoadingSlide {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(250%); }
+}
+.resource-loading-inner .is-warn { color: var(--warning); margin: 0; }

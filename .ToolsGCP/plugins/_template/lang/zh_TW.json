@@ -1,0 +1,25 @@
+{
+  "nav_title": "我的外掛",
+  "nav_home": "首頁",
+  "nav_stats": "統計",
+
+  "title": "我的外掛",
+  "intro": "這是 ToolsGCP 外掛範本。改 app.py / ui / core 裡的程式碼，就能變成你自己的外掛。",
+
+  "stats_line": "資源庫共 {total} 個程式，{categories} 個類別，{repo} 個有程式碼倉庫",
+  "open_times": "這個外掛已經被開啟 {n} 次（存在外掛自己的 data 目錄裡）",
+
+  "stats_title": "統計分析",
+  "search_placeholder": "輸入關鍵字，Enter 搜尋資源庫",
+  "search_button": "搜尋",
+
+  "cfg_title_suffix": "· 設定",
+  "cfg_enable": "啟用本外掛",
+  "cfg_enable_tip": "開關直接寫進主程式的設定裡（鍵名見 manifest 的 enabled_setting）",
+  "cfg_preview_tip": "預覽模式：這頁現在是用瀏覽器直接開啟的，拿不到桌面端介面，所有設定唯讀。",
+  "cfg_back": "返回外掛清單",
+  "cfg_meta_id": "外掛 id",
+  "cfg_meta_version": "版本",
+  "cfg_meta_locale": "語言",
+  "cfg_meta_key": "設定鍵"
+}

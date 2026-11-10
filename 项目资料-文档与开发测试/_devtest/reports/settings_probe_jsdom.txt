@@ -1,0 +1,8 @@
+node --check app.js/icons.js: OK
+PASS  A 左栏选中状态机  {"order":"all stable"}
+PASS  B 设置搜索（合并行/清除/Esc/无污染）  {"samples":["快捷键-在浏览器中打开"]}
+PASS  C Combo 贴合/关闭/不遮挡  "gap=4 stable"
+PASS  D 输入框右键菜单  "6 items stable"
+PASS  E 英文态结果与菜单文案  {"labels":["Copy","Paste","Cut","Select all","Undo","Redo"]}
+============================================================
+SUMMARY: ALL PASS

@@ -1,0 +1,33 @@
+== ① 收藏页：先量后渲染（favMeasured 门控），列数首帧即终值 ==
+  OK   收藏页滚动容器带 ref=favScroller + @vue:mounted=measureFavGrid
+  OK   网格 v-if 同时要求 favItems.length 与 favMeasured（量完才渲染）
+  OK   空文案不再用 v-else（防"有收藏但还没量完"闪一句空）
+  OK   measureFavGrid 量的是 favScroller（常驻容器），不是网格本身
+  OK   量到 0 时不置 favMeasured、但有 rAF 兜底放行（绝不留空白页）
+  OK   favGridObserver 改成 watch(favScroller) 随页重挂（旧 observe(favGrid.value) 恒 null）
+  OK   favGrid 旧 ref 已删干净（app.js 无 const favGrid = ref）
+  OK   滚动条槽常驻预留，断开"宽度↔列数"反馈回路
+== ② 收藏状态唯一真源：资源库重建/详情打开都必须按收藏夹重算 ==
+  OK   loadResources 重建 items 后立刻 syncFavoriteState()（空心星根因）
+  OK   openDetail 的 _fav 取 favoriteCodeSet（不抄传入卡片的旧副本）
+  OK   收藏页模板星标恒实心（页面语义：这里的卡必然已收藏）
+  OK   收藏页星标不再依赖 it._fav 三元
+== ③ 卡片高度自适应（AGENTS.md 第 5 条：禁止 CSS 写死卡片宽高） ==
+  OK   收藏页卡片 height:auto（模板给 min-height 保底）
+  OK   收藏页模板内联 minHeight（不是 height）
+  OK   定制页 .grid-static .card 从 height:196px 改成 min-height:196px
+  OK   搜索页虚拟列表行高计入"下载页按钮多的一行"（FOOT_LINKS_H）
+== ④ 详情页空字段：整行不渲染，网格收缩不留空位 ==
+  OK   detailRows 统一按值过滤（旧 index<4 无条件保留已删）
+  OK   模板不再画破折号占位（插值形态 {{ row.value || '—' }} 已删）
+  OK   详细信息块全空时整块不显示
+  OK   标签行/作者聊天行空时整行不渲染（不留 flex gap 空位）
+== ⑤ 更多筛选展开时卡片不提前消失：可视区换算到 .vlist 行坐标系 ==
+  OK   vRows 窗口上界 = scrollTop − vlistTop（行坐标≠滚动坐标）
+  OK   measureVlistTop 用 rect 差 + scrollTop 换算内容偏移
+  OK   measureViewport 每次都带量 vlistTop
+  OK   滚动每帧刷新 vlistTop（筛选 180ms 过渡期间窗口跟得上）
+  OK   toggleFilter 开合后重测（nextTick + 220ms 过渡结束各一次）
+  OK   vlistTop / measureViewport 已暴露给测试接缝
+
+=== 结论：全部通过（共 26 项）===

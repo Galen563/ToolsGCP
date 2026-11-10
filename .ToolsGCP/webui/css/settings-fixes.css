@@ -1,0 +1,268 @@
+/* ===========================================================================
+ * 设置页补丁样式
+ * 
+ * 放在所有既有 CSS 之后引入。
+ *
+ * 覆盖内容：
+ *   ① 资源来源 / 资源目录 / 云端资源库状态的**缩进**关系
+ *      （缩进 20px，表示这些行归属于上面那个下拉框）
+ *   ② 云端资源库状态行的排版（文字 + 右侧重试图标）
+ *   ③ 滑块行（多线程下载 / 失败重试次数）的控件区放宽
+ *      （默认 200px 里塞了滑块+数字框+单位，能"拉"的范围太小）
+ * =========================================================================*/
+
+/* ---------- ① 归属缩进 ----------
+   ⚠️ 模板里给这些行加了 `indent: true`，模板会加 `.setting-row.is-indent`
+      （layout.css 已有 padding-left:20px）。这里补一条更明确的规则，
+      免得哪天 layout.css 那条被改掉。
+   ⚠️ 云端资源库：…那行是 `row.type === 'cloud-status'`，
+      它在模板里走的是**独立分支**（v-else-if），但仍然在 .setting-row 内部，
+      所以 is-indent 一样生效。*/
+.setting-row.is-indent > .setting-note { padding-left: 0; }
+
+/* ---------- ② 云端资源库状态行 ----------
+   排版：云端资源库…这行文字略向右缩进，表示它归属于上面的资源来源。
+   文字要能换行（版本号 + 条数 + 更新时间可能很长），右边那个重试图标固定在最右。*/
+.cloud-status-note {
+  display: flex; align-items: flex-start; gap: 8px;
+  line-height: 1.6;
+}
+.cloud-status-note .cloud-status-text {
+  flex: 1 1 auto; min-width: 0;
+  /* 长文本换行而不是把图标挤走*/
+  overflow-wrap: anywhere;
+}
+.cloud-status-note .icon-btn {
+  width: 26px; height: 26px; flex: 0 0 auto;
+  align-self: center;
+}
+
+/* ---------- ③ 滑块行（多线程下载 / 失败重试次数）----------
+   形态：数字输入框 + 可拖动的 range 滑块组合。
+   ⚠️ 默认 .setting-control 只有 200px 宽（layout.css:576），而 .range-wrap 里
+      固定要放：range 滑块 + 46px 数字输入框 + 单位文字（约 36px）+ 2 个 8px 间距
+      ≈ 98px —— 留给真正能"拉"的 range 只有 ~100px，手感太差。
+   修法：和 layout.css 里 `.setting-control:has(.hotkey-wrap)`（快捷键行）**同款**写法 ——
+      用 :has() 只把**含 range-wrap 的行**的控件区放宽，其它设置行的 200px 一个都不动。
+   ⚠️ 这里只改控件区宽度，不改 .range 的 max-width:250px（components.css:200），
+      所以滑块本身仍是原版那个 250px 宽，不会撑破卡片。*/
+.setting-control:has(.range-wrap) {
+  width: auto; flex: 1 1 auto; min-width: 300px;
+}
+
+/* ============================================================================
+ * GCP-AI · 设置页服务商区域（列表 + 编辑弹窗）
+ * ============================================================================
+ * 本轮需求（用户原话逐条落地）：
+ *   · 「服务商那里在添加服务商下面增加一个列表ui，不然看着放这些长条卡片ui太难受了」
+ *       → 一个列表容器 + 行 + 分隔线；**不再**每条各带描边/圆角/阴影。
+ *   · 「第一个长条卡片ui不要有特殊的光圈在周围 要与其他的一致」
+ *       → 原先 `.ai-prof-card.is-active` 那圈主色描边 + inset 竖标**整块删除**，
+ *         所有行同一套样式（"当前生效哪条"由模型下拉/聊天区表达，不在这里高亮）。
+ *   · 「这个ui上面不要放接口地址」→ 行里与弹窗里都没有接口地址。
+ *   · 「很多ui摆放和大小不规范导致ui贴近边缘不留标准间距所以很难看」
+ *       → 见下面 §间距令牌：一律 8 的倍数、左右对称，**不再出现负边距**
+ *         （上一版 `.ai-prof-grid` 写过 `margin: 14px -2px 0`，负 2px 等于把内容
+ *          往弹窗边缘又推了 2px，正好和"别贴边"相反）。
+ *
+ * ⚠️ 本轮顺带修的一个**从来没被发现**的错误：本文件旧版通篇用 `var(--text-dim)`，
+ *    而 variables.css 里当时只有 `--text-secondary` / `--text-disabled`，
+ *    **`--text-dim` 根本没有定义**（ai-fixes.css 也错了 7 处）。
+ *    未定义变量的表现是"这条声明整体失效"→ 这些次要文字全部继承了正文色，
+ *    深浅两档下都看着"灰不下来 / 和标题一个颜色"，是"排版不规范"的成因之一。
+ *    现在 variables.css 深色块里补了 `--text-dim: var(--text-secondary)`（别名，
+ *    主题切换自动跟着走），这里继续用它；不要再往别处抄第四种灰。
+ * ==========================================================================*/
+
+/* ---- §间距令牌：这一区所有尺寸只从这里取，改一处全区跟着变 ----
+   基准 8px 栅格；上下留白 > 左右，保证内容不贴卡片边（.settings-card 自己
+   只有 padding: 4px 20px，所以行级留白必须由这里补）。 */
+.setting-row:has(> .ai-prof-wrap) {
+  padding: 14px 0 16px;
+}
+.ai-prof-wrap {
+  display: flex; flex-direction: column; gap: 12px; width: 100%;
+  /* 左右各留 2px：.setting-row 没有横向 padding，chip 描边才不会压住卡片圆角 */
+  padding: 0 2px;
+}
+
+/* ---- 工具条：左侧计数、右侧「添加服务商」 ---- */
+.ai-prof-bar { display: flex; align-items: center; gap: 12px; min-height: 28px; }
+.ai-prof-bar-count { font-size: 12px; color: var(--text-secondary); }
+.ai-prof-add { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 12px; }
+.ai-prof-empty {
+  margin: 0; padding: 14px 12px; font-size: 12px; line-height: 1.6;
+  color: var(--text-secondary);
+  border: 1px dashed var(--card-border); border-radius: var(--card-radius);
+  background: color-mix(in srgb, var(--text) 3%, transparent);
+}
+
+/* ---- 列表：外框一次、行间用分隔线（不是每条一个卡片壳） ---- */
+.ai-prof-list {
+  display: flex; flex-direction: column;
+  border: 1px solid var(--card-border); border-radius: var(--card-radius);
+  background: color-mix(in srgb, var(--text) 2.5%, transparent);
+  overflow: hidden;
+}
+/* 三列网格：表头与每一行共用同一套列宽 → 上下天然对齐。
+   ⚠️ 第一列 minmax(120px,168px) 而不是 1fr：名称列不需要抢宽度，
+      把空间让给中间那列"支持模型"（它是可变数量的 chip 流）。 */
+.ai-prof-row {
+  display: grid; grid-template-columns: minmax(120px, 176px) minmax(0, 1fr) auto;
+  align-items: center; gap: 12px 16px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--divider);
+}
+.ai-prof-row:first-child,
+.ai-prof-row.is-head:first-child { border-top: 0; }
+.ai-prof-row:not(.is-head):hover { background: var(--hover); }
+/* 表头：只是标签，不参与 hover / 不描边（它上面就是列表圆角） */
+.ai-prof-row.is-head {
+  padding: 8px 14px; min-height: 0; background: transparent;
+  border-top: 0; border-bottom: 1px solid var(--divider);
+  font-size: 11px; color: var(--text-secondary);
+}
+.ai-prof-row.is-head .ai-prof-c3 { text-align: right; }
+
+/* ---- 列 1：名称 + 厂商 ---- */
+.ai-prof-c1 { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.ai-prof-title { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.ai-prof-name {
+  font-size: 13px; font-weight: 600; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;
+}
+.ai-prof-vendor { font-size: 11px; color: var(--text-secondary); overflow-wrap: anywhere; }
+/* "未填 Key"是状态告警，不是标签 —— 保留，但收紧成小徽标 */
+.ai-prof-nokey {
+  flex: 0 0 auto; padding: 1px 7px; border-radius: 999px; font-size: 10px;
+  color: var(--danger); background: color-mix(in srgb, var(--danger) 16%, transparent);
+}
+
+/* ---- 列 2：数量 + 模型 chip（可折行，超出给上限，别把行拉得老高） ---- */
+.ai-prof-c2 {
+  min-width: 0; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  max-height: 58px; overflow: hidden;
+}
+.ai-prof-count {
+  font-style: normal; font-size: 11px; color: var(--text-secondary);
+  margin-right: 2px; flex: 0 0 auto;
+}
+.ai-prof-chip {
+  max-width: 160px; padding: 1px 8px; border-radius: 999px; font-size: 11px;
+  border: 1px solid var(--card-border); color: var(--text-secondary);
+  background: color-mix(in srgb, var(--text) 5%, transparent);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ---- 列 3：三个操作按钮，统一尺寸、右对齐 ---- */
+.ai-prof-c3 { min-width: 0; }
+.ai-prof-actions { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
+/* ⚠️ 图标按钮必须是**正方形**：旧写法只给 padding: 0 8px，
+   同一个 .btn.sm 里图标按钮和文字按钮宽度不一致，看着就是"大小不规范"。 */
+.ai-prof-btn.sm {
+  height: 26px; min-width: 26px; padding: 0 10px; font-size: 11px;
+  border-radius: 7px; display: inline-flex; align-items: center; justify-content: center;
+}
+.ai-prof-btn.sm .ic { display: block; }
+/* 纯图标的两个（编辑 / 删除）：宽度交给 min-width + 等量 padding，保持方块观感 */
+.ai-prof-actions .ai-prof-btn.sm:not(:first-child) { padding: 0 6px; }
+/* ⚠️ 需求：删除按钮为红色 */
+.ai-prof-btn.is-danger:hover {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 46%, var(--card-border));
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+}
+
+/* ============================ 编辑/添加弹窗 ============================ */
+.ai-prof-modal { width: 560px; max-width: 92vw; }
+/* 网格：外边距只用正值（见文件头"负边距"那条教训）。
+   行距 16 / 列距 18 —— 和输入框自身高度（30px）配合后视觉密度与全站一致。
+   ⚠️⚠️ 本轮修复用户报的「点输入框进入输入模式后，外侧 ui 被挡住了一点点」：
+      这一层是 `overflow-y: auto` 的**滚动容器**，而输入框聚焦时画的是
+      `box-shadow: 0 0 0 3px var(--accent-soft)`（见 components.css 的 .input:focus /
+      .combo.is-open .combo-trigger）—— 描边画在元素**外边**，
+      旧 padding 只有 2~4px，于是贴边那一格（第一行的服务商下拉、最后一行的 token 输入）
+      聚焦时那圈 3px 光环被滚动容器**裁掉一截** = 用户说的"被挡住一点点"。
+      → padding 一律给到 8px（> 3px 光环 + 余量），上下左右都要够，
+        光环永远完整。 */
+.ai-prof-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px 18px;
+  margin: 14px 0 0; padding: 8px;
+  max-height: 58vh; overflow-y: auto; overscroll-behavior: contain;
+}
+/* 同理：支持模型勾选区也是滚动容器，chip 里的原生 checkbox 聚焦环会被裁
+   → 见下面 .ai-prof-models 的 padding（10px，同样 > 3px 光环）。 */
+.ai-prof-grid::-webkit-scrollbar { width: 8px; }
+/* 弹窗底部按钮与表单之间留一条分隔，避免"贴在一起" */
+.ai-prof-modal-actions {
+  margin-top: 18px; padding-top: 14px;
+  border-top: 1px solid var(--card-border);
+}
+.ai-prof-cell { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.ai-prof-cell.span2 { grid-column: span 2; }
+.ai-prof-cell > label { font-size: 11.5px; color: var(--text-secondary); }
+/* 弹窗里的下拉/输入统一撑满格子宽度：Combo 默认按内联 width 画（前端没给就是
+   内容宽），不撑满就会看到"下拉框比上面的输入框短一截"这种不整齐。 */
+.ai-prof-cell .combo, .ai-prof-cell .combo-trigger { width: 100%; }
+.ai-prof-cell .input { width: 100%; }
+.ai-prof-cell-head { display: flex; align-items: center; gap: 8px; }
+.ai-prof-count-inline {
+  min-width: 20px; height: 18px; padding: 0 6px; border-radius: 999px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 10.5px; color: var(--accent); background: var(--accent-soft);
+}
+.ai-prof-hint { margin: 0; font-size: 10.5px; color: var(--text-secondary); line-height: 1.5; }
+/* 支持模型：勾选做成 chip（点一下切换，比一排原生 checkbox 紧凑）。
+   ⚠️ min-height 是给 custom 兜底的：那家没有官方清单 → 一个 chip 都没有，
+      没有 min-height 这块会塌成一条线（用户原话"ui高长被压缩了"）。 */
+.ai-prof-models {
+  display: flex; flex-wrap: wrap; align-items: flex-start; gap: 6px;
+  min-height: 56px; padding: 10px; border-radius: 8px;
+  border: 1px solid var(--card-border);
+  background: color-mix(in srgb, var(--text) 4%, transparent);
+  max-height: 132px; overflow-y: auto;
+}
+.ai-prof-model-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 2px 9px; border-radius: 999px; font-size: 11px;
+  border: 1px solid var(--card-border); color: var(--text-secondary);
+  background: color-mix(in srgb, var(--text) 5%, transparent);
+  white-space: nowrap;
+}
+.ai-prof-model-chip.is-check { cursor: pointer; user-select: none; -webkit-user-select: none; }
+.ai-prof-model-chip.is-check input { width: 12px; height: 12px; margin: 0; accent-color: var(--accent); }
+.ai-prof-model-chip.is-check.is-on {
+  color: var(--accent); border-color: color-mix(in srgb, var(--accent) 42%, var(--card-border));
+  background: var(--accent-soft);
+}
+.ai-prof-models-empty { margin: 0; font-size: 11px; color: var(--text-secondary); line-height: 1.6; padding: 2px; }
+/* 手输模型：输入框吃满剩余宽度、按钮等距，别再出现"贴着右边描边" */
+.ai-prof-add-model { display: flex; align-items: center; gap: 8px; }
+.ai-prof-add-model .input { flex: 1 1 auto; min-width: 0; }
+/* token 限制：开关 + 最小/最大两个输入；不勾选时整块 v-if 掉（不做"置灰占位"） */
+.ai-prof-token-switch { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; }
+.ai-prof-token-inputs {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  margin-top: 8px; padding-left: 22px;   /* 与开关文字起点对齐（checkbox 12 + gap 8 + 2） */
+  animation: aiProfTokenIn 140ms ease;
+}
+@keyframes aiProfTokenIn { from { opacity: 0; transform: translateY(-2px); } to { opacity: 1; transform: none; } }
+:root[data-motion="off"] .ai-prof-token-inputs { animation: none; }
+.ai-prof-token-inputs label { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-secondary); }
+.ai-prof-token-inputs .input { width: 108px; }
+
+/* ---- 玻璃/亚克力档：列表跟着半透明（和设置页其它卡片同一口径） ---- */
+:root[data-theme][data-fx="glass"] .ai-prof-list,
+:root[data-theme][data-fx="acrylic"] .ai-prof-list {
+  background: color-mix(in srgb, var(--card-solid) 60%, transparent);
+}
+
+/* ---- 窄窗口兜底：三列网格挤不下时改成"名称行 + 模型行 + 按钮行"竖排 ----
+   ⚠️ 用断点而不是写死宽度（AGENTS.md 第 8 节：卡片/列表不要写死宽高）。
+   这里只改**行内布局**，不动列宽数值，虚拟列表算法不受影响。 */
+@media (max-width: 900px) {
+  .ai-prof-row { grid-template-columns: minmax(0, 1fr); }
+  .ai-prof-row.is-head { display: none; }
+  .ai-prof-actions { justify-content: flex-start; }
+  .ai-prof-row.is-head .ai-prof-c3 { text-align: left; }
+}

@@ -1,0 +1,1690 @@
+/* ============================================================================
+ * ToolsGCP · 通用组件样式
+ * ============================================================================*/
+
+/* ===================== 按钮 =====================*/
+.btn {
+  height: 32px; padding: 0 12px; display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  border-radius: 8px; border: 1px solid var(--glass-border); background: var(--glass);
+  color: var(--text); font-size: 12.5px; white-space: nowrap;
+  transition: background 140ms ease, border-color 140ms ease, transform 120ms ease, color 140ms ease;
+}
+.btn:hover { background: var(--hover-strong); border-color: color-mix(in srgb, var(--text) 14%, transparent); }
+.btn:active { transform: translateY(1px); }
+.btn:disabled { opacity: .42; pointer-events: none; }
+.btn.is-on { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 40%, transparent); background: var(--accent-soft); }
+.btn-primary {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 90%, #fff 10%), var(--accent));
+  border-color: transparent; color: var(--accent-ink); font-weight: 600;
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+.btn-primary:hover { background: var(--accent-strong); }
+.btn-sm { height: 28px; padding: 0 10px; border-radius: 7px; font-size: 12px; }
+.btn-wide { min-width: 100px; }
+.btn-half { flex: 1 1 auto; }
+.btn-block { width: 100%; }
+.btn-link { min-width: 104px; height: 30px; }
+.btn-back { min-width: 90px; }
+.btn-act { min-width: 120px; }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-danger-ghost {
+  color: var(--danger); border: 1px solid color-mix(in srgb, var(--danger) 45%, transparent); background: transparent;
+  padding: 6px 14px; border-radius: 6px;
+}
+.btn-danger-ghost:hover { background: color-mix(in srgb, var(--danger) 10%, transparent); }
+.btn-danger-ghost:disabled { opacity: .4; }
+
+.icon-btn {
+  width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 8px; color: var(--text-secondary);
+  transition: background 130ms ease, color 130ms ease, transform 120ms ease;
+}
+.icon-btn:hover { background: var(--hover-strong); color: var(--text); }
+.icon-btn:active { transform: scale(.94); }
+.icon-btn:disabled { opacity: .4; pointer-events: none; }
+.icon-btn.is-on { background: var(--accent-soft); color: var(--accent); }
+.icon-sm { width: 26px; height: 26px; border-radius: 6px; }
+/* 详情页收藏星星点亮态*/
+.ic.is-fav { color: var(--warning); fill: currentColor; }
+
+/* ===================== 自绘下拉框（替代原生 <select>） =====================
+   原生 select 的弹层由系统绘制：WebView2 里是白底黑字的 Windows 经典样式，
+   跟深色主题完全不搭（需求："下拉框弹出的太丑了"）。
+   这里用 fixed 定位的浮层自己画：行高 32、圆角 7、当前项高亮、跟随主题色。*/
+.combo { position: relative; display: inline-flex; flex: 0 0 auto; min-width: 0; }
+/* 触发器布局：文字与箭头分居两端（撤销此前"按内容收宽 + 左对齐"的收紧，
+   那种改法会让下拉框比旁边的按钮短一截、箭头紧贴文案）。
+   触发器宽度由模板定值（搜索页 160 / 定制页 150，见 index.html 的 <combo :width>），
+   两端对齐 + .combo-label 吃掉剩余宽度 ⇒ 文字贴左、箭头贴右，中间留白；
+   文字太长时 label 仍会收缩出省略号（min-width:0 + ellipsis 保留）。
+   ⚠️ 这是共享规则：搜索页与定制页同时生效，不给任何一页单独写值。 */
+.combo-trigger {
+  width: 100%; min-width: 0; height: 32px; padding: 0 10px;
+  display: inline-flex; align-items: center; justify-content: space-between; gap: 8px;
+  border-radius: 8px; border: 1px solid var(--glass-border);
+  background: color-mix(in srgb, var(--card-solid) 74%, transparent);
+  color: var(--text); font-size: 12.5px; text-align: left; white-space: nowrap; overflow: hidden;
+  transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+}
+.combo-trigger:hover { border-color: color-mix(in srgb, var(--text) 20%, transparent); }
+.combo.is-open .combo-trigger { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.combo.is-disabled .combo-trigger { opacity: .5; pointer-events: none; }
+.combo-label { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.combo-arrow { flex: 0 0 auto; margin-left: 2px; color: var(--text-secondary);
+  transition: transform 160ms cubic-bezier(.33,0,.2,1); }
+.combo.is-open .combo-arrow { transform: rotate(180deg); }
+.combo-pop {
+  /* 宽度：inline 的 minWidth = 触发器宽度；选项文字更长时自动撑开（shrink-to-fit）*/
+  position: fixed; z-index: 260; max-height: 300px; overflow-y: auto; overflow-x: hidden;
+  padding: 5px; display: flex; flex-direction: column; gap: 1px;
+  max-width: min(360px, calc(100vw - 16px));
+  border-radius: 10px; border: 1px solid var(--glass-border);
+  background: color-mix(in srgb, var(--card-solid) 96%, transparent);
+  backdrop-filter: blur(22px) saturate(160%); -webkit-backdrop-filter: blur(22px) saturate(160%);
+  box-shadow: var(--shadow-float);
+  /* 点击下拉框应该从上往下展开来——以顶边为原点纵向铺开*/
+  animation: comboIn 170ms cubic-bezier(.22,.8,.2,1) both;
+  transform-origin: top center;
+}
+.combo-item {
+  min-height: 32px; padding: 0 10px; position: relative;
+  display: flex; align-items: center; gap: 8px; text-align: left;
+  border-radius: 7px; font-size: 12.5px; color: var(--text); white-space: nowrap;
+  transition: background 110ms ease, color 110ms ease;
+  /* 逐项轻微下落，形成"从上往下铺开"的层次（--i 由模板给出）*/
+  animation: comboItemIn 160ms cubic-bezier(.22,.8,.2,1) both;
+  animation-delay: calc(var(--i, 0) * 14ms);
+}
+.combo-item:hover, .combo-item.is-highlighted { background: var(--hover-strong); }
+/* ---------- 下拉框选中态统一到所有下拉框 ----------
+   下载页那个清空 ▾用的是 .dropdown-item.is-current，
+   项目里其它下拉框用的是自绘 <combo> 的 .combo-item.is-on ——
+   两套 class 名不同但都是"下拉框里的当前项"，所以这里用**逗号并列选择器**
+   把它们统一成同一套视觉：
+     · 强调色文字（--accent）
+     · 淡强调色底（--accent-soft）
+     · 左侧 ✓ 对勾
+   ⚠️ **只用 CSS 变量**：--accent / --accent-soft 都跟着主题走 ——
+      主题模式（深/浅）由 :root[data-theme] 切、主题配色（蓝/紫/橙）由
+      [data-accent] 覆盖这两个变量、主题效果（云母/毛玻璃/亚克力）由
+      --pop-* 令牌控制弹层底色/模糊 —— 所以这里天然三档全适配，不用写死颜色。
+   ⚠️ 之前 .combo-item.is-on 只有强调色文字 + 对勾，没有底色，
+      和下载页那个（有底色）对不上；现在两边一致了。*/
+.combo-item.is-on,
+.dropdown-item.is-current {
+  color: var(--accent);
+  font-weight: 600;
+  background: var(--accent-soft);
+}
+/* 选中项被 hover 时别把强调色底盖成普通灰 —— 保持强调色（略深一点）*/
+.combo-item.is-on:hover,
+.dropdown-item.is-current:hover {
+  background: color-mix(in srgb, var(--accent) 24%, transparent);
+}
+/* 下拉框选中态**去掉 ✓ 对勾**（下拉框展开里面的勾勾给删了吧我不喜欢）。
+   选中识别只靠强调色文字 + 淡强调色底，26px 缩进保留 —— 去掉缩进会让选项文字
+   和触发器里的文字左边缘对不齐，反而更怪。*/
+/* 当前项左侧对勾：所有项统一 26px 缩进，保证左边界对齐*/
+
+.select, .input {
+  height: 32px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--glass-border);
+  background: color-mix(in srgb, var(--card-solid) 74%, transparent);
+  color: var(--text); font-size: 12.5px; outline: none; width: 100%; min-width: 0;
+  transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+}
+.select option { background: var(--card-solid); color: var(--text); }
+.select:hover, .input:hover { border-color: color-mix(in srgb, var(--text) 20%, transparent); }
+.select:focus, .input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.input::placeholder { color: var(--text-disabled); }
+textarea.input { height: auto; padding: 8px 10px; resize: vertical; line-height: 1.6; }
+
+/* ===================== 开关（原版 SwitchButton：Off 描边圆点贴左 / On 强调色实心 + 白点贴右）
+   ⚠️ Off 态小球必须在**左侧**（left 不是 50%），这是原版唯一形态*/
+.switch {
+  position: relative; width: 40px; height: 22px; flex: 0 0 auto; border-radius: 11px;
+  background: transparent; border: 1px solid color-mix(in srgb, var(--text) 34%, transparent);
+  transition: background 180ms ease, border-color 180ms ease;
+}
+.switch:hover { border-color: color-mix(in srgb, var(--text) 55%, transparent); }
+/* ⚠️ 滑块**不能**写 `transition: all`（原来是这么写的）：
+   `all` 让浏览器对**每一个**会变的属性都挂上过渡——包括将来谁给滑块加个
+   border / box-shadow / opacity，都会莫名其妙地跟着动；而且 `all` 会让
+   样式失效时的排查很难（看不出到底在动什么）。
+   这里只列真正会变的五个属性，视觉与 `all` **完全一致**（这五个就是唯一会变的值），
+   但语义明确、不会被后续改动误伤。*/
+.switch .switch-knob {
+  position: absolute; top: 50%; left: 11px; width: 11px; height: 11px; margin: -5.5px 0 0 -5.5px;
+  border-radius: 50%; background: var(--text);
+  transition: left 190ms cubic-bezier(.22,.8,.2,1), width 190ms cubic-bezier(.22,.8,.2,1),
+              height 190ms cubic-bezier(.22,.8,.2,1), margin 190ms cubic-bezier(.22,.8,.2,1),
+              background-color 190ms cubic-bezier(.22,.8,.2,1);
+}
+.switch.is-on { background: var(--accent); border-color: var(--accent); }
+.switch.is-on .switch-knob { width: 14px; height: 14px; margin: -7px 0 0 -7px; background: var(--accent-ink); left: calc(100% - 11px); }
+.switch.is-mini { width: 34px; height: 20px; border-radius: 10px; }
+.switch.is-mini .switch-knob { left: 9px; }
+.switch.is-mini.is-on .switch-knob { left: calc(100% - 9px); }
+.switch.is-wide { width: 52px; height: 28px; border-radius: 14px; }
+.switch.is-wide .switch-knob { width: 13px; height: 13px; margin: -6.5px 0 0 -6.5px; left: 14px; }
+.switch.is-wide.is-on .switch-knob { width: 16px; height: 16px; margin: -8px 0 0 -8px; left: calc(100% - 13px); }
+.switch-status { font-size: 11.5px; color: var(--text-secondary); }
+
+/* ===================== 分段按钮（视图切换 68×30；变体条 240 宽） =====================
+   选中块用一层 .seg-thumb 做"滑动"指示（由 JS 定位到 .is-on 项），
+   切换时 left/width 过渡 220ms，比直接换背景色丝滑得多。*/
+.segmented {
+  position: relative;
+  height: 30px; display: inline-flex; align-items: center; padding: 2px; gap: 2px;
+  border-radius: 8px; border: 1px solid var(--glass-border); background: var(--glass); flex: 0 0 auto;
+}
+.view-seg { width: 68px; }
+.variant-seg { width: 240px; justify-content: space-around; }
+.seg-thumb {
+  position: absolute; z-index: 0; pointer-events: none; border-radius: 6px;
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 26%, transparent);
+  transition: left 220ms cubic-bezier(.22,.8,.2,1), top 220ms cubic-bezier(.22,.8,.2,1),
+              width 220ms cubic-bezier(.22,.8,.2,1), height 220ms cubic-bezier(.22,.8,.2,1);
+}
+.seg-item {
+  position: relative; z-index: 1;
+  flex: 1 1 auto; min-width: 30px; height: 100%; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 6px; color: var(--text-secondary); font-size: 12px;
+  transition: background 140ms ease, color 140ms ease;
+}
+.seg-item:hover { color: var(--text); background: var(--hover); }
+.seg-item.is-on { background: var(--accent-soft); color: var(--accent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 26%, transparent); }
+/* 有滑动指示块时，选中项的底色交给 thumb，避免"两个蓝块"*/
+.segmented:has(.seg-thumb) .seg-item.is-on { background: transparent; box-shadow: none; }
+.segmented:has(.seg-thumb) .seg-item:hover { background: transparent; }
+
+/* ===================== 筛选胶囊：高 26、宽 = 字 + 26、radius = h/2、1px 描边；选中=强调实底 =====================*/
+.chip {
+  height: 26px; padding: 0 13px; display: inline-flex; align-items: center; gap: 6px;
+  border-radius: 13px; border: 1px solid color-mix(in srgb, var(--text) 13%, transparent);
+  background: color-mix(in srgb, var(--text) 5%, transparent);
+  color: var(--text); font-size: 12px; white-space: nowrap;
+  transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
+}
+.chip:hover { background: color-mix(in srgb, var(--text) 10%, transparent); border-color: color-mix(in srgb, var(--accent) 55%, transparent); }
+.chip.is-on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.chip-flow { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* ===================== 徽标/状态胶囊 =====================*/
+.badge, .status-pill {
+  height: 22px; min-width: 52px; padding: 0 10px; display: inline-flex; align-items: center;
+  border-radius: 11px; font-size: 11px; white-space: nowrap;
+  background: color-mix(in srgb, var(--text-secondary) 16%, transparent); color: var(--text-secondary);
+}
+.badge.is-on, .status-pill.is-ready { color: var(--success); background: color-mix(in srgb, var(--success) 16%, transparent); }
+.badge.is-off, .badge.is-error { color: var(--danger); background: color-mix(in srgb, var(--danger) 16%, transparent); }
+.status-pill.is-downloading { color: var(--accent); background: var(--accent-soft); }
+.status-pill.is-opened { color: var(--warning); background: color-mix(in srgb, var(--warning) 16%, transparent); }
+.status-pill.is-pending { color: var(--text-secondary); }
+.status-pill.is-skipped { color: var(--text-disabled); }
+.status-pill.is-failed { color: var(--danger); background: color-mix(in srgb, var(--danger) 16%, transparent); }
+.status-pill.is-downloaded { color: var(--success); background: color-mix(in srgb, var(--success) 16%, transparent); }
+
+/* ===================== 输入框变体 =====================*/
+.range-wrap { display: flex; align-items: center; gap: 8px; width: 100%; justify-content: flex-end; }
+/* ⚠️ 滑块宽度按原版固定 250（cards_download.py 的 Slider.setFixedWidth(250)），
+   之前是 150，比原版短一截。*/
+.range { flex: 1 1 auto; max-width: 250px; height: 4px; appearance: none; border-radius: 2px;
+  background: color-mix(in srgb, var(--text) 20%, transparent); outline: none; }
+.range::-webkit-slider-thumb { appearance: none; width: 14px; height: 14px; border-radius: 50%;
+  background: var(--accent); border: 2px solid var(--page); box-shadow: 0 0 0 3px var(--accent-soft); }
+.num-input { width: 46px; height: 30px; flex: 0 0 auto; padding: 0 4px; text-align: center;
+  border-radius: 7px; border: 1px solid var(--glass-border); background: var(--card-solid);
+  color: var(--text); font-size: 12px; outline: none; }
+.unit { font-size: 12px; color: var(--text-secondary); min-width: 24px; }
+
+.inline-control { display: flex; align-items: center; gap: 7px; width: 100%; }
+.inline-control .input { flex: 1 1 auto; min-width: 0; }
+.inline-actions { display: flex; align-items: center; gap: 8px; width: 100%; justify-content: flex-end; }
+.path-input { font-family: Consolas, monospace; font-size: 11px; }
+
+.hotkey-wrap { display: flex; align-items: center; gap: 7px; width: 100%; justify-content: flex-end; }
+.hotkey-input { flex: 0 0 var(--control-width); text-align: center; font-family: Consolas, monospace; font-size: 12px; }
+/* 录制中：橙色描边 + 呼吸光晕，和顶部橙色提示条呼应*/
+.hotkey-input.is-recording {
+  border-color: #ff9f43 !important;
+  background: color-mix(in srgb, #ff9f43 10%, transparent) !important;
+  box-shadow: 0 0 0 3px rgba(255, 159, 67, .22) !important;
+  color: #ff9f43 !important;
+  animation: recPulse 1.4s ease-in-out infinite;
+}
+
+/* 屏幕顶部中央的橙色"正在录制键位"提示条*/
+.hotkey-recording {
+  position: fixed; top: calc(var(--tb-height) + 14px); left: 50%; transform: translateX(-50%);
+  z-index: 330; display: inline-flex; align-items: center; gap: 9px;
+  padding: 8px 18px; border-radius: 999px;
+  background: linear-gradient(135deg, #ffa94d, #ff7a18);
+  color: #2a1400; font-size: 12.5px; font-weight: 700; letter-spacing: .01em;
+  box-shadow: 0 12px 30px rgba(255, 122, 24, .38), inset 0 1px 0 rgba(255, 255, 255, .35);
+  pointer-events: none; white-space: nowrap;
+}
+.hotkey-rec-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: #7a2d00;
+  animation: recBlink 1s ease-in-out infinite;
+}
+
+.dev-badge { margin-right: auto; font-size: 12px; font-weight: 700; color: var(--success); }
+
+.setting-value { font-size: 12px; color: var(--text-secondary); text-align: right; word-break: break-all; }
+
+/* ===================== 资源卡片 =====================*/
+.card {
+  position: relative; display: flex; flex-direction: column; padding: 14px 16px;
+  border-radius: var(--card-radius); border: 1px solid var(--card-border);
+  background: var(--card-glass);
+  backdrop-filter: blur(10px) saturate(140%); -webkit-backdrop-filter: blur(10px) saturate(140%);
+  box-shadow: var(--shadow-card), var(--ring); overflow: hidden; cursor: pointer;
+  /* （修订）：**不再**把卡片设成尺寸查询容器。
+     只改网格视图，恢复磁贴视图原样——容器查询靠"卡片宽度"猜视图，
+     磁贴档在小窗口/小尺寸预设下也可能被命中；现在网格视图的收紧规则统一由
+     `.card.is-grid`（app.js 的 viewMode 直接加的类）承担，磁贴视图零影响。*/
+  /* ⚠️ 卡片**不做**入场动画：需求"切换页面这种操作不要触发入场动画"。
+     以前 .card 带 cardIn 动画，切页/从任务栏恢复窗口时整屏卡片会重放一遍上浮，
+     现在只保留 hover/选中过渡，切页动画交给 .page-* 那一层。*/
+}
+.card-tint {
+  position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0;
+  background: var(--tint-dark); transition: opacity 140ms cubic-bezier(.33,0,.2,1);
+}
+.card:hover .card-tint { opacity: .5; }
+.card:hover { border-color: color-mix(in srgb, var(--accent) 26%, var(--card-border)); box-shadow: var(--shadow-hover), var(--ring); }
+.card.is-selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft), var(--shadow-card); }
+/* 右上角按钮组：绝对定位在卡片右上角，26×26、圆角 8—— hover 有圆润的底色块。
+   ⚠️ 卡片相对定位，按钮组绝对定位 right: 12px top: 12px，flex 布局横向排列*/
+/* ⚠️ .card-head **不能**是 position:relative！
+   .card-btn-group 是 absolute，它要相对 .card 定位（right:12px top:12px = 贴卡片右上角）。
+   之前 .card-head 带了 position:relative，按钮组就改成相对"卡头"定位，
+   再叠加 .card 的 padding(14px 16px)，实测被推到距卡片右边 28px、上边 26px —— 就是用户看到的"位置不对"。*/
+.card { position: relative; }
+.card-head { display: flex; align-items: center; gap: 10px; }
+/* 标题要给右上角按钮组"让位"，否则长标题会滑到收藏/外链按钮底下。
+   按钮组宽度 = n×26 + (n−1)×6：1 个按钮 26、2 个按钮 58；
+   换算成 .card-head 的右内边距（再留 8px 缝隙）= 30 / 62。*/
+.card-head:has(.card-btn-group) { padding-right: 30px; }
+.card-head:has(.card-btn-group > .card-btn:nth-child(2)) { padding-right: 62px; }
+.card-btn-group { position: absolute; right: 12px; top: 12px; display: flex; gap: 6px; z-index: 10; }
+/* 选择模式（从搜索页选择 → 部署清单）：右上角只保留勾选框本体。
+   ⚠️ 不要垫 26×26 方块底色 —— 用户明确要求"只要框选 ui，不要方形底色"。*/
+.card-select {
+  position: absolute; right: 12px; top: 12px; z-index: 10;
+  width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center;
+  background: none; border-radius: 0; cursor: pointer;
+}
+.card-select input { width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; }
+.card.is-selected .card-select { background: none; }
+/* 选择模式下标题同样要给勾选框让位*/
+.card-head:has(.card-select) { padding-right: 30px; }
+.card-icon {
+  flex: 0 0 auto; border-radius: 8px; overflow: hidden; display: inline-flex;
+  align-items: center; justify-content: center; background: color-mix(in srgb, var(--text) 5%, transparent);
+}
+.card-icon img { width: 100%; height: 100%; object-fit: contain; }
+.card-title { font-size: 15px; font-weight: 600; line-height: 1.35; flex: 1 1 auto; min-width: 0;
+  overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+/* 卡片右上角按钮：26×26、圆角 8—— hover 有圆润的底色块*/
+.card-btn {
+  width: 26px; height: 26px; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 8px; color: var(--text-secondary);
+  transition: background 130ms ease, color 130ms ease;
+}
+.card-btn:hover { background: var(--hover-strong); color: var(--text); }
+.card-btn.is-on { color: var(--accent); }
+/* 已收藏：星星实心 + 强调色（原版未收藏是空心星，收藏后实心）*/
+.card-btn.is-fav { color: var(--warning); }
+.card-btn.is-fav .ic { fill: currentColor; stroke: currentColor; }
+.card-desc {
+  margin-top: 10px; flex: 1 1 auto; min-height: 0; font-size: 12px; line-height: 1.45;
+  color: var(--text-secondary); overflow: hidden;
+  display: -webkit-box; -webkit-line-clamp: var(--lines, 2); -webkit-box-orient: vertical;
+  max-height: calc(1.45em * var(--lines, 2) + 2px);
+}
+/* 卡片底部：分割线 → 标签在左、外链按钮在右（GitHub 在左、官网在最右，照原版）
+   ⚠️ 标签行必须贴着分割线、垂直居中，不能浮起来或贴到卡片底边上*/
+.card-foot { margin-top: auto; }
+.card-divider { height: 1px; background: color-mix(in srgb, var(--text) 12%, transparent); margin: 8px 0 10px; }
+.card-tags { display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; height: 26px; }
+.tag {
+  height: 22px; padding: 0 10px; display: inline-flex; align-items: center; border-radius: 10px;
+  font-size: 11.5px; white-space: nowrap; line-height: 1;
+  background: color-mix(in srgb, var(--text) 9%, transparent); color: var(--text-secondary);
+}
+:root[data-theme="light"] .tag { background: color-mix(in srgb, var(--text) 8%, transparent); color: #3c3c3c; }
+/* ---------- 「官方」标签（金色）----------
+   ⚠️⚠️ 选择器**必须**带 `:root` 前缀把特异性抬到 0,3,0，否则浅色主题下会被
+   上面那条 `:root[data-theme="light"] .tag`（0,3,0）按"后写的赢"盖掉：
+   `.tag.is-official` 只有 0,2,0，浅色主题下那条灰底 + #3c3c3c 深灰字直接胜出，
+   「官方」标签就变成了和别的标签一样的灰胶囊（用户报的"浅色主题下官方标签该是金色"）。
+   同款坑在 download-fixes.css 的 `.release-badge` 上已经踩过一次，
+   那边的解法就是给选择器加 `:root` + 多一级类。
+   —— 这里两条规则的分工：
+   · `:root .tag.is-official`（0,3,0）：深色主题用的金色，与原 `.tag.is-official` 同色；
+   · `:root[data-theme="light"] .tag.is-official`（0,4,0，靠多一级类严格压过上面那条
+     `:root[data-theme="light"] .tag`，不依赖 CSS 加载顺序）。
+   ⚠️ 浅色底上原来的 #d4af37（暗金）对比度不够，看不清 → 浅色主题换成更深的金
+   #8a6100，底色也用更实的暖黄，保证白/浅灰卡片上清晰可读。
+   深色主题保持 #d4af37 不变（深色主题显示本来就正常，不能被改坏）。*/
+:root .tag.is-official { background: rgba(255, 215, 0, 0.15); color: #d4af37; }
+:root[data-theme="light"] .tag.is-official {
+  background: rgba(255, 200, 40, 0.22);
+  color: #8a6100;
+}
+/* 标签放不下时的+X胶囊（X = 被隐藏的标签数量）*/
+.tag-more {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent); font-weight: 600;
+}
+
+/* ===================== 卡片右键菜单（@给GCP-AI / 测 Ping） =====================*/
+.card-menu {
+  position: fixed; z-index: 265; min-width: 158px; padding: 5px;
+  display: flex; flex-direction: column; gap: 1px;
+  border-radius: 10px; border: 1px solid var(--glass-border);
+  background: color-mix(in srgb, var(--card-solid) 96%, transparent);
+  backdrop-filter: blur(22px) saturate(160%); -webkit-backdrop-filter: blur(22px) saturate(160%);
+  box-shadow: var(--shadow-float);
+  transform-origin: top left;
+}
+.card-menu-item {
+  min-height: 32px; padding: 0 10px; display: flex; align-items: center; gap: 9px;
+  border-radius: 7px; font-size: 12.5px; color: var(--text); text-align: left; white-space: nowrap;
+  transition: background 120ms ease, color 120ms ease;
+}
+.card-menu-item:hover { background: var(--hover-strong); }
+.card-menu-item .ic { flex: 0 0 auto; color: var(--text-secondary); }
+.card-menu-item:hover .ic { color: var(--accent); }
+
+.grid-static { display: flex; flex-wrap: wrap; gap: 14px; }
+/* 定制页 / 收藏夹的静态网格卡片。
+   ⚠️⚠️ 本轮修复（用户原话：「定制页出现卡片ui长度不规范，意思是有的特别长不符合和大多数的
+   卡片ui长度一致，卡片会试图强制拉伸卡片ui长的长度」）：
+   原来写的是 `flex: 1 1 272px` —— **允许拉伸**。grid 是 flex-wrap 的，最后一行不满时
+   （比如 4 列只放满 3 张），剩下的卡片会各自分走空余宽度被人为拉长，于是同一屏里
+   有的卡片 272px、有的 380px，看起来"长度不规范、被强制拉伸"。
+   改成 `flex: 0 0 272px`（= 不伸不缩、宽度恒为 272）：
+     · 每张卡片宽度**完全一致**，一行不满时右侧自然留白（这是用户要的"一致"）；
+     · 宽度仍交给 `.card` 自己的 width 272px，不改虚拟列表/行列算法；
+     · max-width 保留，防止别处（如 .is-grid 变体）把它压得比 272 更宽。
+   ⚠️ 高度 196px 是固定值，配合 `flex: 0 0` 后整屏卡片尺寸统一，不会再出现长有短。
+   ⚠️ 收藏夹那边有单独覆盖（layout.css 的 .fav-main 规则、fav-fixes.css 的变体档），
+      它们在自己的作用域里另有意图，这里只定"定制页/默认"这一档。*/
+/* ⚠️ task-3 ③（AGENTS.md 第 5 条：不要在 CSS 里给卡片写死宽高）：
+   原来这里写死 `height: 196px` —— 卡片内容高度并**不恒定**：
+     · 有 download_page_url 的卡片卡脚多一行按钮（+~32px）；
+     · 不同机型/系统的最小字号、字体度量、DPI 缩放会把标题/简介/标签行顶高。
+   固定高 + `.card{overflow:hidden}` → 超出的内容（简介下沿、卡脚）被裁掉，
+   就是用户报的"部分机型简介文字被遮挡"，且只在部分机器复现。
+   → 改成 `min-height`：保底 196 不塌，内容多时**整卡随内容长高**；
+     flex-wrap 每行 align-items 默认 stretch ⇒ 同行卡片仍然等高，不会长短不一。
+     （收藏页 .fav-grid 是 CSS Grid，行高 auto 取整行最高卡，同样等高。）
+   ⚠️ 宽度维持 272 固定：那是"同一排等宽、最后一行不拉伸"的需求，不是本次 bug 的成因。 */
+.grid-static .card { width: 272px; min-height: 196px; flex: 0 0 272px; max-width: 400px; }
+
+/* ===================== 插件卡片 =====================*/
+.plugin-card {
+  width: 300px; height: 178px; flex: 0 0 300px; padding: 12px 16px 12px 12px;
+  display: flex; flex-direction: column; border-radius: var(--card-radius);
+  background: var(--card-glass); border: 1px solid var(--card-border);
+  box-shadow: var(--shadow-card), var(--ring); transition: border-color 140ms ease, background 140ms ease;
+}
+.plugin-card:hover { border-color: color-mix(in srgb, var(--accent) 26%, var(--card-border)); }
+
+/* ===================== 列表组件 =====================*/
+.list-widget { flex: 1 1 auto; min-height: 96px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px;
+  padding: 4px; border-radius: var(--card-radius); background: var(--glass); border: 1px solid var(--glass-border); }
+.list-item {
+  height: 38px; padding: 0 10px; display: flex; align-items: center; gap: 8px; text-align: left;
+  border-radius: 8px; font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden;
+  transition: background 130ms ease, color 130ms ease;
+}
+.list-item:hover { background: var(--hover); }
+.list-item.is-on { background: var(--accent-soft); color: var(--text); }
+.list-item.is-on::before { content: ""; position: absolute; }
+.list-item.plain.is-on { color: var(--text); font-weight: 600; }
+.list-item.plain.is-on .hit-section { color: var(--accent); }
+.search-hit { flex-direction: column; align-items: flex-start; height: 46px; justify-content: center; gap: 1px; }
+.hit-section { font-size: 10.5px; color: var(--text-secondary); }
+.hit-row { font-size: 12.5px; color: var(--text); max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+
+/* ===================== 空状态 =====================*/
+.empty-state { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 24px; text-align: center; }
+.vlist-empty { padding: 60px 0; text-align: center; }
+.notice-empty { padding-top: 60px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.deploy-empty { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 40px; }
+.log-empty { padding: 20px; text-align: center; color: var(--text-secondary); font-size: 13px; }
+.fav-empty { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 40px; }
+.fav-empty-small { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 20px; }
+
+.empty-orb { width: 64px; height: 64px; border-radius: 50%; background: color-mix(in srgb, var(--accent) 12%, transparent); display: flex; align-items: center; justify-content: center; }
+
+/* ===================== 零散组件（原先只在旧 style.css 里，拆分时丢了） =====================*/
+/* 定制页推荐卡片的匹配分*/
+.score { font-size: 11px; color: var(--accent); font-weight: 700; }
+/* 页头小图标（公告页）*/
+.title-icon { color: var(--accent); }
+/* 卡片头部 @AI 按钮：保留类名兼容，布局交给 .card-btn-group*/
+.card-head.has-mention { padding-right: 0; }
+/* Toast 文案块：标题 + 正文竖排，占满剩余宽度*/
+.toast-copy { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+
+/* ===================== AI（悬浮球 / 抽屉 / 内嵌侧栏） =====================
+   ⚠️ 整段原先只存在于旧 style.css，模块化拆分时漏了 —— 结果 AI 抽屉、悬浮球
+   完全没有样式（歪斜、错位、气泡挤在一起）。这里按原尺寸补回。*/
+/* 悬浮球：需求"要饱满 + 里面有运动的液态动效" ——
+   外层：径向高光 + 内阴影 + 外发光，做出球体体积感；
+   内层：三个彩色 blob 各自按不同时长/方向位移旋转，叠加成流动的液体。*/
+.float-ball {
+  position: fixed; right: 24px; bottom: 24px; width: 64px; height: 64px; z-index: 90;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden;
+  background:
+    radial-gradient(circle at 32% 26%, rgba(255, 255, 255, .55) 0 8%, transparent 38%),
+    radial-gradient(circle at 68% 78%, rgba(0, 0, 0, .28) 0 22%, transparent 62%),
+    linear-gradient(140deg, var(--ball-a), var(--ball-b));
+  box-shadow: 0 10px 34px rgba(91, 141, 239, .45),
+              0 2px 6px rgba(0, 0, 0, .28),
+              inset 0 0 0 1.5px rgba(255, 255, 255, .30),
+              inset 0 -8px 18px rgba(0, 0, 0, .22),
+              inset 0 8px 16px rgba(255, 255, 255, .18);
+  animation: ballIn 260ms cubic-bezier(.34, 1.56, .64, 1) both;
+  cursor: pointer;
+  transition: opacity 200ms ease, transform 160ms ease, box-shadow 200ms ease;
+}
+.float-ball:hover { transform: translateY(-2px) scale(1.05); box-shadow: 0 16px 44px rgba(91, 141, 239, .55), inset 0 0 0 1.5px rgba(255, 255, 255, .38); }
+.float-ball.is-paused { opacity: .35; }
+/* 三个液态色块：不同方向/速度，叠出"流动"感*/
+.ball-liquid {
+  position: absolute; inset: -12%; border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 32%, var(--ball-liquid) 0 22%, transparent 46%),
+    radial-gradient(circle at 72% 64%, #6c5ce7 0 24%, transparent 50%),
+    radial-gradient(circle at 46% 82%, #56ccf2 0 18%, transparent 44%);
+  filter: blur(6px) saturate(160%);
+  opacity: .9;
+  animation: liquidSpin 9s linear infinite;
+}
+.ball-liquid::after {
+  content: ""; position: absolute; inset: 14%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 62% 34%, rgba(255, 255, 255, .75) 0 10%, transparent 40%);
+  mix-blend-mode: screen;
+  animation: liquidPulse 5.5s ease-in-out infinite alternate;
+}
+.ball-g { position: relative; font-size: 22px; font-weight: 800; color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .35), 0 0 14px rgba(255, 255, 255, .35); }
+
+.ai-drawer {
+  position: fixed; top: var(--tb-height); right: 0; bottom: 0; width: 420px; z-index: 88;
+  display: flex; flex-direction: column;
+  border-left: 1px solid color-mix(in srgb, var(--accent) 30%, var(--card-border));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--card-solid) 96%, transparent), var(--card-solid));
+  box-shadow: -18px 0 46px rgba(0, 0, 0, .34);
+}
+:root[data-theme="light"] .ai-drawer { background: linear-gradient(180deg, #f8faff, #ffffff); }
+.ai-embedded { position: absolute; inset: 0; display: flex; flex-direction: column; }
+/* 独立 AI 页：聊天内容居中成一列（抽屉本身就是 420 窄栏，不受影响）。
+   不做这一步输入框会被拉成整窗宽（1280 下实测 1134px），正是"输入框有严重问题"的观感来源。*/
+.ai-embedded { --ai-col: 860px; }
+.ai-embedded > .ai-head,
+.ai-embedded > .ai-messages,
+.ai-embedded > .ai-input-row,
+.ai-embedded > .ai-history > .ai-history-head,
+.ai-embedded > .ai-history > .ai-history-body {
+  width: 100%; max-width: var(--ai-col); margin-left: auto; margin-right: auto;
+}
+/* 头部 / 消息 / 输入区三块左右内边距统一成 14px：
+   标题、气泡、输入框三者的左边缘因此严格对齐（实测都在 x=248），右侧图标与发送按钮也齐。*/
+.ai-head { height: 48px; flex: 0 0 auto; display: flex; align-items: center; gap: 6px; padding: 0 14px; }
+.ai-brand { font-size: 15px; font-weight: 700; }
+/* ⚠️ 上方一大片空白占行的根因：base.css 的 .hairline 是 flex:1 1 auto，
+   AI 容器是竖排 flex + 只有一个弹性区(.ai-messages)，这条 1px 线会一起抢剩余空间，
+   把 .ai-messages 整块顶下去（实测：抽屉 282px / 独立页 292px 的空白）。
+   在 AI 容器里把它钉死成 1px，其余页面不动。*/
+.ai-drawer > .hairline,
+.ai-embedded > .hairline,
+.ai-history > .hairline { flex: none; height: 1px; min-height: 1px; width: 100%; }
+.ai-messages { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 12px 14px;
+  display: flex; flex-direction: column; gap: 16px; }
+.ai-welcome { font-size: 12.5px; color: var(--text-secondary); line-height: 1.7; }
+.bubble-row { display: flex; }
+.bubble-row.is-user { justify-content: flex-end; }
+/* （深色主题下 AI 和用户发送出来的字体不是白色而是灰色，有点看不清楚）
+   —— 气泡正文**必须显式**写死 color: var(--text)（深色 = #E8E8E8 近白，浅色 = #1F2329 深墨）。
+   之前 .bubble 自己没有 color，全靠从 body 继承；一旦上层容器（.ai-messages / 卡片壳）
+   在某个主题或效果档里改了继承色，气泡文字就跟着变灰，而气泡底色是深色卡片 ⇒ 看不清。
+   现在三个类各自钉一次（.is-ai / .is-user 各自带底色，更需要自己的前景色），
+   不再受继承影响，也**不用** --text-secondary / 任何半透明色。*/
+.bubble {
+  max-width: 78%; padding: 8px 11px; border-radius: 16px; font-size: 13px; line-height: 1.5;
+  color: var(--text);
+  user-select: text; -webkit-user-select: text; white-space: pre-wrap; word-break: break-word;
+  box-shadow: 0 3px 20px rgba(0, 0, 0, .18);
+}
+.bubble.is-ai { background: var(--card-solid); border: 1px solid var(--card-border); border-bottom-left-radius: 6px;
+  color: var(--text); }
+.bubble.is-user { background: linear-gradient(135deg, var(--ball-a), var(--ball-b)); color: var(--text);
+  border-bottom-right-radius: 6px; }
+/* 输入区：输入框圆角 10 / 最小高 38 / 最多 110 自适应；发送按钮 66×38（对齐 py 版）。
+   align-items:flex-end + 两个 38px 的高度 → 单行时输入框与按钮底/顶完全对齐（实测 dh=0）。*/
+.ai-input-row { flex: 0 0 auto; display: flex; align-items: flex-end; gap: 8px; padding: 10px 14px 12px;
+  position: relative; }
+.ai-input {
+  flex: 1 1 auto; min-height: 38px; max-height: 110px; padding: 8px 10px; border-radius: 10px;
+  border: 1px solid var(--card-border); background: var(--card-solid); color: var(--text);
+  font-size: 13px; line-height: 1.5; outline: none; resize: none;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+  /* py 版行为：最小高 38、随内容自适应长高、最多 110（再多就内部滚动）。
+     app.js 不负责 textarea 高度，所以这里用 CSS 的 field-sizing（Chromium 123+ /
+     WebView2 支持）；老内核不认这条会退回固定 1 行 + 内部滚动，不会更糟。*/
+  field-sizing: content;
+}
+.ai-input::placeholder { color: var(--text-disabled);
+  /* 窄抽屉里那句长 placeholder 会折成两行，把空输入框顶到 57px（比发送按钮高一截）；
+     这里强制单行 + 省略号，空框恒定 38px，和按钮齐平*/
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* 空输入框（只有 placeholder）钉死 38px：field-sizing:content 会把折行的 placeholder
+   也计入高度；一旦真的输入内容，这个选择器失配，height 回到 auto → 自动长高*/
+.ai-input:placeholder-shown { height: 38px; }
+.ai-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.ai-send {
+  width: 66px; height: 38px; flex: 0 0 auto; border-radius: 10px; font-size: 12px; font-weight: 700;
+  color: #fff; background: linear-gradient(135deg, var(--ball-a), var(--ball-b));
+  transition: filter 140ms ease, background 140ms ease;
+}
+.ai-send:hover { filter: brightness(1.1); }
+.ai-send:active { filter: brightness(.94); }
+.ai-send:disabled { opacity: .5; }
+.ai-send.is-stop { background: color-mix(in srgb, var(--danger) 20%, transparent); color: var(--danger); }
+
+/* · 输入 "/" 时的命令提示（GCP-AI 独立页 + 悬浮抽屉共用）
+   输入 / 就会跳出 /plugin 悬浮提示不挡输入。
+   浮层绝对定位在输入行上方（.ai-input-row 已设 position:relative），
+   容器不吃点击（pointer-events:none），只有胶囊本身可点；
+   半透明 + 模糊，跟随主题效果（云母/毛玻璃/亚克力）与深浅色。*/
+.ai-slash-hint {
+  position: absolute; left: 14px; right: 14px; bottom: calc(100% + 3px);
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  padding: 4px; border-radius: 10px; z-index: 4;
+  border: 1px solid color-mix(in srgb, var(--accent) 26%, var(--glass-border));
+  background: color-mix(in srgb, var(--card-solid) 82%, transparent);
+  backdrop-filter: blur(9px) saturate(125%);
+  -webkit-backdrop-filter: blur(9px) saturate(125%);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, .24);
+  pointer-events: none;
+}
+.ai-slash-chip {
+  display: inline-flex; align-items: center; gap: 7px; height: 26px; padding: 0 10px;
+  border-radius: 999px; font-size: 11.5px; font-weight: 600; color: var(--text);
+  border: 1px solid color-mix(in srgb, var(--accent) 36%, transparent);
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  cursor: pointer; pointer-events: auto;
+  transition: background 140ms ease, border-color 140ms ease;
+}
+.ai-slash-chip:hover {
+  background: color-mix(in srgb, var(--accent) 26%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+}
+.ai-slash-insert { font-weight: 800; letter-spacing: .2px; color: var(--accent-strong); }
+.ai-slash-label { color: var(--text-secondary); font-weight: 500; }
+/* 云母：几乎不糊 → 提示条也不做模糊，改用更高不透明度保持清晰*/
+:root[data-fx="mica"] .ai-slash-hint {
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+  background: color-mix(in srgb, var(--card-solid) 94%, transparent);
+}
+/* 浅色主题下描边/阴影减一档，避免糊成一团*/
+:root[data-theme="light"] .ai-slash-hint { box-shadow: 0 8px 20px rgba(15, 23, 42, .14); }
+
+/* 历史对话面板：盖在抽屉上的右侧滑入层（独立界面，不是弹窗）*/
+.ai-history {
+  position: absolute; inset: 0; z-index: 5; display: flex; flex-direction: column;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--card-solid) 97%, transparent), var(--card-solid));
+}
+:root[data-theme="light"] .ai-history { background: linear-gradient(180deg, #f8faff, #ffffff); }
+.ai-history-head { height: 48px; flex: 0 0 auto; display: flex; align-items: center; gap: 10px; padding: 0 14px 0 10px; }
+.ai-history-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 12px 14px;
+  display: flex; flex-direction: column; gap: 10px; }
+/* 空状态：图标压暗 + 文案限宽，窄抽屉里也不会顶到两边*/
+.ai-history-empty { flex: 1 1 auto; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 6px; color: var(--text-disabled); text-align: center;
+  padding: 24px 16px; }
+.ai-history-empty .ic { opacity: .55; margin-bottom: 2px; }
+.ai-history-empty .cap { max-width: 260px; }
+.history-item { padding: 10px 12px; border-radius: 10px; display: flex; flex-direction: column; gap: 4px;
+  background: color-mix(in srgb, var(--text) 4.5%, transparent);
+  border: 1px solid var(--glass-border); }
+.history-item.is-user { border-left: 2px solid var(--ball-a); }
+.history-item.is-ai { border-left: 2px solid var(--accent); }
+.history-role { font-size: 10.5px; font-weight: 700; color: var(--text-secondary); letter-spacing: .04em; }
+.history-text { font-size: 12.5px; line-height: 1.6; color: var(--text); white-space: pre-wrap;
+  word-break: break-word; user-select: text; -webkit-user-select: text;
+  display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* ===========================================================================
+ * 修复区 -L2 · API Key 输入框 + 常驻小眼睛（secret-wrap / secret-input / eye-btn）
+ * =========================================================================*/
+/* 撑满 .setting-control（和 .inline-control 一致）；position:relative 供小眼睛绝对定位*/
+.secret-wrap { position: relative; width: 100%; min-width: 0; display: flex; align-items: center; }
+/* 右侧让出 34px 给小眼睛，否则输入的文字会被图标压住。
+   ⚠️ .setting-control .input（layout.css:534，(0,2,0)）会把宽度钉成 --control-width(200)，
+      而 layout.css 比本文件后加载 —— 所以这里带上 .setting-control 前缀升到 (0,3,0) 才压得住。*/
+.secret-wrap .input,
+.setting-control .secret-wrap .input { width: 100%; padding-right: 34px; }
+.eye-btn {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  width: 24px; height: 24px; flex: 0 0 auto; border: 0; border-radius: 6px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: transparent;                       /* 常驻可见，不做 hover 才出现*/
+  color: var(--text-secondary);
+  transition: color 130ms ease, background 130ms ease;
+}
+.eye-btn .ic { flex: 0 0 auto; }
+.eye-btn:hover, .eye-btn.is-on { color: var(--accent); }
+.eye-btn:disabled { opacity: .45; pointer-events: none; }
+
+/* ===========================================================================
+ * 修复区 -L3 · 设置页存储迁移进度条（setting-progress）
+ * 
+ * ⚠️ 只作用于 .setting-progress 里面：通用的 .progress-track/.progress-fill（layout.css:174）
+ *    是定制页引导条的 4px 细条，不能被这里改成 6px。
+ * =========================================================================*/
+.setting-progress { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; width: 100%; }
+.setting-progress .progress-track {
+  height: 6px; border-radius: 999px; margin: 0; overflow: hidden;
+  background: var(--track, rgba(255, 255, 255, .10));
+}
+:root[data-theme="light"] .setting-progress .progress-track { background: var(--track, rgba(0, 0, 0, .08)); }
+.setting-progress .progress-fill {
+  display: block; height: 100%; border-radius: 999px; box-shadow: none;
+  background: linear-gradient(90deg, var(--accent), var(--accent-strong));
+  transition: width 180ms linear;
+}
+.setting-progress .progress-text { margin: 0; font-size: 12px; color: var(--text-secondary); }
+
+/* ===========================================================================
+ * 修复区 -C2 · 勾选框（checkbox）现代自绘 —— 全站一套，纯 CSS，不改 HTML
+ * 
+ * 涉及：搜索页全选(.sel-check)、卡片勾选(.card-select)、收藏夹全选(.sel-check)、
+ *       设置行、资源制作器的行勾选 —— 它们都只是裸 <input type="checkbox">。
+ * 为什么要带 :root 前缀：components.css:277 `.card-select input` 与 layout.css:70
+ *   `.sel-check input` 都是 (0,1,1)，且 layout.css 后加载；`:root input[type=checkbox]`
+ *   是 (0,2,1)，无论文件顺序都压得住，不必动那两条既有规则。
+ * 三态：未选 / 选中(渐变实底 + 对勾) / 半选(indeterminate，一条横线)；
+ *       另有 hover、disabled、focus-visible(键盘) 三态；深浅色都由令牌驱动。
+ * 对勾用 ：before + clip-path（appearance:none 后表单控件可派生子元素），
+ * 定位用 left/top+负 margin，不依赖 display:grid 在表单控件上的实现差异。
+ * =========================================================================*/
+:root input[type="checkbox"] {
+  appearance: none; -webkit-appearance: none;
+  position: relative; flex: 0 0 auto; margin: 0; padding: 0;
+  width: 16px; height: 16px; border-radius: 4.5px;
+  border: 1.5px solid color-mix(in srgb, var(--text) 38%, transparent);
+  background: color-mix(in srgb, var(--card-solid) 55%, transparent);
+  box-shadow: inset 0 1px 1px color-mix(in srgb, #000 8%, transparent);
+  vertical-align: middle;
+  transition: background 130ms ease, border-color 130ms ease, box-shadow 130ms ease;
+}
+:root input[type="checkbox"]::before {
+  content: ""; position: absolute; left: 50%; top: 50%;
+  width: 10px; height: 10px; margin: -5px 0 0 -5px;
+  background: var(--accent-ink);
+  clip-path: polygon(14% 46%, 0% 62%, 38% 100%, 100% 22%, 84% 8%, 36% 72%);
+  transform: scale(.3); opacity: 0;
+  transition: transform 130ms cubic-bezier(.22, 1.2, .4, 1), opacity 110ms ease;
+}
+:root input[type="checkbox"]:hover { border-color: color-mix(in srgb, var(--accent) 60%, transparent); }
+:root input[type="checkbox"]:checked,
+:root input[type="checkbox"]:indeterminate {
+  border-color: transparent;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 88%, #fff 12%), var(--accent));
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 32%, transparent);
+}
+:root input[type="checkbox"]:checked::before,
+:root input[type="checkbox"]:indeterminate::before { transform: scale(1); opacity: 1; }
+/* 半选：一条 8×2 的横线（去掉对勾的 clip-path 形状，改圆角小条）*/
+:root input[type="checkbox"]:indeterminate::before {
+  width: 8px; height: 2px; margin: -1px 0 0 -4px; border-radius: 1px; clip-path: none;
+}
+:root input[type="checkbox"]:disabled { opacity: .45; cursor: default; box-shadow: none; }
+:root input[type="checkbox"]:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 88%, transparent); outline-offset: 2px;
+}
+/* 卡片勾选框/全选框的容器尺寸是既有的 15px，这里统一回 16px 的自绘尺寸*/
+.card-select input, .sel-check input { width: 16px; height: 16px; }
+
+/* ===========================================================================
+ * 修复区 -C8 · GCP-AI 独立页太居中、两侧空太多
+ * 
+ * append 前：components.css:448 `.ai-embedded { --ai-col: 860px }`
+ *   → 1280 宽窗口下内容区 1232，两侧各空 186px（用户："太居中、两侧空太多"）。
+ * 修法：把列宽上限提到 1200（并留 16px 呼吸），小窗口仍按 100%-32px 自适应。
+ * 只影响 .ai-embedded（独立页）；AI 抽屉是 420 窄栏、里面没有 .ai-embedded，不受影响。
+ * =========================================================================*/
+.ai-embedded { --ai-col: min(1200px, 100% - 32px); }
+
+/* ===========================================================================
+ * 修复区 -C11 · 卡片图标不再被放大插值（位图糊的一个直接来源）
+ * 
+ * .card-icon 的盒子尺寸由 JS 内联给出（cardPx.icon = 40~80px），这里的 img 原来写
+ * `width:100%; height:100%` —— 源图比盒子小（.ToolsGCP/Icon 里有 48/80/115px 的图标）时
+ * 会被浏览器放大插值 → 发糊。改成"不超过盒子、也不强行放大"：源图小就按原始像素显示
+ * （浏览器不插值 ⇒ 锐），源图大仍会被缩小（缩小不会糊）。
+ * 同步处理的还有 layout.css / overlays.css 里的同类盒子（各自文件末尾修复区）。
+ * =========================================================================*/
+.card-icon img { width: auto; height: auto; max-width: 100%; max-height: 100%; object-fit: contain; }
+
+/* ===========================================================================
+ * 修复区 -AI · 新增 AI 组件样式（气泡下方按钮排 + 历史对话卡片）
+ * 
+ * 都是 index.html 新加、原本**没有任何样式**的类名。放在文件末尾，靠"后加载"压过
+ * 前面同特异性的 .bubble-row / .icon-btn / .history-item 既有规则，无需 !important。
+ * =========================================================================*/
+
+/* ① 气泡 + 按钮的竖排容器：AI 靠左、用户靠右。
+   ⚠️ 78% 上限必须放在**包裹层**而不是 .bubble 上：.bubble-wrap 是 .bubble-row 的
+      flex item，它自己的 min-content 宽度由 .bubble-actions（两个 18px 按钮 + gap ≈ 40px）
+      决定；如果上限还在 .bubble 上（相对这个 ~40px 的窄容器算百分比），Chrome 收缩时
+      会把 wrap 压到 ~40px，正文就变成每行一两个字的“竖着排”。上限放到 wrap 上之后，
+      .bubble 在 wrap 内 max-width:100%，短文本随内容、长文本按整行宽度换行。*/
+.bubble-wrap { display: flex; flex-direction: column; gap: 4px; align-items: flex-start;
+  min-width: 0; max-width: 78%; }
+.bubble-wrap.is-user { align-items: flex-end; }
+
+/* ② 气泡下方那排小按钮：平时 72% 透明度，父级 hover / 自身 hover / 键盘聚焦时点亮*/
+.bubble-actions { display: flex; gap: 4px; opacity: .72; transition: opacity 120ms ease; }
+.bubble-wrap:hover .bubble-actions,
+.bubble-actions:hover,
+.bubble-actions:focus-within { opacity: 1; }
+.bubble-wrap.is-user .bubble-actions { justify-content: flex-end; }
+/* 兼容：按钮排若仍挂在 .bubble-row 里，用户侧同样右对齐*/
+.bubble-row.is-user .bubble-actions { justify-content: flex-end; }
+
+/* ③ 单个气泡小按钮：圆角 / 透明底，hover 变强调色。
+   ⚠️ 尺寸 18 → 26（需求：「用户和AI的聊天气泡下面的按钮的组件ui需要大一点」）。
+   18px 在 1080p 上只有指甲盖大小、点不准；26px 是"看得见又不至于抢正文"的量级，
+   图标同步从 12 提到 14（模板里写死）。命中区仍由按钮本身给出，不再额外加 padding
+   （加 padding 会把那一排撑宽，短消息的气泡会被自己的按钮排撑变形）。*/
+.bubble-btn {
+  width: 26px; height: 26px; flex: 0 0 auto; border-radius: 7px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: transparent; color: var(--text-secondary);
+  transition: color 120ms ease, background 120ms ease;
+}
+.bubble-btn .ic { flex: 0 0 auto; }
+.bubble-btn:hover { color: var(--accent); background: var(--hover); }
+.bubble-btn:active { transform: scale(.94); }
+.bubble-btn.is-done { color: var(--success); }
+
+/* ④ 包裹层内的气泡：撑满可用宽度（上限已由 .bubble-wrap 的 max-width 控制） */
+.bubble-wrap > .bubble { max-width: 100%; }
+
+/* ⑤ 报错气泡（AI 请求失败也落盘的历史消息）：淡红底 + 红描边，深浅主题都醒目
+   ⚠️ 只改颜色不动布局；正文仍走 .bubble 的 pre-wrap / break-word。*/
+.bubble.is-error {
+  background: color-mix(in srgb, var(--danger) 12%, var(--card-solid));
+  border-color: color-mix(in srgb, var(--danger) 45%, var(--card-border));
+  color: var(--text);
+}
+
+/* ④ 历史对话卡片：现在承载"一个对话页"（标题行 + 元信息 + 正文预览）*/
+.history-item-head { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.history-title {
+  flex: 1 1 auto; min-width: 0; font-size: 13px; font-weight: 600; color: var(--text);
+  overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+}
+.history-meta { flex: 0 0 auto; font-size: 11px; color: var(--text-disabled); }
+/* 选中态：淡强调底 + 左侧 2px 强调竖条（和侧栏选中标一个味道）。
+   .history-item 本身已经有 border-left:2px，这里只换颜色；本规则在文件末尾，
+   所以压得住前面 .history-item.is-user/.is-ai 的描边配色。*/
+.history-item.is-on { background: var(--accent-soft); border-left-color: var(--accent); }
+/* ⚠️ 既有 .history-text 是 6 行省略（components.css 里原本就写着 -webkit-line-clamp:6）。
+   你要的"两行预览"若要落地，把下面这条打开即可（我没擅自改显示行数）：
+   .history-item .history-text { -webkit-line-clamp: 2; }*/
+
+/* ⑤ 历史卡片上的删除小按钮*/
+.icon-btn.tiny { width: 16px; height: 16px; border-radius: 5px; }
+.icon-btn.tiny:hover { color: var(--danger); }
+.icon-btn.tiny .ic { width: 12px; height: 12px; }
+
+/* ⑥ 历史列表：本身已有 overflow-y:auto，这里只把卡片间距收到 8*/
+.ai-history-body { gap: 8px; }
+/* ===========================================================================
+ * 修复区 · 毛玻璃 / 亚克力档下的按钮配色（发灰、看不清字）
+ * 
+ * 用户点名：设置→功能 的『验证』按钮、GCP-AI 的『保存』、历史对话界面、
+ * 提交反馈界面的『前往反馈』按钮在毛玻璃/亚克力下配色不对。
+ * 根因见 variables.css 的 注释：此前那条 (0,4,0) 的组件兜底同时覆盖了
+ * `background` / `border-color` / `box-shadow`，把强调色按钮的渐变换成了灰色卡片底，
+ * 于是深色的 --accent-ink 文字压在没有饱和度的灰底上 ⇒ 发灰。
+ * 修法（双保险）：
+ *   ① variables.css 已把交互控件从"底色兜底"里摘出去（只保留背景模糊）；
+ *   ② 这里再用 (0,5,0) 把有配色语义的按钮在 glass / acrylic 两档显式钉一遍，
+ *      **只针对 glass / acrylic** —— 云母档一个字都不改（保持改动前观感）。
+ * 三档对比度：强调色按钮始终是 90%~100% 不透明的强调色底 + --accent-ink 深墨字，
+ * 不会因为面板半透明而"透到看不清字"。
+ * =========================================================================*/
+:root[data-theme][data-fx="glass"] .btn.btn-primary,
+:root[data-theme][data-fx="acrylic"] .btn.btn-primary {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 92%, #fff 8%), var(--accent));
+  border-color: transparent; color: var(--accent-ink); font-weight: 600;
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+:root[data-theme][data-fx="glass"] .btn.btn-primary:hover,
+:root[data-theme][data-fx="acrylic"] .btn.btn-primary:hover {
+  background: var(--accent-strong); color: var(--accent-ink);
+}
+:root[data-theme][data-fx="glass"] .btn.btn-danger,
+:root[data-theme][data-fx="acrylic"] .btn.btn-danger {
+  background: var(--danger); border-color: transparent; color: #fff;
+}
+/* 危险操作"幽灵按钮"（清理历史日志 / 清空历史对话 / 拒绝并退出）：
+   底色必须继续透明，否则红色文字会落在灰色卡片底上、红描边也会消失。*/
+:root[data-theme][data-fx="glass"] .btn.btn-danger-ghost,
+:root[data-theme][data-fx="acrylic"] .btn.btn-danger-ghost {
+  background: transparent;
+  border-color: color-mix(in srgb, var(--danger) 55%, transparent);
+  color: var(--danger);
+}
+:root[data-theme][data-fx="glass"] .btn.btn-danger-ghost:hover,
+:root[data-theme][data-fx="acrylic"] .btn.btn-danger-ghost:hover {
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
+  color: var(--danger);
+}
+/* 已开启态（.is-on = 淡强调底 + 强调色字）：同样不能被兜底吃掉。*/
+:root[data-theme][data-fx="glass"] .btn.is-on,
+:root[data-theme][data-fx="acrylic"] .btn.is-on {
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 46%, transparent);
+  color: var(--accent-strong);
+}
+/* 普通按钮（无配色语义）在玻璃两档下稍微提一点底，别糊在面板里：
+   只调 background，不动 border-color / box-shadow，hover 与焦点仍然由上面的基础规则接管
+   （hover 写在这里是为了让"玻璃档的悬停"也能盖过本条的底）。*/
+:root[data-theme][data-fx="glass"] .btn,
+:root[data-theme][data-fx="acrylic"] .btn {
+  background: color-mix(in srgb, var(--card-solid) 62%, transparent);
+}
+:root[data-theme][data-fx="glass"] .btn:hover,
+:root[data-theme][data-fx="acrylic"] .btn:hover {
+  background: color-mix(in srgb, var(--card-solid) 78%, transparent);
+}
+/* 历史对话里的 AI 气泡：玻璃两档下别用整块实色 --card-solid（太重、像贴了张纸），
+   改成半透明卡片色 + 背景模糊；正文仍是 --text，对比度不变。
+   底色不透明度 74% → 88%。74% 时气泡背后的彩色光斑会透上来，13px 的正文
+   压在半透明底上会"发虚/发灰"（用户反馈"字看不清"），88% 既保留材质感又让文字压得住。*/
+:root[data-theme][data-fx="glass"] .bubble.is-ai,
+:root[data-theme][data-fx="acrylic"] .bubble.is-ai {
+  background: color-mix(in srgb, var(--card-solid) 88%, transparent);
+  backdrop-filter: blur(var(--fx-card-blur)) saturate(var(--fx-sat));
+  -webkit-backdrop-filter: blur(var(--fx-card-blur)) saturate(var(--fx-sat));
+}
+/* 历史对话条目（.history-item）在玻璃两档下的选中态：淡强调底要压得住卡片底*/
+:root[data-theme][data-fx="glass"] .history-item.is-on,
+:root[data-theme][data-fx="acrylic"] .history-item.is-on {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  border-left-color: var(--accent);
+}
+
+/* ===========================================================================
+ * 修复区 · **搜索页网格视图**卡片内部收紧（一行 6 张那种）
+ * 
+ * 它把第二行的简介字体部分给遮挡住了一部分尺寸比例也要合理好看；
+ * 后来又明确补一句：我只让你修改网格视图下的卡片大小，没让你动磁贴视图，恢复磁贴视图原样。
+ *
+ * 所以这里**不再用容器查询猜视图**（那会因为窗口/预设尺寸把磁贴卡也卷进来），
+ * 改成由 app.js 的 viewMode 直接给卡片加 `.is-grid`：
+ *     index.html: <article class="card" :class="{ 'is-grid': viewMode === 'grid' }">
+ * 磁贴视图的卡片**一个字符都没碰**（下面所有规则都以 .card.is-grid 开头）。
+ *
+ * 为什么需要收紧（证据 app.js）：
+ *   · 网格档卡高 = preset.height × 0.76（medium 196→149、small 168→128）；
+ *     但 cardPx.lines 没跟着缩（medium/small 仍 2 行、large 3 行）；
+ *   · 卡片内部固定消耗（旧值）≈ 卡片 padding 28 + 卡头图标 40 + 简介 margin 10
+ *     + 2 行×17.4 + 分割线 19 + 标签行 26 ≈ 160 > 149 ⇒ 第二行简介被 .card{overflow:hidden} 裁掉。
+ * ⚠️ 仍然**不给卡片写死宽高**：只调内部元素（字号 / 间距 / 图标封顶 / 行高与 clamp 同系数）。
+ * 预算复算：medium 网格内容高 119、消耗 101 ✓；small 98 / 95 ✓；large 152 / 117 ✓
+ * =========================================================================*/
+.card.is-grid .card-head { gap: 8px; }
+
+/* 卡头：图标封顶 36（JS 内联给 40；max-* 能压住内联 width/height，不改 JS 意图）*/
+.card.is-grid .card-icon { border-radius: 7px; max-width: 36px; max-height: 36px; }
+.card.is-grid .card-title { font-size: 12.5px; line-height: 1.3; }
+
+/* 简介：字号/行高与 max-height 用同一个 1.4 系数；flex:0 0 auto 不许被压缩*/
+.card.is-grid .card-desc {
+  margin-top: 6px; font-size: 11.5px; line-height: 1.4;
+  flex: 0 0 auto;
+  max-height: calc(1.4em * var(--lines, 2) + 1px);
+}
+
+/* 右上角按钮组按窄卡等比收小（26 → 22），标题让位的 padding 同步收紧*/
+.card.is-grid .card-btn-group { right: 8px; top: 8px; gap: 4px; }
+.card.is-grid .card-btn { width: 22px; height: 22px; border-radius: 6px; }
+.card.is-grid .card-head:has(.card-btn-group) { padding-right: 26px; }
+.card.is-grid .card-head:has(.card-btn-group > .card-btn:nth-child(2)) { padding-right: 52px; }
+.card.is-grid .card-select { right: 8px; top: 8px; width: 22px; height: 22px; }
+.card.is-grid .card-head:has(.card-select) { padding-right: 26px; }
+
+/* 卡脚：分割线与标签行一起收紧，标签行高度必须 ≤ 标签自身高度，否则又会把卡脚顶出卡片*/
+.card.is-grid .card-foot { margin-top: auto; }
+.card.is-grid .card-divider { margin: 3px 0 4px; }
+.card.is-grid .card-tags { height: 18px; gap: 4px; }
+.card.is-grid .tag { height: 18px; padding: 0 7px; border-radius: 8px; font-size: 10.5px; }
+.card.is-grid .card-foot > .row { gap: 4px; }
+
+/* ===========================================================================
+ * 修复区 -LAYOUT · 独立 AI 页的历史对话侧栏钉在右侧 + 不再糊住整页
+ * 
+ * 
+ * 根因（两条，都出在同一份面板上）：
+ *   ① 基础规则 `.ai-history { position:absolute; inset:0 }` 是给**抽屉**用的（铺满 420 窄栏）。
+ *      独立页在 index.html 里用内联样式覆盖成 `position:fixed; right:0; top/bottom; width:392px`，
+ *      但 `inset:0` 里的 **left:0 没有被覆盖** —— 左右同时被钉死后过约束，
+ *      LTR 方向按left + width 生效、right 被忽略解析 ⇒ 面板从**左边**起铺 392px。
+ *      修法：给这一份加 `.is-page-panel`，显式 `left:auto` 把左侧释放掉。
+ *   ② 面板底色是97% 卡片色 → 实色的渐变。铺满整页时左侧页面只透出 3%，
+ *      观感就是"整页微微发虚"。现在改成实色底 + 左侧投影，并显式
+ *      `backdrop-filter:none` —— 面板**不产生任何全屏 backdrop**，左侧页面保持清晰。
+ * z-index 92：高于内容区（--z-content 50，见 base.css 的层级表）。
+ * ⚠️ 抽屉里那份 `.ai-history`（没有 .is-page-panel）保持 absolute + inset:0 不动。
+ * =========================================================================*/
+.ai-history.is-page-panel {
+  position: fixed;
+  left: auto; right: 0; top: var(--tb-height); bottom: 0;
+  width: 392px; max-width: 92vw;
+  z-index: 92;
+  border-radius: 14px 0 0 14px;
+  background: var(--card-solid);                 /* 实色：不让底下页面透上来*/
+  box-shadow: -18px 0 48px rgba(0, 0, 0, .38);
+  backdrop-filter: none;                          /* 不产生全屏模糊*/
+  -webkit-backdrop-filter: none;
+}
+/* 独立页的内容居中列规则会把 head/body 收成 100%-32px 并居中（--ai-col），
+   放进 392px 的侧栏里会再少 32px、两边还多出空白；侧栏内改回整宽。*/
+.ai-history.is-page-panel > .ai-history-head,
+.ai-history.is-page-panel > .ai-history-body {
+  width: 100%; max-width: none; margin-left: 0; margin-right: 0;
+}
+
+/* ===========================================================================
+ * 修复区 -INPUT · GCP-AI 输入框只留自身自发光一圈，删掉最外圈
+ * 
+ * 输入框有 2 层周围光圈，删除最外层的光圈，保留点击输入框自发光的光圈。
+ * 根因不是 :focus-within（全站没有 `.ai-input-row:focus-within` 规则），而是 base.css
+ * 的全局键盘焦点环：
+ *     textarea:focus-visible { outline: 2px solid …; outline-offset: 1px }
+ * 文本类控件在 Chromium 里**鼠标聚焦同样命中 :focus-visible**，于是输入框同时有：
+ *   · 内圈 = `.ai-input:focus` 的 border(accent) + box-shadow 3px accent-soft（自发光，保留）；
+ *   · 外圈 = 上面那条 outline 2px + 1px 间隙 —— 就是多出来的那圈，在这里删掉。
+ * ⚠️ 只对 .ai-input 关 outline，其它 input / textarea 的键盘焦点环保持原样。
+ * =========================================================================*/
+.ai-input:focus,
+.ai-input:focus-visible { outline: none; }
+
+/* ===========================================================================
+ * 修复区 -CARD · 卡片右下角的 GitHub / 官网按钮不再被标签挤出去
+ * 
+ * 搜索页和定制页的官网和 github 按钮在卡片 ui 上消失了。
+ * 结构：`.card-foot > .row.row-6 >（.tag… + .grow + .card-btn×2）`，而 `.card` 是 overflow:hidden。
+ * 根因：.tag 带 `white-space:nowrap` + 左右 10px 内边距，min-content 宽度很大，而 .tag
+ *   没有 min-width:0 ⇒ 标签无法收缩：`.grow` 先被压成 0，标签继续把整行撑宽，
+ *   行尾的两个 .card-btn 就被推到卡片右边缘之外、被 .card{overflow:hidden} 裁掉 ——
+ *   "按钮在卡片 UI 上消失"就是这么来的（模板里按钮其实一直在）。
+ * 修法：**按钮永不让位，让标签让位**。
+ *   · .card-btn 保持 flex:0 0 auto（本来就有，这里再钉一次防回归）；
+ *   · .tag 允许收缩 + min-width:0 + overflow:hidden（宁可裁标签文字）；
+ *   · .grow 也允许收缩到 0；
+ *   · 行本身 overflow:hidden 保持"裁标签、不裁按钮"。
+ * ⚠️ 刻意不写 .tag 的 flex:0 0 auto —— 那会让窄卡重新把按钮顶出去。
+ * =========================================================================*/
+.card-foot > .row { justify-content: flex-start; overflow: hidden; }
+.card-foot > .row > .grow { flex: 1 1 auto; min-width: 0; }
+.card-foot > .row > .tag { flex: 0 1 auto; min-width: 0; overflow: hidden; }
+.card-foot > .row > .card-btn { flex: 0 0 auto; }
+
+/* ###########################################################################
+ * 修复区 · 用户需求（毛玻璃 / 亚克力适配 + 分段切换 + AI 侧栏 + @token）
+ * ###########################################################################
+ * 全部规则都放在文件末尾，靠"后加载"压过前面的同特异性旧规则；
+ * 材质数值一律来自 variables.css 末尾的 令牌表（改档位只改那一处）。
+ * 云母档：要么令牌值等于原值，要么规则整体不匹配 data-fx ⇒ 观感逐像素不变。
+ * #########################################################################*/
+
+/* ===========================================================================
+ * · 分段切换（.segmented / .seg-item / .seg-thumb）—— 全站一套
+ *
+ * 两个病根：
+ *   ① 选中指示原本想交给 JS 注入的 .seg-thumb 滑动块（app.js 的 syncSegThumbs），
+ *      但玻璃两档下：容器 background:var(--glass) 是一块 4.5% 白板、每个 .seg-item
+ *      又被 variables.css 的 ② 单独加了 backdrop-filter（每个项各自一层模糊 ⇒
+ *      画出一个个方块底影），再加上 .seg-item:hover 的 --hover 底色 ——
+ *      三样叠起来就是"每一项下面都有个像被选中的底"。
+ *   ② 选中项兜底样式 `.seg-item.is-on { background: var(--accent-soft) }` 在
+ *      :has() 不可用/thumb 还没注入的那一帧会露出来，又变成"一个实心块"。
+ * 现在（玻璃两档）：
+ *   · 容器 = 极淡底 + 1px 半透明描边（--seg-bg / --seg-border），只有一层背景模糊；
+ *   · 未选中项 = **完全透明**，hover 在毛玻璃档直接不做（亚克力只给 5% 白）；
+ *   · 选中 = 只有 .seg-thumb 滑块（半透明强调色 + 顶部高光，不是实心蓝块）；
+ *   · .seg-item.is-on 的兜底底色在玻璃两档显式清空（thumb 不在时才给一档淡强调底，
+ *     避免"刚渲染还没注入滑块"的那一帧没有任何选中提示）。
+ * 动画：left/top/width/height 各 220ms 同一条缓动（保持原值，只补 will-change 与
+ *   背景/描边的短过渡），这样"视图切换 / 版本变体 / 制作器分节 / 语言切换 / 插件排版"
+ *   五个切换器用的是同一套滑动动画，不需要各自写。
+ * ⚠️ .seg-thumb 的定位（inline left/top/width/height）由 app.js 写，CSS 不要碰尺寸。
+ * =========================================================================*/
+/* 容器与未选中项：云母档令牌值 = 原值（var(--glass) / var(--hover)），所以默认档不变*/
+.segmented { background: var(--seg-bg); border-color: var(--seg-border); }
+.seg-item { background: transparent; }
+.seg-item:hover { background: var(--seg-hover); }
+
+/* 滑块：云母档 = accent-soft + 26% 强调描边（原样），玻璃/亚克力换成半透明 + 高光*/
+.seg-thumb {
+  background: var(--seg-thumb-bg);
+  box-shadow: inset 0 0 0 1px var(--seg-thumb-ring);
+  /* ⚠️ 原来这里写的是 `will-change: left, top, width, height` —— **没有用**。
+     will-change 只对**合成器属性**（transform / opacity / filter）有提升作用；
+     left/top/width/height 是布局属性，声明了也不会进合成层，只会让浏览器
+     提前为这些属性做优化记账、白占内存。它的定位由 app.js 写 inline 样式驱动，
+     真要提速得把定位改成 transform（那属于核心布局逻辑，本轮不动）。
+     所以这条删除，避免"看起来优化过了其实没有"的错觉。*/
+  transition: left 220ms cubic-bezier(.22, .8, .2, 1),
+              top 220ms cubic-bezier(.22, .8, .2, 1),
+              width 220ms cubic-bezier(.22, .8, .2, 1),
+              height 220ms cubic-bezier(.22, .8, .2, 1),
+              background 160ms ease, box-shadow 160ms ease;
+}
+:root[data-fx="glass"] .seg-thumb {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .42),
+              inset 0 0 0 1px var(--seg-thumb-ring),
+              0 2px 10px rgba(0, 0, 0, .18);
+}
+:root[data-fx="acrylic"] .seg-thumb {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .28),
+              inset 0 0 0 1px var(--seg-thumb-ring),
+              0 1px 6px rgba(0, 0, 0, .16);
+}
+/* 玻璃两档：选中项的"兜底底色"清掉，选中感只由滑块负责*/
+:root[data-fx="glass"] .segmented .seg-item.is-on,
+:root[data-fx="acrylic"] .segmented .seg-item.is-on {
+  background: transparent; box-shadow: none; color: var(--accent);
+}
+/* 滑块还没被 JS 注入的那一帧：给一档很淡的强调底兜底（有滑块时上面那条赢）*/
+:root[data-fx="glass"] .segmented:not(:has(.seg-thumb)) .seg-item.is-on,
+:root[data-fx="acrylic"] .segmented:not(:has(.seg-thumb)) .seg-item.is-on {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  box-shadow: inset 0 0 0 1px var(--seg-thumb-ring);
+}
+/* 制作器顶部那条是 34px 高（.maker-seg），滑块上下各留 3px 才对得上；JS 按 item 实际
+   rect 定位，所以这里只需要把圆角跟容器对齐，别让它变成胶囊。*/
+.segmented.maker-seg .seg-thumb { border-radius: 6px; }
+
+/* ===========================================================================
+ * · 下拉触发器 .combo-trigger —— 跟档位联动（底色透明度 + 模糊 + 高光描边）
+ * 
+ * 需求 A：搜索框和下拉框……对毛玻璃和亚克力材质不适配。
+ * 原来 .combo-trigger 的底色写死 color-mix(card-solid 74%)，variables.css 的 ②
+ * 只给它加了背景模糊、没动底色 ⇒ 三档看起来一样（都是"云母实色小块"）。
+ * 现在底色用 --combo-alpha（云母 .74 = 原值；毛玻璃 .46 / 亚克力 .66），
+ * 玻璃两档再叠 --fx-extra 高光描边。
+ * 交互态保护（这是此前踩过的坑）：`.combo.is-open > .combo-trigger` 的强调描边/光圈
+ * 和 `.combo-trigger:hover` 的描边都是更低特异性 —— 所以**必须**用 :not(.is-open)
+ * 分开写，并且在 open / hover 两条里把高光**拼回**去，不能一把盖掉。
+ * =========================================================================*/
+.combo-trigger {
+  background: color-mix(in srgb, var(--card-solid) calc(var(--combo-alpha) * 100%), transparent);
+}
+:root[data-fx="glass"] .combo:not(.is-open) > .combo-trigger,
+:root[data-fx="acrylic"] .combo:not(.is-open) > .combo-trigger {
+  border-color: var(--glass-border);
+  box-shadow: var(--fx-extra);
+  backdrop-filter: blur(var(--combo-blur)) saturate(var(--combo-sat));
+  -webkit-backdrop-filter: blur(var(--combo-blur)) saturate(var(--combo-sat));
+}
+/* 悬停：仍然是"描边亮一档"，不出现底色块（否则又像被选中）*/
+:root[data-fx="glass"] .combo:not(.is-open) > .combo-trigger:hover,
+:root[data-fx="acrylic"] .combo:not(.is-open) > .combo-trigger:hover {
+  border-color: color-mix(in srgb, var(--text) 26%, transparent);
+}
+/* 展开态：保留强调色描边 + 3px 光圈，再把材质高光拼回去*/
+:root[data-fx="glass"] .combo.is-open > .combo-trigger,
+:root[data-fx="acrylic"] .combo.is-open > .combo-trigger {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft), var(--fx-extra);
+  backdrop-filter: blur(var(--combo-blur)) saturate(var(--combo-sat));
+  -webkit-backdrop-filter: blur(var(--combo-blur)) saturate(var(--combo-sat));
+}
+
+/* ===========================================================================
+ * · GCP-AI 右侧抽屉 .ai-drawer / 历史面板 .ai-history —— 材质联动
+ * 
+ * 需求 D：历史对话和 GCP-AI 右侧栏悬浮窗口那里对毛玻璃和亚克力不起作用。
+ * 根因：这两个面板的底色是 `linear-gradient(96% 卡片色 → 实色 --card-solid)`，
+ *   而且**没有任何 backdrop-filter** ⇒ 换档完全没反应。
+ * 现在（玻璃两档）：
+ *   · 底色 = --card-solid × --ai-alpha（毛玻璃 .64 / 亚克力 .72）；
+ *   · backdrop-filter = blur(--ai-blur) saturate(--ai-sat)（30/32px，130%~180%）；
+ *   · 抽屉左边框、-18px 外阴影、z-index:88、fixed 定位**一个都不动**，
+ *     只把高光描边 --fx-extra 拼进 box-shadow（材质厚度感）。
+ * 为什么 AI 抽屉的 alpha 比普通卡片（.38/.63）高：它承载大段聊天正文，
+ *   太透会让 13px 浅色字压在透上来的内容上发虚（已经踩过"气泡看不清字"）——
+ *   这里按"可读性优先"取 .64/.72。
+ * 历史面板 .is-page-panel 的 left:auto 修复（-LAYOUT）**原样保留**：
+ *   当时为了"左侧页面不整页发虚"写死 backdrop-filter:none；现在需求明确要材质，
+ *   于是改成"半透明 + 自身矩形内模糊"（panel 只有 392px 宽，只糊自己身后那一块，
+ *   不再像全屏 3% 透明那样把整页压灰）。
+ * =========================================================================*/
+:root[data-theme][data-fx="glass"] .ai-drawer,
+:root[data-theme][data-fx="acrylic"] .ai-drawer {
+  background: color-mix(in srgb, var(--card-solid) calc(var(--ai-alpha) * 100%), transparent);
+  backdrop-filter: blur(var(--ai-blur)) saturate(var(--ai-sat));
+  -webkit-backdrop-filter: blur(var(--ai-blur)) saturate(var(--ai-sat));
+  border-left-color: var(--glass-border);
+  box-shadow: -18px 0 46px rgba(0, 0, 0, .34), var(--fx-extra);
+}
+:root[data-theme][data-fx="glass"] .ai-history,
+:root[data-theme][data-fx="acrylic"] .ai-history {
+  background: color-mix(in srgb, var(--card-solid) calc(var(--ai-hist-alpha) * 100%), transparent);
+  backdrop-filter: blur(var(--ai-blur)) saturate(var(--ai-sat));
+  -webkit-backdrop-filter: blur(var(--ai-blur)) saturate(var(--ai-sat));
+}
+/* 独立 AI 页那份（fixed 侧栏）：只补边框与高光，位置/宽度/层级保持 原样*/
+:root[data-theme][data-fx="glass"] .ai-history.is-page-panel,
+:root[data-theme][data-fx="acrylic"] .ai-history.is-page-panel {
+  border-left: 1px solid var(--glass-border);
+  box-shadow: -18px 0 48px rgba(0, 0, 0, .38), var(--fx-extra);
+}
+/* 历史卡片：给一点半透明材质（能看出背后是毛玻璃），但底色留 6 成以上保证文字压得住。
+   ⚠️ 这里**故意不加 backdrop-filter**：历史列表一次可能几十条，每条都做一次背景模糊
+      会叠出几十个合成层（WebView2 上直接掉帧）。卡片背后已经是被模糊过的面板，
+      半透明卡色 + 面板模糊就够了，观感一致但便宜得多。
+   ⚠️ 选中态 `.history-item.is-on`（components.css 那段，(0,5,0)）比这里更具体，
+      所以选中色不会被盖掉。*/
+:root[data-theme][data-fx="glass"] .history-item,
+:root[data-theme][data-fx="acrylic"] .history-item {
+  border-color: var(--glass-border);
+}
+:root[data-theme][data-fx="glass"] .history-item { background: color-mix(in srgb, var(--card-solid) 58%, transparent); }
+:root[data-theme][data-fx="acrylic"] .history-item { background: color-mix(in srgb, var(--card-solid) 66%, transparent); }
+
+/* AI 输入框：玻璃两档下不再是不透明 --card-solid，改成半透明 + 自身模糊。
+   ⚠️ 只改 background / backdrop-filter —— `.ai-input:focus` 的描边与光圈不动。*/
+:root[data-theme][data-fx="glass"] .ai-input,
+:root[data-theme][data-fx="acrylic"] .ai-input {
+  background: color-mix(in srgb, var(--card-solid) 62%, transparent);
+  backdrop-filter: blur(18px) saturate(var(--fx-sat));
+  -webkit-backdrop-filter: blur(18px) saturate(var(--fx-sat));
+}
+
+/* ===========================================================================
+ * · @token 输入框 .ai-rich-input（contenteditable）与 .mention-token
+ * 
+ * 需求 G：AI 输入框要从 <textarea> 换成 contenteditable 的富文本（rich-input.js 组件），
+ *   这样@ 选中的资源能变成蓝字下划线的整体 token。CSS 只管视觉，不碰 JS 契约。
+ * 已知坑（照抄 .ai-input 的历史修复）：
+ *   · textarea 专属的 `field-sizing: content` / `:placeholder-shown` 对 div 没有意义，
+ *     而且 `:placeholder-shown` 会把高度钉在 38px —— 显式写 field-sizing: fixed + height:auto，
+ *     高度完全交给 min-height(38) / max-height(110) 与内容；
+ *   · contenteditable 的"空"有两种形态：真为空（:empty）和只剩一个 <br>（:has(> br:only-child)），
+ *     两种都要能显示 placeholder；
+ *   · placeholder 用**绝对定位**的 ：before，而不是块级伪元素 —— 块级会多撑一行，
+ *     窄抽屉里那句长 placeholder 又会把空输入框顶高（这是 textarea 时代的老 bug）。
+ * 用法（rich-input.js 侧要写的属性，写进简报给 Lead）：
+ *   <div class="ai-input ai-rich-input" contenteditable="true"
+ *        :data-placeholder="t('ai_input_placeholder', ...)"></div>
+ *   空 token 是 <span class="mention-token" contenteditable="false" data-code="…">@名字</span>
+ * =========================================================================*/
+.ai-rich-input {
+  /* 覆盖 .ai-input 的 textarea 专属行为*/
+  field-sizing: fixed;
+  height: auto;
+  min-height: 38px;
+  max-height: 110px;
+  /* 与 Lead 的集成约定一致：padding 8px 10px、行高 1.5 ⇒ 单行时 8+19.5+8 = 35.5，
+     靠 min-height:38 兜到 38px，底部与右侧 38px 的 .ai-send 齐平（.ai-input-row 是 flex-end）。*/
+  padding: 8px 10px;
+  overflow-y: auto; overflow-x: hidden;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  cursor: text;
+  position: relative;                 /* 给绝对定位的 placeholder 当包含块*/
+}
+/* placeholder：空（或只剩一个 <br>）时显示，绝对定位不参与排版、不会被当正文选中*/
+.ai-rich-input:empty::before,
+.ai-rich-input:has(> br:only-child)::before {
+  content: attr(data-placeholder);
+  position: absolute; left: 10px; right: 10px; top: 8px;
+  color: var(--text-disabled);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  pointer-events: none;
+  user-select: none; -webkit-user-select: none;
+}
+/* @token：强调色 + 下划线（**不要背景块**），点击由 JS 处理，这里只管视觉；
+   contenteditable=false 的内联 span 仍要有 user-select:text，否则拖选会跳过它。*/
+.mention-token {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  background: none;
+  padding: 0;
+  border-radius: 3px;
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: text; -webkit-user-select: text;
+  transition: color 120ms ease;
+}
+.mention-token:hover { color: var(--accent-strong); }
+/* rich-input 把 /plugin 这类斜杠命令识别后生成的 span.slash-token ——
+   只给蓝色字体 + 加粗，不加背景，避免破坏输入区观感。*/
+.slash-token { color: var(--accent); font-weight: 600; }
+/* token 被选中时：底色用强调色 34%，字色回到 --text，保证"选中时仍能看清"*/
+.mention-token::selection,
+.mention-token *::selection {
+  background: color-mix(in srgb, var(--accent) 34%, transparent);
+  color: var(--text);
+}
+
+/* ===========================================================================
+ * · 卡片底部 GitHub / 官网按钮可见性第二道保险（在 -CARD 之上）
+ * 
+ * 需求 E：搜索页的卡片 ui 上的官网和 Github 按钮为什么消失了。
+ * 已经把 .tag 变成可收缩（min-width:0）、.card-btn 钉成 flex:0 0 auto，但还有
+ * 三个能继续把按钮"弄没"的通道，这里逐个堵掉：
+ *   ① **竖直方向**：`.card { overflow:hidden }` + 网格视图 small 档卡高 128，
+ *      内部固定消耗（padding 28 + 卡头 30 + 简介 6+33.2 + 分割线 8 + 卡脚 22）≈ 128.2，
+ *      正好越过卡高 ⇒ 最下面的卡脚整行被裁。修法：网格视图的 .card-desc 允许收缩
+ *      （flex:0 1 auto + min-height:0）—— 宁可少显示一行简介，也不能吃掉按钮；
+ *      .card-foot 显式 flex:0 0 auto（永不被压缩）。
+ *   ② **水平方向**：.grow 的 flex-basis 从 auto 改成 0（auto 在某些内容下会保留 min-content
+ *      宽度）；.tag 补 max-width:100% + ellipsis；行内 gap 显式 6px（网格 4px）。
+ *   ③ **绘制顺序**：.card-tint 是 position:absolute 的叠加层，会盖在静态流的卡脚上；
+ *      这里**不给 .card-foot 提 z-index** —— 提了会让 hover 时那层淡色叠色（.card-tint）
+ *      只盖住卡片上半部分、不盖卡脚，云母档的 hover 观感就变了（项目原则：默认档不动）。
+ *      .card-tint 只有 6.5% 白，压不没按钮，所以绘制顺序不是病因，不动它。
+ * 兜底：如果哪天模板里 .grow 被去掉，`:first-of-type` 的 margin-left:auto 仍把按钮顶到右侧。
+ * 不改模板（按钮的 v-if 一直是 true，是布局把它们挤没的）。
+ * =========================================================================*/
+.card-foot { flex: 0 0 auto; }
+.card-foot > .row {
+  display: flex; flex-wrap: nowrap; align-items: center;
+  gap: 6px; min-width: 0; overflow: hidden;
+}
+.card-foot > .row > .tag {
+  flex: 0 1 auto; min-width: 0; max-width: 100%;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.card-foot > .row > .grow { flex: 1 1 0; min-width: 0; }
+.card-foot > .row > .card-btn { flex: 0 0 auto; margin: 0; }
+.card-foot > .row > .card-btn:first-of-type { margin-left: auto; }
+.card.is-grid .card-foot { flex: 0 0 auto; }
+.card.is-grid .card-foot > .row { gap: 4px; }
+.card.is-grid .card-desc { flex: 0 1 auto; min-height: 0; }
+/* 窄卡兜底：右上角按钮组绝不参与收缩（absolute，这里只是防以后被改成 flex 子项）*/
+.card-btn-group { flex: 0 0 auto; max-width: calc(100% - 16px); }
+
+/* ###########################################################################
+ * 修复区 · GCP-AI 全组件材质（毛玻璃 / 亚克力）+ 历史对话界面里的东西
+ * ###########################################################################
+ * 
+ * 此前只做了"外壳"（.ai-drawer / .ai-history / .ai-input），里面的**内容件**
+ * 还是云母实色：
+ *   · .bubble.is-ai   = 不透明 --card-solid + 1px 卡边框；
+ *   · .bubble.is-user = 实色 ball-a→ball-b 渐变；
+ *   · .bubble-btn / .ai-head .icon-btn / .ai-history-head .icon-btn = 全透明底、无边框；
+ *   · .ai-send        = 实色渐变；
+ *   · .history-item   = 只给了一档半透明卡色、没有 blur；
+ *   · .ai-history-empty 的大图标直接浮在面板上。
+ * 把每一类都补上材质三件套：**半透明底 + backdrop-filter + 高光描边/阴影**。
+ * 只有 data-fx=glass / acrylic 生效 —— 云母档一个选择器都不匹配，观感逐像素不变。
+ * 性能取舍：气泡/按钮数量少（一屏十几个），逐个 blur 可以接受；
+ *   历史列表可能几十条，因此 .history-item 用 14px（比气泡轻）并且不叠第二层高光。
+ * 可读性：踩过"气泡太透 ⇒ 13px 文字发虚"的坑，所以 AI 气泡底色取 82%
+ *   （不是卡片的 .38/.63），透出来的只是"被模糊过的背景色"，字始终压得住。
+ * #########################################################################*/
+
+/* ---- ① AI 气泡（助手侧）：半透明卡色 + 20px 模糊 + 高光 + 柔和阴影 ----
+   底色按档位分化：毛玻璃 78%（更透，玻璃档该透）/ 亚克力 84%（亚克力本来就实一点）。
+   两条都远高于卡片的 .38/.63 —— 气泡要托住 13px 正文，不能和面板一样透。*/
+:root[data-theme][data-fx="glass"] .bubble.is-ai,
+:root[data-theme][data-fx="acrylic"] .bubble.is-ai {
+  border-color: var(--glass-border);
+  backdrop-filter: blur(20px) saturate(var(--fx-sat));
+  -webkit-backdrop-filter: blur(20px) saturate(var(--fx-sat));
+  box-shadow: var(--fx-extra), 0 6px 22px rgba(0, 0, 0, .22);
+}
+:root[data-theme][data-fx="glass"] .bubble.is-ai { background: color-mix(in srgb, var(--card-solid) 78%, transparent); }
+:root[data-theme][data-fx="acrylic"] .bubble.is-ai { background: color-mix(in srgb, var(--card-solid) 84%, transparent); }
+
+/* ---- ② 用户气泡：实色强调渐变 → 半透明强调渐变（78%）+ 模糊 + 顶部高光 ----
+   ⚠️ 文字仍是 var(--text)（的结论：气泡正文必须显式给近白色）。
+      78% 底上再加一层很轻的文字投影，保证浅色内容上也能读清。*/
+:root[data-theme][data-fx="glass"] .bubble.is-user,
+:root[data-theme][data-fx="acrylic"] .bubble.is-user {
+  background: linear-gradient(135deg,
+      color-mix(in srgb, var(--ball-a) 78%, transparent),
+      color-mix(in srgb, var(--ball-b) 78%, transparent));
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22), 0 6px 22px rgba(0, 0, 0, .20);
+  color: var(--text);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .22);
+}
+
+/* ---- ③ 气泡下方的小按钮（复制 / 重新生成）：半透明卡底 + 1px 描边 + 10px 模糊 ----
+   尺寸跟着基类走（本轮放大到 26×26，border-box，加 1px 边后内容 24px，放 14px 图标），
+   这里只改"材质"不改尺寸，避免三档效果之间按钮大小跳变。*/
+:root[data-theme][data-fx="glass"] .bubble-btn,
+:root[data-theme][data-fx="acrylic"] .bubble-btn {
+  background: color-mix(in srgb, var(--card-solid) 52%, transparent);
+  border: 1px solid var(--glass-border);
+  border-radius: 6px;
+  backdrop-filter: blur(10px) saturate(var(--fx-sat));
+  -webkit-backdrop-filter: blur(10px) saturate(var(--fx-sat));
+  color: var(--text-secondary);
+}
+:root[data-theme][data-fx="glass"] .bubble-btn:hover,
+:root[data-theme][data-fx="acrylic"] .bubble-btn:hover {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  color: var(--accent);
+}
+:root[data-theme][data-fx="glass"] .bubble-btn.is-done,
+:root[data-theme][data-fx="acrylic"] .bubble-btn.is-done { color: var(--success); }
+
+/* ---- ④ 头部图标按钮（新对话 / 历史 / 关闭 / 返回）：同样的玻璃小方块 ----
+   ⚠️ 必须把 `.icon-btn.is-on` 的状态补回来：`.ai-head .icon-btn`(0,5,0) 比
+      `.icon-btn.is-on`(0,2,0) 更具体，不补的话"历史对话已打开"的强调态会被压掉。*/
+:root[data-theme][data-fx="glass"] .ai-head .icon-btn,
+:root[data-theme][data-fx="glass"] .ai-history-head .icon-btn,
+:root[data-theme][data-fx="acrylic"] .ai-head .icon-btn,
+:root[data-theme][data-fx="acrylic"] .ai-history-head .icon-btn {
+  background: color-mix(in srgb, var(--card-solid) 46%, transparent);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(10px) saturate(var(--fx-sat));
+  -webkit-backdrop-filter: blur(10px) saturate(var(--fx-sat));
+  color: var(--text-secondary);
+}
+:root[data-theme][data-fx="glass"] .ai-head .icon-btn:hover,
+:root[data-theme][data-fx="glass"] .ai-history-head .icon-btn:hover,
+:root[data-theme][data-fx="acrylic"] .ai-head .icon-btn:hover,
+:root[data-theme][data-fx="acrylic"] .ai-history-head .icon-btn:hover {
+  background: color-mix(in srgb, var(--card-solid) 68%, transparent);
+  color: var(--text);
+}
+:root[data-theme][data-fx="glass"] .ai-head .icon-btn.is-on,
+:root[data-theme][data-fx="glass"] .ai-history-head .icon-btn.is-on,
+:root[data-theme][data-fx="acrylic"] .ai-head .icon-btn.is-on,
+:root[data-theme][data-fx="acrylic"] .ai-history-head .icon-btn.is-on {
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 42%, transparent);
+  color: var(--accent);
+}
+
+/* ---- ⑤ 发送按钮：实色渐变 → 半透明渐变 + 14px 模糊 + 顶部高光 ----
+   ⚠️ `.is-stop`（停止）必须显式保留 danger 语义：本组 (0,5,0) 会盖掉 `.ai-send.is-stop`(0,2,0)。*/
+:root[data-theme][data-fx="glass"] .ai-send,
+:root[data-theme][data-fx="acrylic"] .ai-send {
+  background: linear-gradient(135deg,
+      color-mix(in srgb, var(--ball-a) 80%, transparent),
+      color-mix(in srgb, var(--ball-b) 80%, transparent));
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .26), 0 6px 18px rgba(0, 0, 0, .18);
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .22);
+}
+:root[data-theme][data-fx="glass"] .ai-send.is-stop,
+:root[data-theme][data-fx="acrylic"] .ai-send.is-stop {
+  background: color-mix(in srgb, var(--danger) 22%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--danger) 48%, transparent);
+  color: var(--danger);
+  text-shadow: none;
+}
+
+/* ---- ⑥ 历史对话卡片：补 14px 背景模糊（只给了半透明卡色）----
+   ⚠️ 只加 backdrop-filter，**不动 background/边框**（的 58%/66% 卡色保持），
+      更不能碰 `.history-item.is-on`（选中态 (0,5,0) 仍然赢）。*/
+:root[data-theme][data-fx="glass"] .history-item,
+:root[data-theme][data-fx="acrylic"] .history-item {
+  backdrop-filter: blur(14px) saturate(var(--fx-sat));
+  -webkit-backdrop-filter: blur(14px) saturate(var(--fx-sat));
+}
+
+/* ---- ⑦ 空状态的大图标：给一个很淡的玻璃圆盘，别硬贴在面板上 ----
+   用 content-box + padding 把圆盘撑大，图标本身的 40×40 尺寸一点不变（不改模板）。*/
+:root[data-theme][data-fx="glass"] .ai-history-empty .ic,
+:root[data-theme][data-fx="acrylic"] .ai-history-empty .ic {
+  box-sizing: content-box; padding: 10px; border-radius: 50%;
+  background: color-mix(in srgb, var(--card-solid) 38%, transparent);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(10px) saturate(var(--fx-sat));
+  -webkit-backdrop-filter: blur(10px) saturate(var(--fx-sat));
+  opacity: .9;
+}
+
+/* ===========================================================================
+ * 修复区 · 公告卡片未读 / 已读按钮
+ * 
+ * 公告中给每个单独卡片ui加一个未读，点击后按钮变成灰色不可点击状态显示已读。
+ * 模板（Lead/前端队员加）：`<button class="btn btn-sm notice-read-btn"
+ *   :class="{ 'is-read': ... }" :disabled="...">未读/已读</button>`
+ * 规则：
+ *   · 未读 = 可点小按钮：强调色淡底 + 强调色文字 + 描边，hover 加深，一眼看出"可以点"；
+ *   · 已读 = 灰底灰字 + 不可点（:disabled / .is-read 同一套），不再有 hover 反馈；
+ *   · 都保持 compact（22~24 高），不把公告卡片底部那一行撑高。
+ * =========================================================================*/
+.notice-read-btn {
+  height: 24px; padding: 0 10px; border-radius: 7px;
+  border: 1px solid color-mix(in srgb, var(--accent) 34%, transparent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 11.5px; line-height: 1;
+  transition: background 130ms ease, color 130ms ease, border-color 130ms ease, opacity 130ms ease;
+}
+.notice-read-btn:hover {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+}
+.notice-read-btn.is-read,
+.notice-read-btn:disabled {
+  background: color-mix(in srgb, var(--text) 7%, transparent);
+  border-color: color-mix(in srgb, var(--text) 12%, transparent);
+  color: var(--text-disabled);
+  cursor: default;
+  opacity: .85;
+}
+.notice-read-btn.is-read:hover,
+.notice-read-btn:disabled:hover {
+  background: color-mix(in srgb, var(--text) 7%, transparent);
+  border-color: color-mix(in srgb, var(--text) 12%, transparent);
+  color: var(--text-disabled);
+}
+/* 已读卡片整体稍微收一点存在感（未读卡保持 的 is-unread 观感 + 红点）*/
+.notice-card:not(.is-unread) { opacity: .92; }
+.notice-card:not(.is-unread):hover { opacity: 1; }
+
+/* ===========================================================================
+ * 修复区 · 可编辑下拉（<combo editable>）+ 分段控制器"绝不溢出"兜底
+ * 
+ * 需求（提交软件 ）：
+ *   · 类别字段换成自绘的可编辑下拉（对齐 py 版 EditableComboBox：31 个内置类别可选，
+ *     也允许直接输入自定义类别）；
+ *   · 多语言字段那条分段控制器在窄窗口 / 切窗口回来时会把父容器撑破。
+ * 一、可编辑下拉的 DOM（app.js 的 Combo 模板，模板已由前端队员交付）：
+ *   <div class="combo is-editable">
+ *     <div class="combo-trigger combo-trigger-editable">
+ *       <input class="combo-edit"> <svg class="combo-arrow">
+ *     </div>
+ *     （弹层 teleport 到 body，样式复用 .combo-pop）
+ *   </div>
+ *   它把 <button> 换成了 <div>（因为里面要放 input），所以这里补三件事：
+ *     ① 光标 = text：base.css 的"可点元素手型"白名单里有 .combo-trigger，
+ *        不加这条的话可编辑下拉里是箭头光标，像"不能打字"；
+ *     ② 里面的 input 必须完全隐形（无边框 / 无背景 / 无 outline），焦点视觉交给触发器
+ *        的 :focus-within —— 否则会出现"外框 + 内框"两层：base.css 的
+ *        `input:focus-visible { outline: 2px solid accent }` 会命中这个 input；
+ *     ③ 高度/圆角/字体沿用 .combo-trigger（32px），只把右侧内边距收窄给箭头让位。
+ * 二、分段控制器被"撑破"的真凶（grep + 读 JS 定位）：
+ *   app.js 的 syncSegThumbs() 会往每个 .segmented 里插一个**绝对定位**的 .seg-thumb
+ *   （inline 写 left/top/width/height）。窗口缩放后（或从隐藏页切回来那一帧）
+ *   滑块可能还留着一份旧的 width/left，而 .segmented 本身不裁切 ⇒ 滑块画到容器外面，
+ *   观感就是"分段控制器溢出、撑破父容器"；又因为表单滚动区
+ *   `.maker-form-scroll { overflow-y: auto }` 会让 overflow-x 自动算成 auto，
+ *   于是直接被带出一条横向滚动条。
+ *   修法：给 .segmented 加 `overflow: hidden; max-width: 100%` —— 不论 JS 什么时候同步，
+ *   越界的滑块/文案都只裁在自己的圆角框内，不参与父容器的溢出计算。
+ *   这是对**所有**分段控制器（搜索视图 / 版本变体 / 制作器分节 / 多语言 / 插件排版）
+ *   都成立的兜底，不需要改 JS。
+ * =========================================================================*/
+/* （不符合和其他下拉框 ui 一致样式）：
+   可编辑下拉的外框必须和 **普通 combo-trigger 一模一样** —— 同样 32px 高、8px 圆角、
+   左右各 10px 内边距、与箭头 8px 间距（箭头到右边框 11px，其它下拉框实测也是 11）。
+   原来写的是 `padding-right: 6px; gap: 4px`（箭头贴得更靠右、文字更贴边），
+   和开源仓库平台等下拉框并排时明显不是一套控件。
+   里面的 input 完全隐形（无边框/背景/内边距），视觉上就是普通触发器。*/
+.combo-trigger-editable { cursor: text; padding: 0 10px; gap: 8px; }
+/* 触发器自己画焦点圈（input 的焦点环被下面关掉了）*/
+.combo-trigger-editable:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.combo-edit {
+  flex: 1 1 auto; min-width: 0; width: 100%; height: 100%;
+  padding: 0; border: 0; background: transparent;
+  color: var(--text); font-size: 12.5px; line-height: 1.4;
+}
+.combo-edit::placeholder { color: var(--text-disabled); }
+/* ⚠️ 必须两条都写：focus-visible 才压得住 base.css 的 input 键盘焦点环*/
+.combo-edit:focus,
+.combo-edit:focus-visible { outline: none; }
+/* 箭头是"展开/收起"的点击热区（模板把 click 绑在 svg 上）*/
+.combo.is-editable .combo-arrow { cursor: pointer; }
+/* （不符合和其他下拉框 ui 一致样式）：让提交软件的类别铺满所在表单格。
+   同格里的普通 input 都是整格宽（默认窗口下约 475px），而 .combo 默认是 inline-flex
+   按内容/写死宽度收缩 ⇒ 类别框只有 240px、右边空一大截，看起来像另一个控件。
+   只命中"表单字段里的可编辑下拉"，其它 combo（工具栏 110/140/160…）的宽度一律不动。*/
+.field > .combo.is-editable { flex: 1 1 auto; width: 100%; align-self: stretch; }
+.combo.is-editable { display: flex; }
+.combo.is-editable > .combo-trigger { width: 100%; }
+/* 玻璃两档：焦点态要把材质高光一起拼回来（的材质规则会覆盖 box-shadow）*/
+:root[data-fx="glass"] .combo-trigger-editable:focus-within,
+:root[data-fx="acrylic"] .combo-trigger-editable:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft), var(--fx-extra);
+}
+/* 分段控制器兜底：裁掉越界内容（含 JS 注入的滑块），自身永不参与父容器横向溢出。
+   ⚠️ `overflow: clip` 是关键的那一行：它**不建立滚动容器**，所以
+      滑块越界不会被算进 scrollWidth / 也不会给父容器带来可滚动溢出；
+      只写 `hidden` 的话元素会变成滚动容器，`seg.scrollWidth` 仍可能大于 clientWidth
+      （验收指标会误报）。`hidden` 保留为老内核的后备值（不支持 clip 时退回裁切）。*/
+.segmented { overflow: hidden; overflow: clip; max-width: 100%; }
+
+/* ===========================================================================
+ * /· GCP-AI 输入框润色按钮
+ * 
+ * 结构：.ai-input-row = [ .ai-input-wrap > rich-ai-input ] [ .ai-polish ] [ .ai-send ]。
+ * 要点：
+ *   · 润色按钮在输入框**外面**、发送按钮左边（曾把它贴进输入框右下角，
+ *     用户又要求挪回来："还是放在输入框外与发送按钮之间的位置吧"）；
+ *   · 按钮和发送按钮同高（38px），单行时三者底/顶对齐。*/
+.ai-input-wrap { position: relative; flex: 1 1 auto; min-width: 0; display: flex; }
+.ai-input-wrap .ai-input {
+  flex: 1 1 auto; width: 100%;
+}
+/* 润色按钮挪回**输入框外**、发送按钮左边（GCP-AI的润色按钮还是放在输入框外与发送按钮之间的位置吧）。
+   撤掉 的"贴输入框内部右下角"absolute 方案：按钮作为 .ai-input-row 的
+   普通 flex 子项与发送按钮并排（38px 高对齐），描边样式保持"次操作"观感。*/
+.ai-polish {
+  width: 38px; height: 38px; flex: 0 0 auto;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 10px;
+  color: var(--text-secondary);
+  background: color-mix(in srgb, var(--card-solid) 86%, transparent);
+  border: 1px solid var(--card-border);
+  transition: color 140ms ease, border-color 140ms ease, background 140ms ease;
+}
+.ai-polish:hover:not(:disabled) {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 42%, transparent);
+  background: var(--accent-soft);
+}
+.ai-polish:active:not(:disabled) { transform: scale(.94); }
+.ai-polish:disabled { opacity: .45; pointer-events: none; }
+.ai-polish:disabled .ic { animation: ai-polish-pulse 1.1s ease-in-out infinite; }
+.ai-polish .ic { width: 14px; height: 14px; }
+@keyframes ai-polish-pulse { 0%, 100% { opacity: .45; } 50% { opacity: 1; } }
+
+/* Beta功能小标签（下载 / GCP工坊 / GCP-AI / 插件 / 应用部署 的标题旁）。
+   橙黄胶囊（--warning 跟主题走：深色 #e0a33a / 浅色 #d98e04），
+   垂直居中贴标题右侧。*/
+.beta-tag {
+  flex: 0 0 auto; align-self: center; margin-left: 8px;
+  height: 17px; padding: 0 7px; display: inline-flex; align-items: center;
+  border-radius: 9px; background: color-mix(in srgb, var(--warning) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--warning) 40%, transparent);
+  color: var(--warning); font-size: 10.5px; font-weight: 700; line-height: 1;
+  letter-spacing: .2px; white-space: nowrap;
+}
+
+/* ===========================================================================
+ * · 收藏页左侧操作面板重做 + 通用对话框勾选组
+ * 
+ * ① 收藏页左侧不再堆全宽按钮，改成两行紧凑分组：
+ *    新建（全宽小按钮）→ 重命名/删除/批量移动（3 个图标钮）→ 导出/导入（2 个半宽钮）。
+ * ② 对话框勾选组（收藏夹导出用）：全选行 + 复选项列表。
+ * =========================================================================*/
+.fav-ops-row {
+  display: flex; align-items: center; gap: 8px;
+  margin-top: 10px;
+}
+.fav-ops-row .icon-btn {
+  flex: 1 1 0; height: 30px;
+  border-radius: 8px;
+  border: 1px solid var(--card-border);
+  background: var(--card-solid);
+  color: var(--text-secondary);
+}
+.fav-ops-row .icon-btn:hover:not(:disabled) { color: var(--accent); border-color: var(--accent); }
+/* ⚠️ 本轮（用户原话）：「英文模式下部分地方的按钮或者ui大小有问题
+   例如收藏页的导入和导出按钮 如果能缩写尽量缩写或者换个方法。」
+   两个措施，缺一不可：
+     ① 语言包文案缩写（en_US 由 "Export favorites"/"Import favorites"
+        改成 "Export"/"Import" —— 见 ToolsGCPcenter_language.json）；
+     ② **这里让按钮能收缩**：收藏页左栏本身很窄，英文再短也比中文两个字宽，
+        所以给 .btn-half 允许 shrink + 文字超长省略 + 图标不参与收缩。
+        ⚠️ 不要改成写死宽度（AGENTS 第 5 条禁止），靠 flex 收缩 + ellipsis 自适应。 */
+.fav-ops-row .btn-half {
+  padding: 0 4px; font-size: 12px;
+  min-width: 0;                 /* 关键：否则 flex 子项撑到内容宽度、顶出容器 */
+  overflow: hidden;
+}
+.fav-ops-row .btn-half .ic { flex: 0 0 auto; }
+.fav-side .btn-block { margin-top: 10px; }
+
+.dialog-checks {
+  margin-top: 12px;
+  display: flex; flex-direction: column; gap: 8px;
+  max-height: 260px; overflow-y: auto;
+}
+.dialog-checks .sel-check { font-size: 12.5px; color: var(--text); }
+.dialog-check-row {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12.5px; color: var(--text);
+  padding: 4px 6px; border-radius: 6px;
+  cursor: pointer;
+}
+.dialog-check-row:hover { background: var(--hover); }
+.dialog-check-row input { accent-color: var(--accent); }
+
+/* · 云端资源库状态行：文字 + 最右侧重试图标*/
+.cloud-status-note {
+  display: flex; align-items: center; gap: 8px;
+}
+.cloud-status-note .cloud-status-text { flex: 1 1 auto; min-width: 0; }
+.cloud-status-note .icon-btn { width: 26px; height: 26px; flex: 0 0 auto; }
+.cloud-status-note .icon-btn.is-busy .ic { animation: cloud-sync-spin 1s linear infinite; }
+@keyframes cloud-sync-spin { to { transform: rotate(360deg); } }

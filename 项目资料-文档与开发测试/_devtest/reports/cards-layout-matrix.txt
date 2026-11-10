@@ -1,0 +1,67 @@
+== task-3 ③ 收藏页布局矩阵（真实 app.js 公式 × 12 档分辨率/缩放）==
+  OK   1280x720 @1.00 行宽自洽（cols×itemW+(cols-1)gap ≈ 930）
+  OK   1280x720 @1.00 渲染卡宽在 [272, 400] 内
+  OK   1280x720 @1.00 无 0 宽面条（itemW>0 且 columns≥1）
+  OK   1280x720 @1.00 列数与搜索页公式一致
+  OK   1280x720 @1.25 行宽自洽（cols×itemW+(cols-1)gap ≈ 674）
+  OK   1280x720 @1.25 渲染卡宽在 [272, 400] 内
+  OK   1280x720 @1.25 无 0 宽面条（itemW>0 且 columns≥1）
+  OK   1280x720 @1.25 列数与搜索页公式一致
+  OK   1280x720 @1.50 行宽自洽（cols×itemW+(cols-1)gap ≈ 503）
+  OK   1280x720 @1.50 渲染卡宽在 [272, 400] 内
+  OK   1280x720 @1.50 1 列超宽由 CSS max-width 封顶
+  OK   1280x720 @1.50 无 0 宽面条（itemW>0 且 columns≥1）
+  OK   1280x720 @1.50 列数与搜索页公式一致
+  OK   1440x900 @1.00 行宽自洽（cols×itemW+(cols-1)gap ≈ 1090）
+  OK   1440x900 @1.00 渲染卡宽在 [272, 400] 内
+  OK   1440x900 @1.00 无 0 宽面条（itemW>0 且 columns≥1）
+  OK   1440x900 @1.00 列数与搜索页公式一致
+  OK   1440x900 @1.25 行宽自洽（cols×itemW+(cols-1)gap ≈ 802）
+  OK   1440x900 @1.25 渲染卡宽在 [272, 400] 内
+  OK   1440x900 @1.25 无 0 宽面条（itemW>0 且 columns≥1）
+  OK   1440x900 @1.25 列数与搜索页公式一致
+  OK   1440x900 @1.50 行宽自洽（cols×itemW+(cols-1)gap ≈ 610）
+  OK   1440x900 @1.50 渲染卡宽在 [272, 400] 内
+  OK   1440x900 @1.50 无 0 宽面条（itemW>0 且 columns≥1）
+  OK   1440x900 @1.50 列数与搜索页公式一致
+  OK   1920x1080 @1.00 行宽自洽（cols×itemW+(cols-1)gap ≈ 1570）
+  OK   1920x1080 @1.00 渲染卡宽在 [272, 400] 内
+  OK   1920x1080 @1.00 无 0 宽面条（itemW>0 且 columns≥1）
+  OK   1920x1080 @1.00 列数与搜索页公式一致
+  OK   1920x1080 @1.25 行宽自洽（cols×itemW+(cols-1)gap ≈ 1186）
+  OK   1920x1080 @1.25 渲染卡宽在 [272, 400] 内
+  OK   1920x1080 @1.25 无 0 宽面条（itemW>0 且 columns≥1）
+  OK   1920x1080 @1.25 列数与搜索页公式一致
+  OK   1920x1080 @1.50 行宽自洽（cols×itemW+(cols-1)gap ≈ 930）
+  OK   1920x1080 @1.50 渲染卡宽在 [272, 400] 内
+  OK   1920x1080 @1.50 无 0 宽面条（itemW>0 且 columns≥1）
+  OK   1920x1080 @1.50 列数与搜索页公式一致
+  OK   2560x1440 @1.00 行宽自洽（cols×itemW+(cols-1)gap ≈ 2210）
+  OK   2560x1440 @1.00 渲染卡宽在 [272, 400] 内
+  OK   2560x1440 @1.00 无 0 宽面条（itemW>0 且 columns≥1）
+  OK   2560x1440 @1.00 列数与搜索页公式一致
+  OK   2560x1440 @1.25 行宽自洽（cols×itemW+(cols-1)gap ≈ 1698）
+  OK   2560x1440 @1.25 渲染卡宽在 [272, 400] 内
+  OK   2560x1440 @1.25 无 0 宽面条（itemW>0 且 columns≥1）
+  OK   2560x1440 @1.25 列数与搜索页公式一致
+  OK   2560x1440 @1.50 行宽自洽（cols×itemW+(cols-1)gap ≈ 1356）
+  OK   2560x1440 @1.50 渲染卡宽在 [272, 400] 内
+  OK   2560x1440 @1.50 无 0 宽面条（itemW>0 且 columns≥1）
+  OK   2560x1440 @1.50 列数与搜索页公式一致
+  OK   极窄 300px → 1 列且卡宽≈容器
+  OK   极宽 2100px → 卡宽 ≤ 400（maxCardW 生效）
+  ..   矩阵明细：
+       1280x720 @1.00     cssW=1280 avail= 930 cols=3 itemW=300 gap=15
+       1280x720 @1.25     cssW=1024 avail= 674 cols=2 itemW=330 gap=14
+       1280x720 @1.50     cssW= 853 avail= 503 cols=1 itemW=503 gap=14
+       1440x900 @1.00     cssW=1440 avail=1090 cols=3 itemW=354 gap=14
+       1440x900 @1.25     cssW=1152 avail= 802 cols=2 itemW=394 gap=14
+       1440x900 @1.50     cssW= 960 avail= 610 cols=2 itemW=298 gap=14
+       1920x1080 @1.00    cssW=1920 avail=1570 cols=4 itemW=382 gap=14
+       1920x1080 @1.25    cssW=1536 avail=1186 cols=4 itemW=286 gap=14
+       1920x1080 @1.50    cssW=1280 avail= 930 cols=3 itemW=300 gap=15
+       2560x1440 @1.00    cssW=2560 avail=2210 cols=6 itemW=356 gap=14.8
+       2560x1440 @1.25    cssW=2048 avail=1698 cols=5 itemW=328 gap=14.5
+       2560x1440 @1.50    cssW=1706 avail=1356 cols=4 itemW=328 gap=14.67
+
+结果：全部通过

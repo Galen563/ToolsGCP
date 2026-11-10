@@ -1,0 +1,47 @@
+{
+  "title": "GCP-AI Agent",
+  "intro": "Once enabled, just talk in either GCP-AI chat interface and it can operate ToolsGCP for you. This page is only its configuration screen.",
+
+  "sec_switch": "Master switch",
+  "sec_switch_desc": "When on, GCP-AI can operate ToolsGCP for you. When off, it only chats normally. This is the same switch as the one in Settings.",
+  "switch_on": "On",
+  "switch_off": "Off",
+  "switch_hint_on": "GCP-AI can operate ToolsGCP for you right now.",
+  "switch_hint_off": "GCP-AI only chats right now; when you ask it to act, it will point you back here.",
+  "switch_unavailable": "Agent is unavailable (the main window is not ready yet). Try opening this page again later.",
+  "switch_toggle_failed": "Failed to toggle: {error}",
+
+  "sec_modules": "More modules",
+  "sec_modules_desc": "Every \"hand\" of the AI lives in there and can be toggled one by one. When the master switch is on, they all default to on.",
+  "btn_open_modules": "Open more modules",
+  "modules_enabled_count": "{on} / {total} enabled",
+  "modules_title": "More modules",
+  "modules_desc": "Disabled modules are neither advertised to the AI nor executed — that saves tokens and stops it from reaching for a hand that isn't there.",
+  "btn_back": "Back",
+  "btn_all_on": "Enable all",
+  "btn_all_off": "Disable all",
+  "modules_empty": "No modules registered yet. The Agent can only chat right now.",
+  "modules_all_on": "All enabled",
+  "modules_all_off": "All disabled",
+  "module_danger": "Careful",
+  "module_source": "from {source}",
+  "module_params": "({params})",
+  "module_toggle_failed": "Failed to toggle this module: {error}",
+
+  "sec_actions": "Recent activity",
+  "sec_actions_desc": "Every action the Agent takes is logged here, newest first (only the latest few are kept; they are gone when the app closes).",
+  "btn_refresh": "Refresh",
+  "btn_clear": "Clear",
+  "actions_empty": "No activity yet. Ask the AI to do something in a chat window and this will fill up.",
+  "actions_cleared": "Recent activity cleared",
+  "actions_clear_failed": "Failed to clear: {error}",
+  "action_line": "{ts}  {mark}  {tool} — {detail}",
+  "mark_ok": "✔",
+  "mark_fail": "✘",
+
+  "sec_stats": "Statistics",
+  "stats_line": "{tools} modules · {total} calls in total",
+  "stats_calls": "Calls per module: {calls}",
+
+  "refresh_failed": "Failed to read Agent state: {error}"
+}

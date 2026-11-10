@@ -1,0 +1,16 @@
+  OK    拿到 .ai-messages
+  OK    三条消息都渲染了
+  OK    第二条是 AI 消息（role 映射对了）  <- ai
+  OK    该气泡有 3 个版本可翻  <- 3
+  OK    场景1 起点：被翻气泡在视野内  <- top=50
+  OK    场景1 短翻长：视口位置**精确保持**（±2px，没被拉到底）  <- 50 → 50
+  OK    场景1 没有被滚到最底部  <- scrollTop=0 max=90
+  OK    场景2 起点：气泡在视野内  <- top=40
+  OK    场景2 长翻短：气泡**仍在视野内**（没被甩出屏幕、也没跳到别的气泡）  <- 40 → 40（scrollTop=10 max=-154）
+  OK    场景2 要么精确保持、要么是被可滚动上限夹住（不是乱跳）  <- top 40→40 scrollTop=10/-154
+  OK    来回翻三趟后仍是 3 条气泡
+  OK    来回翻三趟后停在第 1 版  <- page=1
+  OK    aiSwitchVariant 里不再有 nextTick(scrollAiToEnd)（拉到底的来源已删）
+  OK    aiSwitchVariant 走的是锚点（capture + restore 成对）
+================================================================
+ALL OK

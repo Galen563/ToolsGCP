@@ -1,0 +1,24 @@
+{
+  "id": "REPLACE-WITH-YOUR-PLUGIN-ID",
+  "name": {
+    "简体中文": "我的插件",
+    "繁體中文": "我的插件",
+    "English": "My Plugin"
+  },
+  "version": "1.0.0",
+  "author": "你的名字",
+  "description": {
+    "简体中文": "一句话说明这个插件是干什么的",
+    "繁體中文": "一句話說明這個外掛是幹什麼的",
+    "English": "Describe in one sentence what this plugin does."
+  },
+  "entry": "app.py",
+  "icon": "assets/icon.png",
+
+  "config_page": "config.html",
+  "enabled_setting": "plugin_my_plugin_enabled",
+  "default_disabled": true,
+
+  "_comment_web": "⚠️ 复制这个模板做 Web 版插件时，必须同时改三处并且保持一致：目录名、id、enabled_setting（前缀 plugin_ + id 把 - 换成 _）。config_page / enabled_setting / default_disabled 是 Web 版真正读的字段：没有 config_page，⚙ 按钮是灰的；没有 enabled_setting，开关拨不动（提示「这个插件没有提供开关配置」）。app.py / ui/ / core/ 那套是 py(QuQt) 版用的，Web 版不会加载（主线程不许 import PyQt5）。",
+  "_comment_id": "id 故意写成不可能合法的占位串：直接复制目录忘了改，宿主会因 id 与目录名不一致而报错，不会静默地两个插件共用同一份 data_dir。合法格式：以小写字母或数字开头，总长 2~41 个字符，只允许 a-z 0-9 - _。"
+}

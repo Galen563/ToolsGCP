@@ -1,0 +1,70 @@
+bundle 直调: ok = true modules = 14
+jsdom 错误 = []
+语言包自检 t(search) = "Search" （已加载）
+语言 = English —— 界面可见文本里的简体中文残留
+
+  search: 5 处
+      · Could not load the cloud resource library: {err}资源库读取失败
+      · @aria-label=最小化
+      · @title=最大化
+      · @aria-label=最大化
+      · @aria-label=关闭
+  customize: 1 处
+      · app 没挂载（环境抖动）
+  favorites: 1 处
+      · app 没挂载（环境抖动）
+  detail: 5 处
+      · Could not load the cloud resource library: {err}资源库读取失败
+      · @aria-label=最小化
+      · @title=最大化
+      · @aria-label=最大化
+      · @aria-label=关闭
+  deploy: 5 处
+      · Could not load the cloud resource library: {err}资源库读取失败
+      · @aria-label=最小化
+      · @title=最大化
+      · @aria-label=最大化
+      · @aria-label=关闭
+  plugin: 5 处
+      · Could not load the cloud resource library: {err}资源库读取失败
+      · @aria-label=最小化
+      · @title=最大化
+      · @aria-label=最大化
+      · @aria-label=关闭
+  maker: 5 处
+      · Could not load the cloud resource library: {err}资源库读取失败
+      · @aria-label=最小化
+      · @title=最大化
+      · @aria-label=最大化
+      · @aria-label=关闭
+  log: 5 处
+      · Could not load the cloud resource library: {err}资源库读取失败
+      · @aria-label=最小化
+      · @title=最大化
+      · @aria-label=最大化
+      · @aria-label=关闭
+  notice: 5 处
+      · Could not load the cloud resource library: {err}资源库读取失败
+      · @aria-label=最小化
+      · @title=最大化
+      · @aria-label=最大化
+      · @aria-label=关闭
+  feedback: 5 处
+      · Could not load the cloud resource library: {err}资源库读取失败
+      · @aria-label=最小化
+      · @title=最大化
+      · @aria-label=最大化
+      · @aria-label=关闭
+  settings: 1 处
+      · app 没挂载（环境抖动）
+  ai: 5 处
+      · Could not load the cloud resource library: {err}资源库读取失败
+      · @aria-label=最小化
+      · @title=最大化
+      · @aria-label=最大化
+      · @aria-label=关闭
+  github: 1 处
+      · app 没挂载（环境抖动）
+================================================================
+共 49 处残留
+exit=0

@@ -1,0 +1,14 @@
+{
+ "results": [
+  {
+   "case": "combo",
+   "secs": 46.2,
+   "report": null,
+   "jsError": null,
+   "screenshot": "C:\\Users\\Administrator\\Desktop\\ToolsGCP开发\\v1.1.4 - 12\\项目资料-文档与开发测试\\_devtest\\reports\\settings_probe_combo.png"
+  }
+ ],
+ "fails": [
+  "combo: 探针没回传（可能 Edge 起不来 / 页面崩）"
+ ]
+}

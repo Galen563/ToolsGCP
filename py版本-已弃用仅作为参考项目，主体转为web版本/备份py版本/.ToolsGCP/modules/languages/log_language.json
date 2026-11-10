@@ -1,0 +1,117 @@
+{
+  "log_operations": {
+    "简体中文": "日志操作",
+    "繁體中文": "日誌操作",
+    "English": "Log Operations"
+  },
+  "log_export_current": {
+    "简体中文": "导出日志",
+    "繁體中文": "匯出日誌",
+    "English": "Export Log"
+  },
+  "log_export_all": {
+    "简体中文": "导出全部日志",
+    "繁體中文": "匯出全部日誌",
+    "English": "Export All Logs"
+  },
+  "log_open_dir": {
+    "简体中文": "打开日志目录",
+    "繁體中文": "打開日誌目錄",
+    "English": "Open Log Folder"
+  },
+  "log_clear_history": {
+    "简体中文": "清理历史日志",
+    "繁體中文": "清理歷史日誌",
+    "English": "Clear History Logs"
+  },
+  "log_all_logs": {
+    "简体中文": "所有日志",
+    "繁體中文": "所有日誌",
+    "English": "All Logs"
+  },
+  "log_current_tag": {
+    "简体中文": "（当前）",
+    "繁體中文": "（當前）",
+    "English": "(Current)"
+  },
+  "log_no_logs": {
+    "简体中文": "暂无日志记录",
+    "繁體中文": "暫無日誌記錄",
+    "English": "No logs yet"
+  },
+  "log_no_history": {
+    "简体中文": "没有可清理的历史日志",
+    "繁體中文": "沒有可清理的歷史日誌",
+    "English": "No history logs to clear"
+  },
+  "log_clear_confirm_body": {
+    "简体中文": "确定删除全部历史日志吗？\n当前日志（system_log.log）的内容会保留，不会被清除。",
+    "繁體中文": "確定刪除全部歷史日誌嗎？\n當前日誌（system_log.log）的內容會保留，不會被清除。",
+    "English": "Delete all history logs?\nThe current log (system_log.log) is kept and will not be cleared."
+  },
+  "log_cancel": {
+    "简体中文": "取消",
+    "繁體中文": "取消",
+    "English": "Cancel"
+  },
+  "log_confirm": {
+    "简体中文": "确定",
+    "繁體中文": "確定",
+    "English": "Confirm"
+  },
+  "log_clear_success": {
+    "简体中文": "已清理 {n} 条历史日志（当前日志已保留）",
+    "繁體中文": "已清理 {n} 條歷史日誌（當前日誌已保留）",
+    "English": "Cleared {n} history logs (current log kept)"
+  },
+  "log_export_success": {
+    "简体中文": "导出成功",
+    "繁體中文": "匯出成功",
+    "English": "Export successful"
+  },
+  "log_export_failed": {
+    "简体中文": "导出失败",
+    "繁體中文": "匯出失敗",
+    "English": "Export failed"
+  },
+  "log_export_no_select": {
+    "简体中文": "请先选择一条日志",
+    "繁體中文": "請先選擇一條日誌",
+    "English": "Please select a log first"
+  },
+  "log_toast_title": {
+    "简体中文": "日志",
+    "繁體中文": "日誌",
+    "English": "Log"
+  },
+  "open_in_window_tip": {
+    "简体中文": "双击在独立窗口中打开这份日志",
+    "繁體中文": "雙擊在獨立視窗中開啟這份日誌",
+    "English": "Double-click to open this log in a window"
+  },
+  "log_viewer_reload_tip": {
+    "简体中文": "刷新这份日志",
+    "繁體中文": "重新整理這份日誌",
+    "English": "Reload this log"
+  },
+  "log_viewer_missing": {
+    "简体中文": "日志文件不存在：{path}",
+    "繁體中文": "日誌檔案不存在：{path}",
+    "English": "Log file not found: {path}"
+  },
+  "log_viewer_read_failed": {
+    "简体中文": "（读取失败：{error}）",
+    "繁體中文": "（讀取失敗：{error}）",
+    "English": "(Could not read: {error})"
+  },
+  "log_viewer_truncated": {
+    "简体中文": "……（文件太大，只显示前 {n} 个字符）",
+    "繁體中文": "……（檔案太大，只顯示前 {n} 個字元）",
+    "English": "… (file is large; only the first {n} characters are shown)"
+  },
+  "log_viewer_refreshed": {
+    "简体中文": "已刷新：{name}",
+    "繁體中文": "已重新整理：{name}",
+    "English": "Reloaded: {name}"
+  }
+}

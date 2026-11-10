@@ -1,0 +1,132 @@
+{
+  "onboard_title": {
+    "简体中文": "先选几个感兴趣的",
+    "繁體中文": "先選幾個感興趣的",
+    "English": "Pick a few interests"
+  },
+  "onboard_subtitle": {
+    "简体中文": "勾选你感兴趣的方向，我们照着你的喜好推荐资源；以后随时可以点「编辑喜好」修改。",
+    "繁體中文": "勾選你感興趣的方向，我們照著你的喜好推薦資源；之後隨時可以點「編輯喜好」修改。",
+    "English": "Tick the areas you care about and we will recommend resources that match. You can change this anytime with \u201cEdit interests\u201d."
+  },
+  "group_category": {
+    "简体中文": "类别",
+    "繁體中文": "類別",
+    "English": "Categories"
+  },
+  "group_tag": {
+    "简体中文": "标签",
+    "繁體中文": "標籤",
+    "English": "Tags"
+  },
+  "selected_count": {
+    "简体中文": "已选 {n} 个",
+    "繁體中文": "已選 {n} 個",
+    "English": "{n} selected"
+  },
+  "btn_start": {
+    "简体中文": "开始",
+    "繁體中文": "開始",
+    "English": "Start"
+  },
+  "btn_save": {
+    "简体中文": "保存",
+    "繁體中文": "儲存",
+    "English": "Save"
+  },
+  "btn_clear": {
+    "简体中文": "全不选",
+    "繁體中文": "全不選",
+    "English": "Clear all"
+  },
+  "btn_reset_interests": {
+    "简体中文": "恢复默认",
+    "繁體中文": "重設為預設",
+    "English": "Reset to defaults"
+  },
+  "btn_cancel": {
+    "简体中文": "取消",
+    "繁體中文": "取消",
+    "English": "Cancel"
+  },
+  "recommend_title": {
+    "简体中文": "为你推荐",
+    "繁體中文": "為你推薦",
+    "English": "Recommended for you"
+  },
+  "recommend_basis": {
+    "简体中文": "根据你选的：{names}",
+    "繁體中文": "根據你選的：{names}",
+    "English": "Based on: {names}"
+  },
+  "btn_edit_interests": {
+    "简体中文": "编辑喜好",
+    "繁體中文": "編輯喜好",
+    "English": "Edit interests"
+  },
+  "recommend_count": {
+    "简体中文": "共 {n} 个推荐",
+    "繁體中文": "共 {n} 個推薦",
+    "English": "{n} recommendations"
+  },
+  "empty_no_match": {
+    "简体中文": "这几个喜好暂时没有匹配的资源，换几个试试。",
+    "繁體中文": "這幾個喜好暫時沒有符合的資源，換幾個試試。",
+    "English": "Nothing matches these interests yet — try a few others."
+  },
+  "empty_no_interests": {
+    "简体中文": "还没有选择喜好，先挑几个吧。",
+    "繁體中文": "還沒有選擇喜好，先挑幾個吧。",
+    "English": "No interests chosen yet — pick a few first."
+  },
+  "empty_action": {
+    "简体中文": "去设置喜好",
+    "繁體中文": "去設定喜好",
+    "English": "Choose interests"
+  },
+  "no_interests_in_library": {
+    "简体中文": "资源库里暂时没有可选的喜好标签，先去看看搜索页吧。",
+    "繁體中文": "資源庫裡暫時沒有可選的喜好標籤，先去看看搜尋頁吧。",
+    "English": "No interest tags are available in the resource library yet."
+  },
+  "list_separator": {
+    "简体中文": "、",
+    "繁體中文": "、",
+    "English": ", "
+  },
+  "toast_saved": {
+    "简体中文": "喜好已保存",
+    "繁體中文": "喜好已儲存",
+    "English": "Preferences saved"
+  },
+  "toast_interests_reset": {
+    "简体中文": "已恢复默认，请重新选择喜好",
+    "繁體中文": "已恢復預設，請重新選擇喜好",
+    "English": "Reset to defaults — please pick your interests again"
+  },
+  "confirm_reset_interests": {
+    "简体中文": "确定要删除所有喜好、恢复到默认状态吗？删除后推荐页会清空，需要重新挑一次。",
+    "繁體中文": "確定要刪除所有喜好、恢復到預設狀態嗎？刪除後推薦頁會清空，需要重新挑選一次。",
+    "English": "Delete all your saved interests and go back to defaults? The recommendation page will be cleared and you will need to pick again."
+  },
+  "toast_success_title": {
+    "简体中文": "成功",
+    "繁體中文": "成功",
+    "English": "Success"
+  },
+  "toast_info_title": {
+    "简体中文": "提示",
+    "繁體中文": "提示",
+    "English": "Notice"
+  },
+  "toast_need_interest": {
+    "简体中文": "请至少选择一个喜好",
+    "繁體中文": "請至少選擇一個喜好",
+    "English": "Pick at least one interest"
+  },
+  "hint_open_in_search": {
+    "简体中文": "在搜索页搜索「{name}」可以查看详情。",
+    "繁體中文": "在搜尋頁搜尋「{name}」可以查看詳情。",
+    "English": "Search \u201c{name}\u201d on the Search page for details."
+  }
+}

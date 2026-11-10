@@ -1,0 +1,83 @@
+[1] 用户气泡与 AI 气泡同色
+  FAIL  components.css 里 .bubble.is-user 仍是旧的渐变（说明覆盖必须生效）
+  FAIL  ai-fixes.css 里有 .bubble.is-user 覆盖
+  FAIL  覆盖后的底色 = 与 AI 气泡同一个 var(--card-solid)
+  FAIL  覆盖后带描边（和 .is-ai 一致的语言，不是纯色块）
+  OK    ai-fixes.css 在 components.css **之后**加载（同特异性才能赢）  <- components=5542 ai-fixes=6362
+  OK    glass/acrylic 两档也给了 .bubble.is-user 同款半透明
+  OK     mica 档明确关模糊（别留 backdrop-filter）
+[2] 编辑态要有『输入框』的反馈感（但尺寸不能变）
+  FAIL  有 .bubble.ai-bubble-edit 规则
+  FAIL  强调色描边（输入框聚焦语言）
+  FAIL  外发光光圈 box-shadow 0 0 0 3px var(--accent-soft)
+  FAIL  圆角收到输入框的 10（不再是气泡的 16）
+  FAIL  光标用强调色（caret-color）
+  OK    ⚠️ 没有写 width/height（上一轮『点编辑不能突然缩小/跳位』是硬要求）  <- 编辑态盒尺寸必须仍由 JS 实测值给（规则正文见上）
+  FAIL  resize: none（不许用户拖拽破坏尺寸保持）
+[3] 抽屉不再半透明
+  FAIL  components.css 里 .ai-drawer 本体仍是半透明渐变（说明必须被覆盖）
+  OK    ai-fixes.css 覆盖了 glass/acrylic 两档的 .ai-drawer
+  OK    覆盖成完全不透明的 var(--card-solid)  <- :root[data-theme][data-fx="glass"] .ai-drawer`（0,5,0）：  *      本文件在它之后加载，同样写 0,5,0 就后者胜（和 .ai-send 禁用态那处一个套路）。  *      只
+  OK    backdrop-filter 关掉
+  OK    浅色主题单独给 #ffffff（否则浅色下会露深色 card-solid）
+  OK    覆盖条与原件**同特异性**且靠加载顺序取胜（不是靠 !important）
+[4] 选择区颜色更蓝
+  FAIL  有 .ai-embedded ::selection 规则且用强调色  <- 0 条
+  OK    有 .ai-drawer ::selection 规则且用强调色  <- 1 条
+  OK    有 .bubble ::selection 规则且用强调色  <- 1 条
+  OK    有 .ai-rich-input ::selection 规则且用强调色  <- 1 条
+  OK    46% 不透明度（比系统默认深）
+  OK    浅色主题单独降到 34%（保证文字仍可读）
+[5] 源码级防回归：未保存弹窗已删 + 旧结构不残留
+  OK    goto() 里不再构造 api_unsaved_title 确认框
+  OK    没有『留在当前界面』这种三选按钮残留
+  OK    apiKeyDirty()/saveApiKey() 本体保留（保存按钮还在用）
+  OK    输入框菜单快捷键在 JS 里加括号
+  OK    旧竖排容器 .imi-text 已从 HTML 移除
+  OK    旧结构无残留：ai-input-col
+  OK    旧结构无残留：ai-input-foot
+  OK    旧结构无残留：is-mini
+  OK    旧结构无残留：i-chip
+  OK    旧结构无残留：aiCtxSelectAll
+  OK    旧结构无残留：ai-think-toggle
+  OK    气泡右键菜单只剩 1 个按钮（复制）
+[6] 真跑 jsdom：改脏 API Key 后切页不弹确认框
+  FAIL  探针挂载成功（否则下面全是空跑）  <- TAILWIND_STRIPPED=true
+MOUNTED=false
+JSDOM_ERRORS=["Could not load script: \"http://127.0.0.1:8857/static/js/app.js\""]
+RESULT: APP_NOT_MOUNTED
+  FAIL  前置条件：Key 草稿确实是『脏』的  <- TAILWIND_STRIPPED=true
+MOUNTED=false
+JSDOM_ERRORS=["Could not load script: \"http://127.0.0.1:8857/static/js/app.js\""]
+RESULT: APP_NOT_MOUNTED
+  FAIL  切页真的切走了（没被弹窗拦住）  <- TAILWIND_STRIPPED=true
+MOUNTED=false
+JSDOM_ERRORS=["Could not load script: \"http://127.0.0.1:8857/static/js/app.js\""]
+RESULT: APP_NOT_MOUNTED
+  FAIL  没有弹出确认框  <- TAILWIND_STRIPPED=true
+MOUNTED=false
+JSDOM_ERRORS=["Could not load script: \"http://127.0.0.1:8857/static/js/app.js\""]
+RESULT: APP_NOT_MOUNTED
+  FAIL  也没有『顺手替用户保存』（没写 api_key）
+  FAIL  破坏性操作的二次确认没被误删（清空历史仍是 danger 框）
+========================================================================
+FAILED 18:
+   - components.css 里 .bubble.is-user 仍是旧的渐变（说明覆盖必须生效）
+   - ai-fixes.css 里有 .bubble.is-user 覆盖
+   - 覆盖后的底色 = 与 AI 气泡同一个 var(--card-solid)
+   - 覆盖后带描边（和 .is-ai 一致的语言，不是纯色块）
+   - 有 .bubble.ai-bubble-edit 规则
+   - 强调色描边（输入框聚焦语言）
+   - 外发光光圈 box-shadow 0 0 0 3px var(--accent-soft)
+   - 圆角收到输入框的 10（不再是气泡的 16）
+   - 光标用强调色（caret-color）
+   - resize: none（不许用户拖拽破坏尺寸保持）
+   - components.css 里 .ai-drawer 本体仍是半透明渐变（说明必须被覆盖）
+   - 有 .ai-embedded ::selection 规则且用强调色
+   - 探针挂载成功（否则下面全是空跑）
+   - 前置条件：Key 草稿确实是『脏』的
+   - 切页真的切走了（没被弹窗拦住）
+   - 没有弹出确认框
+   - 也没有『顺手替用户保存』（没写 api_key）
+   - 破坏性操作的二次确认没被误删（清空历史仍是 danger 框）
+visual_exit=1

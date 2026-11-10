@@ -1,0 +1,1231 @@
+/* ===========================================================================
+ * ai-fixes.css · GCP-AI 聊天界面 5 项改造的补丁样式
+ * ===========================================================================
+ * 必须放在所有既有 CSS 之后（见 index.html 的引入顺序），这里的规则要压得住
+ * components.css / r24-fixes.css 里同名的 .ai-send / .history-item / .bubble。
+ *
+ * 五项改动分别对应：
+ *   ① 发送按钮 = 纸飞机图标 + **圆角方形**（不是圆形）+ 修禁用态的 hover 错觉
+ *   ② 历史对话列表行 → cursor: pointer（行内按钮也要有手型）
+ *   ③ 润色按钮的第二态（撤销润色）：只是图标切换，尺寸/配色沿用 .ai-polish
+ *   ④ 气泡版本导航 ◀ 2/3 ▶ + 用户消息"原地编辑"（尺寸必须保持，不能跳位）
+ *   ⑤ 等待提示「AI正在查看问题...」的省略号动画（1→2→3 个点循环）
+ * =========================================================================*/
+
+/* ---------------------------------------------------------------------------
+ * ① 发送按钮：圆角方形 + 纸飞机图标
+ * -------------------------------------------------------------------------
+ * 为什么宽度和高度都钉成 38px：原来是 66×38 的"文字按钮"，换成图标后如果还留 66 宽，
+ * 图标两侧就是大片空白，视觉上像按钮坏了；38×38 + radius 10 才是"圆角方形"
+ * （radius 超过一半才变圆，所以这里绝不写 999px）。
+ * 高度 38 与输入框的 min-height 对齐（.ai-input-row 是 flex-end），单行时三者顶底齐平。
+ *--------------------------------------------------------------------------*/
+.ai-send {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;            /* 圆角方形：10/38 ≈ 26%，明显是"方"不是"圆" */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+.ai-send .ic { width: 16px; height: 16px; flex: 0 0 auto; }
+
+/* 停止态：仍是同一个方按钮，只把图标换成"方块"语义（两条竖杠更 recognizable） */
+.ai-send.is-stop { width: 38px; }
+
+/* ⚠️⚠️ 禁用态的 hover bug（用户原话：按钮 disabled 时鼠标移上去仍有 hover 反馈/可点击错觉）
+ *   根因有两层，必须同时治：
+ *   1) `.ai-send:hover { filter: brightness(1.1) }` 没有排除 :disabled，
+ *      所以禁用时照样变亮 —— 看起来"能点"；
+ *   2) 浏览器对 disabled 的 <button> 会自己吞掉 click，但**不会**吞掉 hover/pointer 样式，
+ *      而且父级如果有 pointer-events 覆盖，还会收到事件。
+ *   治法：hover/active 一律加 :not(:disabled)；禁用态给 cursor: not-allowed
+ *   （不是 default —— 用户要求"看得出现在不能点"）；再用 pointer-events: none
+ *   把鼠标反馈彻底掐掉（同时保留 :not-allowed 光标由外层容器给出，见下一条）。
+ *
+ * ⚠️ pointer-events:none 之后按钮自己拿不到 hover，光标会变成父级 .ai-input-row 的默认箭头
+ *   —— 所以 not-allowed 要写在**按钮本身**并且不能和 pointer-events:none 同时生效：
+ *   最终方案是「保留事件命中（pointer-events:auto）+ 明确 not-allowed 光标 + 无 hover 变化」，
+ *   真不可点由「CSS :disabled 的原生行为 + 模板上的 :disabled + JS 里的 aiBusy/空文本早退」三重保证。
+ */
+.ai-send:disabled {
+  cursor: not-allowed;
+  opacity: .45;
+  filter: none;
+  transform: none;
+  box-shadow: none;
+  /* 灰底：禁用时不该还顶着"可发送"的渐变主色 */
+  background: color-mix(in srgb, var(--text) 12%, transparent);
+  color: var(--text-disabled);
+}
+.ai-send:disabled:hover,
+.ai-send:disabled:active {
+  filter: none;                   /* 明确压掉前面那两条 hover/active */
+  transform: none;
+  background: color-mix(in srgb, var(--text) 12%, transparent);
+  color: var(--text-disabled);
+}
+/* 图标也别跟着亮 */
+.ai-send:disabled .ic { opacity: .8; }
+
+/* 全局兜底：任何 .ai-send 的 hover 效果都要先确认没被禁用
+ * （写在这里而不是改 components.css —— 那个文件 Lead 也在动）*/
+.ai-send:not(:disabled):hover { filter: brightness(1.1); }
+.ai-send:not(:disabled):active { filter: brightness(.94); transform: scale(.97); }
+
+/* :disabled 的按钮在部分内核下 cursor 不吃 CSS（要 -internal- 光标穿透），
+ * 所以外层容器也声明一次 not-allowed，鼠标落在按钮上时一定有正确光标。 */
+.ai-input-row:has(> .ai-send:disabled) { cursor: default; }
+.ai-send:disabled { pointer-events: auto; }   /* 明确：不吃 hover，但要吃到光标样式 */
+
+/* ---------------------------------------------------------------------------
+ * ② 历史对话列表行：必须一眼看出"能点"
+ * -------------------------------------------------------------------------
+ * base.css 把全局 button 的 cursor 设成 default，可点的行/按钮要逐个点名；
+ * .history-item 是个 <article>（不是 button），所以根本不在那份手型清单里 →
+ * 用户看到的就是"默认箭头，看不出能点"。这里连同**行内的按钮**一起给手型。
+ * ⚠️ 删除/重命名这类按钮在自己被禁用时仍要退回 not-allowed（别让"不能点"也画成手型）。
+ *--------------------------------------------------------------------------*/
+.history-item,
+.history-item .history-title,
+.history-item .history-text,
+.history-item .icon-btn,
+.history-item button:not(:disabled),
+.history-item [role="button"] {
+  cursor: pointer;
+}
+.history-item .icon-btn:disabled,
+.history-item button:disabled {
+  cursor: not-allowed;
+}
+/* 手型之外给一点"这行有反馈"：hover 抬底色（原来是靠 .is-on 才有底色） */
+.history-item:hover { background: var(--hover, color-mix(in srgb, var(--text) 8%, transparent)); }
+
+/* 抽屉版（.ai-drawer 内）和独立页版（.ai-embedded 内）共用同一套：
+ * 上面这些选择器已经覆盖两种 DOM；这里只处理"清空"按钮那一行仍然按全局规则走。*/
+
+/* ---------------------------------------------------------------------------
+ * ③ 润色按钮的第二态 = 撤销润色（图标换成"返回上一个"）
+ * -------------------------------------------------------------------------
+ * 只换图标，尺寸/位置/配色都跟普通态一致（按钮不能因为进入可撤销态就变大跳位）。
+ * 用 .is-undo 标出"现在点下去是撤销"，顺手给一点强调色，让用户看得出状态变了。
+ *--------------------------------------------------------------------------*/
+.ai-polish { border-radius: 10px; }          /* 和新的方形发送按钮同一套语言 */
+.ai-polish.is-undo {
+  color: var(--accent-strong);
+  border-color: color-mix(in srgb, var(--accent) 46%, transparent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+.ai-polish.is-undo:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 24%, transparent);
+}
+/* 禁用态同样不许有 hover 错觉（和发送按钮一个口径） */
+.ai-polish:disabled { cursor: not-allowed; opacity: .4; pointer-events: none; }
+.ai-polish:disabled:hover { transform: none; background: transparent; }
+
+/* ---------------------------------------------------------------------------
+ * ③-b 润色「进行中」态 + 输入框锁定
+ * -------------------------------------------------------------------------
+ * 需求原话：「润色按钮点击后为润色中，期间输入框状态被锁定为不可输入模式」。
+ * ⚠️ 本轮修正（用户原话「润色按钮点击之后我不需要这个改为转圈图标，改回原本的那个图标」）：
+ * · 按钮：润色中**图标不变**（仍是 #i-robot / #i-undo 两态，由模板直接绑定），
+ *   进行中反馈改成 .is-busy 的**呼吸**（复用 components.css 的 ai-polish-pulse 关键帧，
+ *   只写 opacity 动画，不引 spin / 旋转），title 由模板临时换成「润色中…」；
+ *   润色中按钮仍然 disabled（防连点），这条显式规则同时钉死"呼吸"口径：
+ *   即使 components.css 那条 `.ai-polish:disabled .ic` 也命中，两处是同一个动画，
+ *   不存在旧版"转圈压呼吸"的优先级打架问题。
+ * · 输入框：rich-ai-input 在 disabled 时自己把 contenteditable 切成 false，
+ *   外层再加 .is-locked 做视觉提示（降低不透明度 + progress 光标）。
+ *   ⚠️ 只作用于 AI 输入框（.ai-rich-input 是它专属 class），
+ *      绝不碰模型弹层 / 设置页里任何输入控件。
+ * · 两个主题都要看得清：只用 opacity + 光标，不写死颜色，深浅色都成立。
+ *--------------------------------------------------------------------------*/
+.ai-polish.is-busy:disabled {
+  opacity: .75;
+  cursor: progress;
+  /* ⚠️ 上面 .ai-polish:disabled 有 pointer-events:none，那会让「润色中…」这个 title
+     永远弹不出来。这里放行鼠标事件只为让提示可见：disabled 属性本身仍然吞掉 click，
+     不存在"边润色边再点一次"的风险。 */
+  pointer-events: auto;
+}
+/* ⚠️ 本轮修正：润色中**不再转圈**（用户原话），图标保持原样（#i-robot / #i-undo），
+   进行中反馈 = opacity 呼吸。关键帧直接复用项目已有的 ai-polish-pulse
+   （components.css：0%/100% opacity .45 ↔ 50% opacity 1），不另造动画、更不引 spin。
+   这里显式钉在 .is-busy 上（而不是只靠 components.css 那条 :disabled 通用规则），
+   是为了让"呼吸 = 润色进行中"这个语义在本组件里自证，不依赖别的文件的加载顺序。 */
+.ai-polish.is-busy:disabled .ic { animation: ai-polish-pulse 1.1s ease-in-out infinite; }
+/* 尊重「关动效」档：呼吸也停（静态原图标 + 「润色中…」文案已足够提示进行中） */
+:root[data-motion="off"] .ai-polish.is-busy:disabled .ic { animation: none; }
+
+/* 润色期间锁定输入框：只动透明度/光标，不改变尺寸（框不能"跳"一下） */
+.ai-box-text .ai-rich-input.is-locked,
+.ai-rich-input.is-locked {
+  opacity: .65;
+  cursor: progress;
+  /* 锁定时明确告诉浏览器"这里不接受输入"：不只靠 JS 拦键盘，双击选词也一起关掉，
+     避免用户以为还能编辑（真正的不可输入由 contenteditable="false" 保证）。 */
+  user-select: none; -webkit-user-select: none;
+}
+/* 锁定时 placeholder 也要淡下去，否则"框灰了但提示字还很亮"看着像没生效 */
+.ai-rich-input.is-locked::before { opacity: .6; }
+/* 锁定/禁用期间不要显示输入光标在家里闪 */
+.ai-rich-input.is-locked,
+.ai-rich-input[contenteditable="false"] { caret-color: transparent; }
+
+/* ---------------------------------------------------------------------------
+ * ④ 版本树 ◀ n ▶ + 用户消息原地编辑
+ * -------------------------------------------------------------------------
+ * 需求原话：「我喜欢有 ◀ n ▶ 的按钮，而且 **n 只是 2 个按钮之间的、实时根据这个
+ * 版本树改变的 text，而不是属于一个组件 ui**」。
+ * → 左右两个箭头是**按钮**，中间那个 n 就是一段**普通文字**（跟着翻页实时变）。
+ *   所以这里**不再**给 .variant-nav 画"胶囊外壳"（底色 / 圆角 / 内边距全都去掉）：
+ *   它只是排里的一个普通块，视觉上与左右那颗按钮不再形成"第三个组件"。
+ * 位置：在气泡下方那一排操作里，排在**复制右边**（本轮需求，见 index.html 顺序注释）。
+ * ⚠️ 只有一版时模板直接不渲染（v-if），这里不需要处理"1/1"的空壳。
+ *--------------------------------------------------------------------------*/
+.variant-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;                       /* 外壳没了，间距交给按钮自己的尺寸 + .bubble-actions 的 gap */
+  height: 26px;                 /* 和放大后的 .bubble-btn 同高，那一排不会上下跳 */
+  background: none;             /* ← 不再是"组件"：无底色 */
+  border-radius: 0;             /* ← 无圆角胶囊 */
+  padding: 0;                   /* ← 无内边距 */
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;   /* "1/2" 翻页时数字宽度不变，按钮不会左右跳 */
+  user-select: none;
+}
+.variant-nav .vn-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  background: none;
+  color: inherit;
+  border-radius: 7px;            /* 按钮本体仍是圆角方块（和复制/重新生成一个口径） */
+  cursor: pointer;               /* 导航是"能点的"，别给默认箭头 */
+}
+.variant-nav .vn-btn:hover { background: var(--hover, color-mix(in srgb, var(--text) 10%, transparent)); color: var(--accent); }
+.variant-nav .vn-btn:active { transform: scale(.92); }
+.variant-nav .vn-btn:disabled { cursor: not-allowed; opacity: .35; }
+.variant-nav .vn-btn:disabled:hover { background: none; color: var(--text-secondary); }
+.variant-nav .vn-btn .ic { width: 12px; height: 12px; }
+/* 中间那段 n：纯文字，没有底色/边框/内边距（需求明确"不属于一个组件 ui"）。
+   左右各留 2px 呼吸距，不然两个箭头会把它夹得太死。 */
+.variant-nav .vn-page { min-width: 0; padding: 0 2px; text-align: center; line-height: 1;
+  background: none; border: 0; }
+
+/* 用户消息的编辑按钮（气泡操作排里，和复制同一行） */
+.bubble-btn.is-edit:hover { color: var(--accent); }
+
+/* 原地编辑：气泡**还是同一个 .bubble**，只加一个 is-editing 类。
+ * ⚠️ 尺寸保持（用户明确抱怨"突然缩小/跳位"）的做法：
+ *   · 不改 max-width / font-size / line-height / padding（全部继承 .bubble）；
+ *   · 只加描边和底色提示；
+ *   · 编辑区用一个**同尺寸的 min-height**（把当前正文行数撑住）避免空内容时塌下去。
+ * 结构上把 <div class="bubble"> 换成 <textarea class="bubble ai-bubble-edit">：
+ * textarea 是替换元素，必须显式把字体/行高/换行行为写全，否则观感和气泡不一致。
+ *
+ * ⚠️⚠️ 「一行字变成编辑态就折成两行」的根因（本轮修复，用户原话：「例如"你好啊"本该是一行
+ *    但是变成输入模式就出现了变成2行」）：
+ *    · 全局 `* { box-sizing: border-box }`（base.css 第 5 行）→ 宽度 100% 是**含边框**的；
+ *    · 真气泡 `.bubble`（display 的 div）**没有 border**，内容宽 = width - padding；
+ *    · 而编辑框原来加了 `border: 1px solid var(--accent)` → 内容宽比气泡**少 2px**，
+ *      于是刚好卡在"一行放不下"的边界文本（如"你好啊"）会被多折一行；
+ *    · 高度同理：多出 2px 边框，1 行 → 视觉上像 2 行高。
+ *    修法：**不用 border**，改用 `outline` 画那圈强调色 —— outline 画在边框盒**外侧**，
+ *    完全不参与布局，所以内容宽高与 static 气泡逐像素一致（这也正是"不跳位"的关键）。
+ *    同时显式钉住 `white-space: pre-wrap`，保证换行行为与气泡一致。*/
+.bubble.ai-bubble-edit,
+.bubble.ai-bubble-edit.is-user,
+.bubble.ai-bubble-edit.is-ai {
+  /* ⚠️⚠️⚠️ 本轮重写这一条（用户连着两轮报同一个 UI）：
+       上一轮「文本很短他会搞一个**固定长条**气泡 ui 而不是自适应」
+       这一轮「编辑模式这个聊天气泡 ui 长度就**固定了**，他不会继续变长了，
+              就维持文本原本有多长，编辑时就不变了」
+     旧写法 `width: 100%` + 内联 `width: <算出来的 px>` = 编辑框尺寸**钉死**，
+     打字再多也不会变宽。
+     ⇒ 现在交给**排版引擎按内容给尺寸**：
+       · `width: auto` + `field-sizing: content`（Chromium 123+ / WebView2 Evergreen）
+         → 框宽 = 内容需要多宽就多宽；短文本自然是小框（不再需要任何 240px 下限）；
+       · `max-width: 78%` 与展示态那颗 `.bubble`（components.css:562）**同一个值**
+         → 长文本先撑到 78%，**超过才折行** = 用户要的"到一定长度自动换行"；
+       · 因为宽度恒等于内容宽，"你好呀"被压在窄框里折成"你好↵呀"那种情况
+         **结构上不可能发生**（要折行必须先有一个比内容更窄的固定宽度，而我们不再有）。
+     ⚠️ 顺带的好处：字号/行高/padding 与展示态完全一致时，未改动文本的编辑框
+        和刚才那颗气泡**逐像素同尺寸**，天然满足更早那轮"点编辑不要突然缩小/跳位"，
+        不用 JS 去量任何东西。 */
+  width: auto;
+  max-width: 78%;
+  min-width: 2em;                        /* 空内容时也是个看得见的框，不会塌成一条线 */
+  field-sizing: content;                 /* 宽高都按内容自适应（input/textarea 原生能力） */
+  min-height: 0;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--card-solid);
+  /* 边框换成 outline（0 布局影响）；颜色与原来那圈描边一致。
+     outline-offset: 0 → 紧贴边框盒外沿，观感等同于原来的 1px border。 */
+  border: 0;
+  outline: 1px solid var(--accent);
+  outline-offset: 0;
+  border-radius: 16px;
+  padding: 8px 11px;                     /* 与 .bubble 一致（防 UA 默认 padding 干扰）*/
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  resize: none;                          /* 绝不允许用户拖出个奇怪尺寸 */
+  /* ⚠️ 高度也由 field-sizing 跟着内容走；这里只封顶，超长时内部滚动，
+     免得一句话改成几十行把整个聊天区撑爆（和 .ai-input 的 max-height 同一思路）。 */
+  max-height: 40vh;
+  overflow-y: auto;
+  box-shadow: 0 0 0 3px var(--accent-soft);
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
+}
+/* ⚠️⚠️ 本轮修复（用户原话：「浅色主题我点击用户的编辑按钮切换为输入状态时
+   这个按钮ui的颜色变成深色主题的那种蓝紫彩色主题按钮了」）。
+   根因就在这一条：
+     · 上面 669 行已经把**普通**用户气泡改成和 AI 气泡同色（--card-solid，
+       因为用户要求"GCP-AI 用户气泡不要特殊颜色"）；
+     · 但**编辑态**这里仍然写着 AI 悬浮球那套 `--ball-a → --ball-b` 蓝紫渐变，
+       而且特异性更高（.bubble.ai-bubble-edit.is-user 三个类 = 0,3,0
+       压过 .bubble.ai-bubble-edit 的 0,2,0）→ 一点「编辑」，气泡底色
+       当场从卡片色跳成蓝紫渐变，浅色主题下格外刺眼（观感就是"变成深色主题的按钮"）。
+   修法：编辑态**不再画渐变**，底色交给下面那条 .bubble.ai-bubble-edit
+   （--card-sunken 输入区色 + 强调色描边），深浅主题都跟随，
+   和"输入框"的视觉语言一致 —— 这才是用户要的"一眼看出是输入框"。
+   （保留这条规则本身而不是删掉，是为了让 border-radius 那段的意图还看得懂。） */
+.bubble.ai-bubble-edit.is-user {
+  background: var(--card-solid);
+}
+/* 编辑态下操作排换成 ✕ / ✓：这一排的尺寸**不用再在这里钉**了。
+   原来这里写死 `height: 18px`（为了让 ✕/✓ 和当时的复制/重新生成完全等高、不跳行）。
+   本轮把气泡按钮统一放大到 26×26（components.css `.bubble-btn`、上面 `.vn-btn`），
+   两个类已经是同一个口径 → 再留这条 18px 反而会把放大后的按钮**压回** 18，
+   所以整条删除（需求「气泡下面的按钮的组件ui需要大一点」靠基类生效）。 */
+
+/* ---------------------------------------------------------------------------
+ * ⑤ 等待提示「AI正在查看问题...」（省略号 1→2→3 循环）
+ * -------------------------------------------------------------------------
+ * ⚠️ 这颗气泡是**纯渲染层**的东西：既不进 aiMessages（前端不 push），
+ *    也不写会话文件（后端不 append），一收到第一段流式正文就整块移除。
+ *    所以它的样式和真气泡分开写（.ai-pending），不会被复制/翻版本按钮波及。
+ * ⚠️ 现在它有两种落位（都在模板里直接挂 `.ai-pending` 本身，不再需要一层
+ *    `.ai-pending-row` 包装）：① 普通提问时挂在列表末尾；② 重新生成/编辑重发时
+ *    **就地取代那颗气泡本体**（用户要求"原本的气泡消失、用正在xxx代替"）。
+ *    所以原先那条 `.ai-pending-row{display:flex}` 已删除 —— 它就是为①单独加的包装层。
+ *--------------------------------------------------------------------------*/
+.ai-pending {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 1px;
+  padding: 8px 11px;
+  border-radius: 16px;
+  border-bottom-left-radius: 6px;
+  background: var(--card-solid);
+  border: 1px solid var(--card-border);
+  color: var(--text-secondary);          /* 灰色（用户要求） */
+  font-size: 12.5px;
+  line-height: 1.5;
+  user-select: none;
+}
+/* 省略号：三个 span 拼成「点数在累加」的循环 —— 第 1 个点全程可见，
+ * 第 2 个点在周期 1/3 之后出现，第 3 个点在 2/3 之后出现，于是看起来是
+ * 「.」→「..」→「...」→ 回到「.」。
+ * ⚠️ 用 visibility 而不是 opacity/width：点隐藏时**仍占位**，气泡宽度全程不变，
+ *    不会一抖一抖（用户很在意气泡尺寸跳动）。steps(1,end) 保证是"整颗出现"，
+ *    不是淡入淡出 —— 淡入看起来像第四个点在闪。*/
+.ai-pending .dot { display: inline-block; }
+.ai-pending .dot-1 { visibility: visible; }
+.ai-pending .dot-2 { animation: ai-dot2 1.2s steps(1, end) infinite; }
+.ai-pending .dot-3 { animation: ai-dot3 1.2s steps(1, end) infinite; }
+@keyframes ai-dot2 {
+  0%   { visibility: hidden; }
+  33%  { visibility: visible; }
+  100% { visibility: visible; }
+}
+@keyframes ai-dot3 {
+  0%   { visibility: hidden; }
+  66%  { visibility: visible; }
+  100% { visibility: visible; }
+}
+
+/* 流式中的气泡：末尾挂一个光标，让人一眼看出"还在往外吐字" */
+.ai-stream-cursor {
+  display: inline-block;
+  width: 6px;
+  height: 13px;
+  margin-left: 3px;
+  vertical-align: -2px;
+  border-radius: 2px;
+  background: var(--accent);
+  animation: ai-cursor-blink 1s steps(1, end) infinite;
+}
+@keyframes ai-cursor-blink { 0%, 50% { opacity: 1; } 50.01%, 100% { opacity: 0; } }
+
+/* 玻璃/亚克力两档下：等待提示也要跟着半透明（和 .bubble.is-ai 同一口径） */
+:root[data-theme][data-fx="glass"] .ai-pending,
+:root[data-theme][data-fx="acrylic"] .ai-pending {
+  background: color-mix(in srgb, var(--card-solid) 78%, transparent);
+  backdrop-filter: blur(10px) saturate(125%);
+  -webkit-backdrop-filter: blur(10px) saturate(125%);
+}
+/* 云母档不做模糊（全站约定：mica 几乎不糊） */
+:root[data-fx="mica"] .ai-pending { backdrop-filter: none; -webkit-backdrop-filter: none; }
+
+/* ⚠️ components.css 末尾那批 `:root[data-theme][data-fx="glass"|"acrylic"] .ai-send`（0,5,0）
+ *    会把实色渐变/毛玻璃底色写回按钮，**并且没排除 :disabled** ——
+ *    所以玻璃两档下"不能点的按钮"照样亮着，正是用户报的"禁用态还有可点错觉"。
+ *    这里按同样的特异性把禁用态再钉一次（本文件在它之后加载，同特异性后者胜）。*/
+:root[data-theme][data-fx="glass"] .ai-send:disabled,
+:root[data-theme][data-fx="acrylic"] .ai-send:disabled,
+:root[data-theme][data-fx="glass"] .ai-send:disabled:hover,
+:root[data-theme][data-fx="acrylic"] .ai-send:disabled:hover {
+  background: color-mix(in srgb, var(--text) 12%, transparent);
+  color: var(--text-disabled);
+  border: 0;
+  box-shadow: none;
+  filter: none;
+  transform: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  cursor: not-allowed;
+}
+
+/* 减少动效偏好：省略号和光标都停下（不隐藏，避免布局跳） */
+@media (prefers-reduced-motion: reduce) {
+  .ai-pending .dot { animation: none; visibility: visible; }
+  .ai-stream-cursor { animation: none; opacity: 1; }
+}
+
+/* ===========================================================================
+ * · 本轮 GCP-AI 改造（Lead 负责）：输入框加高 + 右下角模型切换 UI / 思考开关、
+ *   @ 资源候选浮层、气泡里的 @token 与蓝链、思考折叠块、气泡右键菜单。
+ *   需求原话：「把单独界面和侧边AI界面整个输入框高增加一点，然后在输入框的右下角
+ *   放入模型切换ui……再把润色按钮缩小一点，模型ui放在他的右边」。
+ * ⚠️ 本段**只加新 class**，不改上面任何既有规则（.ai-send / .ai-polish 的禁用态等
+ *    都保持原样），避免和 ui-settings / cards-fe 的改动打架。
+ * ========================================================================*/
+
+/* ===========================================================================
+ * · 本轮 GCP-AI 输入框重构（Lead 负责）
+ *   需求原话：「重构输入框UI：底部按钮行移入输入框内部；更改模型切换图标 要求更贴切的
+ *   图标；润色去掉文字放在发送按钮左边；且把思考开关改为对接官方API的多档位滑动强度
+ *   而不是只有开和关（类似Codex）；模型切换的对勾放在模型前面 模型前面都要留点空隙
+ *   确保对勾能放下。复述一遍整体样貌：一个大输入框默认内容可以输入2行 超过2行才会改变
+ *   输入框大小高度，输入框内部最下排左侧为模型和思考 右侧从左往右为润色和发送按钮。」
+ *
+ *   → 视觉全部挂在**外框 .ai-box** 上（边框/圆角/聚焦光圈），框内：
+ *       .ai-box-text = 富文本输入区（min-height = 2 行，超过才长高）
+ *       .ai-box-bar  = 框内最下排（左：模型 + 思考滑块；右：润色图标 → 发送）
+ *   ⚠️ 上一轮那套 .ai-input-col / .ai-input-foot（工具行在框**外**）已废弃删除。
+ *   ⚠️ 两处（独立页 + 抽屉）结构完全一致，改一处记得改两处。
+ * ========================================================================*/
+
+/* 大框：边框/圆角/聚焦都在框上；输入区自己不再画边框（见下面 .ai-box-text 里的 .ai-input） */
+.ai-box {
+  flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column;
+  border: 1px solid var(--card-border); border-radius: 12px;
+  background: var(--card-solid);
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+.ai-box:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.ai-box-text { display: flex; min-width: 0; }
+/* 输入区：边框交给外框，自己只留内边距；
+   需求"默认内容可以输入2行，超过2行才会改变输入框大小高度"
+   → min-height = **2 行**（13px × 1.5 = 19.5 × 2 ≈ 39）+ 上下内边距 = 55，
+     ⚠️ 不是封顶！超过 2 行要**跟着长高**（这才是用户描述的"超过2行才会改变高度"），
+     长到 max-height 才转成内部滚动（否则一段长文能把整页顶穿）。
+   ⚠️ 这里必须同时压掉 components.css 给 .ai-rich-input 写的 min-height:52/max-height:110
+      和 .ai-input 的边框，否则框内会出现"框中框"双线 + 高度对不上。 */
+.ai-box-text .ai-input,
+.ai-box-text .ai-rich-input {
+  border: 0; box-shadow: none; outline: none; background: transparent;
+  border-radius: 0;
+  min-height: 55px; max-height: 190px;
+  padding: 8px 10px 4px;
+}
+/* 输入区聚焦时不要再画自己的光圈（光圈在外框上） */
+.ai-box-text .ai-input:focus,
+.ai-box-text .ai-rich-input:focus { border: 0; box-shadow: none; }
+
+/* 框内最下排 */
+.ai-box-bar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 2px 8px 6px; min-height: 28px;
+}
+.ai-box-left { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 0 1 auto; }
+.ai-box-right { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
+
+/* 润色：本轮**去掉文字只留图标**，放在发送按钮左边（用户原话） */
+.ai-polish.is-icon {
+  width: 26px; height: 26px; padding: 0; gap: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 8px;
+}
+.ai-polish.is-icon .ic { width: 15px; height: 15px; }
+/* 发送按钮在框内下排。
+   ⚠️ 本轮修复（任务 6）：用户报「发送按钮被拉伸成长方形」。
+   根因：旧规则写了 width:46px / height:26px —— 那就是个长方形（不是被 flex 拉伸，
+   是尺寸本身 46×26），is-stop 态又变 26 宽，两个状态形状还在跳。
+   治法：**aspect-ratio: 1/1 + 显式等高宽 + flex: none + align-self: center**，
+   并压掉 .ai-box-bar 这一排里任何拉伸（父级 align-items 已经是 center，
+   flex:0 0 auto 防止被当 grow item 撑宽）。不写卡片级宽高（虚拟列表规则只关卡片，
+   这里是按钮本体，允许钉尺寸）。 */
+.ai-box .ai-send {
+  width: 26px; height: 26px;
+  aspect-ratio: 1 / 1;
+  flex: none;
+  align-self: center;
+}
+.ai-box .ai-send.is-stop { width: 26px; }
+.ai-box .ai-send .ic { width: 14px; height: 14px; }
+
+/* 模型切换胶囊（图标本轮换成 #i-model 立方体，见 icons.js） */
+.ai-model-wrap { position: relative; display: inline-flex; min-width: 0; }
+.ai-model-chip {
+  display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 8px;
+  border: 1px solid var(--card-border); border-radius: 999px; background: transparent;
+  color: var(--text-dim); font-size: 11px; cursor: pointer; max-width: 220px; min-width: 0;
+  transition: color 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+.ai-model-chip:hover { color: var(--text); border-color: var(--accent); background: var(--hover); }
+.ai-model-chip .ai-model-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+/* ⚠️ 本轮需求（用户原话）：「模型切换ui的内部text最右侧的那个展开或关闭图标
+   那个切换状态要有动画」。
+   旧做法是**换 symbol**（`<use href>` 在 chevron_down ⇄ chevron_up 之间切）——
+   那是替换节点内容，浏览器**无法**对"换掉的东西"补间，所以只能是硬切。
+   正确做法（index.html 两处胶囊已配套改成单一 chevron_down + :class 绑定）：
+   图标本体不变，展开时给它 `rotate(180deg)` —— 可动画的是**变换属性**，
+   down 转 180° 后形状本身就等于 up，视觉结果和旧的两张图完全一致，
+   却多了一段顺滑的翻转。关动效档下面单独降级为瞬时。 */
+.ai-model-chip .ai-model-caret {
+  flex: 0 0 auto; opacity: .7;
+  transition: transform 180ms cubic-bezier(.2, .8, .3, 1), opacity 120ms ease;
+}
+.ai-model-chip .ai-model-caret.is-open { transform: rotate(180deg); opacity: 1; }
+:root[data-motion="off"] .ai-model-chip .ai-model-caret { transition: none; }
+.ai-model-pop {
+  position: absolute; left: 0; bottom: calc(100% + 6px); z-index: 30;
+  min-width: 240px; max-width: 320px; max-height: 360px;
+  /* 本轮改造（任务 1）：弹层两层结构 —— **只有模型列表滚动**，
+     底部思考区固定在弹层内不跟着滚（flex 列 + 滚动限制在 .ai-model-scroll 容器）。
+     overflow 从整块移到滚动容器上，思考 dock 因此"位置不随滚动移动"。 */
+  display: flex; flex-direction: column; overflow: hidden;
+  padding: 6px; border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--accent) 26%, var(--glass-border));
+  background: color-mix(in srgb, var(--card-solid) 92%, transparent);
+  backdrop-filter: blur(12px) saturate(125%); -webkit-backdrop-filter: blur(12px) saturate(125%);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, .34);
+}
+/* 上半：模型列表（provider 分组 + 条目），**只有这一层可滚动** */
+.ai-model-scroll {
+  flex: 0 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+}
+/* 下半：思考区（固定在底部）。
+   ⚠️ 本轮（用户原话「思考ui已经有了一个分割线，上面模型最下面一个不需要再有一个分割线了」）：
+      分割线**只留这一条**（模型列表与思考区之间）。
+      下面 .ai-model-group + .ai-model-group 那条"服务商分组之间"的分隔线删掉
+      （两组 Key 都在时，最后一条模型下面 + dock 上面会挨着出现两条，观感就是"重复分割线"）。
+      dock 自身的 border-top 保留 = 用户认可的那一条。 */
+.ai-think-dock {
+  flex: 0 0 auto; margin-top: 4px; padding: 6px 6px 4px;
+  border-top: 1px solid var(--card-border);
+  display: flex; flex-direction: column; gap: 6px;
+  outline: none; border-radius: 0 0 8px 8px;
+}
+.ai-think-dock:focus-visible { box-shadow: inset 0 0 0 2px var(--accent-soft); }
+.ai-think-dock-head { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--text-dim); }
+.ai-think-dock-label { flex: 0 0 auto; }
+/* 「思考」右侧实时显示当前强度名（官方 label） */
+.ai-think-dock-state {
+  flex: 0 0 auto; color: var(--accent); font-weight: 600;
+  max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* Codex 风格分段滑块：轨道 + 档位刻度 + 滑块头（圆形，位置按档位比例，transition 跟手）。
+   ⚠️ 本轮（用户原话「滑动条的高长再长一点」）：整条高度 18 → 26px、
+   轨道 inset 6px → 8px，填充条与 thumb 一起变粗；档位逻辑/结构一字未动。
+   ⚠️ 本轮（用户原话「圆点要在那个ui里面条的右侧尽头处 而不是在条的中央位置，
+      还有如果是关闭状态ui这个圆应该在最左侧尽头处 条完全不露出来」）：
+      · thumb 圆心现在与填充条**右端**重合（JS: left = 100%*at/(n-1)），
+        0% / 100% 时圆心正好压在轨道两端 → 不加内边距的话半个圆会露到控件外面；
+      · 所以 .ai-think-seg 左右各留 9px（= 圆半径 18/2），轨道用 left/right:9px 让出这段，
+        圆完整可见，且**轨道两端与圆的两个极限位置严格对齐**；
+      · ⚠️ 不能再用 `inset: 8px 0`（左右 0）—— 那是"轨道铺满整个容器"的老几何，
+        和新的圆点定位（圆心压 0%/100%）配不上。 */
+.ai-think-seg { position: relative; height: 26px; padding: 0 9px; }
+.ai-think-seg-rail {
+  position: absolute; left: 9px; right: 9px; top: 8px; bottom: 8px; border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 16%, transparent);
+  cursor: pointer; touch-action: none;      /* 拖动期间不让浏览器抢走指针做滚动 */
+}
+/* 进度填充条（= 圆点左侧那一段）：**蓝紫渐变 + 内部细小白色星光粒子**。
+   · 渐变走主题变量（--ball-a/--ball-b 就是程序图标那对蓝紫），深浅主题自动跟上；
+   · 星光是多层 radial-gradient 白点（纯 CSS，无图片资源、无额外 DOM 节点）；
+   · ⚠️ 本轮（用户原话「粒子效果太少了太不密集而且间隔出现时长太长了 而且思考等级越高的
+       速度越快粒子越多越密集」）：
+       ① 星点 7 → **18 个**，尺寸 0.7~1.6px 混排、位置刻意疏密不均（不是等距排）；
+       ② 动画基准 thinkStarDrift 9s → **3.2s**、thinkStarTwinkle 2.6s → **1.1s**；
+       ③ 时长/密度改由变量驱动（绑定在 .ai-think-seg 上，由 aiThinkSparkStyle 按当前档位给）：
+          --think-spark-speed（越高档越小 = 越快）、--think-spark-density（越高档越大 = 越密）；
+       ④ 密度**只作用在粒子层**（.ai-think-seg-fill::after），渐变底保持不透明：
+          off 档 density=0 → 星光完全不可见（此时填充宽度本来就是 0%，整体也不可见）；
+          低档 density≈0.35 仍看得见少量星点，越高越亮越密；
+       ⑤ :root[data-motion="off"] 里关掉动画（保留静态粒子）。
+   · ⚠️ 为什么把粒子放 ::after 而不是直接用多层 background：
+       opacity 作用在元素上会连渐变底一起变淡（低档位时整条看着"发灰/没上色"）。
+       ::after 是伪元素、不算额外 DOM 层，正好把"密度"限定在星光上，渐变永远实心。
+   · 圆点位置与这里宽度同公式（见 aiThinkFillStyle / aiThinkSegHeadStyle），圆永远压在条右端。 */
+.ai-think-seg-fill {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: 0;                                   /* 实际宽度由 aiThinkFillStyle 给（百分比） */
+  border-radius: 999px;
+  overflow: hidden;
+  background: linear-gradient(90deg, var(--ball-a), var(--ball-b));
+  transition: width 160ms cubic-bezier(.2, .8, .3, 1);
+  pointer-events: none;
+}
+/* ===========================================================================
+ * ⚠️⚠️ 本轮需求（用户原话）：「模型选择 ui 的思考 ui 条为 1 段时里面要是这个里面的
+ *   **蓝色**，**其他颜色都不要了**，还有**粒子效果也消失**。
+ *   其他除思考强度大于等级 1 的 ui 状态**不用更改**」
+ *   → "1 段" = 这个模型官方没有可选档位（只有 off / 不支持思考），
+ *     这条 UI 已经没有任何可滑动的东西，只剩一个状态指示。
+ *   做三件事（**全部限定在 .is-single 之下**，多档位那条一个字节都没改）：
+ *     ① 填充改成**纯强调蓝**（--accent），不要蓝紫渐变（--ball-a/--ball-b 都不要）；
+ *     ② 粒子层 opacity = 0，两个动画一起关掉（否则静态星点还会留在那儿）；
+ *     ③ 中间刻度小圆点不画（aiThinkNotches 本来就已经是空数组，这里再兜一层，
+ *        免得后端哪天给了 1 档又给了 notch 数据）。
+ *   圆头（thumb）保留：单段时它就是"这一个状态"的指示点，位置贴在最右端。 */
+.ai-think-seg.is-single .ai-think-seg-fill {
+  background: var(--accent);
+}
+.ai-think-seg.is-single .ai-think-seg-fill::after {
+  opacity: 0;
+  animation: none;
+}
+.ai-think-seg.is-single .ai-think-seg-notch { display: none; }
+/* 星光粒子层（伪元素：不是 DOM 节点，不改模板结构）。
+   ⚠️ 本轮修复（用户原话「思考强度ui那个粒子效果中间有断层 中间有一段没有粒子效果的bug」）：
+   旧实现把 18 颗星的 x 写在 5%~98%，同时 background-size: 180% 100%。
+   而 CSS 百分比停止点是相对**图片盒子**（= background-size 的 180% 宽）计算的，
+   元素可见宽度只有图片的 1/1.8 ≈ 55.6%：
+   · x ≥ 56% 的那几颗星实际画在元素右侧之外，直接被 overflow:hidden 裁掉；
+   · 位移动画又把整层从 0% 一路推到 180%，中段必然出现"所有星点都滑出可视区"的帧
+     —— 这就是用户看到的"中间一段没有粒子"的断层。
+   新实现没有选"写两遍 18 层 gradient、两套各偏移 50%"，而是用**同一组星点横向平铺**：
+   · background-size 用**固定像素周期** + repeat-x → 一组星点按同一周期横铺，
+     可见区全程被整数个周期覆盖（本轮起周期不再用百分比，理由见下面 ::after 那段）；
+   · 动画位移 = **恰好一个平铺周期** → 无缝循环，
+     可视区任意时刻都被整数个平铺周期覆盖，**永远不会有空窗帧**（断层从几何上不可能出现，
+     而不是"碰巧每帧都有星"）；
+   · gradient 里的 x% 现在是"单个平铺块（= 元素宽的一半）"内的相对位置，
+     平铺后等效落在元素宽度的 x/2 % 与 x/2 + 50 % 两处，疏密不均的排布因此翻倍保留。 */
+.ai-think-seg-fill::after {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  background:
+    /* 星光粒子 18 颗（≥18，不减）：尺寸 0.7~1.6px 混排，x 刻意疏密不均（不是等距排）。
+       x% 是平铺块内的相对位置，见上面 background-size 的说明。 */
+    radial-gradient(circle 1.4px at 5% 38%, rgba(255, 255, 255, .96) 0 55%, transparent 60%),
+    radial-gradient(circle 0.8px at 12% 72%, rgba(255, 255, 255, .72) 0 55%, transparent 60%),
+    radial-gradient(circle 1.0px at 17% 22%, rgba(255, 255, 255, .84) 0 55%, transparent 60%),
+    radial-gradient(circle 1.6px at 24% 58%, rgba(255, 255, 255, .98) 0 55%, transparent 60%),
+    radial-gradient(circle 0.7px at 29% 30%, rgba(255, 255, 255, .66) 0 55%, transparent 60%),
+    radial-gradient(circle 1.2px at 34% 82%, rgba(255, 255, 255, .90) 0 55%, transparent 60%),
+    radial-gradient(circle 0.9px at 40% 46%, rgba(255, 255, 255, .78) 0 55%, transparent 60%),
+    radial-gradient(circle 1.5px at 47% 18%, rgba(255, 255, 255, .96) 0 55%, transparent 60%),
+    radial-gradient(circle 0.7px at 52% 68%, rgba(255, 255, 255, .64) 0 55%, transparent 60%),
+    radial-gradient(circle 1.1px at 58% 34%, rgba(255, 255, 255, .86) 0 55%, transparent 60%),
+    radial-gradient(circle 1.3px at 63% 76%, rgba(255, 255, 255, .94) 0 55%, transparent 60%),
+    radial-gradient(circle 0.8px at 68% 50%, rgba(255, 255, 255, .70) 0 55%, transparent 60%),
+    radial-gradient(circle 1.6px at 74% 24%, rgba(255, 255, 255, .98) 0 55%, transparent 60%),
+    radial-gradient(circle 0.9px at 79% 64%, rgba(255, 255, 255, .76) 0 55%, transparent 60%),
+    radial-gradient(circle 1.2px at 84% 40%, rgba(255, 255, 255, .90) 0 55%, transparent 60%),
+    radial-gradient(circle 0.7px at 89% 78%, rgba(255, 255, 255, .62) 0 55%, transparent 60%),
+    radial-gradient(circle 1.5px at 94% 30%, rgba(255, 255, 255, .96) 0 55%, transparent 60%),
+    radial-gradient(circle 1.0px at 98% 60%, rgba(255, 255, 255, .82) 0 55%, transparent 60%);
+  /* ⚠️⚠️⚠️ 本轮需求（用户原话）：「确保**所有**思考强度 ui 里面的粒子效果密度
+     和**满级**思考强度的密集程度一致」。
+     旧写法 `background-size: 50% 100%` 里的 50% 是**相对这颗填充条自己的宽度**算的 ——
+     而填充条宽度跟着档位变（1 档时很窄、满档时铺满轨道）！
+       · 低档位：条窄 → 平铺块窄 → 同样的 18 颗星挤在很小一段里 = **反而更密**；
+       · 满档位：条宽 → 平铺块宽 = **每像素星点最少**。
+     也就是说旧实现**从头到尾就和用户要的相反**（越高档越稀）。
+     ⇒ 密度要"处处等于满档"，唯一正确的做法是让平铺块**用绝对像素**、
+       不再跟着条宽伸缩：`SPARK_TILE_PX` 一颗周期 = 满档时那条的一半宽。
+       这样"每像素几颗星"就是一个和档位无关的常量。
+     ⚠️ 配套的位移量必须跟着换成**同一个像素值**（见 thinkStarDrift）：
+       平移一个整周期才能无缝循环，用百分比会在固定像素尺寸下错位。 */
+  background-size: 72px 100%;
+  background-repeat: repeat-x;
+  /* 粒子"密度"：本轮起**不再按档位递增**（用户要的是一致），一律取满档的值 = 1。
+     仍保留两个必须为 0 的场景（见 aiThinkSparkStyle）：off 档、只有一段（不支持思考）。 */
+  opacity: var(--think-spark-density, 1);
+  animation:
+    thinkStarDrift var(--think-spark-speed, 3.2s) linear infinite,
+    /* 呼吸节奏跟着漂移一起加速：基准 3.2 * .1875 + .5 = **1.1s**（需求给的基准），
+       最快档 0.55s → 0.60s；用"加法 + 乘法"而不是 max()，避免老 WebView2
+       对 max() 里混单位支持不一致，同时天然留了 0.5s 下限。 */
+    thinkStarTwinkle calc(.5s + var(--think-spark-speed, 3.2s) * .1875) ease-in-out infinite alternate;
+  transition: opacity 200ms ease;
+  pointer-events: none;
+}
+/* 星点漂移：只动粒子层，渐变底不动，观感是"星光在蓝紫里快速流动"。
+   ⚠️⚠️⚠️ 几何沿革（**改这里必须连 background-size 一起想**，三轮需求都长在这一对值上）：
+     · 断层那轮：旧版给 18 层各写 background-position，还配 `background-size: 180%`——
+       百分比停止点按**图片盒**算，可见区只覆盖图片的 55.6%，
+       x≥56% 的星点画在元素外被 overflow 裁掉，位移到中段出现"所有星点都滑出可视区"的
+       空窗帧 = 用户报的"中间一段没有粒子"。
+     · 方向那轮（「你把粒子效果弄反了应该是从右往左」）：改成 `50% 100%` 平铺 +
+       `100% → 0%` 位移。`background-position` 的百分比含义是"pos 越大图案越往左偏"，
+       所以那组值是**从右往左**，且起止差恰好一个平铺周期 → 无缝。
+     · **本轮（密度）**：位移量换成固定 **72px**，因为平铺块也换成了绝对像素
+       （理由见 `.ai-think-seg-fill::after`：百分比尺寸会跟着填充条宽度伸缩，
+        导致"每像素星点数"随档位变，和"各档密度一致"直接冲突）。
+       平铺块一旦是固定像素，百分比位移就再也对不上周期了 ——
+       百分比是相对 `(元素宽 − 图片宽)` 算的，元素宽跟着档位变，
+       一个周期到底多少像素**根本不确定** → 循环处必跳。
+       所以：平移量 = 一个整周期 = **-72px**；取负号 = 图案向左 = 从右往左（方向不变）。
+     ⚠️ 将来谁再动 background-size，必须同步动这里的位移量，两者必须严格相等。 */
+/* 星点漂移：只动粒子层，渐变底不动，观感是"星光在蓝紫里快速流动"。
+   ⚠️⚠️ 本轮（密度需求）配套改动：**位移量从百分比换成固定 72px**。
+     · 平铺块现在是 `background-size: 72px 100%`（绝对像素，见上面 `.ai-think-seg-fill::after`），
+       再写百分比就会和周期脱钩 —— 百分比定位是相对 **(元素宽 − 图片宽)** 算的，
+       元素宽（= 填充条宽）跟着档位变，一个周期到底是多少像素**根本对不上**，
+       循环处必然突跳。
+     · 平移量正好等于**一个平铺周期 72px** → 终点画面与起点逐像素相同，无缝循环。
+     · 方向：`0 → -72px` 让图案整体往左走 = **从右往左**（上一轮的需求保持不变）。
+       旧写法 `100% → 0%` 之所以是右往左，是因为百分比定位在"图片比元素窄"时
+       的含义是反的；现在改成像素量后必须显式取负，别顺手改回正数（方向会反）。 */
+@keyframes thinkStarDrift {
+  from { background-position: 0px 0%; }
+  to   { background-position: -72px 0%; }
+}
+@keyframes thinkStarTwinkle {
+  from { filter: brightness(1) saturate(1); }
+  to { filter: brightness(1.18) saturate(1.12); }
+}
+/* 关动效档：粒子停在原位、不闪（结构/颜色/密度都不变，只是静止）。
+   ⚠️ animations.css 里已有一条全局 `data-motion="off"` 关动画规则，这里显式再写一遍
+      是为了让"本组件自身的动效开关"不依赖全局样式的加载顺序。 */
+:root[data-motion="off"] .ai-think-seg-fill::after { animation: none; }
+/* 档位刻度：从"格边界"改成"档位点"（第 i 个 = 100%*i/(n-1)，首尾不画见 v-show）。
+   ⚠️ 旧公式是 100%*(i+1)/n（格边界）—— 换成"圆点落在档位点上"的几何后，
+      格边界和档位点不再重合（n=4 时第一格边界在 25%，而 low 档位点在 33.3%），
+      刻度留在老位置就会和圆点错位。 */
+/* 档位刻度 = **小圆点**（本轮需求原话：「中间那些节点搞成小圆点」）。
+   ⚠️ 旧形态是 1px 宽的竖线（top:3px/bottom:3px 拉满轨道高度）—— 那不是"圆点"。
+   现在：5px 正圆、垂直居中、位置仍是 `left = 100% * i / (n-1)`（与档位点严格重合，
+   translateX(-50%) 让**圆心**压住那个点，和滑块头用的是同一套坐标）。
+   画哪几个（只含中间档 / 推到最右全隐）由 app.js 的 aiThinkNotches 决定，
+   这里只负责"长什么样"，不负责"画不画"。 */
+.ai-think-seg-notch {
+  position: absolute; top: 50%;
+  width: 5px; height: 5px; margin-top: -2.5px; margin-left: 0;
+  border-radius: 50%;
+  transform: translateX(-50%);
+  background: color-mix(in srgb, var(--card-solid) 78%, transparent);
+  z-index: 2;                                  /* 压在填充条上面，圆点才看得见 */
+  pointer-events: none;                        /* 别抢轨道的按下/拖动 */
+}
+/* ⚠️ 滑块头 = **较大的纯白色正圆形**（尺寸 18px）。
+   · 圆形 = width 与 height 相等 + border-radius 50%；
+   · 纯白：不跟随档位/主题变色（浅色主题下靠描边+阴影才看得清）；
+   · 位置：JS 给 `left: 100% * at / (n-1)`（与本条填充宽度**同一公式**），
+     靠下面这条 `transform: translateX(-50%)` 让**圆心压住该点** ——
+     于是 at=0 圆心在轨道最左（圆贴左边缘、条宽度 0 完全不可见），
+     at=n-1 圆心在轨道最右（圆贴右边缘），中间档位圆永远压在填充条右端。 */
+/* ⚠️ 本轮需求（用户原话）：「圆点ui有个周围的光圈应该在鼠标放上这个圆点ui才会触发，
+   平时就是普通的圆点ui」—— 旧写法把 `0 0 0 3px accent` 那圈光环**常驻**在 box-shadow 里，
+   所以任何时候看着都带光圈。现在：
+     · 平时：只留投影（那个 0 1px 4px），干干净净一个白圆点；
+     · 悬停/键盘聚焦/拖动中：才亮出主色光环。
+   注意 `:focus-visible` 也保留 —— 键盘 Tab 到思考控件时必须有焦点指示（无障碍），
+   这条不属于"平时就有光圈"，去掉会让键盘用户完全看不见焦点。 */
+.ai-think-seg-thumb {
+  position: absolute; top: 50%;
+  width: 18px; height: 18px; margin-top: -9px;
+  border-radius: 50%;
+  /* 定位：JS 给的是"档位点"百分比，靠 translateX(-50%) 让圆心压住那个点 */
+  transform: translateX(-50%);
+  background: #fff;
+  border: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .38);
+  transition: left 160ms cubic-bezier(.2, .8, .3, 1), box-shadow 140ms ease;
+  z-index: 3;
+}
+/* 悬停圆点本体 → 亮光环 */
+.ai-think-seg-thumb:hover,
+/* 悬停整条轨道（按下拖动时指针也在轨道里，所以拖动同样保持亮）→ 也亮：
+   只认圆点自己的 :hover 会有 1~2px 的"闪进闪出"，手感很差。 */
+.ai-think-seg-rail:hover .ai-think-seg-thumb,
+/* 键盘焦点：无障碍必须看得见（只在 focus-visible 下，鼠标点击不触发） */
+.ai-think-dock:focus-visible .ai-think-seg-thumb {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .38),
+              0 0 0 3px color-mix(in srgb, var(--accent) 26%, transparent);
+}
+/* 置灰但**保留占位**（有 Key、但当前模型不支持思考：只有单档）—— 弹层高度稳定。
+   ⚠️ 本轮 thumb 改成纯白色后，禁用态**不能再把圆染成灰色底**（纯白是这个控件的识别特征，
+      置灰靠整块的 opacity:.5 就够，用户原话只要"较大的纯白色正圆形"）。 */
+.ai-think-dock.is-disabled, .ai-think-seg.is-disabled { opacity: .5; }
+.ai-think-seg.is-disabled .ai-think-seg-rail { cursor: default; }
+.ai-think-seg.is-disabled .ai-think-seg-thumb { box-shadow: none; }
+/* ⚠️ 本轮（用户原话「思考ui已经有了一个分割线，上面模型最下面一个不需要再有一个分割线了」）：
+   服务商分组之间那条 border-top 删掉 —— 多组都有 Key 时，最后一组模型下面
+   和思考区上面会挨着出现两条发丝线，看着就是"重复分割线"。
+   分组仍然靠 group 标题 + 4px 间距区分，不靠线。 */
+.ai-model-group + .ai-model-group { margin-top: 4px; }
+.ai-model-group-label { margin: 4px 6px 2px; font-size: 10.5px; color: var(--text-disabled); }
+/* ⚠️ 本轮：对勾放在模型名**前面**，并且给它一条**固定宽度的空隙**（.ai-model-mark），
+   未选中时也占位 —— 否则选中/不选中会让模型名左右跳一下（用户说的"留点空隙确保对勾能放下"）。 */
+.ai-model-item {
+  display: flex; align-items: center; gap: 6px; width: 100%; height: 26px;
+  padding: 0 6px 0 2px;
+  border: 0; border-radius: 7px; background: transparent; color: var(--text-dim);
+  font-size: 12px; text-align: left; cursor: pointer;
+}
+.ai-model-mark {
+  flex: 0 0 18px; width: 18px; height: 18px; margin-left: 4px;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.ai-model-item:hover { background: var(--hover); color: var(--text); }
+.ai-model-item.is-on { color: var(--accent); }
+.ai-model-item .ai-model-item-name { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ai-model-badge {
+  flex: 0 0 auto; padding: 0 5px; border-radius: 999px; font-size: 10px;
+  color: var(--accent); background: var(--accent-soft);
+}
+.ai-model-empty { margin: 6px; font-size: 11.5px; color: var(--text-dim); line-height: 1.6; }
+.ai-model-link {
+  border: 0; background: none; padding: 0; color: var(--accent);
+  text-decoration: underline; cursor: pointer; font-size: 11.5px;
+}
+
+/* ===========================================================================
+ * · 思考滑块（本轮改造：输入框里的 .ai-think-slider / .ai-think-range 已删除，
+ *   思考区搬进模型弹层底部 —— 新样式见上面 .ai-think-dock / .ai-think-seg 段。
+ *   旧的 range 滑块 CSS（.ai-think-slider/.ai-think-range 共 40 行）作为死代码一并移除，
+ *   连占位和 tooltip 都不留（需求原话："输入框区域不再有任何思考 UI"）。
+ * ========================================================================*/
+
+/* @ 资源候选浮层：和 .ai-slash-hint 同一套语言，但**可滚动**（需求"可以滚动这个ui选择"） */
+.ai-at-pop {
+  position: absolute; left: 14px; right: 14px; bottom: calc(100% + 4px); z-index: 6;
+  max-height: 240px; display: flex; flex-direction: column;
+  border-radius: 10px; padding: 4px;
+  border: 1px solid color-mix(in srgb, var(--accent) 26%, var(--glass-border));
+  background: color-mix(in srgb, var(--card-solid) 92%, transparent);
+  backdrop-filter: blur(12px) saturate(125%); -webkit-backdrop-filter: blur(12px) saturate(125%);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, .32);
+}
+.ai-at-head { display: flex; align-items: center; gap: 8px; padding: 2px 6px 4px; font-size: 11px; }
+.ai-at-title { color: var(--accent); font-weight: 600; }
+.ai-at-tip { color: var(--text-disabled); font-size: 10.5px; }
+.ai-at-list { overflow-y: auto; max-height: 200px; }
+.ai-at-item {
+  display: flex; align-items: center; gap: 8px; width: 100%; height: 26px; padding: 0 6px;
+  border: 0; border-radius: 7px; background: transparent; color: var(--text-dim);
+  font-size: 12px; text-align: left; cursor: pointer;
+}
+.ai-at-item:hover, .ai-at-item.is-on { background: var(--hover); color: var(--text); }
+.ai-at-item.is-on { outline: 1px solid var(--accent); }
+.ai-at-code { flex: 0 0 auto; font-size: 10.5px; color: var(--text-disabled); }
+.ai-at-name { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* 气泡里的 @token / 蓝链：和输入框里的 .mention-token 同一套视觉（蓝字 + 下划线 + 可点）。
+   ⚠️ 用户报的"@ 内容发送后变为不可点击、无下划线"就是气泡侧只做了纯文本插值，
+      现在改成片段数组渲染（aiBubbleParts），这两类 span 的外观由本段负责。
+   ⚠️ 本轮（任务 7）补强：普通 http(s) 链接（link:'url'）也走 ai-inline-link ——
+      **蓝色 + 下划线 + hover 手型**，深浅两套都要够对比度：
+      --accent 跟着「组件配色」走（浅色 blue 档是青色 #009faa，白底上偏淡、
+      深紫档在浅底上更糊），所以这里另钉一组**专门给正文链接**的蓝：
+      深色档 = Fluent 亮链接蓝 #6e93ff；浅色档 = 深链接蓝 #0b66c3（对白卡 ≈5:1），
+      hover 再走一档。全部是 --ai-link 变量，主题切换自动跟上。 */
+:root { --ai-link: #6e93ff; --ai-link-hover: #86a6ff; }
+:root[data-theme="light"] { --ai-link: #0b66c3; --ai-link-hover: #0a4f97; }
+.bubble .ai-mention,
+.bubble .ai-inline-link {
+  color: var(--ai-link);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.bubble .ai-mention:hover,
+.bubble .ai-inline-link:hover {
+  color: var(--ai-link-hover);
+  text-decoration-thickness: 2px;   /* hover 明显一点，"可点"反馈更强 */
+}
+.bubble .ai-mention::selection, .bubble .ai-inline-link::selection {
+  background: color-mix(in srgb, var(--accent) 34%, transparent); color: var(--text);
+}
+/* 本轮（任务 5 + 本轮 F8）：用户气泡里开头的 slash 命令（/plugin 等）= 蓝色 token，
+   与输入框 .slash-token **完全同一个颜色变量**（用户原话：「输入/plugin是一个浅蓝色
+   但是发送出去是一个深蓝色的/plugin，你需要颜色一致」）。
+   ⚠️ 上一版这里写的是 `--ai-link`（那是专门给**正文链接**的固定蓝：
+      浅色 #0b66c3 / 深色 #6e93ff），而输入框的 .slash-token 用 `--accent`
+      （跟随「组件配色」）→ 同一个 /plugin 在输入框是浅蓝、发出去变深蓝。
+      现在两边都走 --accent：输入 = 发送后 同色，切主题也一起变。
+   蓝字 + 稍粗，**不带下划线**：它不是跳转链接。 */
+.bubble .ai-slash-cmd {
+  color: var(--accent);
+  font-weight: 600;
+  white-space: pre;                 /* 命令和后面参数之间的空格照常显示 */
+}
+
+/* 思考折叠块（DeepSeek 网页版那种：一行状态文字 + 展开/收起，正文在下面另起一块） */
+.ai-think {
+  margin: 0 0 8px; border-radius: 9px; overflow: hidden;
+  border: 1px solid var(--card-border);
+  background: color-mix(in srgb, var(--text) 5%, transparent);
+}
+.ai-think-head {
+  display: flex; align-items: center; gap: 6px; width: 100%; min-height: 26px;
+  padding: 4px 8px; border: 0; background: transparent; cursor: pointer;
+  color: var(--text-dim); font-size: 11.5px; text-align: left;
+}
+.ai-think-head:hover { color: var(--text); background: var(--hover); }
+.ai-think-head .ai-think-text { flex: 1 1 auto; }
+.ai-think-head .ai-think-caret { flex: 0 0 auto; opacity: .7; }
+.ai-think-body {
+  padding: 6px 10px 8px; font-size: 11.5px; line-height: 1.65; color: var(--text-dim);
+  white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word;
+  border-top: 1px dashed var(--card-border);
+  max-height: 220px; overflow-y: auto;
+}
+/* 流式中的思考：标题用强调色（不闪烁、不抢正文注意力） */
+.ai-think.is-streaming .ai-think-text { color: var(--accent); }
+
+/* AI 气泡右键菜单：完全复用 .card-menu 的外观，只把宽度收一点 */
+.ai-ctx-menu { min-width: 148px; }
+
+/* ===========================================================================
+ * · 本轮需求：「GCP-AI用户的聊天气泡不要是特殊的颜色，和AI聊天气泡一致颜色就ok」
+ *   原来 .bubble.is-user 用的是 AI 悬浮球那套渐变（--ball-a/--ball-b），
+ *   用户觉得那是"特殊颜色"，要和 AI 气泡一致。
+ *   ⚠️ 只改底色/描边，**保留右对齐 + 右下小圆角**这两个方向性线索
+ *      （不然用户会分不清谁说的）；文字仍是 --text，对比度不变。
+ *   ⚠️ 写在 ai-fixes.css（在 components.css 之后加载）而不是改 components.css：
+ *      后者本轮 cards-fe / settings-fe 都在动，同特异性后者胜，避免撞车。
+ * ========================================================================*/
+.bubble.is-user {
+  background: var(--card-solid);
+  border: 1px solid var(--card-border);
+  color: var(--text);
+}
+/* 玻璃/亚克力两档：AI 气泡是半透明卡片色，用户气泡必须跟着同一档，
+   否则会出现"一个糊一个实"的色差（components.css 里只给 .is-ai 写了这条）。 */
+:root[data-theme][data-fx="glass"] .bubble.is-user,
+:root[data-theme][data-fx="acrylic"] .bubble.is-user {
+  background: color-mix(in srgb, var(--card-solid) 88%, transparent);
+  backdrop-filter: blur(10px) saturate(125%);
+  -webkit-backdrop-filter: blur(10px) saturate(125%);
+}
+:root[data-fx="mica"] .bubble.is-user { backdrop-filter: none; -webkit-backdrop-filter: none; }
+
+/* ===========================================================================
+ * · 本轮需求：「用户编辑模式下聊天气泡会变为编辑模式的输入框状态
+ *   但是现在的反馈感不强 感觉还像是在聊天气泡内输入而不是输入框ui的反馈感」
+ *   → 编辑态要**一眼看出是"输入框"而不是"气泡"**：
+ *     ① 描边加粗成强调色 + 外发光（和输入框聚焦时同一套语言）；
+ *     ② 底色换成输入区色（比卡片底更"凹"），去掉气泡的投影；
+ *     ③ 圆角从气泡的 16 收到输入框的 10（形状语言也不同）；
+ *     ④ 光标/选区正常（textarea 原生就有）。
+ *   ⚠️ 尺寸保持是硬要求（上一轮需求"点编辑不要突然缩小或跳位"）：
+ *      宽高由 app.js 的 aiEditBoxStyle 按点击瞬间实测值给，这里**不写 width/height**，
+ *      只改颜色/描边/圆角这类不影响盒尺寸的东西（padding 也保持原值）。
+ * ========================================================================*/
+.bubble.ai-bubble-edit {
+  border: 1px solid var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+  background: var(--card-solid);
+  border-radius: 10px;
+  color: var(--text);
+  font-family: inherit;
+  caret-color: var(--accent);
+  /* textarea 自己的 resize 关掉（尺寸由 JS 实测保持，用户拖拽会破坏"尺寸保持"） */
+  resize: none;
+}
+.bubble.ai-bubble-edit:focus { outline: none; border-color: var(--accent-strong); }
+/* 编辑态不再画气泡的小尾巴圆角（那是气泡的方向性特征，输入框不该有） */
+.bubble.ai-bubble-edit.is-user { border-bottom-right-radius: 10px; }
+
+/* ===========================================================================
+ * · 本轮需求：「框选字体的款选颜色有点浅 再蓝一点」
+ *   输入框和气泡里的选区底色原来靠系统默认（深浅主题下都很淡）。
+ *   ⚠️ 只提高**不透明度**，色相仍用强调色，保证浅色主题下文字仍可读。
+ * ========================================================================*/
+.ai-embedded ::selection, .ai-drawer ::selection,
+.bubble ::selection, .ai-rich-input ::selection {
+  background: color-mix(in srgb, var(--accent) 46%, transparent);
+  color: var(--text);
+}
+:root[data-theme="light"] .ai-embedded ::selection,
+:root[data-theme="light"] .ai-drawer ::selection,
+:root[data-theme="light"] .bubble ::selection,
+:root[data-theme="light"] .ai-rich-input ::selection {
+  background: color-mix(in srgb, var(--accent) 34%, transparent);
+  color: var(--text);
+}
+
+
+/* ===========================================================================
+ * · 本轮需求：「未填写 API Key 的固定回复里那个 请填写<API Key> 要蓝色下划线可点，
+ *   点击跳转到设置中的 GCP-AI 位置（现在是不可点击、无下划线的普通字体）」
+ *   真根因不在气泡，而在 **toast**：语言包 ai_no_key_reply 三语都带着
+ *   `<a href="toolsgcp://api_key">API Key</a>` 这种 HTML 标签，而模板是
+ *   {{ toast.message }} 纯文本插值 → 尖括号原样显示、当然点不动。
+ *   语言包已去掉 HTML；这里负责把命中的字面量渲染成"看起来就能点"的样子。
+ *   ⚠️ 用 <button> 画链接（不是 span）：键盘 Tab 能到、Enter 能触发，
+ *      同时把 button 的默认外观清干净，视觉上仍然是"一行提示里的蓝字"。
+ * ========================================================================*/
+.toast-link {
+  border: 0; background: none; padding: 0; margin: 0; font: inherit;
+  color: var(--accent); text-decoration: underline;
+  text-underline-offset: 2px; cursor: pointer;
+}
+.toast-link:hover { color: var(--accent-strong); }
+.toast-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+/* 点击蓝字后弹出的两项小菜单（去填写 / 知道了）：复用 .card-menu 外壳，收紧尺寸 */
+.toast-link-menu { min-width: 148px; z-index: 140; }
+.toast-link-menu .card-menu-item { min-height: 24px; height: 24px; font-size: 11.5px; }
+
+/* ===========================================================================
+ * · 本轮需求：「右侧边悬浮窗口点击菜单中按钮会自动关闭侧边GCP-AI聊天窗bug修复」
+ *   抽屉的自动关闭是靠 document 上的 mousedown 委托（点在抽屉外就收）。
+ *   菜单（气泡右键 / 输入框右键 / 模型弹层）都是 teleport 或挂在 body 上，
+ *   DOM 位置在抽屉**外面** → 点菜单项被当成"点了外面"，抽屉顺手就关了。
+ *   ⚠️ 解法在 app.js：判断点击目标是否落在这些浮层里（closest），落在就不收。
+ *     这里只留一个钩子类给 JS 认（不改样式）。
+ * ========================================================================*/
+
+/* 抽屉里那一排更窄：允许换行，别让润色/发送被挤没
+   （旧 .ai-think-range 48px 一条随思考 UI 搬进弹层而删除；弹层宽度由 .ai-model-pop 自管） */
+.ai-drawer .ai-box-left { flex-wrap: wrap; }
+.ai-drawer .ai-model-chip { max-width: 150px; }
+
+/* ===========================================================================
+ * · 本轮需求：「GCP-AI右侧边悬浮窗不要是半透明的」
+ *   上一轮为了"材质联动"给抽屉在 glass/acrylic 两档做了半透明 + 背景模糊，
+ *   用户明确不要 —— 抽屉**任何材质档都必须完全不透明**。
+ *   ⚠️ 特异性必须压过 components.css 里那两条
+ *      `:root[data-theme][data-fx="glass"] .ai-drawer`（0,5,0）：
+ *      本文件在它之后加载，同样写 0,5,0 就后者胜（和 .ai-send 禁用态那处一个套路）。
+ *      只动 .ai-drawer 本体，不动 .ai-history（用户没提，保持原样）。
+ * ========================================================================*/
+:root[data-theme][data-fx="glass"] .ai-drawer,
+:root[data-theme][data-fx="acrylic"] .ai-drawer {
+  background: var(--card-solid);
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+:root[data-theme="light"][data-fx="glass"] .ai-drawer,
+:root[data-theme="light"][data-fx="acrylic"] .ai-drawer { background: #ffffff; }
+
+/* ===========================================================================
+ * · 本轮需求（用户原话）：「右侧栏的AI窗口的左上角和左下角稍微圆润一点点就行」
+ *   抽屉是**贴屏幕右边缘**的固定栏（top/right/bottom 都到边），所以只有**左侧两个角**
+ *   该圆：右上/右下改了会在屏幕右边露出缺口，反而更怪。
+ *   半径取 10px（"稍微一点点"）：再大就会和标题栏/窗口圆角打架、也显得整块浮起来了。
+ *   ⚠️ 只加新规则、不改 components.css 里 .ai-drawer 的其它属性
+ *      （本文件在它之后加载，同特异性后者胜，和上面半透明那处一个套路）。
+ * ========================================================================*/
+.ai-drawer {
+  border-top-left-radius: 10px;
+  border-bottom-left-radius: 10px;
+  overflow: hidden;        /* 圆角要有裁剪，否则内部 .ai-head 的底色会从角上漏出来 */
+}
+
+/* 玻璃/亚克力档：新浮层跟着半透明（和 .ai-slash-hint 同一口径） */
+:root[data-theme][data-fx="glass"] .ai-model-pop,
+:root[data-theme][data-fx="acrylic"] .ai-model-pop,
+:root[data-theme][data-fx="glass"] .ai-at-pop,
+:root[data-theme][data-fx="acrylic"] .ai-at-pop {
+  background: color-mix(in srgb, var(--card-solid) 78%, transparent);
+}
+/* 云母档不做模糊（全站约定：mica 几乎不糊） */
+:root[data-fx="mica"] .ai-model-pop,
+:root[data-fx="mica"] .ai-at-pop { backdrop-filter: none; -webkit-backdrop-filter: none; }
+/* ===========================================================================
+ * · 本轮需求（任务 2）：「当页面不是最底部时对话框上面也是页面的右小角有一个按钮
+ *   是圆形 里面有个朝下的图标很像V的那个图标，普通状态就这样，如果是正在输出的时候
+ *   他的边框还会有一个在轮廓围绕转圈的发淡淡的光圈」
+ * -------------------------------------------------------------------------
+ * 结构：<button.ai-back-bottom> 被挂在 .ai-input-row 里（它本身 position:relative），
+ *   用 bottom:calc(100% + 8px) 抬到输入框正上方 —— 也就是"AI 聊天区的右下角"。
+ *   ⚠️ 为什么不直接放进 .ai-messages 里 absolute：
+ *      ① .ai-messages 是滚动容器，里面 absolute 的按钮会**跟着内容一起滚**（回到底部按钮
+ *         往上翻的时候正好滚出视野，等于废掉）；
+ *      ② 塞进 .ai-messages 还会被 flex column + gap:16px 当成一个子项占位，
+ *         按钮出现/消失会把整段聊天内容顶来顶去。
+ *      挂在输入行里两个问题都没有：它相对输入行定位，不参与消息布局。
+ * 尺寸：34px 圆形（用户说"圆形"、直径约 34px），图标用 #i-chevron_down（那个 V 形）。
+ * 配色：底色 --card-solid + 描边 --card-border，图标 --text —— 深浅主题都跟主题走；
+ *   悬停时描边换成 --accent，给"能点"的反馈。
+ * ========================================================================*/
+.ai-back-bottom {
+  position: absolute;
+  right: 16px;
+  bottom: calc(100% + 8px);      /* 抬到输入行**上方**，视觉上压在聊天区右下角 */
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid var(--card-border);
+  background: var(--card-solid);
+  color: var(--text);
+  cursor: pointer;
+  z-index: 7;                    /* 高于 .ai-slash-hint(4) / .ai-at-pop(6)，别被提示条盖住 */
+  padding: 0;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .28);
+  transition: border-color 140ms ease, color 140ms ease, transform 140ms ease;
+  /* ⚠️ 按钮本体不可选、不可拖选 —— 它就是个控件，不该被框选（和任务 5 同一套口径） */
+  user-select: none;
+  -webkit-user-select: none;
+}
+.ai-back-bottom:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  transform: translateY(-1px);
+}
+.ai-back-bottom:active { transform: translateY(0) scale(.96); }
+.ai-back-bottom .ic { stroke-width: 2; }
+/* 浅色主题：卡片底已经很白，描边和投影各压一档，按钮不会糊成一片 */
+:root[data-theme="light"] .ai-back-bottom {
+  border-color: color-mix(in srgb, var(--card-border) 78%, var(--accent));
+  box-shadow: 0 4px 14px rgba(15, 23, 42, .16);
+}
+/* 玻璃 / 亚克力档：跟着半透明（和 .ai-slash-hint 同一口径，别做成一块实心白板） */
+:root[data-theme][data-fx="glass"] .ai-back-bottom,
+:root[data-theme][data-fx="acrylic"] .ai-back-bottom {
+  background: color-mix(in srgb, var(--card-solid) 82%, transparent);
+  backdrop-filter: blur(9px) saturate(125%);
+  -webkit-backdrop-filter: blur(9px) saturate(125%);
+}
+:root[data-fx="mica"] .ai-back-bottom {
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+  background: var(--card-solid);
+}
+
+/* ---------------------------------------------------------------------------
+ * 正在输出时：**外轮廓**上有一圈淡淡的光绕着转（不是填充、不是内部亮）
+ * -------------------------------------------------------------------------
+ * 做法：::before 画一个比按钮大 6px 的环 —— 用 conic-gradient 做"渐变弧"，
+ *   再用 mask 把中间**挖空**（exclude 合成）→ 只剩一圈**环带**，旋转起来就是
+ *   "轮廓在转圈"的观感。
+ * ⚠️ 只转 ::before（GPU 合成层），不碰按钮本体/图标，所以文字和 V 形箭头永远正着。
+ * ⚠️ 用 mask 而不是 border：border 只能整圈同色、转起来看不出方向；
+ *   conic-gradient 才有一头亮一头暗的"光在流动"感。
+ * ⚠️ 关动画（:root[data-motion="off"]）→ 静态显示、不旋转（用户明确要求）。
+ * -------------------------------------------------------------------------*/
+.ai-back-bottom.is-streaming::before {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  padding: 3px;                  /* 环带宽度 = 3px（"淡淡的光圈"，不能太粗） */
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    color-mix(in srgb, var(--accent) 0%, transparent) 40deg,
+    color-mix(in srgb, var(--accent) 78%, transparent) 150deg,
+    color-mix(in srgb, var(--accent) 10%, transparent) 250deg,
+    transparent 360deg);
+  /* 标准 + WebView2(Chromium) 前缀两套都写，老内核退回"整圈淡光"也能看 */
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  -webkit-mask-composite: xor;
+  pointer-events: none;
+  animation: aiBackBottomSpin 1.6s linear infinite;
+  z-index: 1;
+}
+/* 主弧之外再补一层很淡的静态外发光，输出时按钮"在呼吸"的感觉更明显 */
+.ai-back-bottom.is-streaming {
+  border-color: color-mix(in srgb, var(--accent) 52%, var(--card-border));
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .28),
+              0 0 12px color-mix(in srgb, var(--accent) 26%, transparent);
+}
+:root[data-theme="light"] .ai-back-bottom.is-streaming {
+  box-shadow: 0 4px 14px rgba(15, 23, 42, .16),
+              0 0 12px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+@keyframes aiBackBottomSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+/* 关闭动画：静态显示那圈光（仍然能看出"正在输出"，只是不转） */
+:root[data-motion="off"] .ai-back-bottom.is-streaming::before { animation: none; }
+/* 减少动画：转得慢一点，但仍然保留"在输出"的视觉线索 */
+:root[data-motion="reduced"] .ai-back-bottom.is-streaming::before { animation-duration: 3.2s; }
+
+/* ===========================================================================
+ * · 本轮需求（任务 5）：「快速点击思考展开或关闭ui会把所有字体框选这个我不要，
+ *   因为这个ui并不属于可框选文本部分」
+ * -------------------------------------------------------------------------
+ * 根因：连点两下在浏览器里就是一次"双击" → 触发多击选词，选区会从按钮蔓延到
+ *   整个气泡正文。**只要思考块头部不可选**，多击选词就没有落点，正文就不会被选中。
+ * ⚠️⚠️ 边界必须划清（任务 6 的硬要求）：
+ *   · .ai-think-head（标题/状态文字/箭头）→ user-select: none（不可选、不可复制）；
+ *   · .ai-think-body（**思考正文**）→ 显式 user-select: text（必须能选中、能复制、能三击选段）。
+ *   父级 .bubble 在 components.css 里是 user-select:text，本来就不会拦；
+ *   这里把两边都显式钉死，将来谁动了祖先也不会互相串。
+ * ========================================================================*/
+.ai-think-head,
+.ai-think-head *,
+.ai-think-head .ai-think-text {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.ai-think-body,
+.ai-think-body * {
+  user-select: text;
+  -webkit-user-select: text;
+}
+/* 双击/三击选中范围仍然只在自己那块里：思考正文与正文是两个独立块元素，
+   中间没有共同的可选行内容器，浏览器的原生多击选词不会跨过块边界。 */
+
+/* ===========================================================================
+ * · 本轮需求（任务 7）：「框选文字内容在浅色主题下框选为淡蓝色不易看到，
+ *   稍微加深一点和GCP-AI中框选的那个颜色要一致」
+ * -------------------------------------------------------------------------
+ * 现状（grep 结果）：
+ *   · base.css:43            ::selection { background: var(--accent-soft) }  —— 全局，很淡；
+ *   · ai-fixes.css:738-743   [data-theme="light"] 下 AI 面板内是 accent 34%。
+ * 用户要的是"**全站**浅色主题的框选都加深到 GCP-AI 那一档"（= accent 34% 那一族），
+ * 所以这里在文件末尾用更靠后的同/更高特异性把全局那条在浅色主题下**覆盖**掉，
+ * 并且把 AI 面板内再统一成同一个色值 —— 两处看起来**必须一模一样**。
+ * ⚠️ 不改 base.css / components.css（那两份有别的成员在动）；ai-fixes.css 最后加载，
+ *    `:root[data-theme="light"] ::selection` 特异性(0,2,0) 压过 base.css 的 ::selection(0,1,0)。
+ * ⚠️ 加深但别过头：34% → 44%，文字仍用 --text 保证对比度。
+ * ========================================================================*/
+:root[data-theme="light"] ::selection {
+  background: color-mix(in srgb, var(--accent) 44%, transparent);
+  color: var(--text);
+}
+/* AI 面板内（气泡 / 输入框 / 思考正文）与上面**完全同色**，不再各写一档 */
+:root[data-theme="light"] .ai-embedded ::selection,
+:root[data-theme="light"] .ai-drawer ::selection,
+:root[data-theme="light"] .bubble ::selection,
+:root[data-theme="light"] .ai-rich-input ::selection,
+:root[data-theme="light"] .ai-think-body ::selection {
+  background: color-mix(in srgb, var(--accent) 44%, transparent);
+  color: var(--text);
+}
+/* 链接/mention token 的选区跟同一档（原来那组是 34%，浅色下比周围还浅，看着像"缺一块"） */
+:root[data-theme="light"] .bubble .ai-mention::selection,
+:root[data-theme="light"] .bubble .ai-inline-link::selection {
+  background: color-mix(in srgb, var(--accent) 44%, transparent);
+  color: var(--text);
+}

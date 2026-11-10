@@ -1,0 +1,446 @@
+/* ============================================================================
+ * ToolsGCP · 覆盖层与弹层
+ * ============================================================================*/
+
+/* ===================== 托盘菜单（PyQt TrayMenu 同款：圆角 12 / padding 6 / 行高 30 / 图标 14） =====================*/
+.tray-menu {
+  position: fixed; z-index: 200; width: 168px; padding: 6px; display: flex; flex-direction: column; gap: 1px;
+  border-radius: 12px; border: 1px solid rgba(255, 255, 255, .10);
+  background: rgba(43, 43, 43, .98); color: #e8e8e8; box-shadow: var(--shadow-float);
+  backdrop-filter: blur(20px) saturate(150%); -webkit-backdrop-filter: blur(20px) saturate(150%);
+  animation: popIn 150ms cubic-bezier(.22,.8,.2,1) both; transform-origin: left top;
+  /* 初始隐藏在视口外，等 JS 定位后再显示，防止左上角闪现*/
+  left: -9999px; top: -9999px;
+}
+:root[data-theme="light"] .tray-menu { background: rgba(252, 252, 253, .98); border-color: rgba(0, 0, 0, .08); color: #1f2329; }
+.tray-item {
+  height: 30px; min-width: 92px; padding: 0 10px 0 30px; position: relative;
+  display: flex; align-items: center; gap: 8px; border-radius: 8px; font-size: 12.5px; text-align: left;
+  transition: background 120ms ease;
+}
+.tray-item .ic { position: absolute; left: 10px; width: 14px; height: 14px; }
+.tray-item:hover { background: rgba(255, 255, 255, .10); }
+:root[data-theme="light"] .tray-item:hover { background: rgba(0, 0, 0, .06); }
+.tray-sep { height: 1px; margin: 4px 8px; background: rgba(255, 255, 255, .10); }
+:root[data-theme="light"] .tray-sep { background: rgba(0, 0, 0, .08); }
+
+/* ===================== 对话框 =====================*/
+.modal-backdrop {
+  position: fixed; inset: 0; z-index: 140; display: flex; align-items: center; justify-content: center;
+  background: rgba(0, 0, 0, .42); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+}
+.modal-backdrop.is-privacy { background: rgba(0, 0, 0, .59); }
+/* ⚠️ 需求（本轮）：法律协议窗必须是**最高级** —— 它以前只是普通 modal（z140），
+   会被启动页遮罩（.boot-screen，z190）整块盖住：窗口放出来了、协议也确实"弹了"，
+   但用户看见的还是启动页，表现就是"是否同意的窗口并未出现"。
+   抬到 280（仅次于提示气泡 300，高于启动页 190 / 托盘菜单 200），
+   并配合 boot() 里"未同意先撤启动页 + 提前 app.ready"，保证首屏可见可点。 */
+.modal-backdrop.is-privacy { z-index: 280; }
+.modal {
+  width: min(560px, calc(100vw - 60px)); max-height: 84vh; overflow-y: auto; padding: 20px 24px;
+  border-radius: 12px; border: 1px solid var(--glass-border); background: var(--card-solid);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, .46); animation: popIn 180ms cubic-bezier(.22,.8,.2,1) both;
+}
+.modal.is-wide { width: min(660px, calc(100vw - 60px)); }
+.modal.is-danger .modal-title { color: var(--danger); }
+.modal-title { font-size: 16px; font-weight: 600; }
+.modal-body { margin-top: 10px; font-size: 13px; line-height: 1.7; color: var(--text-secondary); white-space: pre-line; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+.fact-grid { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 8px 16px; margin-top: 14px; }
+.fact-key { font-size: 12px; color: var(--text-secondary); }
+.fact-val { font-size: 13px; color: var(--text); word-break: break-word; }
+.fact-val.is-strong { font-weight: 700; color: var(--accent); }
+.notes-panel { margin-top: 14px; padding: 10px 14px 10px 12px; border-radius: 6px; max-height: 150px; overflow-y: auto;
+  background: color-mix(in srgb, var(--text) 4.5%, transparent); border: 1px solid var(--glass-border);
+  font-size: 12.5px; line-height: 1.65; white-space: pre-wrap; }
+.dev-guide { margin-top: 14px; max-height: 400px; overflow-y: auto; padding: 12px; border-radius: 8px;
+  background: color-mix(in srgb, var(--text) 4.5%, transparent); border: 1px solid var(--glass-border);
+  font-family: Consolas, monospace; font-size: 11.5px; line-height: 1.7; white-space: pre-wrap; }
+
+.privacy-card {
+  width: 460px; max-width: calc(100vw - 40px); min-height: 220px; padding: 22px 24px;
+  display: flex; flex-direction: column; gap: 12px; border-radius: 12px;
+  background: linear-gradient(160deg, #2c3e50, #1f2d3d); color: #fff;
+  border: 1px solid rgba(255, 255, 255, .08); box-shadow: 0 4px 24px rgba(0, 0, 0, .48);
+}
+:root[data-theme="light"] .privacy-card { background: linear-gradient(160deg, #fff, #f5f7fa); color: var(--text); }
+.privacy-title { font-size: 15px; font-weight: 700; color: var(--ball-a); }
+.privacy-line { height: 1px; background: color-mix(in srgb, var(--ball-a) 45%, transparent); }
+.privacy-body { font-size: 12.5px; line-height: 1.75; flex: 1 1 auto; }
+.privacy-body a { color: var(--ball-a); text-decoration: underline; }
+
+/* ===================== 轻提示（原版 InfoBar：位置可在设置 → 功能里改，标题 + 正文、可关闭） =====================*/
+/* 位置由 .toast-stack 上的 is-tr / is-br / is-tl / is-bl / is-top 决定（默认顶端居中）*/
+.toast-stack { position: fixed; z-index: 160; display: flex; gap: 8px;
+  width: min(340px, calc(100vw - 32px)); pointer-events: none; }
+.toast-stack.is-tr { top: calc(var(--tb-height) + 12px); right: 16px; flex-direction: column; }
+.toast-stack.is-br { bottom: 16px; right: 16px; flex-direction: column-reverse; }
+/* ⚠️ 左侧两个位置**往右让一点** —— 原来 left:16px 会被**左侧导航栏**盖住
+   （侧栏展开时宽度约 200px+），提示条贴在屏幕最左边会有一半藏在侧栏下面。
+   现在让到侧栏右侧（--nav-expanded 是侧栏展开时的宽度），侧栏收起时也留一点边。*/
+.toast-stack.is-tl { top: calc(var(--tb-height) + 12px); left: calc(var(--nav-expanded, 200px) + 16px);
+  flex-direction: column; }
+.toast-stack.is-bl { bottom: 16px; left: calc(var(--nav-expanded, 200px) + 16px);
+  flex-direction: column-reverse; }
+/* 顶端：横跨居中，一条一条往下排（原版 InfoBarPosition.TOP）*/
+.toast-stack.is-top { top: calc(var(--tb-height) + 12px); left: 50%; transform: translateX(-50%);
+  flex-direction: column; align-items: center; }
+.toast {
+  pointer-events: auto; display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px;
+  border-radius: 10px; border: 1px solid var(--glass-border); background: var(--card-glass);
+  backdrop-filter: blur(18px) saturate(150%); -webkit-backdrop-filter: blur(18px) saturate(150%);
+  box-shadow: var(--shadow-float);
+}
+.toast-title { font-size: 12px; font-weight: 600; }
+.toast-message { font-size: 12px; line-height: 1.5; color: var(--text-secondary); word-break: break-word; }
+.toast-icon { margin-top: 1px; }
+.toast.is-success .toast-icon { color: var(--success); }
+.toast.is-error .toast-icon { color: var(--danger); }
+.toast.is-warning .toast-icon { color: var(--warning); }
+.toast.is-info .toast-icon { color: var(--accent); }
+.toast-close { margin-left: auto; color: var(--text-disabled); width: 18px; height: 18px;
+  display: inline-flex; align-items: center; justify-content: center; border-radius: 5px; }
+.toast-close:hover { background: var(--hover-strong); color: var(--text); }
+
+/* ===================== 插件 iframe 页 =====================*/
+.plugin-page { position: fixed; inset: 0; z-index: 120; display: flex; flex-direction: column; background: var(--page); }
+.plugin-page-head { height: 52px; flex: 0 0 auto; display: flex; align-items: center; gap: 10px; padding: 0 20px; }
+.plugin-frame { flex: 1 1 auto; border: 0; width: 100%; background: var(--page); }
+
+/* ===================== 首屏 =====================
+   ⚠️⚠️ 本轮按用户需求**整段删除 .boot-screen**（启动瞬间那个"偏离中心 + 深色底"
+      的覆盖层 UI，用户原话"直接删除不要了"）。
+      配套删掉的内容：.boot-screen / .boot-logo / .boot-title / .boot-bar / .boot-text
+      与 animations.css 里 bootScreen / bootSlide / .boot-screen 的 motion 规则。
+      `booting` 状态机本身保留（app.js），原生 splash.py 浮窗也保留。 -->
+
+/* ===================== i提示气泡（唯一的真 DOM tooltip：fixed + 最高 z-index，不会被任何容器裁掉） =====================*/
+#tip-bubble {
+  position: fixed; z-index: 300; max-width: 320px; padding: 6px 10px;
+  border-radius: 6px; font-size: 12px; line-height: 1.5; font-style: normal;
+  color: #fff; background: #2b2b2b; border: 1px solid #3e3e3e;
+  box-shadow: var(--shadow-float);
+  white-space: pre-line; pointer-events: none;
+  opacity: 0; visibility: hidden;
+  transition: opacity 120ms ease, visibility 120ms ease;
+}
+:root[data-theme="light"] #tip-bubble { color: #000; background: #fff; border-color: #e0e0e0; }
+#tip-bubble.is-on { opacity: 1; visibility: visible; }
+
+/* ===========================================================================
+ * 修复区 · toast 复制按钮（与 .toast-close 同级观感）
+ * 
+ * 结构：.toast > .toast-icon / .toast-copy / [.toast-copy-btn] / .toast-close
+ * 观感对齐 .toast-close（18×18 / 圆角 5 / hover 用 --hover-strong），
+ * 但复制默认比关闭更淡一点、hover 才亮到强调色；不写死颜色，
+ * 所以 is-success / is-error / is-warning / is-info 的配色不会被盖掉。
+ * ⚠️ .toast-close 自带 margin-left:auto（贴右端）；复制按钮插在它左边时
+ *    这个 auto 会把两者拆开 —— 这里把 auto 交给复制按钮，并清掉紧邻关闭按钮的 auto。*/
+.toast-copy-btn {
+  margin-left: auto; flex: 0 0 auto;
+  width: 18px; height: 18px; border-radius: 5px;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: color-mix(in srgb, var(--text) 42%, transparent);
+  transition: background 120ms ease, color 120ms ease;
+}
+.toast-copy-btn .ic { flex: 0 0 auto; }
+.toast-copy-btn:hover { background: var(--hover-strong); color: var(--accent); }
+.toast-copy-btn:active { transform: scale(.94); }
+/* 复制成功态（app.js 给 .is-done 就变绿，颜色跟主题的 --success）*/
+.toast-copy-btn.is-done { color: var(--success); }
+.toast-copy-btn + .toast-close { margin-left: 0; }
+
+/* ===========================================================================
+ * 修复区 · 弹层材质令牌：主题效果（云母 / 毛玻璃 / 亚克力）在这些组件上真正生效
+ * 
+ * 令牌定义在 variables.css 末尾（--pop-* / --tray-* / --toast-blur / --modal-alpha /
+ * --search-*），云母档数值 = 改动前原值，glass/acrylic 档才明显不同。
+ * ⚠️ 这一段**故意放在最后加载的 overlays.css**：它要覆盖的规则散落在
+ *    components.css(.combo-pop:70 / .card-menu:324)、layout.css(.search-box:8)、
+ *    本文件(.modal:35 / .toast:79 / .tray-menu:6)，同为 (0,1,0) 时"后加载者胜"，
+ *    放这里可以全部压住，且不必给任何一条加 !important。
+ * 已确认无需改动的：.more-pop（base.css:203 已用 --tb-bg + --tb-blur）、
+ *   .nav.is-expanded（base.css:223 同上）、.titlebar（base.css:160 同上）。
+ * =========================================================================*/
+
+/* ① 下拉弹层 .combo-pop：原来 blur(22px) 写死 + 96% 不透明底（背后那层模糊根本看不见）*/
+.combo-pop {
+  background: color-mix(in srgb, var(--card-solid) calc(var(--pop-alpha) * 100%), transparent);
+  border-color: var(--glass-border);
+  backdrop-filter: blur(var(--pop-blur)) saturate(var(--pop-sat));
+  -webkit-backdrop-filter: blur(var(--pop-blur)) saturate(var(--pop-sat));
+  box-shadow: var(--pop-shadow);
+}
+/* ② 卡片右键菜单 .card-menu：同上*/
+.card-menu {
+  background: color-mix(in srgb, var(--card-solid) calc(var(--pop-alpha) * 100%), transparent);
+  border-color: var(--glass-border);
+  backdrop-filter: blur(var(--pop-blur)) saturate(var(--pop-sat));
+  -webkit-backdrop-filter: blur(var(--pop-blur)) saturate(var(--pop-sat));
+  box-shadow: var(--pop-shadow);
+}
+/* ②-b 输入框右键菜单：外壳完全复用 .card-menu（主题/材质/阴影自动跟随）。
+   ⚠️ [hidden] 必须显式压过 .card-menu 的 display:flex —— UA 的 [hidden]{display:none}
+      特异性只有 (0,1,0)，而 .card-menu 是 (0,1,0) 且后加载，会把 hidden 吃掉，
+      表现为"菜单没打开也一直挂在左上角"。 */
+.input-menu[hidden] { display: none !important; }
+
+/* ===========================================================================
+ * 本轮需求（用户原话）：「所有快捷键文本放在对应文本的右侧并且加个括号放在里面
+ *   并且菜单要缩小点 现在太大了」
+ *   ① 快捷键从"每项两行（竖排）"改成**和文字同一行、顶到最右侧**：
+ *      .imi-text 那层竖排容器已经在 HTML 里删掉，label 与 key 现在是同级 flex 子项，
+ *      key 用 margin-left:auto 顶右；括号由 app.js 加（切语言重刷时不会丢）。
+ *   ② 尺寸整体收一档：min-width 172→132、行高 36→24、字号 12→11.5、
+ *      内边距/图标都收紧（原来是"每项两行"所以行很高，现在单行不需要那么高）。
+ *   ⚠️ 禁用样式必须自己写：全局 .card-menu-item:disabled 没有任何规则
+ *      （fav/download 菜单各自 scoped 过），漏写会得到"灰字仍可点"的假禁用。
+ * ========================================================================*/
+.input-menu { min-width: 132px; padding: 4px; }
+.input-menu .card-menu-item {
+  align-items: center; min-height: 24px; height: 24px;
+  padding: 0 8px; gap: 6px; font-size: 11.5px;
+}
+.input-menu .card-menu-item .ic { width: 13px; height: 13px; flex: 0 0 auto; }
+.input-menu .imi-label { min-width: 0; }
+/* 快捷键：同一行最右侧 + 灰色小字（括号由 JS 加） */
+.input-menu .imi-key {
+  flex: 0 0 auto; margin-left: auto; padding-left: 10px;
+  font-size: 10.5px; color: var(--text-secondary);
+  letter-spacing: .02em; line-height: 1.2; white-space: nowrap;
+}
+.input-menu .card-menu-item:disabled,
+.input-menu .card-menu-item.is-disabled {
+  opacity: .45; cursor: default; pointer-events: none;
+}
+.input-menu .card-menu-item:disabled .ic,
+.input-menu .card-menu-item.is-disabled .ic { color: var(--text-disabled); }
+.input-menu .card-menu-item:disabled .imi-key,
+.input-menu .card-menu-item.is-disabled .imi-key { color: var(--text-disabled); }
+
+/* ③ 对话框 .modal：原来是**实色** --card-solid 且没有 backdrop-filter ⇒ 换档完全无反应。
+      不透明度用 --modal-alpha（云母 1 = 完全等价原样，毛玻璃 .82、亚克力 .90），
+      保证对话框上的正文依旧好读。*/
+.modal {
+  background: color-mix(in srgb, var(--card-solid) calc(var(--modal-alpha) * 100%), transparent);
+  border-color: var(--glass-border);
+  backdrop-filter: blur(var(--pop-blur)) saturate(var(--pop-sat));
+  -webkit-backdrop-filter: blur(var(--pop-blur)) saturate(var(--pop-sat));
+  box-shadow: var(--pop-shadow);
+}
+/* ④ toast：底色本来就取 --card-glass（已按档位改过），只有模糊半径是写死的 18px*/
+.toast {
+  backdrop-filter: blur(var(--toast-blur)) saturate(var(--toast-sat));
+  -webkit-backdrop-filter: blur(var(--toast-blur)) saturate(var(--toast-sat));
+  box-shadow: var(--pop-shadow);
+}
+/* ⑤ 托盘菜单 .tray-menu：原来 blur(20px) + rgba(43,43,43,.98)（#2b2b2b/.98 ⇒ 云母档等价）*/
+.tray-menu {
+  background: color-mix(in srgb, #2b2b2b calc(var(--tray-alpha) * 100%), transparent);
+  backdrop-filter: blur(var(--tray-blur)) saturate(var(--pop-sat));
+  -webkit-backdrop-filter: blur(var(--tray-blur)) saturate(var(--pop-sat));
+  box-shadow: var(--pop-shadow);
+}
+:root[data-theme="light"] .tray-menu {
+  background: color-mix(in srgb, #fcfcfd calc(var(--tray-alpha) * 100%), transparent);
+}
+/* ⑥ 搜索框 .search-box：原来 84% 不透明 + 完全没有 backdrop-filter。
+      云母档 --search-blur: 0px ⇒ **不加** backdrop-filter（保持改动前观感，也避免白建合成层）；
+      毛玻璃 / 亚克力档才点亮模糊 + 高透明底 + 高光描边。*/
+.search-box {
+  background: color-mix(in srgb, var(--card-solid) calc(var(--search-alpha) * 100%), transparent);
+  border-color: var(--card-border);
+}
+:root[data-fx="glass"] .search-box,
+:root[data-fx="acrylic"] .search-box {
+  border-color: var(--glass-border);
+  backdrop-filter: blur(var(--search-blur)) saturate(var(--pop-sat));
+  -webkit-backdrop-filter: blur(var(--search-blur)) saturate(var(--pop-sat));
+  box-shadow: var(--fx-extra), var(--shadow-float);
+}
+
+/* ===========================================================================
+ * 修复区 · 搜索框 / 筛选面板的材质收尾（含一个"被压掉焦点态"的回归修复）
+ * 
+ * 症状：搜索框和下拉框等 UI 在毛玻璃 / 亚克力材质下不适配。
+ * 搜索框本身的底色/模糊在上面弹层材质令牌一节 ⑥ 已经令牌化（--search-alpha / --search-blur），
+ * 但那条规则的特异性是 (0,3,0)，**比 `.search-box:focus-within`(0,2,0) 高** ——
+ * 于是玻璃/亚克力档下"点进搜索框的强调色描边 + 3px 光圈"被整条 box-shadow 覆盖掉了，
+ * 观感就是"搜索框点了没反应"。这里把焦点态用更高特异性拼回来（高光也一起保留）。
+ * 顺带（同样只在玻璃两档）：
+ *   · 展开后的筛选面板 .filter-inner 给一层淡磨砂 + 细描边，不再是一块半透明灰；
+ *   · 搜索框内的清除按钮 .search-clear 底色加浓一点（玻璃底上 12% 灰几乎看不见）。
+ * 云母档：三条规则全部不匹配 ⇒ 搜索框、焦点态、筛选面板与改动前完全一致。
+ * =========================================================================*/
+:root[data-fx="glass"] .search-box:focus-within,
+:root[data-fx="acrylic"] .search-box:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft), var(--fx-extra), var(--shadow-float);
+}
+:root[data-fx="glass"] .search-box .search-clear,
+:root[data-fx="acrylic"] .search-box .search-clear {
+  background: color-mix(in srgb, var(--text) 20%, transparent);
+}
+:root[data-fx="glass"] .search-box .search-clear:hover,
+:root[data-fx="acrylic"] .search-box .search-clear:hover {
+  background: color-mix(in srgb, var(--text) 30%, transparent);
+}
+:root[data-theme][data-fx="glass"] .filter-inner,
+:root[data-theme][data-fx="acrylic"] .filter-inner {
+  background: color-mix(in srgb, var(--card-solid) 34%, transparent);
+  border-color: var(--glass-border);
+  backdrop-filter: blur(18px) saturate(var(--fx-sat));
+  -webkit-backdrop-filter: blur(18px) saturate(var(--fx-sat));
+}
+/* 下拉弹层里的"当前项"：玻璃两档下底色是半透明的，对勾与强调色文字都要再提亮一档，
+   否则压在透上来的内容上会发灰（同 variables.css 按钮踩坑记录的根因）。*/
+:root[data-fx="glass"] .combo-pop .combo-item.is-on,
+:root[data-fx="acrylic"] .combo-pop .combo-item.is-on {
+  color: var(--accent-strong);
+}
+
+/* ===========================================================================
+ * 修复区 · 插件配置页嵌进右侧内容区
+ * 
+ * 一、插件配置页的问题：配置界面把顶部栏（ToolsGCP + 最小化那排）和左侧栏全盖住了，
+ *    正确行为是**所有内容只显示在右侧大内容区里**。
+ *   病根：本条上面的 `.plugin-page`（本文件:95）是 `position: fixed; inset: 0`，
+ *   铺满整个视口 ⇒ 连标题栏（ToolsGCP / 最小化 / 全屏 / 关闭）和左侧导航一起盖掉。
+ *   模板已把这段移进 `<main class="content">`（那把"右侧大界面"），
+ *   于是这里改成 **absolute + inset:0**：
+ *     · `.content` 本身是 `position: relative`（base.css:131/222）⇒ 定位基准就是内容区；
+ *     · 标题栏、导航、侧栏全部不受影响（它们不在 .content 里）；
+ *     · z-index 120 保持在页面段（.page 在 --z-content 50 内）与抽屉（88）之上、
+ *       模态（140）/toast（160）之下 —— 配置页属于"内容区的一页"，弹窗仍要能压住它；
+ *     · 不要圆角、不要外阴影（它不是浮层，就是内容区的一页）。
+ *   顺带补两条：`.plugin-page > .hairline` 钉成 1px（base.css 的 .hairline 是 flex:1 1 auto，
+ *   竖排容器里会和 AI 面板一样抢剩余高度）；`.plugin-frame` 宽高都 100%。
+ * 二、右上角浮动的"退出全屏"胶囊及其全部样式已整块删除。
+ *    完全全屏只有 F11 一个入口（进入与退出都走 F11，见 app.js onKeydown）；
+ *    不要再把浮动出口加回来。
+ * =========================================================================*/
+.plugin-page {
+  position: absolute;
+  inset: 0;
+  z-index: 120;
+  display: flex; flex-direction: column;
+  background: var(--page);
+  border-radius: 0;
+  box-shadow: none;
+  overflow: hidden;
+}
+.plugin-page-head {
+  height: 52px; flex: 0 0 auto;
+  display: flex; align-items: center; gap: 10px; padding: 0 20px;
+  background: var(--tb-bg);
+}
+/* 竖排容器里的分隔线：钉死 1px，别抢剩余高度（同 components.css 里 AI 面板的处理）*/
+.plugin-page > .hairline { flex: 0 0 auto; height: 1px; min-height: 1px; width: 100%; }
+.plugin-frame { flex: 1 1 auto; width: 100%; height: 100%; border: 0; display: block; background: var(--page); }
+
+/* 原全屏浮动退出胶囊的样式已整块删除（只有 F11 能退出完全全屏）。*/
+
+/* ===========================================================================
+ * 修复区 · 隐私同意弹窗改为跟主题材质联动
+ * 
+ * 启动时检测隐私协议是否已同意，未同意时弹的这个窗口原本不跟程序主题材质联动，需要改。
+ * 旧样式（overlays.css:54-64）是写死的蓝黑渐变 `linear-gradient(160deg,#2c3e50,#1f2d3d)`，
+ * 在浅色主题/毛玻璃/亚克力档下都像"另一个程序"。
+ * 现在：
+ *   · 底色 = 卡片色 × 86%（保留足够不透明度，弹窗正文必须清楚）；
+ *   · 复用弹层令牌 --pop-blur / --pop-sat / --pop-shadow ⇒ 三档材质自动一致；
+ *   · 边框 --glass-border + --fx-extra 高光，圆角 12；
+ *   · 标题/正文/链接全部走主题色（链接 accent + 下划线），不再写死 #fff / #2c3e50。
+ * ⚠️ 选择器用 `:root[data-theme] .privacy-card`(0,2,0) 且放在文件末尾，
+ *    压过旧规则和 `:root[data-theme="light"] .privacy-card` 的 (0,2,0)（后加载者胜）。
+ * =========================================================================*/
+:root[data-theme] .privacy-card {
+  width: min(480px, calc(100vw - 40px));
+  min-height: 0;
+  padding: 22px 24px;
+  display: flex; flex-direction: column; gap: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  background: color-mix(in srgb, var(--card-solid) 86%, transparent);
+  color: var(--text);
+  /* ⚠️ 不能写 `var(--fx-extra), var(--shadow-float)`：云母档 --fx-extra 是 none，
+     而 box-shadow 列表里出现 none 会让整条声明失效（弹窗会没有阴影）。
+     --pop-shadow 已经按档位定义好（云母 = shadow-float；玻璃/亚克力 = fx-extra + float）。*/
+  box-shadow: var(--pop-shadow);
+  backdrop-filter: blur(var(--pop-blur)) saturate(var(--pop-sat));
+  -webkit-backdrop-filter: blur(var(--pop-blur)) saturate(var(--pop-sat));
+}
+:root[data-theme] .privacy-title { font-size: 15px; font-weight: 700; color: var(--text); }
+:root[data-theme] .privacy-line {
+  height: 1px;
+  background: color-mix(in srgb, var(--accent) 42%, transparent);
+}
+:root[data-theme] .privacy-body { font-size: 12.5px; line-height: 1.75; color: var(--text); flex: 1 1 auto; }
+:root[data-theme] .privacy-body a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 120ms ease;
+}
+:root[data-theme] .privacy-body a:hover { color: var(--accent-strong); }
+:root[data-theme] .privacy-card .row { margin-top: 4px; }
+
+
+/* ===========================================================================
+ * GitHub Releases 弹窗 + 下载页骨架 + 下载小圆
+ * 
+ * 期望行为：
+ *   · 点击检查更新弹出一个稍大的 Releases 弹窗（不要特别小），
+ *     弹窗里点某个安装包（如 123.exe）就直接开始下载；
+ *   · 右下角有一个下载图标的小圆，点击进入**独立的下载界面**：
+ *     左侧栏不显示，顶部栏左上角是返回图标按钮 +下载文字，
+ *     右边的最小化 / 全屏 / 关闭保持不变；
+ * 要点：
+ *   · Releases 弹窗比普通 modal 宽（880px），内部滚动，不撑破视口；
+ *   · 下载页是**标题栏以下整页浮层**（inset: var(--tb-height) 0 0 0）：左侧栏被盖住，
+ *     标题栏（含右边三个窗口按钮）保持原样；
+ *   · 下载小圆固定在右下（不与 AI 悬浮球重叠：往上让一档）。
+ * =========================================================================*/
+.modal.is-releases { width: min(880px, calc(100vw - 60px)); max-height: 86vh; }
+.releases-head { display: flex; align-items: center; gap: 10px; }
+.releases-hint { margin: 8px 0 0; }
+.releases-body { margin-top: 12px; max-height: 62vh; overflow-y: auto; padding-right: 4px; }
+.release-block { margin-bottom: 14px; }
+.release-head { display: flex; align-items: center; gap: 8px; }
+.release-tag { font-size: 13px; font-weight: 700; color: var(--text); }
+.release-assets { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.release-asset {
+  display: flex; align-items: center; gap: 8px;
+  height: 34px; padding: 0 12px; border-radius: 8px;
+  border: 1px solid var(--card-border); background: var(--card-solid);
+  color: var(--text); font-size: 12.5px; text-align: left;
+  transition: border-color 140ms ease, background 140ms ease;
+}
+.release-asset:hover { border-color: var(--accent); background: var(--accent-soft); }
+.release-asset .ellipsis { flex: 1 1 auto; min-width: 0; }
+.release-asset .cap { flex: 0 0 auto; }
+
+/* Releases 版本标签 + 下载页 + 下载红点的样式都移到了
+   `download-fixes.css`（放在所有既有 CSS 之后，加载顺序更明确）。
+   这里只保留最初就在本文件里的通用片段。*/
+
+/* 下载页：它是左侧栏里的**普通页面**（不再是盖住内容的浮层），
+   完整的样式在 download-fixes.css。*/
+.download-page {
+  display: flex; flex-direction: column;
+  height: 100%; min-height: 0;
+  padding: 0 0 20px;
+}
+.download-page-head { display: flex; align-items: center; gap: 10px; padding: 12px 20px; }
+.download-page > .hairline { flex: 0 0 auto; height: 1px; min-height: 1px; width: 100%; }
+.download-page-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 16px 20px; }
+.download-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 14px; margin-bottom: 10px; border-radius: 10px;
+  border: 1px solid var(--card-border); background: var(--card-solid);
+}
+.download-row-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.download-name { font-size: 13px; color: var(--text); }
+.download-bar { flex: 0 0 160px; height: 6px; border-radius: 3px; background: var(--track); overflow: hidden; }
+.download-bar > span { display: block; height: 100%; background: var(--accent); }
+.download-row-ops { flex: 0 0 auto; display: flex; gap: 6px; }

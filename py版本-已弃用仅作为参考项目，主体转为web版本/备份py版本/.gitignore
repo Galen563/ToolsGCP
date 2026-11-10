@@ -1,0 +1,38 @@
+# ===== Python =====
+__pycache__/
+plugins/*/__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+env/
+
+# ===== 构建产物 =====
+build/
+dist/
+*.spec
+*.exe
+*.msi
+
+# ===== 运行期数据（属于用户，不该进版本库）=====
+# 用户配置里可能含有加密后的密钥，绝对不要提交
+# 程序自己写出来的配置统一在 .ToolsGCP/config/ 下（见 core/data_dir.py）
+.ToolsGCP/config/
+.ToolsGCP/privacy_policy.json
+.ToolsGCP/logs/
+.ToolsGCP/ToolsGCP-Resources.backup-*.json
+
+# 本地导出的部署清单 / 资源稿件
+ToolsGCP-Deploy-*.json
+ResourceDrafts/
+
+# 自检脚本的渲染产物（tools/detail_preview.py 生成，随时可重跑）
+.ToolsGCP/tools/_out/
+
+# ===== 编辑器 / 系统 =====
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+desktop.ini

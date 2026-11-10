@@ -1,0 +1,16 @@
+{
+  "title": "外掛範例",
+  "hint": "這一頁列出了外掛能拿到的全部東西：外掛資訊、ToolsGCP 的資源庫、以及自己的可寫目錄。照著改成你的功能即可。",
+  "info_id": "外掛 id",
+  "info_version": "版本",
+  "info_author": "作者",
+  "info_locale": "目前語言",
+  "info_data_dir": "我的可寫目錄",
+  "res_total": "資源庫條目總數",
+  "res_categories": "類別數",
+  "res_site": "有官網的",
+  "res_repo": "有程式倉庫的",
+  "res_top": "最多的類別",
+  "click_me": "點我（會把次數寫進我自己的資料檔）",
+  "count_now": "你已經點了 {count} 次，這個數字存在 context.data_dir 裡。"
+}

@@ -1,0 +1,42 @@
+  ..   复用已在运行的 mock 服务 http://127.0.0.1:8811/
+== ① 收藏页首帧列数正确（先量后渲染）+ ② 星标实心 ==
+  OK   favItems 有 3 条（mock：常用工具）
+  OK   收藏页卡片 _fav 全为 true（数据层）
+  OK   收藏页星标渲染为 #i-star_solid（实心）
+  OK   favMeasured=true（量到宽度才渲染）
+  OK   favGridWidth 取到模型宽度
+  OK   列数公式：columns 与 gap/itemW 自洽（cols*itemW+(cols-1)*gap ≈ avail）
+  OK   列数在 [1, 上限] 内且卡片不超 400px（maxCardW）
+  OK   网格 --fav-cols 与 JS 列数一致
+  OK   重复测量幂等（列数不再变化，无二次跳变）
+  OK   容器变窄 → 列数变少（真 resize 才重排）
+  OK   容器变宽 → 列数回到原值
+  OK   资源库条目仍在
+  OK   资源库重建后收藏页 _fav 仍为 true（syncFavoriteState 已补）
+  OK   取消收藏后该条不在收藏页
+  OK   取消后收藏页剩 2 张
+  OK   取消后网格剩 2 张卡且星仍全实心
+  OK   再收藏后 items 的 _fav 同步为 true（搜索页一致性）
+  OK   再收藏后出现在 Default 收藏夹且 _fav=true
+  OK   收藏页运行无 JS 错误
+== ④ 详情页空字段（CPU 架构等）整行不渲染 ==
+  OK   资源库里存在"CPU 架构"为空的样本
+  OK   detailRows 不含"CPU 架构"行（空值整行剔除）
+  OK   detailRows 不含任何空值行
+  OK   DOM 里也查不到"CPU 架构"这个 label
+  OK   DOM 里没有任何"—"占位值
+  OK   非空字段（类别/官网等）仍在
+== ⑤ 更多筛选展开时顶部卡片不提前消失（可视区含 vlist 偏移） ==
+  OK   搜索页滚动容器在场（详情已关闭、过渡已落定）
+  OK   searchScroll ref 已挂上
+  OK   筛选收起时 vlistTop = 头部高度（>0，量到了）
+  OK   筛选展开后 vlistTop 变大（面板高度计入）
+  OK   滚动 300px（筛选展开）后 vRows 非空
+  OK   第一行仍在 DOM 窗口内（未提前消失）
+  OK   首个卡片行也在窗口内（top=组标题高度）
+  OK   渲染出的卡片数 > 0（屏幕上有卡片时 DOM 必须有）
+  OK   真正滚出后窗口前移（虚拟列表仍生效）
+  OK   收起筛选后 vlistTop 回到收起值
+  OK   搜索页运行无 JS 错误
+
+结果：全部通过

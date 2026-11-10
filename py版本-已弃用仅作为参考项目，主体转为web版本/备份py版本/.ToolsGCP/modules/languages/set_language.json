@@ -1,0 +1,1882 @@
+{
+  "settings_title": {
+    "简体中文": "设置",
+    "繁體中文": "設置",
+    "English": "Settings"
+  },
+  "settings_search_hint": {
+    "简体中文": "搜索设置项…",
+    "繁體中文": "搜尋設定項…",
+    "English": "Search settings…"
+  },
+  "settings_search_none": {
+    "简体中文": "没找到这个设置项",
+    "繁體中文": "找不到這個設定項",
+    "English": "No matching setting"
+  },
+  "appearance": {
+    "简体中文": "外观",
+    "繁體中文": "外觀",
+    "English": "Appearance"
+  },
+  "theme_mode": {
+    "简体中文": "主题模式",
+    "繁體中文": "主題模式",
+    "English": "Theme Mode"
+  },
+  "theme_mode_desc": {
+    "简体中文": "跟随 Windows 的浅色 / 深色设置",
+    "繁體中文": "跟隨 Windows 的淺色 / 深色設定",
+    "English": "Follow the Windows light / dark setting"
+  },
+  "language_desc": {
+    "简体中文": "切换后需要重启程序才会生效",
+    "繁體中文": "切換後需要重新啟動程式才會生效",
+    "English": "Takes effect after restarting the app"
+  },
+  "follow_system": {
+    "简体中文": "跟随系统",
+    "繁體中文": "跟隨系統",
+    "English": "Follow System"
+  },
+  "light_theme": {
+    "简体中文": "浅色主题",
+    "繁體中文": "淺色主題",
+    "English": "Light Theme"
+  },
+  "dark_theme": {
+    "简体中文": "深色主题",
+    "繁體中文": "深色主題",
+    "English": "Dark Theme"
+  },
+  "language": {
+    "简体中文": "语言",
+    "繁體中文": "語言",
+    "English": "Language"
+  },
+  "startup": {
+    "简体中文": "启动",
+    "繁體中文": "啟動",
+    "English": "Startup"
+  },
+  "startup_with_windows": {
+    "简体中文": "开机自启动",
+    "繁體中文": "開機自啟動",
+    "English": "Start with Windows"
+  },
+  "minimize_to_tray": {
+    "简体中文": "启动时最小化到托盘",
+    "繁體中文": "啟動時最小化到托盤",
+    "English": "Minimize to Tray on Startup"
+  },
+  "minimize_to_tray_tip": {
+    "简体中文": "开启后，开机自启动时将隐藏到托盘，不会显示主窗口",
+    "繁體中文": "開啟後，開機自啟動時將隱藏到托盤，不會顯示主窗口",
+    "English": "When enabled, the app will hide to tray on startup without showing the main window"
+  },
+  "default_page": {
+    "简体中文": "默认启动页面",
+    "繁體中文": "默認啟動頁面",
+    "English": "Default Page"
+  },
+  "functions": {
+    "简体中文": "功能",
+    "繁體中文": "功能",
+    "English": "Functions"
+  },
+  "gcp_license_key": {
+    "简体中文": "GCP License Key",
+    "繁體中文": "GCP License Key",
+    "English": "GCP License Key"
+  },
+  "gcp_key_tip": {
+    "简体中文": "输入正确的GCP License Key可以解锁隐藏功能",
+    "繁體中文": "輸入正確的GCP License Key可以解鎖隱藏功能",
+    "English": "Enter a valid GCP License Key to unlock hidden features"
+  },
+  "input_gcp_key": {
+    "简体中文": "输入GCP License Key密钥",
+    "繁體中文": "輸入GCP License Key密鑰",
+    "English": "Enter GCP License Key"
+  },
+  "verify": {
+    "简体中文": "验证",
+    "繁體中文": "驗證",
+    "English": "Verify"
+  },
+  "enable_notification": {
+    "简体中文": "启用通知",
+    "繁體中文": "啟用通知",
+    "English": "Enable Notifications"
+  },
+  "close_mode": {
+    "简体中文": "关闭模式",
+    "繁體中文": "關閉模式",
+    "English": "Close Mode"
+  },
+  "close_mode_tip": {
+    "简体中文": "选择点击关闭按钮时的行为：彻底退出或隐藏到托盘中",
+    "繁體中文": "選擇點擊關閉按鈕時的行為：徹底退出或隱藏到托盤中",
+    "English": "Choose the behavior when clicking the close button: exit completely or hide to tray"
+  },
+  "close_mode_exit": {
+    "简体中文": "彻底退出",
+    "繁體中文": "徹底退出",
+    "English": "Exit Completely"
+  },
+  "close_mode_tray": {
+    "简体中文": "隐藏到托盘中",
+    "繁體中文": "隱藏到托盤中",
+    "English": "Hide to Tray"
+  },
+  "available_keys": {
+    "简体中文": "可用的GCP License Keys",
+    "繁體中文": "可用的GCP License Keys",
+    "English": "Available GCP License Keys"
+  },
+  "close": {
+    "简体中文": "关闭",
+    "繁體中文": "關閉",
+    "English": "Close"
+  },
+  "copy_success_title": {
+    "简体中文": "复制成功",
+    "繁體中文": "複製成功",
+    "English": "Copy Success"
+  },
+  "copy_success_content": {
+    "简体中文": "密钥已复制到剪贴板",
+    "繁體中文": "密鑰已複製到剪貼板",
+    "English": "Key copied to clipboard"
+  },
+  "autostart_enabled": {
+    "简体中文": "开机自启动已开启",
+    "繁體中文": "開機自啟動已開啟",
+    "English": "Auto-start enabled"
+  },
+  "autostart_disabled": {
+    "简体中文": "开机自启动已关闭",
+    "繁體中文": "開機自啟動已關閉",
+    "English": "Auto-start disabled"
+  },
+  "autostart_failed": {
+    "简体中文": "设置开机自启动失败",
+    "繁體中文": "設置開機自啟動失敗",
+    "English": "Failed to set auto-start"
+  },
+  "tray_enabled": {
+    "简体中文": "启动时最小化到托盘已开启",
+    "繁體中文": "啟動時最小化到托盤已開啟",
+    "English": "Minimize to tray on startup enabled"
+  },
+  "tray_disabled": {
+    "简体中文": "启动时最小化到托盘已关闭",
+    "繁體中文": "啟動時最小化到托盤已關閉",
+    "English": "Minimize to tray on startup disabled"
+  },
+  "restart_required": {
+    "简体中文": "需要重启",
+    "繁體中文": "需要重啟",
+    "English": "Restart Required"
+  },
+  "theme_changed": {
+    "简体中文": "已切换到",
+    "繁體中文": "已切換到",
+    "English": "Switched to"
+  },
+  "key_valid": {
+    "简体中文": "GCP License Key验证成功",
+    "繁體中文": "GCP License Key驗證成功",
+    "English": "GCP License Key valid"
+  },
+  "key_invalid": {
+    "简体中文": "GCP License Key无效",
+    "繁體中文": "GCP License Key無效",
+    "English": "GCP License Key invalid"
+  },
+  "key_empty": {
+    "简体中文": "请输入GCP License Key",
+    "繁體中文": "請輸入GCP License Key",
+    "English": "Please enter GCP License Key"
+  },
+  "notification_enabled": {
+    "简体中文": "通知已开启",
+    "繁體中文": "通知已開啟",
+    "English": "Notifications enabled"
+  },
+  "notification_disabled": {
+    "简体中文": "通知已关闭",
+    "繁體中文": "通知已關閉",
+    "English": "Notifications disabled"
+  },
+  "success": {
+    "简体中文": "成功",
+    "繁體中文": "成功",
+    "English": "Success"
+  },
+  "error": {
+    "简体中文": "错误",
+    "繁體中文": "錯誤",
+    "English": "Error"
+  },
+  "warning": {
+    "简体中文": "提示",
+    "繁體中文": "提示",
+    "English": "Warning"
+  },
+  "info": {
+    "简体中文": "信息",
+    "繁體中文": "資訊",
+    "English": "Info"
+  },
+  "gcp_keys_title": {
+    "简体中文": "GCP License Keys",
+    "繁體中文": "GCP License Keys",
+    "English": "GCP License Keys"
+  },
+  "search_title": {
+    "简体中文": "搜索",
+    "繁體中文": "搜尋",
+    "English": "Search"
+  },
+  "home_title": {
+    "简体中文": "定制页",
+    "繁體中文": "客製頁",
+    "English": "Custom"
+  },
+  "tools_gcp_title": {
+    "简体中文": "收藏",
+    "繁體中文": "收藏",
+    "English": "Favorites"
+  },
+  "github_title": {
+    "简体中文": "Github",
+    "繁體中文": "Github",
+    "English": "Github"
+  },
+  "deploy_title": {
+    "简体中文": "应用部署",
+    "繁體中文": "應用部署",
+    "English": "App Deploy"
+  },
+  "feedback_title": {
+    "简体中文": "反馈",
+    "繁體中文": "反饋",
+    "English": "Feedback"
+  },
+  "log_title": {
+    "简体中文": "查看日志",
+    "繁體中文": "查看日誌",
+    "English": "View Logs"
+  },
+  "developer_functions": {
+    "简体中文": "开发者功能",
+    "繁體中文": "開發者功能",
+    "English": "Developer Functions"
+  },
+  "developer_identity_token": {
+    "简体中文": "开发者身份令牌",
+    "繁體中文": "開發者身份令牌",
+    "English": "Developer Identity Token"
+  },
+  "dev_mode_tip": {
+    "简体中文": "输入正确的密钥可解锁更多隐藏内容、调试功能及开放更多权限和指令",
+    "繁體中文": "輸入正確的密鑰可解鎖更多隱藏內容、調試功能及開放更多權限和指令",
+    "English": "Enter the correct key to unlock more hidden content, debugging features, and additional permissions"
+  },
+  "input_dev_key": {
+    "简体中文": "输入管理员身份验证密钥",
+    "繁體中文": "輸入管理員身份驗證密鑰",
+    "English": "Enter admin verification key"
+  },
+  "admin_verified": {
+    "简体中文": "管理员身份验证",
+    "繁體中文": "管理員身份驗證",
+    "English": "Admin Verified"
+  },
+  "verify_time": {
+    "简体中文": "验证成功时间",
+    "繁體中文": "驗證成功時間",
+    "English": "Verification Time"
+  },
+  "dev_verify_success": {
+    "简体中文": "开发者身份令牌验证成功",
+    "繁體中文": "開發者身份令牌驗證成功",
+    "English": "Developer identity token verified"
+  },
+  "dev_key_empty": {
+    "简体中文": "请输入开发者身份令牌",
+    "繁體中文": "請輸入開發者身份令牌",
+    "English": "Please enter the developer identity token"
+  },
+  "dev_key_invalid": {
+    "简体中文": "开发者身份令牌无效",
+    "繁體中文": "開發者身份令牌無效",
+    "English": "Developer identity token invalid"
+  },
+  "dev_logout": {
+    "简体中文": "已退出开发者模式",
+    "繁體中文": "已退出開發者模式",
+    "English": "Developer mode exited"
+  },
+  "exit": {
+    "简体中文": "退出",
+    "繁體中文": "退出",
+    "English": "Exit"
+  },
+  "debug_info": {
+    "简体中文": "调试信息",
+    "繁體中文": "除錯資訊",
+    "English": "Debug Info"
+  },
+  "debug_info_tip": {
+    "简体中文": "开启后将在界面显示组件编号、对象名称、内存占用、渲染层级等底层调试信息，用于开发排错",
+    "繁體中文": "開啟後將在介面顯示元件編號、物件名稱、記憶體佔用、渲染層級等底層除錯資訊，用於開發排錯",
+    "English": "When enabled, displays component IDs, object names, memory usage, render layers and other debug info"
+  },
+  "available_dev_keys": {
+    "简体中文": "可用的开发者密钥",
+    "繁體中文": "可用的開發者密鑰",
+    "English": "Available Developer Keys"
+  },
+  "download": {
+    "简体中文": "下载",
+    "繁體中文": "下載",
+    "English": "Download"
+  },
+  "search_settings": {
+    "简体中文": "搜索",
+    "繁體中文": "搜尋",
+    "English": "Search"
+  },
+  "search_source": {
+    "简体中文": "搜索源",
+    "繁體中文": "搜尋源",
+    "English": "Search Source"
+  },
+  "download_source": {
+    "简体中文": "下载源",
+    "繁體中文": "下載源",
+    "English": "Download Source"
+  },
+  "domestic_source": {
+    "简体中文": "国内源",
+    "繁體中文": "國內源",
+    "English": "Domestic Source"
+  },
+  "github_source": {
+    "简体中文": "Github",
+    "繁體中文": "Github",
+    "English": "Github"
+  },
+  "source_changed": {
+    "简体中文": "源已切换为",
+    "繁體中文": "源已切換為",
+    "English": "Source changed to"
+  },
+  "download_speed_limit": {
+    "简体中文": "下载限速",
+    "繁體中文": "下載限速",
+    "English": "Download Speed Limit"
+  },
+  "limit_speed": {
+    "简体中文": "限速",
+    "繁體中文": "限速",
+    "English": "Limit Speed"
+  },
+  "enabled": {
+    "简体中文": "已开启",
+    "繁體中文": "已開啟",
+    "English": "Enabled"
+  },
+  "disabled": {
+    "简体中文": "已关闭",
+    "繁體中文": "已關閉",
+    "English": "Disabled"
+  },
+  "unlimited": {
+    "简体中文": "无限制",
+    "繁體中文": "無限制",
+    "English": "Unlimited"
+  },
+  "splash_screen": {
+    "简体中文": "启动动画",
+    "繁體中文": "啟動動畫",
+    "English": "Splash Screen"
+  },
+  "splash_screen_tip": {
+    "简体中文": "开启后，程序启动时将显示启动画面",
+    "繁體中文": "開啟後，程式啟動時將顯示啟動畫面",
+    "English": "Show splash screen on startup when enabled"
+  },
+  "auto_search": {
+    "简体中文": "自动搜索",
+    "繁體中文": "自動搜尋",
+    "English": "Auto Search"
+  },
+  "auto_search_tip": {
+    "简体中文": "开启后，输入时自动搜索；关闭后，需按Enter或点击搜索按钮才搜索",
+    "繁體中文": "開啟後，輸入時自動搜尋；關閉後，需按Enter或點擊搜尋按鈕才搜尋",
+    "English": "When enabled, search as you type; when disabled, press Enter or click search button"
+  },
+  "splash_screen_duration": {
+    "简体中文": "启动动画时长",
+    "繁體中文": "啟動動畫時長",
+    "English": "Splash Screen Duration"
+  },
+  "splash_screen_duration_tip": {
+    "简体中文": "增加启动动画时长组件，是因为Python加载资源需要一点时间",
+    "繁體中文": "增加啟動動畫時長元件，是因為Python載入資源需要一點時間",
+    "English": "The splash duration slider exists because Python needs time to load resources"
+  },
+  "seconds": {
+    "简体中文": "秒",
+    "繁體中文": "秒",
+    "English": "s"
+  },
+  "hotkey_section": {
+    "简体中文": "快捷键",
+    "繁體中文": "快速鍵",
+    "English": "Hotkeys"
+  },
+  "hotkey_enable": {
+    "简体中文": "启用全局快捷键",
+    "繁體中文": "啟用全域快速鍵",
+    "English": "Enable Global Hotkeys"
+  },
+  "hotkey_enable_tip": {
+    "简体中文": "开启后，快捷键由本程序独占，其它程序收不到该按键",
+    "繁體中文": "開啟後，快速鍵由本程式獨佔，其它程式收不到該按鍵",
+    "English": "Once enabled, the shortcut is exclusive to this app and other programs will not receive it"
+  },
+  "hotkey_search": {
+    "简体中文": "呼出搜索框",
+    "繁體中文": "呼出搜尋框",
+    "English": "Open Search Box"
+  },
+  "hotkey_ai": {
+    "简体中文": "呼出 GCP-AI",
+    "繁體中文": "呼出 GCP-AI",
+    "English": "Open GCP-AI"
+  },
+  "hotkey_ai_tip": {
+    "简体中文": "在任何程序里按下该组合键，都会把 ToolsGCP 拉到最前并打开 AI 面板",
+    "繁體中文": "在任何程式裡按下該組合鍵，都會把 ToolsGCP 拉到最前並開啟 AI 面板",
+    "English": "Pressing this shortcut from any program opens the GCP-AI panel"
+  },
+  "hotkey_search_tip": {
+    "简体中文": "在任何程序里按下该组合键，都会把 ToolsGCP 拉到最前并聚焦搜索框",
+    "繁體中文": "在任何程式裡按下該組合鍵，都會把 ToolsGCP 拉到最前並聚焦搜尋框",
+    "English": "Pressing this shortcut from any program brings ToolsGCP to the front and focuses the search box"
+  },
+  "hotkey_hint": {
+    "简体中文": "点击右侧输入框后直接按下想用的组合键即可修改；Esc 取消，Backspace 清空。",
+    "繁體中文": "點擊右側輸入框後直接按下想用的組合鍵即可修改；Esc 取消，Backspace 清空。",
+    "English": "Click the box on the right and press the key combination you want. Esc cancels, Backspace clears."
+  },
+  "hotkey_reset": {
+    "简体中文": "恢复默认",
+    "繁體中文": "恢復預設",
+    "English": "Reset"
+  },
+  "hotkey_register_failed": {
+    "简体中文": "快捷键注册失败",
+    "繁體中文": "快速鍵註冊失敗",
+    "English": "Hotkey registration failed"
+  },
+  "api_key_section": {
+    "简体中文": "API Key",
+    "繁體中文": "API Key",
+    "English": "API Key"
+  },
+  "api_key_tip": {
+    "简体中文": "填写用于调用第三方 API 服务的密钥，将保存在本地配置文件中",
+    "繁體中文": "填寫用於呼叫第三方 API 服務的金鑰，將儲存在本機組態檔案中",
+    "English": "Enter the API key for third-party services. It will be stored in the local config file"
+  },
+  "api_key_placeholder": {
+    "简体中文": "请输入 API Key",
+    "繁體中文": "請輸入 API Key",
+    "English": "Please enter API Key"
+  },
+  "show": {
+    "简体中文": "显示",
+    "繁體中文": "顯示",
+    "English": "Show"
+  },
+  "hide": {
+    "简体中文": "隐藏",
+    "繁體中文": "隱藏",
+    "English": "Hide"
+  },
+  "save": {
+    "简体中文": "保存",
+    "繁體中文": "儲存",
+    "English": "Save"
+  },
+  "api_key_saved": {
+    "简体中文": "API Key 已保存",
+    "繁體中文": "API Key 已儲存",
+    "English": "API Key saved"
+  },
+  "api_key_cleared": {
+    "简体中文": "API Key 已清空",
+    "繁體中文": "API Key 已清空",
+    "English": "API Key cleared"
+  },
+  "clear": {
+    "简体中文": "清空",
+    "繁體中文": "清空",
+    "English": "Clear"
+  },
+  "model_name": {
+    "简体中文": "模型名称",
+    "繁體中文": "模型名稱",
+    "English": "Model Name"
+  },
+  "model_name_tip": {
+    "简体中文": "填写要使用的 AI 模型名称，与 API Key 一起保存",
+    "繁體中文": "填寫要使用的 AI 模型名稱，與 API Key 一起儲存",
+    "English": "Enter the AI model name to use, saved together with the API Key"
+  },
+  "model_name_placeholder": {
+    "简体中文": "请输入模型名称（如 gpt-4、claude-3 等）",
+    "繁體中文": "請輸入模型名稱（如 gpt-4、claude-3 等）",
+    "English": "Enter model name (e.g. gpt-4, claude-3, etc.)"
+  },
+  "model_name_saved": {
+    "简体中文": "模型名称与 API Key 已保存",
+    "繁體中文": "模型名稱與 API Key 已儲存",
+    "English": "Model name and API Key saved"
+  },
+  "ai_section": {
+    "简体中文": "GCP-AI",
+    "繁體中文": "GCP-AI",
+    "English": "GCP-AI"
+  },
+  "ai_enable": {
+    "简体中文": "开启GCP-AI",
+    "繁體中文": "開啟GCP-AI",
+    "English": "Enable GCP-AI"
+  },
+  "ai_input_placeholder": {
+    "简体中文": "说一个你想要的软件或网站…（Enter 发送，Shift+Enter 换行）",
+    "繁體中文": "說一個你想要的軟體或網站…（Enter 傳送，Shift+Enter 換行）",
+    "English": "Describe an app or site you want… (Enter to send, Shift+Enter for newline)"
+  },
+  "ai_send": {
+    "简体中文": "发送",
+    "繁體中文": "傳送",
+    "English": "Send"
+  },
+  "ai_api_base": {
+    "简体中文": "接口地址",
+    "繁體中文": "介面位址",
+    "English": "API Base URL"
+  },
+  "ai_provider": {
+    "简体中文": "服务商",
+    "繁體中文": "服務商",
+    "English": "Provider"
+  },
+  "ai_provider_tip": {
+    "简体中文": "选择 AI 服务商后，下面的「模型名称」和「接口地址」会自动填好。两个下拉框都可以手动输入：清单之外的模型名或自建接口直接敲进去即可",
+    "繁體中文": "選擇 AI 服務商後，下面的「模型名稱」和「介面位址」會自動填好。兩個下拉框都可以手動輸入：清單之外的模型名稱或自建介面直接敲進去即可",
+    "English": "Pick a provider and the model name and base URL below are filled in automatically. Both boxes are editable — type any model id or your own endpoint."
+  },
+  "ai_api_base_tip": {
+    "简体中文": "OpenAI 兼容格式的接口地址，通常以 /v1 结尾。跟着服务商自动填，也可以自己改（本地模型可填 http://127.0.0.1:端口/v1）",
+    "繁體中文": "OpenAI 相容格式的介面位址，通常以 /v1 結尾。跟著服務商自動填，也可以自己改（本機模型可填 http://127.0.0.1:連接埠/v1）",
+    "English": "OpenAI-compatible base URL, usually ending in /v1. Filled automatically from the provider; edit freely (a local model can use http://127.0.0.1:port/v1)."
+  },
+  "ai_api_base_placeholder": {
+    "简体中文": "https://api.deepseek.com/v1",
+    "繁體中文": "https://api.deepseek.com/v1",
+    "English": "https://api.deepseek.com/v1"
+  },
+  "ai_api_base_invalid": {
+    "简体中文": "接口地址必须以 http:// 或 https:// 开头，且要带上主机名",
+    "繁體中文": "介面位址必須以 http:// 或 https:// 開頭，且要帶上主機名稱",
+    "English": "The base URL must start with http:// or https:// and include a host name"
+  },
+  "model_name_required": {
+    "简体中文": "请先选择或填写模型名称",
+    "繁體中文": "請先選擇或填寫模型名稱",
+    "English": "Please choose or type a model name first"
+  },
+  "ai_reply_mode": {
+    "简体中文": "回复模式",
+    "繁體中文": "回覆模式",
+    "English": "Reply Mode"
+  },
+  "ai_reply_mode_tip": {
+    "简体中文": "控制回答的长度和细节。简洁：最多 4 行只给结论；标准：6 行内给推荐 + 一个备选；专业：10 行左右，带关键差异对比。任何模式都不会输出代码",
+    "繁體中文": "控制回答的長度與細節。簡潔：最多 4 行只給結論；標準：6 行內給推薦 + 一個備選；專業：10 行左右，帶關鍵差異對比。任何模式都不會輸出程式碼",
+    "English": "Controls answer length and detail. Concise: max 4 lines, conclusion only. Standard: within 6 lines, a pick plus one alternative. Professional: about 10 lines with key differences. No mode outputs code."
+  },
+  "ai_mode_standard": {
+    "简体中文": "标准",
+    "繁體中文": "標準",
+    "English": "Standard"
+  },
+  "ai_mode_concise": {
+    "简体中文": "简洁",
+    "繁體中文": "簡潔",
+    "English": "Concise"
+  },
+  "ai_mode_professional": {
+    "简体中文": "专业",
+    "繁體中文": "專業",
+    "English": "Professional"
+  },
+  "ai_reply_mode_saved": {
+    "简体中文": "回复模式已更新",
+    "繁體中文": "回覆模式已更新",
+    "English": "Reply mode updated"
+  },
+  "ai_context_window": {
+    "简体中文": "上下文范围",
+    "繁體中文": "上下文範圍",
+    "English": "Context Window"
+  },
+  "ai_context_tip": {
+    "简体中文": "每次提问时，把多少历史对话一起发给模型。历史记录永远完整保存，这里只影响发给模型的条数；选得越长越连贯，消耗的 token 也越多",
+    "繁體中文": "每次提問時，把多少歷史對話一起發給模型。歷史記錄永遠完整儲存，這裡只影響發給模型的條數；選得越長越連貫，消耗的 token 也越多",
+    "English": "How much chat history to send with each question. The full history is always saved on disk; longer context is more coherent but costs more tokens"
+  },
+  "ai_context_full": {
+    "简体中文": "整个会话（最长记忆）",
+    "繁體中文": "整個會話（最長記憶）",
+    "English": "Whole session (longest memory)"
+  },
+  "ai_context_10": {
+    "简体中文": "最近 10 轮对话",
+    "繁體中文": "最近 10 輪對話",
+    "English": "Last 10 rounds"
+  },
+  "ai_context_20": {
+    "简体中文": "最近 20 轮对话",
+    "繁體中文": "最近 20 輪對話",
+    "English": "Last 20 rounds"
+  },
+  "ai_context_30": {
+    "简体中文": "最近 30 轮对话",
+    "繁體中文": "最近 30 輪對話",
+    "English": "Last 30 rounds"
+  },
+  "ai_context_saved": {
+    "简体中文": "上下文范围已更新",
+    "繁體中文": "上下文範圍已更新",
+    "English": "Context window updated"
+  },
+  "ai_no_key_reply": {
+    "简体中文": "还没配置 <a href=\"toolsgcp://api_key\">API Key</a>，填好就能聊。",
+    "繁體中文": "還沒設定 <a href=\"toolsgcp://api_key\">API Key</a>，填好就能聊。",
+    "English": "No <a href=\"toolsgcp://api_key\">API Key</a> configured yet — fill it in and we're good to go."
+  },
+  "ai_resource_not_found": {
+    "简体中文": "资源库里找不到 {code} 这一条，可能已经被移除了。",
+    "繁體中文": "資源庫裡找不到 {code} 這一條，可能已經被移除了。",
+    "English": "No entry {code} in the library — it may have been removed."
+  },
+  "ai_mention_hint": {
+    "简体中文": "输入 @ 可以从资源库里挑一条直接丢给我",
+    "繁體中文": "輸入 @ 可以從資源庫裡挑一條直接丟給我",
+    "English": "Type @ to pick an entry from the library"
+  },
+  "ai_mention_tip": {
+    "简体中文": "把这条资源 @ 给 GCP-AI",
+    "繁體中文": "把這條資源 @ 給 GCP-AI",
+    "English": "Mention this entry to GCP-AI"
+  },
+  "ai_welcome": {
+    "简体中文": "说一句你想要什么功能就行，比如「局域网传文件的工具」——我会从资源库里找出来给你。",
+    "繁體中文": "說一句你想要什麼功能就行，例如「區域網路傳檔的工具」——我會從資源庫裡找出來給你。",
+    "English": "Just say what you need — e.g. \"a tool to transfer files over my LAN\" — and I'll find it in the library."
+  },
+  "ai_back": {
+    "简体中文": "返回",
+    "繁體中文": "返回",
+    "English": "Back"
+  },
+  "ai_new_chat": {
+    "简体中文": "新对话",
+    "繁體中文": "新對話",
+    "English": "New chat"
+  },
+  "ai_history": {
+    "简体中文": "历史对话",
+    "繁體中文": "歷史對話",
+    "English": "History"
+  },
+  "ai_close_drawer": {
+    "简体中文": "收起",
+    "繁體中文": "收起",
+    "English": "Collapse"
+  },
+  "ai_history_empty": {
+    "简体中文": "还没有历史对话",
+    "繁體中文": "還沒有歷史對話",
+    "English": "No conversations yet"
+  },
+  "ai_history_load_failed": {
+    "简体中文": "这个对话文件读不出来了，可能已损坏",
+    "繁體中文": "這個對話檔案讀不出來了，可能已損壞",
+    "English": "This conversation file can't be read; it may be corrupted"
+  },
+  "ai_history_loading": {
+    "简体中文": "正在加载历史对话",
+    "繁體中文": "正在載入歷史對話",
+    "English": "Loading conversations"
+  },
+  "ai_chat_loading": {
+    "简体中文": "正在加载对话",
+    "繁體中文": "正在載入對話",
+    "English": "Loading conversation"
+  },
+  "menu_copy": {
+    "简体中文": "复制",
+    "繁體中文": "複製",
+    "English": "Copy"
+  },
+  "menu_paste": {
+    "简体中文": "粘贴",
+    "繁體中文": "貼上",
+    "English": "Paste"
+  },
+  "menu_cut": {
+    "简体中文": "剪切",
+    "繁體中文": "剪下",
+    "English": "Cut"
+  },
+  "menu_undo": {
+    "简体中文": "撤回",
+    "繁體中文": "復原",
+    "English": "Undo"
+  },
+  "menu_select_all": {
+    "简体中文": "全选",
+    "繁體中文": "全選",
+    "English": "Select all"
+  },
+  "ai_delete_chat": {
+    "简体中文": "删除这个对话",
+    "繁體中文": "刪除這個對話",
+    "English": "Delete this conversation"
+  },
+  "msg_edit": {
+    "简体中文": "重写这条消息",
+    "繁體中文": "重寫這則訊息",
+    "English": "Rewrite this message"
+  },
+  "msg_copy": {
+    "简体中文": "复制内容",
+    "繁體中文": "複製內容",
+    "English": "Copy"
+  },
+  "msg_prev": {
+    "简体中文": "上一版",
+    "繁體中文": "上一版",
+    "English": "Previous version"
+  },
+  "msg_next": {
+    "简体中文": "下一版",
+    "繁體中文": "下一版",
+    "English": "Next version"
+  },
+  "msg_regen": {
+    "简体中文": "重新生成这条回答",
+    "繁體中文": "重新生成這則回覆",
+    "English": "Regenerate this reply"
+  },
+  "link_tip_open": {
+    "简体中文": "单击链接用浏览器打开；按住 Ctrl 单击在程序内打开",
+    "繁體中文": "點擊連結用瀏覽器開啟；按住 Ctrl 點擊在程式內開啟",
+    "English": "Click to open in the browser; Ctrl+Click to open inside the app"
+  },
+  "ctrl_open_tip": {
+    "简体中文": "Ctrl+左键：静默打开，不切走",
+    "繁體中文": "Ctrl+左鍵：靜默開啟，不切走",
+    "English": "Ctrl+click: open quietly without switching away"
+  },
+  "mention_tip_detail": {
+    "简体中文": "点击打开「{name}」的详情页",
+    "繁體中文": "點擊開啟「{name}」的詳細頁",
+    "English": "Open the details page for \"{name}\""
+  },
+  "ai_delete_title": {
+    "简体中文": "删除对话",
+    "繁體中文": "刪除對話",
+    "English": "Delete conversation"
+  },
+  "ai_delete_btn": {
+    "简体中文": "删除",
+    "繁體中文": "刪除",
+    "English": "Delete"
+  },
+  "ai_delete_confirm": {
+    "简体中文": "删除后就找不回来了，确定删掉这个对话吗？",
+    "繁體中文": "刪除後就找不回來了，確定刪掉這個對話嗎？",
+    "English": "This can't be undone. Delete this conversation?"
+  },
+  "cancel": {
+    "简体中文": "取消",
+    "繁體中文": "取消",
+    "English": "Cancel"
+  },
+  "ai_deleted": {
+    "简体中文": "对话已删除",
+    "繁體中文": "對話已刪除",
+    "English": "Conversation deleted"
+  },
+  "ai_thinking": {
+    "简体中文": "正在思考…",
+    "繁體中文": "正在思考…",
+    "English": "Thinking…"
+  },
+  "ai_stop": {
+    "简体中文": "停止",
+    "繁體中文": "停止",
+    "English": "Stop"
+  },
+  "ai_stopped": {
+    "简体中文": "已停止本次回答",
+    "繁體中文": "已停止本次回答",
+    "English": "Generation stopped"
+  },
+  "ai_error_no_key": {
+    "简体中文": "还没有配置 API Key，请到 设置 → API Key 填写后再试",
+    "繁體中文": "還沒有設定 API Key，請到 設定 → API Key 填寫後再試",
+    "English": "No API Key configured. Please fill it in at Settings → API Key"
+  },
+  "ai_error_no_model": {
+    "简体中文": "还没有配置模型名称，请到 设置 → API Key 填写（例如 deepseek-v4.1-flash）",
+    "繁體中文": "還沒有設定模型名稱，請到 設定 → API Key 填寫（例如 deepseek-v4.1-flash）",
+    "English": "No model name configured. Please fill it in at Settings → API Key (e.g. deepseek-v4.1-flash)"
+  },
+  "ai_error_failed": {
+    "简体中文": "回答失败",
+    "繁體中文": "回答失敗",
+    "English": "Request failed"
+  },
+  "ai_reply_stopped": {
+    "简体中文": "（本次回答被中断）",
+    "繁體中文": "（本次回答被中斷）",
+    "English": "(response interrupted)"
+  },
+  "model_calling": {
+    "简体中文": "模型调用",
+    "繁體中文": "模型呼叫",
+    "English": "Model Calling"
+  },
+  "limit_token_output": {
+    "简体中文": "限制token输出",
+    "繁體中文": "限制token輸出",
+    "English": "Limit token output"
+  },
+  "min_token_placeholder": {
+    "简体中文": "最小token量",
+    "繁體中文": "最小token量",
+    "English": "Minimum token amount"
+  },
+  "max_token_placeholder": {
+    "简体中文": "最大token量",
+    "繁體中文": "最大token量",
+    "English": "Maximum token amount"
+  },
+  "token_unit": {
+    "简体中文": "tokens",
+    "繁體中文": "tokens",
+    "English": "tokens"
+  },
+  "about": {
+    "简体中文": "关于",
+    "繁體中文": "關於",
+    "English": "About"
+  },
+  "check_update": {
+    "简体中文": "检查更新",
+    "繁體中文": "檢查更新",
+    "English": "Check for Updates"
+  },
+  "check_update_btn": {
+    "简体中文": "检查更新",
+    "繁體中文": "檢查更新",
+    "English": "Check Now"
+  },
+  "checking_update": {
+    "简体中文": "正在检查更新...",
+    "繁體中文": "正在檢查更新...",
+    "English": "Checking for updates..."
+  },
+  "update_channel": {
+    "简体中文": "更新下载渠道",
+    "繁體中文": "更新下載渠道",
+    "English": "Update channel"
+  },
+  "update_channel_tip": {
+    "简体中文": "决定「检查更新」愿意接受哪种发布：正式版 + Beta 版（默认）、只要正式版、或只要 Beta 版。",
+    "繁體中文": "決定「檢查更新」願意接受哪種發布：正式版 + Beta 版（預設）、只要正式版、或只要 Beta 版。",
+    "English": "Which releases \"Check for Updates\" accepts: Stable + Beta (default), Stable only, or Beta only."
+  },
+  "update_channel_all": {
+    "简体中文": "下载正式版和Beta版",
+    "繁體中文": "下載正式版和Beta版",
+    "English": "Stable + Beta"
+  },
+  "update_channel_stable": {
+    "简体中文": "仅下载正式版",
+    "繁體中文": "僅下載正式版",
+    "English": "Stable only"
+  },
+  "update_channel_beta": {
+    "简体中文": "仅下载Beta版",
+    "繁體中文": "僅下載Beta版",
+    "English": "Beta only"
+  },
+  "update_is_latest": {
+    "简体中文": "当前已是最新版本",
+    "繁體中文": "目前已是最新版本",
+    "English": "You are on the latest version"
+  },
+  "update_dir_fallback": {
+    "简体中文": "程序目录不可写，更新包已改存到「下载」文件夹",
+    "繁體中文": "程式目錄無法寫入，更新包已改存到「下載」資料夾",
+    "English": "The program folder is not writable; the update was saved to your Downloads folder"
+  },
+  "update_dialog_title": {
+    "简体中文": "发现新版本",
+    "繁體中文": "發現新版本",
+    "English": "Update available"
+  },
+  "update_dialog_available": {
+    "简体中文": "发现新版本",
+    "繁體中文": "發現新版本",
+    "English": "Update available"
+  },
+  "update_badge_prerelease": {
+    "简体中文": "Beta 版",
+    "繁體中文": "Beta 版",
+    "English": "Beta"
+  },
+  "update_badge_stable": {
+    "简体中文": "正式版",
+    "繁體中文": "正式版",
+    "English": "Stable"
+  },
+  "update_fact_current": {
+    "简体中文": "当前版本",
+    "繁體中文": "當前版本",
+    "English": "Current version"
+  },
+  "update_fact_latest": {
+    "简体中文": "最新版本",
+    "繁體中文": "最新版本",
+    "English": "Latest version"
+  },
+  "update_fact_file": {
+    "简体中文": "更新文件",
+    "繁體中文": "更新檔案",
+    "English": "File"
+  },
+  "update_fact_size": {
+    "简体中文": "文件大小",
+    "繁體中文": "檔案大小",
+    "English": "Size"
+  },
+  "update_fact_published": {
+    "简体中文": "发布日期",
+    "繁體中文": "發布日期",
+    "English": "Published"
+  },
+  "update_fact_notes": {
+    "简体中文": "版本信息",
+    "繁體中文": "版本資訊",
+    "English": "Release notes"
+  },
+  "update_notes_empty": {
+    "简体中文": "（这个版本没有填写更新说明）",
+    "繁體中文": "（這個版本沒有填寫更新說明）",
+    "English": "(This release has no notes)"
+  },
+  "update_btn_download": {
+    "简体中文": "立即下载",
+    "繁體中文": "立即下載",
+    "English": "Download"
+  },
+  "update_btn_later": {
+    "简体中文": "稍后",
+    "繁體中文": "稍後",
+    "English": "Later"
+  },
+  "update_btn_open_page": {
+    "简体中文": "打开发布页",
+    "繁體中文": "打開發布頁",
+    "English": "Release page"
+  },
+  "update_btn_cancel": {
+    "简体中文": "取消",
+    "繁體中文": "取消",
+    "English": "Cancel"
+  },
+  "update_btn_close": {
+    "简体中文": "关闭",
+    "繁體中文": "關閉",
+    "English": "Close"
+  },
+  "update_btn_open_folder": {
+    "简体中文": "打开文件夹",
+    "繁體中文": "開啟資料夾",
+    "English": "Open folder"
+  },
+  "update_btn_restart_now": {
+    "简体中文": "立即重启并更新",
+    "繁體中文": "立即重啟並更新",
+    "English": "Restart & update now"
+  },
+  "update_btn_see_reasons": {
+    "简体中文": "查看原因",
+    "繁體中文": "檢視原因",
+    "English": "Why?"
+  },
+  "update_btn_know": {
+    "简体中文": "我知道了",
+    "繁體中文": "我知道了",
+    "English": "Got it"
+  },
+  "update_download_ready_replace": {
+    "简体中文": "已校验通过。点「立即重启并更新」就会替换成新版本并自动启动。",
+    "繁體中文": "已校驗通過。點「立即重啟並更新」就會替換成新版本並自動啟動。",
+    "English": "Verified. Click \"Restart & update now\" to replace the program and launch the new version."
+  },
+  "update_download_auto_restart": {
+    "简体中文": "已校验通过，正在自动替换并重启…（想稍后装就点「稍后」）",
+    "繁體中文": "已校驗通過，正在自動替換並重啟…（想稍後安裝就點「稍後」）",
+    "English": "Verified. Replacing the program and restarting now… (click Later to postpone)"
+  },
+  "update_download_cannot_replace": {
+    "简体中文": "已校验通过，但当前环境不能自动替换，点「查看原因」看看是哪种情况。",
+    "繁體中文": "已校驗通過，但目前環境不能自動替換，點「檢視原因」看看是哪種情況。",
+    "English": "Verified, but this environment cannot replace the program automatically. Click \"Why?\" to see which case applies."
+  },
+  "update_replace_failed_title": {
+    "简体中文": "无法自动替换",
+    "繁體中文": "無法自動替換",
+    "English": "Cannot replace automatically"
+  },
+  "update_replace_failed_intro": {
+    "简体中文": "新版本已经下载好了，但程序没能把自己替换成新版本。常见原因有下面几种：",
+    "繁體中文": "新版本已經下載好了，但程式沒能把自己替換成新版本。常見原因有以下幾種：",
+    "English": "The new version has been downloaded, but the program could not replace itself. The usual reasons are listed below:"
+  },
+  "update_replace_detected": {
+    "简体中文": "本次检测到：",
+    "繁體中文": "本次偵測到：",
+    "English": "Detected this time:"
+  },
+  "update_replace_other": {
+    "简体中文": "其它也可能导致替换失败的原因：",
+    "繁體中文": "其他也可能導致替換失敗的原因：",
+    "English": "Other reasons that can also break the replacement:"
+  },
+  "update_replace_reason_source_run": {
+    "简体中文": "正在用源码运行（开发状态），当前目录里没有 ToolsGCP.exe 可以替换",
+    "繁體中文": "正在用原始碼執行（開發狀態），目前目錄裡沒有 ToolsGCP.exe 可以替換",
+    "English": "Running from source code (development state) — there is no ToolsGCP.exe in the folder to replace"
+  },
+  "update_replace_reason_no_exe": {
+    "简体中文": "当前文件夹里找不到 ToolsGCP.exe（被删掉了，或者还在开发目录里）",
+    "繁體中文": "目前資料夾裡找不到 ToolsGCP.exe（被刪掉了，或者還在開發目錄裡）",
+    "English": "ToolsGCP.exe cannot be found in the current folder (deleted, or this is still a development folder)"
+  },
+  "update_replace_reason_stage": {
+    "简体中文": "把新版本复制进程序目录时失败了（磁盘空间不足、权限不足，或被安全软件拦截）",
+    "繁體中文": "把新版本複製進程式目錄時失敗了（磁碟空間不足、權限不足，或被安全軟體攔截）",
+    "English": "Copying the new version into the program folder failed (no disk space, not enough permission, or blocked by security software)"
+  },
+  "update_replace_reason_renamed": {
+    "简体中文": "程序的文件名里带中文或特殊字符 —— 替换脚本只认纯英文文件名（改成英文名再运行就能自动更新）",
+    "繁體中文": "程式的檔案名稱含中文或特殊字元 —— 替換指令碼只認純英文檔名（改成英文名再執行就能自動更新）",
+    "English": "The program file name contains non-ASCII characters — the replace helper only handles plain-ASCII names (rename it to ASCII and it can update itself)"
+  },
+  "update_replace_reason_not_writable": {
+    "简体中文": "程序所在文件夹不可写（装在 Program Files、只读盘或网盘里）",
+    "繁體中文": "程式所在資料夾不可寫入（安裝在 Program Files、唯讀磁碟或網路磁碟裡）",
+    "English": "The program folder is not writable (installed under Program Files, on a read-only or network drive)"
+  },
+  "update_replace_reason_script": {
+    "简体中文": "临时目录里写不了替换脚本（临时目录不可写，或被安全软件拦截了）",
+    "繁體中文": "暫存目錄裡寫不了替換腳本（暫存目錄不可寫，或被安全軟體攔截了）",
+    "English": "The helper script cannot be written to the temp folder (temp folder not writable, or blocked by security software)"
+  },
+  "update_replace_reason_not_windows": {
+    "简体中文": "当前系统不是 Windows（自动替换脚本只支持 Windows）",
+    "繁體中文": "目前系統不是 Windows（自動替換腳本只支援 Windows）",
+    "English": "This system is not Windows (the auto-replace script only works on Windows)"
+  },
+  "update_replace_manual_tip": {
+    "简体中文": "新版本文件：{path}\n可以点「打开文件夹」，手动把它改名成 ToolsGCP.exe 覆盖旧文件。",
+    "繁體中文": "新版本檔案：{path}\n可以點「開啟資料夾」，手動把它改名成 ToolsGCP.exe 覆蓋舊檔案。",
+    "English": "New version file: {path}\nClick \"Open folder\" and rename it to ToolsGCP.exe to replace the old file manually."
+  },
+  "update_download_title": {
+    "简体中文": "正在下载更新",
+    "繁體中文": "正在下載更新",
+    "English": "Downloading update"
+  },
+  "update_download_starting": {
+    "简体中文": "正在连接…",
+    "繁體中文": "正在連接…",
+    "English": "Connecting…"
+  },
+  "update_download_done": {
+    "简体中文": "更新包下载完成",
+    "繁體中文": "更新包下載完成",
+    "English": "Update downloaded"
+  },
+  "update_download_done_warn": {
+    "简体中文": "已下载（有提示）",
+    "繁體中文": "已下載（有提示）",
+    "English": "Downloaded (with warnings)"
+  },
+  "update_warn_too_small": {
+    "简体中文": "文件偏小，可能不完整",
+    "繁體中文": "檔案偏小，可能不完整",
+    "English": "File may be incomplete"
+  },
+  "update_warn_not_exe": {
+    "简体中文": "可能不是程序文件",
+    "繁體中文": "可能不是程式檔案",
+    "English": "May not be a program file"
+  },
+  "update_download_done_tip": {
+    "简体中文": "已校验通过，文件保存在下面这个位置",
+    "繁體中文": "已校驗通過，檔案儲存在下面這個位置",
+    "English": "Verified. The file is saved at the location below."
+  },
+  "update_download_failed": {
+    "简体中文": "下载失败",
+    "繁體中文": "下載失敗",
+    "English": "Download failed"
+  },
+  "update_download_cancelled": {
+    "简体中文": "已取消下载",
+    "繁體中文": "已取消下載",
+    "English": "Download cancelled"
+  },
+  "update_was_cancelled": {
+    "简体中文": "已取消",
+    "繁體中文": "已取消",
+    "English": "Cancelled"
+  },
+  "update_err_no_release": {
+    "简体中文": "作者还没有发布任何版本",
+    "繁體中文": "作者還沒有發布任何版本",
+    "English": "The author hasn't published any releases yet"
+  },
+  "update_err_rate_limit": {
+    "简体中文": "GitHub 接口访问太频繁，请稍后再试",
+    "繁體中文": "GitHub 介面存取過於頻繁，請稍後再試",
+    "English": "GitHub API rate limit reached, please try again later"
+  },
+  "update_err_network": {
+    "简体中文": "网络连接失败，请检查网络后重试",
+    "繁體中文": "網路連線失敗，請檢查網路後重試",
+    "English": "Network error, please check your connection and retry"
+  },
+  "update_err_bad_response": {
+    "简体中文": "服务器返回的内容看不懂，请稍后再试",
+    "繁體中文": "伺服器回應的內容無法辨識，請稍後再試",
+    "English": "Unexpected response from the server, please try again later"
+  },
+  "update_err_no_channel_release": {
+    "简体中文": "当前渠道下还没有发布版本，换个渠道试试",
+    "繁體中文": "目前渠道下還沒有發布版本，換個渠道試試",
+    "English": "No release in the selected channel — try another channel"
+  },
+  "update_err_no_asset": {
+    "简体中文": "这个版本里没有找到 ToolsGCP.exe",
+    "繁體中文": "這個版本裡沒有找到 ToolsGCP.exe",
+    "English": "ToolsGCP.exe was not found in this release"
+  },
+  "update_err_timeout": {
+    "简体中文": "检查更新超时了，请稍后再试",
+    "繁體中文": "檢查更新逾時，請稍後再試",
+    "English": "Checking for updates timed out, please try again later"
+  },
+  "update_err_checksum": {
+    "简体中文": "文件校验失败，可能下载不完整，请重试",
+    "繁體中文": "檔案校驗失敗，可能下載不完整，請重試",
+    "English": "Checksum mismatch — the download may be incomplete, please retry"
+  },
+  "update_err_too_small": {
+    "简体中文": "下载到的文件不完整（体积异常）",
+    "繁體中文": "下載到的檔案不完整（大小異常）",
+    "English": "The downloaded file is incomplete (unexpected size)"
+  },
+  "update_err_not_exe": {
+    "简体中文": "下载到的不是可执行文件",
+    "繁體中文": "下載到的不是可執行檔",
+    "English": "The downloaded file is not an executable"
+  },
+  "update_err_disk": {
+    "简体中文": "写入文件失败，请检查磁盘空间和权限",
+    "繁體中文": "寫入檔案失敗，請檢查磁碟空間與權限",
+    "English": "Failed to write the file — check disk space and permissions"
+  },
+  "update_err_http": {
+    "简体中文": "服务器返回错误",
+    "繁體中文": "伺服器回應錯誤",
+    "English": "Server returned an error"
+  },
+  "update_err_unknown": {
+    "简体中文": "检查更新失败",
+    "繁體中文": "檢查更新失敗",
+    "English": "Failed to check for updates"
+  },
+  "resource_source": {
+    "简体中文": "资源来源",
+    "繁體中文": "資源來源",
+    "English": "Resource source"
+  },
+  "resource_source_tip": {
+    "简体中文": "云端：使用作者上传的最新资源库，收录了哪些程序由云端决定。\n本地：使用你自己电脑上的 ToolsGCP-Resources.json，适合自己改过资源库、或开发者还没把资源传到云端时调试。",
+    "繁體中文": "雲端：使用作者上傳的最新資源庫，收錄了哪些程式由雲端決定。\n本機：使用你自己電腦上的 ToolsGCP-Resources.json，適合自己改過資源庫、或開發者還沒把資源傳到雲端時除錯。",
+    "English": "Cloud: use the latest resource list published by the author.\nLocal: use a ToolsGCP-Resources.json on your own disk."
+  },
+  "resource_source_mode": {
+    "简体中文": "资源来源",
+    "繁體中文": "資源來源",
+    "English": "Source"
+  },
+  "source_cloud": {
+    "简体中文": "云端（推荐）",
+    "繁體中文": "雲端（推薦）",
+    "English": "Cloud (recommended)"
+  },
+  "source_local": {
+    "简体中文": "本地文件",
+    "繁體中文": "本機檔案",
+    "English": "Local file"
+  },
+  "local_dir": {
+    "简体中文": "资源目录",
+    "繁體中文": "資源目錄",
+    "English": "Folder"
+  },
+  "choose_dir": {
+    "简体中文": "选择文件夹",
+    "繁體中文": "選擇資料夾",
+    "English": "Choose folder"
+  },
+  "current_index_file": {
+    "简体中文": "当前索引文件",
+    "繁體中文": "目前索引檔案",
+    "English": "Current index file"
+  },
+  "index_file_missing": {
+    "简体中文": "这个位置没有找到 ToolsGCP-Resources.json",
+    "繁體中文": "這個位置沒有找到 ToolsGCP-Resources.json",
+    "English": "ToolsGCP-Resources.json was not found there"
+  },
+  "local_dir_temp_notice": {
+    "简体中文": "⚠️ 提示：本地资源功能还在开发中，目前「云端」和「本地」读取的其实都是本地文件；云端拉取还没有接上，后续会补。",
+    "繁體中文": "⚠️ 提示：本機資源功能還在開發中，目前「雲端」和「本機」讀取的其實都是本機檔案；雲端拉取還沒接上，後續會補。",
+    "English": "Note: the local/cloud resource feature is still under development."
+  },
+  "search_card_size": {
+    "简体中文": "搜索页卡片大小",
+    "繁體中文": "搜尋頁卡片大小",
+    "English": "Search card size"
+  },
+  "search_card_size_tip": {
+    "简体中文": "调整搜索页卡片的尺寸，改完立刻生效",
+    "繁體中文": "調整搜尋頁卡片的尺寸，改完立刻生效",
+    "English": "Change the size of search page cards. Takes effect immediately."
+  },
+  "card_size_small": {
+    "简体中文": "小（一屏放更多）",
+    "繁體中文": "小（一屏放更多）",
+    "English": "Small (more per screen)"
+  },
+  "card_size_medium": {
+    "简体中文": "中（默认）",
+    "繁體中文": "中（預設）",
+    "English": "Medium (default)"
+  },
+  "card_size_large": {
+    "简体中文": "大（简介显示三行）",
+    "繁體中文": "大（簡介顯示三行）",
+    "English": "Large (3 lines of description)"
+  },
+  "restart_now": {
+    "简体中文": "立即重启",
+    "繁體中文": "立即重新啟動",
+    "English": "Restart now"
+  },
+  "restart_later": {
+    "简体中文": "稍后手动重启",
+    "繁體中文": "稍後手動重新啟動",
+    "English": "Restart later"
+  },
+  "show_github_button": {
+    "简体中文": "显示 GitHub 按钮",
+    "繁體中文": "顯示 GitHub 按鈕",
+    "English": "Show GitHub button"
+  },
+  "show_github_button_tip": {
+    "简体中文": "开启后，搜索页卡片右下角会显示 GitHub 按钮；默认开启",
+    "繁體中文": "開啟後，搜尋頁卡片右下角會顯示 GitHub 按鈕；預設開啟",
+    "English": "Show the GitHub button on search cards (on by default)"
+  },
+  "search_view_mode": {
+    "简体中文": "搜索页视图",
+    "繁體中文": "搜尋頁檢視",
+    "English": "Search view"
+  },
+  "search_view_mode_tip": {
+    "简体中文": "磁贴：一行 4 个大卡片；网格：一行 6 个小卡片，只保留收藏按钮",
+    "繁體中文": "磁貼：一行 4 個大卡片；網格：一行 6 個小卡片，只保留收藏按鈕",
+    "English": "Tile: 4 large cards per row; Grid: 6 small cards, favourite only"
+  },
+  "search_view_tile": {
+    "简体中文": "磁贴",
+    "繁體中文": "磁貼",
+    "English": "Tile"
+  },
+  "search_view_grid": {
+    "简体中文": "网格",
+    "繁體中文": "網格",
+    "English": "Grid"
+  },
+  "api_unsaved_title": {
+    "简体中文": "还有修改没有保存",
+    "繁體中文": "還有修改沒有儲存",
+    "English": "Unsaved changes"
+  },
+  "api_unsaved_body": {
+    "简体中文": "服务商 / 模型名称 / 接口地址 / API Key 有改动还没保存。\n选择「保存并继续」先存下来，或「放弃修改」丢掉这次的改动；点「留在当前界面」则停在原处不动。",
+    "繁體中文": "服務商 / 模型名稱 / 介面位址 / API Key 有改動還沒儲存。\n選擇「儲存並繼續」先存下來，或「放棄修改」丟掉這次的改動；點「留在當前介面」則停在原處不動。",
+    "English": "Provider / model / API base / API key have unsaved changes.\nChoose Save and continue, Discard changes, or Stay here."
+  },
+  "hotkey_registered": {
+    "简体中文": "已注册",
+    "繁體中文": "已註冊",
+    "English": "Registered"
+  },
+  "hotkey_failed": {
+    "简体中文": "未生效（被占用或不可用）",
+    "繁體中文": "未生效（被佔用或不可用）",
+    "English": "Not active (taken or unusable)"
+  },
+  "github_mirror_hint": {
+    "简体中文": "下面的镜像站会把上面的链接原样转发一份，国内下载通常快很多。这条不通就换一条，或者直接用上面的「下载」走 GitHub 官方。",
+    "繁體中文": "下面的鏡像站會把上面的連結原樣轉發一份，國內下載通常快很多。這條不通就換一條，或者直接用上面的「下載」走 GitHub 官方。",
+    "English": "The mirrors below simply forward the link above; they are usually much faster in mainland China. If one does not work, try the next one — or use \"Download\" above to go through GitHub directly."
+  },
+  "github_mirror_footer": {
+    "简体中文": "镜像由第三方公益提供：本站只做跳转，不中转、不修改文件，也不保证它们一直可用。装之前建议核对官方公布的哈希值。",
+    "繁體中文": "鏡像由第三方公益提供：本站只做跳轉，不中轉、不修改檔案，也不保證它們一直可用。裝之前建議核對官方公布的雜湊值。",
+    "English": "Mirrors are run by third parties as a public service: this app only redirects — it never proxies or modifies files, and cannot promise the mirrors stay available. Check the official hash before installing."
+  },
+  "github_mirror_list_label": {
+    "简体中文": "镜像站",
+    "繁體中文": "鏡像站",
+    "English": "Mirrors"
+  },
+  "accent_blue": {
+    "简体中文": "蓝色",
+    "繁體中文": "藍色",
+    "English": "Blue"
+  },
+  "accent_color": {
+    "简体中文": "组件配色",
+    "繁體中文": "組件配色",
+    "English": "Accent color"
+  },
+  "accent_color_desc": {
+    "简体中文": "改的是开关 / 下拉框 / 滑块这些组件的颜色（AI 悬浮球背景不变）",
+    "繁體中文": "改的是開關 / 下拉框 / 滑桿這些組件的顏色（AI 懸浮球背景不變）",
+    "English": "Colors of switches, dropdowns and sliders (the AI ball keeps its own colors)"
+  },
+  "ui_font": {
+    "简体中文": "字体",
+    "繁體中文": "字型",
+    "English": "Font"
+  },
+  "ai_sidebar_mode": {
+    "简体中文": "改用侧边栏 AI 单独界面",
+    "繁體中文": "改用側邊欄 AI 單獨介面",
+    "English": "Use the sidebar AI page instead"
+  },
+  "ai_sidebar_mode_tip": {
+    "简体中文": "把 AI 从右下角悬浮球改成左侧栏里的一整页（位置在 GCP工坊下面）；开启后悬浮球会消失",
+    "繁體中文": "把 AI 從右下角懸浮球改成左側欄裡的一整頁（位置在 GCP工坊下面）；開啟後懸浮球會消失",
+    "English": "Turns AI from the floating ball into a full page in the sidebar (right below GCP Workshop). The ball disappears while this is on."
+  },
+  "ui_font_desc": {
+    "简体中文": "整个界面的字体，选完立刻生效；选「跟随系统」恢复默认",
+    "繁體中文": "整個介面的字型，選完立刻生效；選「跟隨系統」恢復預設",
+    "English": "Font used across the whole app; takes effect immediately. Pick \"Follow system\" to reset."
+  },
+  "accent_orange": {
+    "简体中文": "Claude橙",
+    "繁體中文": "Claude橙",
+    "English": "Claude orange"
+  },
+  "accent_purple": {
+    "简体中文": "紫罗兰",
+    "繁體中文": "紫羅蘭",
+    "English": "Violet"
+  },
+  "ai_history_empty_card": {
+    "简体中文": "这个对话还没有内容。",
+    "繁體中文": "這個對話還沒有內容。",
+    "English": "This conversation is empty."
+  },
+  "autostart": {
+    "简体中文": "开机自启动",
+    "繁體中文": "開機自啟動",
+    "English": "Launch at startup"
+  },
+  "close_mode_changed": {
+    "简体中文": "关闭方式已更改",
+    "繁體中文": "關閉方式已變更",
+    "English": "Close behavior updated"
+  },
+  "coming_soon": {
+    "简体中文": "功能开发中…",
+    "繁體中文": "功能開發中…",
+    "English": "Coming soon…"
+  },
+  "debug_info_enabled": {
+    "简体中文": "显示调试信息",
+    "繁體中文": "顯示除錯資訊",
+    "English": "Show debug info"
+  },
+  "dev_functions": {
+    "简体中文": "开发者功能",
+    "繁體中文": "開發者功能",
+    "English": "Developer features"
+  },
+  "download_settings": {
+    "简体中文": "下载",
+    "繁體中文": "下載",
+    "English": "Downloads"
+  },
+  "download_speed_limit_tip": {
+    "简体中文": "限制下载速度，避免占满带宽",
+    "繁體中文": "限制下載速度，避免佔滿頻寬",
+    "English": "Cap the download speed so it does not fill your bandwidth"
+  },
+  "exit_directly": {
+    "简体中文": "彻底退出",
+    "繁體中文": "徹底結束",
+    "English": "Exit completely"
+  },
+  "function_settings": {
+    "简体中文": "功能",
+    "繁體中文": "功能",
+    "English": "Features"
+  },
+  "home_page_title": {
+    "简体中文": "首页",
+    "繁體中文": "首頁",
+    "English": "Home"
+  },
+  "input_license": {
+    "简体中文": "输入 GCP License Key",
+    "繁體中文": "輸入 GCP License Key",
+    "English": "Enter your GCP License Key"
+  },
+  "license_invalid": {
+    "简体中文": "密钥无效",
+    "繁體中文": "金鑰無效",
+    "English": "Invalid key"
+  },
+  "license_saved": {
+    "简体中文": "密钥已保存",
+    "繁體中文": "金鑰已儲存",
+    "English": "Key saved"
+  },
+  "license_tip": {
+    "简体中文": "输入正确的密钥可解锁完整功能",
+    "繁體中文": "輸入正確的金鑰可解鎖完整功能",
+    "English": "Enter a valid key to unlock all features"
+  },
+  "license_valid": {
+    "简体中文": "密钥有效",
+    "繁體中文": "金鑰有效",
+    "English": "Key is valid"
+  },
+  "limit": {
+    "简体中文": "限速",
+    "繁體中文": "限速",
+    "English": "Limit"
+  },
+  "limit_token_tip": {
+    "简体中文": "限制单次回复里最大的 token 数，避免回复过长",
+    "繁體中文": "限制單次回覆裡最大的 token 數，避免回覆過長",
+    "English": "Cap the number of tokens in a single reply"
+  },
+  "logout": {
+    "简体中文": "退出开发者模式",
+    "繁體中文": "結束開發者模式",
+    "English": "Leave developer mode"
+  },
+  "max_token": {
+    "简体中文": "最大 token",
+    "繁體中文": "最大 token",
+    "English": "Max tokens"
+  },
+  "min_token": {
+    "简体中文": "最小 token",
+    "繁體中文": "最小 token",
+    "English": "Min tokens"
+  },
+  "minimize_to_tray_option": {
+    "简体中文": "最小化到托盘",
+    "繁體中文": "最小化到系統匣",
+    "English": "Minimize to tray"
+  },
+  "notify": {
+    "简体中文": "显示通知",
+    "繁體中文": "顯示通知",
+    "English": "Show notifications"
+  },
+  "notify_disabled": {
+    "简体中文": "通知已关闭",
+    "繁體中文": "通知已關閉",
+    "English": "Notifications off"
+  },
+  "notify_enabled": {
+    "简体中文": "通知已开启",
+    "繁體中文": "通知已開啟",
+    "English": "Notifications on"
+  },
+  "open_settings_on_restart": {
+    "简体中文": "重启后打开设置页",
+    "繁體中文": "重啟後開啟設定頁",
+    "English": "Open settings after restart"
+  },
+  "show_view_switch": {
+    "简体中文": "在搜索页显示视图切换按钮",
+    "繁體中文": "在搜尋頁顯示檢視切換按鈕",
+    "English": "Show the view switch on the search page"
+  },
+  "show_view_switch_tip": {
+    "简体中文": "关闭后搜索页工具栏上的磁贴 / 网格切换按钮会隐藏，排序会往右靠拢补齐位置；这里的「搜索页视图」照样能切",
+    "繁體中文": "關閉後搜尋頁工具列上的磁貼 / 網格切換按鈕會隱藏，排序會往右靠攏補齊位置；這裡的「搜尋頁檢視」照樣能切",
+    "English": "Hides the tile/grid switch on the search toolbar and lets sorting move right. The \"Search page view\" option below still works."
+  },
+  "speed_limit_setting": {
+    "简体中文": "限速设置",
+    "繁體中文": "限速設定",
+    "English": "Speed limit"
+  },
+  "token_saved": {
+    "简体中文": "token 设置已保存",
+    "繁體中文": "token 設定已儲存",
+    "English": "Token settings saved"
+  },
+  "hotkey_placeholder": {
+    "简体中文": "点击这里，然后按下组合键",
+    "繁體中文": "點這裡，然後按下組合鍵",
+    "English": "Click here, then press the shortcut"
+  },
+  "font_label_default": {
+    "简体中文": "微软雅黑",
+    "繁體中文": "微軟雅黑",
+    "English": "Microsoft YaHei"
+  },
+  "font_label_dengxian": {
+    "简体中文": "等线 (DengXian)",
+    "繁體中文": "等線 (DengXian)",
+    "English": "DengXian"
+  },
+  "font_label_segoe": {
+    "简体中文": "Segoe UI",
+    "繁體中文": "Segoe UI",
+    "English": "Segoe UI"
+  },
+  "font_label_simsun": {
+    "简体中文": "宋体 (SimSun)",
+    "繁體中文": "宋體 (SimSun)",
+    "English": "SimSun"
+  },
+  "font_label_simhei": {
+    "简体中文": "黑体 (SimHei)",
+    "繁體中文": "黑體 (SimHei)",
+    "English": "SimHei"
+  },
+  "font_label_kaiti": {
+    "简体中文": "楷体 (KaiTi)",
+    "繁體中文": "楷體 (KaiTi)",
+    "English": "KaiTi"
+  },
+  "font_label_fangsong": {
+    "简体中文": "仿宋 (FangSong)",
+    "繁體中文": "仿宋 (FangSong)",
+    "English": "FangSong"
+  },
+  "font_label_consolas": {
+    "简体中文": "Consolas（等宽）",
+    "繁體中文": "Consolas（等寬）",
+    "English": "Consolas (monospace)"
+  },
+  "font_label_jetbrains": {
+    "简体中文": "JetBrains Mono（等宽）",
+    "繁體中文": "JetBrains Mono（等寬）",
+    "English": "JetBrains Mono (monospace)"
+  },
+  "font_label_other": {
+    "简体中文": "其它系统字体",
+    "繁體中文": "其它系統字型",
+    "English": "Other system fonts"
+  },
+  "ai_provider_deepseek": {
+    "简体中文": "DeepSeek（深度求索）",
+    "繁體中文": "DeepSeek（深度求索）",
+    "English": "DeepSeek"
+  },
+  "ai_provider_openai": {
+    "简体中文": "OpenAI（ChatGPT）",
+    "繁體中文": "OpenAI（ChatGPT）",
+    "English": "OpenAI (ChatGPT)"
+  },
+  "ai_provider_claude": {
+    "简体中文": "Anthropic（Claude）",
+    "繁體中文": "Anthropic（Claude）",
+    "English": "Anthropic (Claude)"
+  },
+  "ai_provider_grok": {
+    "简体中文": "xAI（Grok）",
+    "繁體中文": "xAI（Grok）",
+    "English": "xAI (Grok)"
+  },
+  "ai_provider_kimi": {
+    "简体中文": "Kimi（月之暗面）",
+    "繁體中文": "Kimi（月之暗面）",
+    "English": "Kimi (Moonshot)"
+  },
+  "ai_provider_qwen": {
+    "简体中文": "通义千问（阿里云百炼）",
+    "繁體中文": "通義千問（阿里雲百鍊）",
+    "English": "Qwen (Alibaba Cloud Bailian)"
+  },
+  "ai_provider_siliconflow": {
+    "简体中文": "硅基流动 SiliconFlow",
+    "繁體中文": "硅基流動 SiliconFlow",
+    "English": "SiliconFlow"
+  },
+  "ai_provider_custom": {
+    "简体中文": "自定义（OpenAI 兼容）",
+    "繁體中文": "自訂（OpenAI 相容）",
+    "English": "Custom (OpenAI-compatible)"
+  },
+  "ai_provider_hint_deepseek": {
+    "简体中文": "在 platform.deepseek.com 申请 API Key",
+    "繁體中文": "在 platform.deepseek.com 申請 API Key",
+    "English": "Get an API key at platform.deepseek.com"
+  },
+  "ai_provider_hint_openai": {
+    "简体中文": "在 platform.openai.com 申请 API Key",
+    "繁體中文": "在 platform.openai.com 申請 API Key",
+    "English": "Get an API key at platform.openai.com"
+  },
+  "ai_provider_hint_claude": {
+    "简体中文": "在 console.anthropic.com 申请 API Key",
+    "繁體中文": "在 console.anthropic.com 申請 API Key",
+    "English": "Get an API key at console.anthropic.com"
+  },
+  "ai_provider_hint_grok": {
+    "简体中文": "在 console.x.ai 申请 API Key",
+    "繁體中文": "在 console.x.ai 申請 API Key",
+    "English": "Get an API key at console.x.ai"
+  },
+  "ai_provider_hint_kimi": {
+    "简体中文": "在 platform.kimi.com 申请 API Key",
+    "繁體中文": "在 platform.kimi.com 申請 API Key",
+    "English": "Get an API key at platform.kimi.com"
+  },
+  "ai_provider_hint_qwen": {
+    "简体中文": "在阿里云百炼控制台申请 API Key（有免费额度）",
+    "繁體中文": "在阿里雲百鍊控制台申請 API Key（有免費額度）",
+    "English": "Get an API key in the Alibaba Cloud Bailian console (free quota available)"
+  },
+  "ai_provider_hint_siliconflow": {
+    "简体中文": "聚合平台，模型很多；具体 id 以控制台的模型广场为准",
+    "繁體中文": "聚合平台，模型很多；具體 id 以控制台的模型廣場為準",
+    "English": "Aggregator with many models; check the console model list for exact ids"
+  },
+  "ai_provider_hint_custom": {
+    "简体中文": "任何 OpenAI 兼容接口都行：本地 Ollama / vLLM / one-api 等，填完整地址",
+    "繁體中文": "任何 OpenAI 相容介面都行：本地 Ollama / vLLM / one-api 等，填完整位址",
+    "English": "Any OpenAI-compatible endpoint: local Ollama / vLLM / one-api, etc. Enter the full URL"
+  },
+  "hotkey_status_unset": {
+    "简体中文": "未设置",
+    "繁體中文": "未設定",
+    "English": "Not set"
+  },
+  "hotkey_err_unsupported": {
+    "简体中文": "当前系统不支持全局快捷键",
+    "繁體中文": "目前系統不支援全域快捷鍵",
+    "English": "Global hotkeys are not supported on this system"
+  },
+  "hotkey_err_too_many": {
+    "简体中文": "注册的热键太多了",
+    "繁體中文": "註冊的熱鍵太多了",
+    "English": "Too many hotkeys are registered"
+  },
+  "hotkey_err_empty": {
+    "简体中文": "快捷键为空",
+    "繁體中文": "快捷鍵為空",
+    "English": "The hotkey is empty"
+  },
+  "hotkey_err_one_main_key": {
+    "简体中文": "只能包含一个主键，出现了 {first} 和 {second}",
+    "繁體中文": "只能包含一個主鍵，出現了 {first} 和 {second}",
+    "English": "Only one main key is allowed — got both {first} and {second}"
+  },
+  "hotkey_err_no_main_key": {
+    "简体中文": "缺少主键（例如 Q、F9）",
+    "繁體中文": "缺少主鍵（例如 Q、F9）",
+    "English": "Missing the main key (for example Q or F9)"
+  },
+  "hotkey_err_unsupported_key": {
+    "简体中文": "不支持的按键: {key}",
+    "繁體中文": "不支援的按鍵：{key}",
+    "English": "Unsupported key: {key}"
+  },
+  "hotkey_err_need_modifier": {
+    "简体中文": "快捷键至少需要一个修饰键（Ctrl / Alt / Shift / Win），或使用 F1~F24",
+    "繁體中文": "快捷鍵至少需要一個修飾鍵（Ctrl / Alt / Shift / Win），或使用 F1~F24",
+    "English": "A hotkey needs at least one modifier (Ctrl / Alt / Shift / Win) or an F1–F24 key"
+  },
+  "hotkey_err_occupied": {
+    "简体中文": "快捷键 {sequence} 已被其它程序占用，请换一个",
+    "繁體中文": "快捷鍵 {sequence} 已被其它程式占用，請換一個",
+    "English": "The shortcut {sequence} is already taken by another program — please pick another one"
+  },
+  "hotkey_err_register_failed": {
+    "简体中文": "注册快捷键 {sequence} 失败（错误码 {code}）",
+    "繁體中文": "註冊快捷鍵 {sequence} 失敗（錯誤碼 {code}）",
+    "English": "Could not register the shortcut {sequence} (error code {code})"
+  },
+  "hotkey_err_system_key": {
+    "简体中文": "{key} 不能做快捷键的主键（系统占用了这个键），请换一个组合",
+    "繁體中文": "{key} 不能當快捷鍵的主鍵（系統佔用了這個鍵），請換一個組合",
+    "English": "{key} cannot be the main key of a shortcut (the system reserves it) — please pick another combination"
+  },
+  "storage_section": {
+    "简体中文": "存储",
+    "繁體中文": "儲存",
+    "English": "Storage"
+  },
+  "storage_location": {
+    "简体中文": "存储位置",
+    "繁體中文": "儲存位置",
+    "English": "Storage location"
+  },
+  "storage_location_desc": {
+    "简体中文": "配置、对话记录、日志都保存在这里",
+    "繁體中文": "設定、對話紀錄、日誌都保存在這裡",
+    "English": "Config, chat history and logs are stored here"
+  },
+  "storage_location_tip": {
+    "简体中文": "资源文件（资源库、图标、语言包）不在这个目录里，它们跟着程序走",
+    "繁體中文": "資源檔案（資源庫、圖示、語言包）不在這個目錄裡，它們跟著程式走",
+    "English": "Resource files (library, icons, language packs) are not here; they ship with the app"
+  },
+  "storage_pointer_file": {
+    "简体中文": "位置记录文件",
+    "繁體中文": "位置記錄檔案",
+    "English": "Location file"
+  },
+  "storage_pointer_file_desc": {
+    "简体中文": "ToolsGCP.json 记录上面的目录在哪里；丢失或损坏会自动重建",
+    "繁體中文": "ToolsGCP.json 記錄上面的目錄在哪裡；遺失或損毀會自動重建",
+    "English": "ToolsGCP.json records where that folder is; it is rebuilt automatically if missing or broken"
+  },
+  "storage_change": {
+    "简体中文": "更改",
+    "繁體中文": "變更",
+    "English": "Change"
+  },
+  "storage_reset": {
+    "简体中文": "恢复默认",
+    "繁體中文": "恢復預設",
+    "English": "Reset"
+  },
+  "storage_choose_dir": {
+    "简体中文": "选择存放 .ToolsGCP 的位置",
+    "繁體中文": "選擇存放 .ToolsGCP 的位置",
+    "English": "Choose where to store .ToolsGCP"
+  },
+  "storage_confirm_title": {
+    "简体中文": "迁移存储位置",
+    "繁體中文": "遷移儲存位置",
+    "English": "Migrate storage"
+  },
+  "storage_confirm_body": {
+    "简体中文": "是否确认迁移 .ToolsGCP 至",
+    "繁體中文": "是否確認遷移 .ToolsGCP 至",
+    "English": "Migrate .ToolsGCP to"
+  },
+  "storage_confirm_ok": {
+    "简体中文": "确认迁移",
+    "繁體中文": "確認遷移",
+    "English": "Migrate"
+  },
+  "storage_confirm_cancel": {
+    "简体中文": "取消",
+    "繁體中文": "取消",
+    "English": "Cancel"
+  },
+  "storage_preparing": {
+    "简体中文": "准备迁移…",
+    "繁體中文": "準備遷移…",
+    "English": "Preparing…"
+  },
+  "storage_done": {
+    "简体中文": "迁移完成",
+    "繁體中文": "遷移完成",
+    "English": "Migration complete"
+  },
+  "storage_success": {
+    "简体中文": "迁移成功",
+    "繁體中文": "遷移成功",
+    "English": "Migration succeeded"
+  },
+  "storage_failed": {
+    "简体中文": "迁移失败",
+    "繁體中文": "遷移失敗",
+    "English": "Migration failed"
+  },
+  "storage_restart_hint": {
+    "简体中文": "重启程序后完全生效",
+    "繁體中文": "重新啟動程式後完全生效",
+    "English": "Restart the app for it to fully take effect"
+  },
+  "storage_reset_done": {
+    "简体中文": "已恢复默认位置",
+    "繁體中文": "已恢復預設位置",
+    "English": "Restored to the default location"
+  },
+  "storage_same_path": {
+    "简体中文": "选择的目录和当前位置相同",
+    "繁體中文": "選擇的目錄和目前位置相同",
+    "English": "That folder is already the current location"
+  },
+  "storage_invalid_target": {
+    "简体中文": "无法使用该位置",
+    "繁體中文": "無法使用該位置",
+    "English": "That location cannot be used"
+  },
+  "storage_note": {
+    "简体中文": "这里只存放配置文件；资源库 ToolsGCP-Resources.json 属于资源文件，不会被搬动。",
+    "繁體中文": "這裡只存放設定檔；資源庫 ToolsGCP-Resources.json 屬於資源檔案，不會被搬動。",
+    "English": "Only configuration files live here. ToolsGCP-Resources.json is a resource file and is never moved."
+  }
+}

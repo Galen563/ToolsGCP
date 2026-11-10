@@ -1,0 +1,3 @@
+# jsdom 依赖（仅 _devtest 的 Node 回归用，22MB，不进版本库）
+# package.json / package-lock.json 保留：重装命令 npm install --prefix 本目录 jsdom
+node_modules/

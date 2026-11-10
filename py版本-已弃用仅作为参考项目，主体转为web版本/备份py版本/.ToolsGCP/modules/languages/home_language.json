@@ -1,0 +1,42 @@
+{
+  "home_title": {
+    "简体中文": "首页",
+    "繁體中文": "首頁",
+    "English": "Home"
+  },
+  "recommend_plugins": {
+    "简体中文": "推荐插件",
+    "繁體中文": "推薦外掛",
+    "English": "Recommended Plugins"
+  },
+  "recommend_plugins_tip": {
+    "简体中文": "这些都是本机 plugins/ 目录里的插件",
+    "繁體中文": "這些都是本機 plugins/ 目錄裡的外掛",
+    "English": "These are the plugins in your local plugins/ folder"
+  },
+  "no_plugins": {
+    "简体中文": "还没有安装插件。把插件文件夹放进 plugins/ 目录就会出现在这里。",
+    "繁體中文": "還沒有安裝外掛。把外掛資料夾放進 plugins/ 目錄就會出現在這裡。",
+    "English": "No plugins installed yet. Drop a plugin folder into plugins/ and it shows up here."
+  },
+  "no_recommend_plugins": {
+    "简体中文": "暂无可推荐的插件。程序自带的插件都在「插件中心」里，随时可以开关。",
+    "繁體中文": "暫無可推薦的外掛。程式自帶的外掛都在「外掛中心」裡，隨時可以開關。",
+    "English": "Nothing to recommend yet. The built-in plugins are all in the Plugin Center, ready to switch on or off."
+  },
+  "open_plugin_center": {
+    "简体中文": "打开插件中心",
+    "繁體中文": "開啟外掛中心",
+    "English": "Open Plugin Center"
+  },
+  "welcome": {
+    "简体中文": "欢迎使用 ToolsGCP",
+    "繁體中文": "歡迎使用 ToolsGCP",
+    "English": "Welcome to ToolsGCP"
+  },
+  "quick_start": {
+    "简体中文": "快速开始",
+    "繁體中文": "快速開始",
+    "English": "Quick Start"
+  }
+}

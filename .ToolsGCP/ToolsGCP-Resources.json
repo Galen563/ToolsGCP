@@ -1,0 +1,2055 @@
+{
+  "schema_version": "2.1.0",
+  "metadata": {
+    "name": "ToolsGCP Resources",
+    "description": "ToolsGCP 资源索引文件",
+    "icon_dir": ".ToolsGCP/Icon",
+    "updated_at": "2026-10-14T22:30:44+08:00",
+    "total_count": 53
+  },
+  "resources": [
+    {
+      "id": "localsend",
+      "code": "TG-000001",
+      "name": {
+        "简体中文": "LocalSend",
+        "繁體中文": "LocalSend",
+        "English": "LocalSend"
+      },
+      "category": [
+        "工具"
+      ],
+      "tags": [
+        "传输"
+      ],
+      "icon": "TG-000001.png",
+      "url": "https://localsend.org/",
+      "github": "https://github.com/localsend/localsend",
+      "description": {
+        "简体中文": "跨平台局域网文件传输工具，支持高效、安全、无需互联网的文件共享。",
+        "繁體中文": "跨平台區域網路檔案傳輸工具，支援高效、安全、無需網際網路的檔案分享。",
+        "English": "A cross-platform LAN file transfer tool for fast, secure sharing with no internet connection required."
+      },
+      "intro": {
+        "简体中文": "LocalSend 是一款免费开源的文件传输工具，手机与电脑只要处在同一个局域网，就能直接互传图片、视频、文档乃至整个文件夹，既不需要数据线，也不用登录账号或依赖云端服务器。它会自动发现附近设备，也支持手动输入地址连接，接收方确认后文件才会保存，传输过程经过加密。界面简洁、上手几乎零门槛，适合在家庭、宿舍或办公环境里快速交换大文件，尤其适合不想借助网盘和聊天软件传文件的用户。",
+        "繁體中文": "LocalSend 是一款免費開源的檔案傳輸工具，手機與電腦只要位在同一個區域網路內，就能直接互傳圖片、影片、文件甚至整個資料夾，既不需要傳輸線，也不用登入帳號或依賴雲端伺服器。它會自動偵測附近的裝置，也支援手動輸入位址連線，接收方確認後檔案才會儲存，傳輸過程經過加密。介面簡潔、幾乎零學習門檻，適合在家庭、宿舍或辦公環境中快速交換大型檔案，尤其適合不想透過網路硬碟和聊天軟體傳檔案的使用者。",
+        "English": "LocalSend is a free, open-source file transfer tool: as long as your phone and computer are on the same local network, you can send photos, videos, documents, and even entire folders directly to each other — no cable, no account sign-in, and no cloud server involved. It discovers nearby devices automatically and also lets you connect by entering an address manually; files are saved only after the receiver confirms, and every transfer is encrypted. The interface is clean and nearly effortless to pick up, making it ideal for swapping large files quickly at home, in a dorm, or at the office — especially for anyone who would rather not route files through cloud drives or chat apps."
+      },
+      "supplement": {
+        "简体中文": "官方提供 Windows、macOS、Linux 桌面版，并有 Android 与 iOS 手机客户端；同一局域网内的设备可直接互传文件，不需要账号，也不依赖公网服务器。",
+        "繁體中文": "官方提供 Windows、macOS、Linux 桌面版，並有 Android 與 iOS 手機用戶端；同一個區域網路內的裝置可直接互傳檔案，不需要帳號，也不依賴公網伺服器。",
+        "English": "Official desktop builds are available for Windows, macOS, and Linux, along with Android and iOS mobile clients. Devices on the same local network can exchange files directly — no account needed and no public server involved."
+      },
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "全平台"
+      ],
+      "architectures": [
+        "x64",
+        "arm64",
+        "arm",
+        "Apple Silicon"
+      ]
+    },
+    {
+      "id": "pcl-ce",
+      "code": "TG-000002",
+      "name": {
+        "简体中文": "PCL CE",
+        "繁體中文": "PCL CE",
+        "English": "PCL CE"
+      },
+      "category": [
+        "游戏"
+      ],
+      "tags": [
+        "MC启动器"
+      ],
+      "icon": "TG-000002.png",
+      "url": "https://ce.pclc.cc",
+      "github": "https://github.com/PCL-Community/PCL-CE",
+      "description": {
+        "简体中文": "Minecraft 启动器，提供更多功能和自定义选项。",
+        "繁體中文": "Minecraft 啟動器，提供更多功能與自訂選項。",
+        "English": "A Minecraft launcher with more features and customization options."
+      },
+      "intro": {
+        "简体中文": "PCL CE 是 PCL2 的社区版，由社区开发者维护，特色是让玩家提前体验上游尚未合并的新功能与修复。它支持多个游戏版本与存档的管理，内置资源搜索下载、模组与整合包安装，能够自动检测并补全所需的 Java 运行环境，还针对模组依赖、崩溃日志等常见问题做了优化。界面延续了原版简洁清爽、启动快速的风格，适合已经习惯 PCL 操作方式、希望第一时间用上新特性并愿意反馈问题的 Minecraft 玩家。",
+        "繁體中文": "PCL CE 是 PCL2 的社群版，由社群開發者維護，特色是讓玩家提前體驗上游尚未合併的新功能與修正。它支援多個遊戲版本與存檔的管理，內建資源搜尋下載、模組與整合包安裝，能夠自動偵測並補齊所需的 Java 執行環境，還針對模組相依性、崩潰日誌等常見問題做了最佳化。介面延續了原版簡潔清爽、啟動快速的風格，適合已經習慣 PCL 操作方式、希望第一時間用上新功能並願意回報問題的 Minecraft 玩家。",
+        "English": "PCL CE is a community edition of PCL2 maintained by community developers, built to let players try new features and fixes before they are merged upstream. It manages multiple game versions and saves, includes built-in search and download for resources, mods, and modpacks, automatically detects and installs the required Java runtime, and improves how common issues such as mod dependencies and crash logs are handled. The interface keeps the original's clean, fast-launching feel — a good fit for Minecraft players who already know how PCL works, want new features the moment they land, and are happy to report problems back."
+      },
+      "supplement": {
+        "简体中文": "由社区维护的 Minecraft 启动器，只提供 Windows 桌面版，安装包分别适配 64 位与 ARM 架构电脑；内置下载与模组管理，可自动补全游戏所需运行环境。",
+        "繁體中文": "由社群維護的 Minecraft 啟動器，僅提供 Windows 桌面版，安裝檔分別適配 64 位元與 ARM 架構電腦；內建下載與模組管理，可自動補齊遊戲所需的執行環境。",
+        "English": "A community-maintained Minecraft launcher, available for Windows desktop only, with installers for 64-bit and ARM-based PCs. It includes built-in downloads and mod management, and can automatically install the runtime the game needs."
+      },
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows"
+      ],
+      "architectures": [
+        "x64",
+        "arm64"
+      ]
+    },
+    {
+      "id": "steam",
+      "code": "TG-000003",
+      "name": {
+        "简体中文": "Steam",
+        "繁體中文": "Steam",
+        "English": "Steam"
+      },
+      "category": [
+        "游戏"
+      ],
+      "tags": [
+        "启动器",
+        "官方"
+      ],
+      "icon": "TG-000003.png",
+      "url": "https://store.steampowered.com/",
+      "description": {
+        "简体中文": "游戏数字发行平台，提供游戏购买、下载、社区等功能。",
+        "繁體中文": "遊戲數位發行平台，提供遊戲購買、下載、社群等功能。",
+        "English": "A digital game distribution platform offering game purchases, downloads, community features, and more."
+      },
+      "intro": {
+        "简体中文": "Steam 是全球规模领先的 PC 游戏数字发行平台，把商店、游戏库、社区与好友系统整合在一起。用户可以在其中购买和下载游戏、领取免费内容、参与创意工坊与社区讨论，并通过云存档在不同设备间同步进度；成就、截图、直播和好友语音让游戏过程更具社交乐趣。客户端支持自动更新、下载队列管理和远程畅玩，手机端应用则能确认登录、浏览商店和管理令牌。无论偶尔买一款单机大作，还是长期投入联机游戏，都能用它统一管理游戏与好友。",
+        "繁體中文": "Steam 是全球規模領先的 PC 遊戲數位發行平台，把商店、遊戲庫、社群與好友系統整合在一起。使用者可以在其中購買和下載遊戲、領取免費內容、參與工作坊與社群討論，並透過雲端存檔在不同裝置間同步進度；成就、擷圖、直播和好友語音讓遊戲過程更具社交樂趣。用戶端支援自動更新、下載佇列管理和遠端暢玩，手機端應用程式則能確認登入、瀏覽商店和管理令牌。無論偶爾買一款單機大作，還是長期投入連線遊戲，都能用它統一管理遊戲與好友。",
+        "English": "Steam is the world's leading digital distribution platform for PC games, bringing the store, game library, community, and friends system together in one place. You can buy and download games, claim free content, join Workshop and community discussions, and sync progress across devices with cloud saves; achievements, screenshots, broadcasts, and friend voice chat make playing more social. The client supports automatic updates, download queue management, and Remote Play, while the mobile app lets you approve sign-ins, browse the store, and manage your tokens. Whether you pick up the occasional single-player epic or sink years into online games, it keeps your games and friends organized in one place."
+      },
+      "supplement": {
+        "简体中文": "全球主流的游戏发行平台，官方提供 Windows、macOS 与 Linux 桌面客户端；此外还有手机端应用，可用于聊天、令牌与浏览商店，游戏库和好友数据在各端同步。",
+        "繁體中文": "全球主流的遊戲發行平台，官方提供 Windows、macOS 與 Linux 桌面用戶端；此外還有手機端應用程式，可用於聊天、令牌與瀏覽商店，遊戲庫和好友資料在各端同步。",
+        "English": "The world's leading game distribution platform, with official desktop clients for Windows, macOS, and Linux. A mobile app is also available for chat, tokens, and store browsing, with your library and friends synced across devices."
+      },
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Linux"
+      ],
+      "architectures": [
+        "x64",
+        "arm64"
+      ]
+    },
+    {
+      "id": "watt-toolkit",
+      "code": "TG-000004",
+      "name": {
+        "简体中文": "Watt Toolkit",
+        "繁體中文": "Watt Toolkit",
+        "English": "Watt Toolkit"
+      },
+      "category": [
+        "工具"
+      ],
+      "tags": [
+        "游戏",
+        "网络"
+      ],
+      "icon": "TG-000004.png",
+      "url": "https://steampp.net/",
+      "github": "https://github.com/BeyondDimension/SteamTools",
+      "description": {
+        "简体中文": "Steam++，一款开源的Steam增强工具，提供网络加速、社区功能增强等服务。",
+        "繁體中文": "Steam++，一款開源的 Steam 增強工具，提供網路加速、社群功能增強等服務。",
+        "English": "Steam++, an open-source Steam enhancement tool offering network acceleration, community feature enhancements, and more."
+      },
+      "intro": {
+        "简体中文": "Watt Toolkit（原 Steam++）是一款开源的多功能工具箱，主要面向国内网络环境下的 Steam 玩家。它通过本地反向代理改善 Steam 社区、创意工坊等页面的访问体验，也支持部分海外站点加速；此外还提供多账号快速切换、游戏成就管理、本地两步验证令牌和游戏窗口化等实用工具。所有处理都在本机完成，令牌等敏感信息不会上传。适合经常访问 Steam 社区、想集中管理账号与成就的用户，使用前需先安装官方 Steam 客户端。",
+        "繁體中文": "Watt Toolkit（原 Steam++）是一款開源的多功能工具箱，主要針對中國大陸網路環境下的 Steam 玩家。它透過本機反向代理改善 Steam 社群、工作坊等頁面的存取體驗，也支援部分海外網站加速；此外還提供多帳號快速切換、遊戲成就管理、本機兩步驟驗證令牌和遊戲視窗化等實用工具。所有處理都在本機完成，令牌等敏感資訊不會上傳。適合經常瀏覽 Steam 社群、想集中管理帳號與成就的使用者，使用前需先安裝官方 Steam 用戶端。",
+        "English": "Watt Toolkit (formerly Steam++) is an open-source, multi-purpose toolbox aimed mainly at Steam players on mainland Chinese networks. It uses a local reverse proxy to improve access to Steam Community, Workshop, and similar pages, and can also accelerate certain overseas sites. On top of that it offers quick multi-account switching, game achievement management, a local two-factor authentication token, and windowed game mode. Everything is processed locally, so sensitive data such as tokens is never uploaded. It suits users who visit Steam Community often and want to manage accounts and achievements in one place; the official Steam client must be installed first."
+      },
+      "supplement": {
+        "简体中文": "面向国内用户的 Steam 辅助工具箱，提供 Windows、macOS、Linux 桌面版，可加速社区页面并管理账号、令牌与成就；需配合已安装的 Steam 使用，Windows ARM 暂未支持。",
+        "繁體中文": "面向中國大陸使用者的 Steam 輔助工具箱，提供 Windows、macOS、Linux 桌面版，可加速社群頁面並管理帳號、令牌與成就；需搭配已安裝的 Steam 使用，Windows ARM 暫未支援。",
+        "English": "A Steam companion toolbox for users in mainland China, with desktop builds for Windows, macOS, and Linux. It accelerates community pages and manages accounts, tokens, and achievements; it requires an installed Steam client, and Windows on ARM is not supported yet."
+      },
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Linux"
+      ],
+      "architectures": [
+        "x64",
+        "arm64",
+        "Apple Silicon"
+      ]
+    },
+    {
+      "id": "pcl2",
+      "code": "TG-000005",
+      "name": "PCL2",
+      "category": [
+        "游戏"
+      ],
+      "tags": [
+        "MC启动器"
+      ],
+      "icon": "TG-000005.png",
+      "url": "https://meloong.com/PCL",
+      "github": "https://github.com/Meloong-Git/PCL",
+      "author_url": "https://ifdian.net/p/0164034c016c11ebafcb52540025c377",
+      "description": "Minecraft启动器，提供游戏版本管理、模组下载、整合包安装等功能。",
+      "intro": "PCL2（Plain Craft Launcher 2）是一款人气很高的 Minecraft 启动器，以启动速度快、界面清爽和上手门槛低受到玩家欢迎。它支持原版及各主流模组加载器的版本安装与切换，内置模组、整合包、资源包和光影的搜索下载，能够自动检测并补全游戏所需的 Java 运行环境，游戏崩溃后还会提供日志分析和排查建议。启动器免安装、占用空间小，配置与存档都在本地，适合希望少折腾配置、专注于游戏的 Minecraft 玩家。",
+      "supplement": "经典 Minecraft 启动器，官方仅提供 Windows 桌面版，下载后可绿色免安装直接运行；内置下载、模组与整合包管理，并会自动检测补全运行环境，暂无手机端与网页版。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows"
+      ]
+    },
+    {
+      "id": "afdian",
+      "code": "TG-000006",
+      "name": {
+        "简体中文": "爱发电",
+        "繁體中文": "愛發電",
+        "English": "Afdian"
+      },
+      "category": [
+        "平台"
+      ],
+      "tags": [
+        "创作",
+        "赞助",
+        "官方"
+      ],
+      "icon": "TG-000006.png",
+      "url": "https://ifdian.net/",
+      "description": {
+        "简体中文": "创作者赞助与会员订阅平台，支持持续创作支持。",
+        "繁體中文": "創作者贊助與會員訂閱平台，支持持續創作。",
+        "English": "A sponsorship and membership platform for creators that helps sustain ongoing creative work."
+      },
+      "intro": {
+        "简体中文": "爱发电是一个连接创作者与粉丝的赞助与会员订阅平台。创作者可以发布创作计划并设置不同价位的赞助档位，粉丝按月或按次付费支持，并在订阅期内查看对应档位的专享内容，如文章、图片、音频和视频等。平台支持微信、支付宝等常见支付方式，提供付费内容加密和私信沟通能力，方便双方长期互动。它适合插画、写作、播客、独立开发等各类创作者，也适合希望持续支持喜爱作者的粉丝，在网页和手机应用上都能使用。",
+        "繁體中文": "愛發電是一個連結創作者與粉絲的贊助與會員訂閱平台。創作者可以發布創作計畫並設定不同價位的贊助方案，粉絲按月或單次付款支持，並在訂閱期內查看對應方案的專屬內容，例如文章、圖片、音訊和影片等。平台支援微信、支付寶等常見付款方式，提供付費內容加密和私訊溝通功能，方便雙方長期互動。它適合插畫、寫作、Podcast、獨立開發等各類創作者，也適合希望持續支持喜愛作者的粉絲，在網頁和手機 App 上都能使用。",
+        "English": "Afdian is a sponsorship and membership platform that connects creators with their fans. Creators can publish a creation plan and set up sponsorship tiers at different price points, while fans pay monthly or per release to support them and get access to tier-exclusive content such as articles, images, audio, and video during their subscription. The platform supports common payment methods including WeChat Pay and Alipay, and offers encrypted paid content plus direct messaging so both sides can keep in touch over the long term. It suits illustrators, writers, podcasters, indie developers, and other creators, as well as fans who want to keep supporting the authors they love, and it works on both the web and mobile apps."
+      },
+      "supplement": {
+        "简体中文": "面向创作者的赞助与会员订阅平台，官方提供 iOS 与 Android 手机应用，也可以直接用浏览器访问网页版；没有桌面客户端，登录、支付与查看内容均可多端进行。",
+        "繁體中文": "面向創作者的贊助與會員訂閱平台，官方提供 iOS 與 Android 手機 App，也可以直接用瀏覽器開啟網頁版；沒有桌面用戶端，登入、付款與查看內容都能在各裝置上進行。",
+        "English": "A sponsorship and membership platform for creators. Official iOS and Android apps are available, and the web version runs directly in a browser; there is no desktop client, so signing in, paying, and viewing content all happen across devices."
+      },
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "iOS",
+        "Android",
+        "web"
+      ]
+    },
+    {
+      "id": "epic-games",
+      "code": "TG-000007",
+      "name": {
+        "简体中文": "Epic Games",
+        "繁體中文": "Epic Games",
+        "English": "Epic Games"
+      },
+      "category": [
+        "游戏"
+      ],
+      "tags": [
+        "启动器",
+        "官方"
+      ],
+      "icon": "TG-000007.png",
+      "url": "https://www.epicgames.com",
+      "description": {
+        "简体中文": "游戏数字发行平台，提供游戏购买、免费领取及社交功能。",
+        "繁體中文": "遊戲數位發行平台，提供遊戲購買、免費領取及社交功能。",
+        "English": "A digital game distribution platform offering game purchases, free giveaways, and social features."
+      },
+      "intro": {
+        "简体中文": "Epic Games 是知名游戏发行平台与虚幻引擎的开发商，其桌面启动器提供从购买、下载到管理的完整游戏体验，并长期每周限时免费赠送游戏。商店内既有第三方大作也有大量独立作品，购买后可在库中安装并自动更新，同时支持好友列表、语音聊天与成就系统，跨平台联机让不同设备的玩家也能一起游玩。除客户端外，还可以通过网页浏览商店、领取免费游戏和管理账号，适合关注首发大作、独立游戏以及免费福利的玩家。",
+        "繁體中文": "Epic Games 是知名遊戲發行平台與虛幻引擎的開發商，其桌面啟動器提供從購買、下載到管理的完整遊戲體驗，並長期每週限時免費贈送遊戲。商店內既有第三方大作也有大量獨立作品，購買後可在遊戲庫中安裝並自動更新，同時支援好友清單、語音聊天與成就系統，跨平台連線讓不同裝置的玩家也能一起遊玩。除用戶端外，還可以透過網頁瀏覽商店、領取免費遊戲和管理帳號，適合關注首發大作、獨立遊戲以及免費福利的玩家。",
+        "English": "Epic Games is a well-known game publisher and the creator of Unreal Engine. Its desktop launcher covers the whole journey from buying to downloading and managing games, and it has long given away free games for a limited time every week. The store carries both major third-party releases and a large catalog of indie titles; once purchased, games can be installed and kept up to date automatically. Friend lists, voice chat, and achievements are built in, and cross-platform play lets players on different devices join the same session. Beyond the client, you can browse the store, claim free games, and manage your account on the web, making it a good fit for players who follow big launches, indie games, and free perks."
+      },
+      "supplement": {
+        "简体中文": "官方游戏商城与启动器，提供 Windows 与 macOS 桌面客户端用于购买、下载和管理游戏；可在网页端领取免费游戏，手机端商店目前仅在部分地区开放。",
+        "繁體中文": "官方遊戲商城與啟動器，提供 Windows 與 macOS 桌面用戶端，用於購買、下載和管理遊戲；可在網頁端領取免費遊戲，手機端商店目前僅在部分地區開放。",
+        "English": "The official game store and launcher, with Windows and macOS desktop clients for buying, downloading, and managing games. Free games can be claimed on the web, and the mobile store is currently available only in select regions."
+      },
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS"
+      ],
+      "architectures": [
+        "x64"
+      ]
+    },
+    {
+      "id": "wegame",
+      "code": "TG-000008",
+      "name": {
+        "简体中文": "WeGame",
+        "繁體中文": "WeGame",
+        "English": "WeGame"
+      },
+      "category": [
+        "游戏"
+      ],
+      "tags": [
+        "启动器",
+        "官方"
+      ],
+      "icon": "TG-000008.png",
+      "url": "https://www.wegame.com",
+      "description": {
+        "简体中文": "游戏发行平台，提供游戏下载、社区、直播等功能。",
+        "繁體中文": "遊戲發行平台，提供遊戲下載、社群、直播等功能。",
+        "English": "A game distribution platform with game downloads, community, and live streaming features."
+      },
+      "intro": {
+        "简体中文": "WeGame 是腾讯推出的游戏平台，面向国内玩家提供游戏下载、更新、启动与社区服务。用户可以在平台内购买或领取游戏，统一管理已安装的作品并查看游玩时长，还能浏览攻略、直播和好友动态，方便找到同好一起开黑；内置的辅助工具与网络优化也让部分网游的启动、更新更顺畅。除电脑客户端外，官方还提供 Mac 版本供苹果电脑用户使用，适合经常游玩腾讯系网游、希望在国内网络环境下获得便捷下载和社区体验的玩家。",
+        "繁體中文": "WeGame 是騰訊推出的遊戲平台，面向中國大陸玩家提供遊戲下載、更新、啟動與社群服務。使用者可以在平台內購買或領取遊戲，統一管理已安裝的作品並查看遊玩時數，還能瀏覽攻略、直播和好友動態，方便找到同好一起組隊；內建的輔助工具與網路優化也讓部分線上遊戲的啟動、更新更順暢。除電腦用戶端外，官方還提供 Mac 版本供蘋果電腦使用者使用，適合經常遊玩騰訊系線上遊戲、希望在國內網路環境下獲得更便利下載與社群體驗的玩家。",
+        "English": "WeGame is Tencent's gaming platform, offering game downloads, updates, launching, and community services mainly for players in mainland China. Users can buy or claim games on the platform, manage installed titles and track playtime in one place, and browse guides, live streams, and friends' activity to find people to team up with. Built-in helper tools and network optimization also make launching and updating some online games smoother. Alongside the desktop client, an official Mac version serves Apple computer users. It is a good fit for players who regularly play Tencent online games and want convenient downloads and community features on mainland networks."
+      },
+      "supplement": {
+        "简体中文": "腾讯旗下的游戏平台，官方提供 Windows 客户端与 Mac 端，Mac 版还区分 Intel 与 M 系列芯片两种安装包；可用于管理游戏、查看时长与好友动态，暂无 Linux 版本。",
+        "繁體中文": "騰訊旗下的遊戲平台，官方提供 Windows 用戶端與 Mac 版，Mac 版還區分 Intel 與 M 系列晶片兩種安裝檔；可用於管理遊戲、查看時數與好友動態，目前沒有 Linux 版本。",
+        "English": "Tencent's gaming platform. Official Windows and Mac clients are available, and the Mac build comes in separate installers for Intel and M-series chips. It can be used to manage games and check playtime and friends' activity; there is no Linux version yet."
+      },
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS"
+      ],
+      "architectures": [
+        "x64",
+        "arm64",
+        "Apple Silicon"
+      ]
+    },
+    {
+      "id": "python",
+      "code": "TG-000009",
+      "name": {
+        "简体中文": "Python",
+        "繁體中文": "Python",
+        "English": "Python"
+      },
+      "category": [
+        "编程"
+      ],
+      "tags": [
+        "编程语言",
+        "官方"
+      ],
+      "icon": "TG-000009.png",
+      "url": "https://www.python.org/",
+      "github": "https://github.com/python/cpython",
+      "description": {
+        "简体中文": "简洁易学的高级编程语言，支持多种编程范式，拥有丰富的标准库和第三方生态。",
+        "繁體中文": "簡潔易學的高階程式語言，支援多種程式設計範式，擁有豐富的標準函式庫與第三方生態系。",
+        "English": "A clean, easy-to-learn high-level programming language that supports multiple paradigms and comes with a rich standard library and third-party ecosystem."
+      },
+      "intro": {
+        "简体中文": "Python 是一门语法简洁、易读易学的高级编程语言，广泛应用于数据分析、人工智能、Web 开发、自动化脚本、科学计算和编程教学等场景。它拥有成熟的标准库和庞大的第三方生态，多数常见需求都能找到现成的库直接调用，配合交互式解释器和包管理工具，从写第一个小程序到搭建大型项目都比较顺畅。Python 支持面向对象、函数式等多种编程风格，跨平台表现一致，既适合零基础入门者，也适合需要快速完成数据处理与原型开发的工程师和科研人员。",
+        "繁體中文": "Python 是一門語法簡潔、易讀易學的高階程式語言，廣泛應用於資料分析、人工智慧、網頁開發、自動化指令碼、科學運算和程式設計教學等領域。它擁有成熟的標準函式庫與龐大的第三方生態系，多數常見需求都能找到現成的套件直接呼叫，搭配互動式解譯器與套件管理工具，從寫第一個小程式到建置大型專案都相當順暢。Python 支援物件導向、函數式等多種程式設計風格，跨平台行為一致，既適合完全沒有基礎的初學者，也適合需要快速完成資料處理與原型開發的工程師和研究人員。",
+        "English": "Python is a high-level programming language with clean, readable syntax that is easy to learn, widely used for data analysis, AI, web development, automation scripts, scientific computing, and teaching programming. It ships with a mature standard library and a huge third-party ecosystem, so most everyday needs can be met by calling an existing package, and with its interactive interpreter and package management tools it is smooth going from your first small script to building a large project. Python supports object-oriented, functional, and other programming styles and behaves consistently across platforms, making it a good fit both for complete beginners and for engineers and researchers who need to get data processing and prototypes done quickly."
+      },
+      "supplement": {
+        "简体中文": "通用编程语言运行环境，官方为 Windows 提供常规与 ARM 架构安装包，为 macOS 提供适配 Intel 与 Apple Silicon 的安装包；Linux 可通过源码或系统仓库安装。",
+        "繁體中文": "通用程式語言的執行環境，官方為 Windows 提供一般與 ARM 架構安裝檔，為 macOS 提供適配 Intel 與 Apple Silicon 的安裝檔；Linux 可透過原始碼或系統套件庫安裝。",
+        "English": "A runtime for a general-purpose programming language. Official installers are available for Windows in both standard and ARM builds, and for macOS with versions for Intel and Apple Silicon; on Linux it can be installed from source or your system repositories."
+      },
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Linux"
+      ],
+      "architectures": [
+        "x64",
+        "x86",
+        "arm64",
+        "Apple Silicon"
+      ]
+    },
+    {
+      "id": "bilibili",
+      "code": "TG-000010",
+      "name": {
+        "简体中文": "哔哩哔哩",
+        "繁體中文": "嗶哩嗶哩",
+        "English": "Bilibili"
+      },
+      "category": [
+        "视频平台"
+      ],
+      "tags": [
+        "官方"
+      ],
+      "icon": "TG-000010.png",
+      "url": "https://www.bilibili.com/",
+      "description": {
+        "简体中文": "视频弹幕社区，提供动画、游戏、科技、生活等领域的视频内容与互动。",
+        "繁體中文": "影片彈幕社群，提供動畫、遊戲、科技、生活等領域的影片內容與互動。",
+        "English": "A video community built around danmaku comments, offering content and interaction across anime, gaming, tech, lifestyle, and more."
+      },
+      "intro": {
+        "简体中文": "哔哩哔哩（B 站）是国内知名的视频与弹幕社区，内容覆盖动画、游戏、科技、知识、生活、音乐、影视等众多分区。用户既可以观看视频，也能投稿创作、发布动态与专栏，并通过弹幕、评论、投币、收藏和关注与其他观众互动；直播、番剧追更、课程学习和视频合集等功能，让平台兼具娱乐与学习属性。同一账号在网页、电脑客户端和手机应用之间同步，收藏、历史与关注列表可以随时接着看，适合喜欢弹幕文化、乐于参与社区讨论或希望边玩边学的用户。",
+        "繁體中文": "嗶哩嗶哩（B 站）是中國知名的影片與彈幕社群，內容涵蓋動畫、遊戲、科技、知識、生活、音樂、影視等眾多分區。使用者既能觀看影片，也能投稿創作、發布動態與專欄，並透過彈幕、留言、投幣、收藏和追蹤與其他觀眾互動；直播、動畫跟播、課程學習和影片合輯等功能，讓平台兼具娛樂與學習性質。同一組帳號在網頁、電腦用戶端和手機 App 之間同步，收藏、歷史紀錄與追蹤清單都能隨時接著看，適合喜歡彈幕文化、樂於參與社群討論或希望邊玩邊學的使用者。",
+        "English": "Bilibili, often known simply as B zhan, is a well-known video and danmaku community in China, covering anime, gaming, tech, knowledge, lifestyle, music, film and TV, and many other categories. Users can watch videos, upload their own work, post updates and long-form articles, and interact with other viewers through danmaku comments, replies, virtual coins, favorites, and follows. Live streaming, seasonal anime, online courses, and video collections give the platform both entertainment and learning value. One account syncs across the website, desktop client, and mobile apps, so favorites, history, and follow lists carry over wherever you watch, making it ideal for fans of danmaku culture, community discussion, or learning while they play."
+      },
+      "supplement": {
+        "简体中文": "国内主流的视频与弹幕社区，在浏览器访问官网即可观看、投稿和互动；官方另有 Windows、macOS 电脑客户端与 iOS、Android 手机 App，账号、收藏与观看记录多端同步。",
+        "繁體中文": "中國主流的影片與彈幕社群，在瀏覽器開啟官網即可觀看、投稿和互動；官方另有 Windows、macOS 電腦用戶端與 iOS、Android 手機 App，帳號、收藏與觀看紀錄可跨多個裝置同步。",
+        "English": "A leading video and danmaku community in China: open the official website in a browser to watch, upload, and interact. Official Windows and macOS desktop clients and iOS and Android apps are also available, with accounts, favorites, and watch history synced across devices."
+      },
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "全平台"
+      ]
+    },
+    {
+      "id": "douyin",
+      "code": "TG-000011",
+      "name": {
+        "简体中文": "抖音",
+        "繁體中文": "抖音",
+        "English": "Douyin"
+      },
+      "category": [
+        "视频平台"
+      ],
+      "tags": [
+        "官方"
+      ],
+      "icon": "TG-000011.png",
+      "url": "https://www.douyin.com/",
+      "description": {
+        "简体中文": "短视频创作与分享平台，提供视频编辑、直播、社交等功能。",
+        "繁體中文": "短影音創作與分享平台，提供影片剪輯、直播、社群等功能。",
+        "English": "A short-video creation and sharing platform with video editing, live streaming and social features."
+      },
+      "intro": {
+        "简体中文": "抖音是一个以短视频为核心的创作与分享平台，用户可以拍摄、剪辑并发布短视频，也能通过直播与观众实时互动。内容覆盖生活记录、美食、旅行、才艺、知识科普、影视剪辑等众多领域，依靠推荐机制把作品分发给可能感兴趣的观众；平台还提供滤镜、特效、配乐和字幕等创作工具，没有剪辑基础也能快速做出成片。除观看和发布，还能关注创作者、评论互动、参与话题活动，并在网页版、电脑客户端和手机应用上登录同一账号。",
+        "繁體中文": "抖音是一個以短影音為核心的創作與分享平台，使用者可以拍攝、剪輯並發布短影音，也能透過直播與觀眾即時互動。內容涵蓋生活紀錄、美食、旅遊、才藝、知識科普、影視剪輯等眾多領域，並透過推薦機制把作品分發給可能感興趣的觀眾；平台也提供濾鏡、特效、配樂和字幕等創作工具，沒有剪輯基礎也能快速做出成品。除了觀看和發布，還能追蹤創作者、留言互動、參與話題活動，並在網頁版、電腦版應用程式和手機 App 上登入同一個帳號。",
+        "English": "Douyin is a short-video platform built around creation and sharing. Users can shoot, edit and publish short videos, and go live to interact with viewers in real time. Content spans everyday vlogs, food, travel, talent, knowledge explainers, film and TV edits and many other areas, with a recommendation system distributing each work to viewers likely to be interested. The platform also offers filters, effects, soundtracks and captions, so even people with no editing background can produce a finished clip quickly. Beyond watching and posting, you can follow creators, comment and join themed campaigns, and sign in to the same account on the web version, the desktop app and the mobile app."
+      },
+      "supplement": {
+        "简体中文": "短视频平台，用浏览器打开官网即可浏览、搜索和发布内容，扫码登录后与手机端数据同步；官方另有电脑版客户端与 iOS、Android 手机 App，适合在大屏上观看和做创作管理。",
+        "繁體中文": "短影音平台，用瀏覽器開啟官網即可瀏覽、搜尋和發布內容，掃碼登入後與手機端資料同步；官方另有電腦版應用程式與 iOS、Android 手機 App，適合在大螢幕上觀看和進行創作管理。",
+        "English": "A short-video platform: open the official website in a browser to browse, search and publish content, then sign in with a QR code to sync with the mobile app. Official desktop software and iOS/Android apps are also available, well suited to watching and managing your content on a larger screen."
+      },
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "全平台"
+      ]
+    },
+    {
+      "id": "blender",
+      "code": "TG-000012",
+      "name": {
+        "简体中文": "Blender",
+        "繁體中文": "Blender",
+        "English": "Blender"
+      },
+      "category": [
+        "建筑/设计"
+      ],
+      "tags": [
+        "官方"
+      ],
+      "icon": "TG-000012.png",
+      "url": "https://www.blender.org/",
+      "github": "https://github.com/blender/blender",
+      "description": {
+        "简体中文": "开源的三维创作套件，支持建模、动画、渲染、仿真、视频编辑等功能。",
+        "繁體中文": "開源的三維創作套件，支援建模、動畫、渲染、模擬、影片剪輯等功能。",
+        "English": "An open-source 3D creation suite supporting modeling, animation, rendering, simulation and video editing."
+      },
+      "intro": {
+        "简体中文": "Blender 是一款完全开源且免费的三维创作套件，流程覆盖建模、雕刻、材质贴图、动画绑定、特效模拟、渲染与视频剪辑。它内置 Cycles 与 EEVEE 等渲染引擎，支持 Python 脚本与插件扩展，社区活跃、教程丰富；凭借完整而持续迭代的功能，被广泛用于动画短片、游戏美术、产品与建筑可视化、概念设计等领域。由于免费又功能齐全，它既适合想入门三维创作的学生与爱好者，也适合希望以较低成本完成专业项目的工作室和独立创作者。",
+        "繁體中文": "Blender 是一款完全開源且免費的三維創作套件，流程涵蓋建模、雕刻、材質貼圖、動畫綁定、特效模擬、渲染與影片剪輯。它內建 Cycles 與 EEVEE 等渲染引擎，支援 Python 腳本與外掛擴充，社群活躍、教學資源豐富；憑藉完整且持續迭代的功能，被廣泛應用於動畫短片、遊戲美術、產品與建築視覺化、概念設計等領域。由於免費又功能齊全，它既適合想入門三維創作的學生與愛好者，也適合希望以較低成本完成專業專案的工作室和獨立創作者。",
+        "English": "Blender is a fully open-source and free 3D creation suite whose pipeline covers modeling, sculpting, texturing, rigging, simulation, rendering and video editing. It ships with render engines such as Cycles and EEVEE, supports Python scripting and add-ons, and has an active community with plenty of tutorials. Its complete, continuously evolving feature set makes it a popular choice for animated shorts, game art, product and architectural visualization, concept design and more. Because it is free yet full-featured, it suits students and hobbyists taking their first steps in 3D as well as studios and independent creators who want to deliver professional projects at lower cost."
+      },
+      "supplement": {
+        "简体中文": "开源三维创作软件，官方提供 Windows、macOS 与 Linux 桌面版，Windows ARM 电脑和 Apple Silicon 机型也有对应安装包；另提供免安装压缩包与微软商店等分发方式。",
+        "繁體中文": "開源三維創作軟體，官方提供 Windows、macOS 與 Linux 桌面版，Windows ARM 電腦和 Apple Silicon 機型也有對應安裝包；另提供免安裝壓縮包與 Microsoft Store 等取得方式。",
+        "English": "Open-source 3D creation software. Official desktop builds are available for Windows, macOS and Linux, including packages for Windows on ARM PCs and Apple silicon Macs; portable archives and the Microsoft Store are also offered as distribution options."
+      },
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Linux"
+      ],
+      "architectures": [
+        "x64",
+        "arm64",
+        "Apple Silicon"
+      ]
+    },
+    {
+      "id": "unity",
+      "code": "TG-000013",
+      "name": {
+        "简体中文": "Unity",
+        "繁體中文": "Unity",
+        "English": "Unity"
+      },
+      "category": [
+        "游戏引擎"
+      ],
+      "tags": [
+        "官方"
+      ],
+      "icon": "TG-000013.png",
+      "url": "https://unity.com/",
+      "description": {
+        "简体中文": "跨平台游戏引擎，支持2D/3D游戏开发、AR/VR内容创作。",
+        "繁體中文": "跨平台遊戲引擎，支援 2D/3D 遊戲開發、AR/VR 內容創作。",
+        "English": "A cross-platform game engine supporting 2D/3D game development and AR/VR content creation."
+      },
+      "intro": {
+        "简体中文": "Unity 是一款面向游戏与实时三维内容开发的跨平台引擎，广泛用于 2D/3D 游戏、AR/VR 应用和交互式展示项目。它提供可视化编辑器、物理与动画系统、材质与光照工具，并内置资源商店和云端协作能力，开发者可以用同一套项目面向手机、桌面、网页和主机发布。对希望从零学习游戏开发、或需要成熟商业化工具链的团队都很合适。",
+        "繁體中文": "Unity 是一款面向遊戲與即時三維內容開發的跨平台引擎，廣泛用於 2D/3D 遊戲、AR/VR 應用和互動式展示專案。它提供視覺化編輯器、物理與動畫系統、材質與光照工具，並內建資源商店和雲端協作能力，開發者可以用同一套專案面向手機、桌面、網頁和主機發布。對希望從零學習遊戲開發、或需要成熟商業化工具鏈的團隊都很合適。",
+        "English": "Unity is a cross-platform engine for game and real-time 3D content development, widely used for 2D/3D games, AR/VR applications and interactive showcases. It offers a visual editor, physics and animation systems, material and lighting tools, plus a built-in asset store and cloud collaboration. Developers can target mobile, desktop, web and consoles from a single project. It is a good fit both for people learning game development from scratch and for teams that need a mature, production-ready toolchain."
+      },
+      "supplement": {
+        "简体中文": "Unity 官方编辑器提供 Windows、macOS 与 Linux 三个桌面版本，其中 Windows on Arm 和 Apple 芯片 Mac 都有原生版本。除桌面端外，还能把作品发布到手机、网页和主机等平台。",
+        "繁體中文": "Unity 官方編輯器提供 Windows、macOS 與 Linux 三種桌面版本，其中 Windows on Arm 和 Apple 晶片 Mac 都有原生版本。除桌面端外，還能將作品發布到手機、網頁和主機等平台。",
+        "English": "The official Unity Editor comes in desktop versions for Windows, macOS and Linux, with native builds for Windows on Arm and Apple silicon Macs. Beyond desktop, projects can be published to mobile, web, consoles and other platforms."
+      },
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Linux"
+      ],
+      "architectures": [
+        "x64",
+        "arm64",
+        "Apple Silicon"
+      ]
+    },
+    {
+      "id": "godot",
+      "code": "TG-000014",
+      "name": {
+        "简体中文": "Godot",
+        "繁體中文": "Godot",
+        "English": "Godot"
+      },
+      "category": [
+        "游戏引擎"
+      ],
+      "tags": [
+        "官方"
+      ],
+      "icon": "TG-000014.png",
+      "url": "https://godotengine.org/",
+      "github": "https://github.com/godotengine/godot",
+      "description": {
+        "简体中文": "开源跨平台游戏引擎，支持2D/3D游戏开发，使用节点系统架构。",
+        "繁體中文": "開源跨平台遊戲引擎，支援 2D/3D 遊戲開發，採用節點系統架構。",
+        "English": "An open-source cross-platform game engine for 2D/3D development, built on a node-based architecture."
+      },
+      "intro": {
+        "简体中文": "Godot 是一款完全免费、开源的游戏引擎，采用节点与场景的组织方式，脚本语言轻量易上手，也支持 C# 等方案。它内置 2D 与 3D 渲染、物理、动画、界面和音频工具，项目文件为纯文本，便于版本管理与团队协作；除桌面端外还提供手机端与浏览器内编辑器，作品可导出到多个平台。适合独立开发者、学生和小团队从原型一路做到正式作品。",
+        "繁體中文": "Godot 是一款完全免費、開源的遊戲引擎，採用節點與場景的組織方式，腳本語言輕量易上手，也支援 C# 等方案。它內建 2D 與 3D 渲染、物理、動畫、介面和音訊工具，專案檔案為純文字，便於版本管理與團隊協作；除桌面端外還提供手機端與瀏覽器內編輯器，作品可匯出到多個平台。適合獨立開發者、學生和小團隊從原型一路做到正式作品。",
+        "English": "Godot is a completely free, open-source game engine organized around nodes and scenes. Its scripting language is lightweight and easy to pick up, and C# and other options are supported as well. Built-in tools cover 2D and 3D rendering, physics, animation, UI and audio, and project files are plain text, which makes version control and teamwork straightforward. Besides desktop, there is a mobile editor and an in-browser editor, and projects can be exported to many platforms. It suits indie developers, students and small teams taking an idea from prototype all the way to release."
+      },
+      "supplement": {
+        "简体中文": "除 Windows、macOS、Linux 桌面版外，官方还直接提供可在手机上运行的 Android 编辑器和浏览器内打开的网页版编辑器，作品也能导出到 iOS 等更多平台；引擎免费开源，压缩包解压即用。",
+        "繁體中文": "除 Windows、macOS、Linux 桌面版外，官方還直接提供可在手機上執行的 Android 編輯器和在瀏覽器內開啟的網頁版編輯器，作品也能匯出到 iOS 等更多平台；引擎免費開源，壓縮包解壓即可使用。",
+        "English": "Alongside the Windows, macOS and Linux desktop builds, the official release includes an Android editor that runs on phones and a web editor you can open in a browser, and projects can also be exported to iOS and other platforms. The engine is free and open source, and the archive is ready to use once extracted."
+      },
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Linux",
+        "Android",
+        "iOS",
+        "web"
+      ],
+      "architectures": [
+        "x64",
+        "x86",
+        "arm64",
+        "arm",
+        "Apple Silicon"
+      ]
+    },
+    {
+      "id": "trae",
+      "code": "TG-000015",
+      "name": {
+        "简体中文": "Trae",
+        "繁體中文": "Trae",
+        "English": "Trae"
+      },
+      "category": [
+        "编程"
+      ],
+      "tags": [
+        "IDE编辑器"
+      ],
+      "icon": "TG-000015.png",
+      "url": "https://www.trae.cn/",
+      "description": {
+        "简体中文": "字节跳动推出的 AI 原生 IDE，可在国际版与国内版之间切换。",
+        "繁體中文": "字節跳動推出的 AI 原生 IDE，可在國際版與中國版之間切換。",
+        "English": "An AI-native IDE from ByteDance that can switch between the international and China editions."
+      },
+      "intro": {
+        "简体中文": "Trae 是字节跳动推出的 AI 编程与办公工具，包含面向开发的 IDE 和面向文档、数据分析的办公平台。它支持用自然语言描述需求，由 AI 直接生成或修改代码，也能自动拆解并执行任务，同时保留传统编辑器界面与工作模式切换。产品覆盖桌面端、网页端与手机端，账号数据可多端同步。适合希望把重复性编码和日常文档工作交给 AI、同时保留人工验收环节的开发者与办公用户。",
+        "繁體中文": "Trae 是字節跳動推出的 AI 程式開發與辦公工具，包含面向開發的 IDE 和面向文件、資料分析的辦公平台。它支援用自然語言描述需求，由 AI 直接產生或修改程式碼，也能自動拆解並執行任務，同時保留傳統編輯器介面與工作模式切換。產品涵蓋桌面端、網頁端與手機端，帳號資料可多端同步。適合希望把重複性編碼和日常文件工作交給 AI、同時保留人工驗收環節的開發者與辦公使用者。",
+        "English": "Trae is an AI coding and productivity tool from ByteDance, comprising a developer-focused IDE and a workspace platform for documents and data analysis. You can describe what you need in natural language and let the AI generate or modify code directly, or have it break a task down and carry it out automatically, while the familiar editor interface and switchable working modes remain available. The product spans desktop, web and mobile, with account data synced across devices. It suits developers and office users who want AI to handle repetitive coding and everyday document work while keeping a human review step."
+      },
+      "supplement": {
+        "简体中文": "桌面端覆盖 Windows、macOS 与 Linux，另提供网页版和手机端 App，同一账号可多端协同；需要注意 macOS 版只提供 Apple 芯片版本，Intel Mac 用户暂无法使用。",
+        "繁體中文": "桌面端涵蓋 Windows、macOS 與 Linux，另提供網頁版和手機端 App，同一個帳號可多端協同；需注意 macOS 版只提供 Apple 晶片版本，Intel Mac 使用者暫時無法使用。",
+        "English": "The desktop app covers Windows, macOS and Linux, with a web version and a mobile app that share one account across devices. Note that the macOS build is Apple silicon only, so Intel Mac users cannot use it for now."
+      },
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "全平台"
+      ],
+      "architectures": [
+        "x64",
+        "Apple Silicon"
+      ],
+      "variants": [
+        {
+          "key": "cn",
+          "label": "国内版",
+          "url": "https://www.trae.cn/"
+        },
+        {
+          "key": "global",
+          "label": "国际版",
+          "url": "https://www.trae.ai/"
+        }
+      ],
+      "default_variant": "cn"
+    },
+    {
+      "id": "hmcl",
+      "code": "TG-000016",
+      "name": {
+        "简体中文": "HMCL",
+        "繁體中文": "HMCL",
+        "English": "HMCL"
+      },
+      "category": [
+        "游戏"
+      ],
+      "tags": [
+        "MC启动器"
+      ],
+      "icon": "TG-000016.png",
+      "url": "https://hmcl.huangyuhui.net/",
+      "github": "https://github.com/HMCL-dev/HMCL",
+      "description": {
+        "简体中文": "开源的 Minecraft 启动器，支持离线模式、多人联机和 Mod 管理。",
+        "繁體中文": "開源的 Minecraft 啟動器，支援離線模式、多人連線與 Mod 管理。",
+        "English": "An open-source Minecraft launcher with offline mode, multiplayer support, and mod management."
+      },
+      "intro": {
+        "简体中文": "HMCL 是一款开源、免费的 Minecraft 启动器，可以在图形界面里集中管理多个游戏版本与实例，并一键安装 Forge、Fabric、OptiFine 等常见模组加载器。它还提供模组与整合包管理、账号登录（含离线模式）、游戏参数调整和自动更新等能力，界面简洁、中文支持完善。作为纯 Java 编写的老牌启动器，它对系统要求较低、更新活跃，各类 Minecraft 玩家都能快速上手。",
+        "繁體中文": "HMCL 是一款開源、免費的 Minecraft 啟動器，可以在圖形介面中集中管理多個遊戲版本與實例，並一鍵安裝 Forge、Fabric、OptiFine 等常見模組載入器。它還提供模組與整合包管理、帳號登入（含離線模式）、遊戲參數調整與自動更新等功能，介面簡潔、中文支援完善。作為純 Java 撰寫的老牌啟動器，它對系統要求較低、更新活躍，各類 Minecraft 玩家都能快速上手。",
+        "English": "HMCL is a free, open-source Minecraft launcher that lets you manage multiple game versions and instances from a single graphical interface, and install popular mod loaders such as Forge, Fabric, and OptiFine with one click. It also handles mod and modpack management, account sign-in (including offline mode), game parameter tweaking, and automatic updates, all through a clean interface with solid Chinese-language support. Written entirely in Java, this long-established launcher has modest system requirements and an active update cycle, so Minecraft players of every kind can get started quickly."
+      },
+      "supplement": {
+        "简体中文": "官方以 Java 通用包的形式分发，Windows、macOS 与 Linux（含 FreeBSD）都能运行，对 CPU 架构没有特殊要求；Windows 用户可直接下载安装包，其他平台使用通用 jar 或启动脚本。",
+        "繁體中文": "官方以 Java 通用包的形式發佈，Windows、macOS 與 Linux（含 FreeBSD）都能執行，對 CPU 架構沒有特殊要求；Windows 使用者可直接下載安裝包，其他平台則使用通用 jar 或啟動指令碼。",
+        "English": "The official release ships as a universal Java package that runs on Windows, macOS, and Linux (including FreeBSD), with no special CPU architecture requirements. Windows users can download an installer directly, while other platforms use the universal jar or a launch script."
+      },
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Linux"
+      ],
+      "architectures": [
+        "x64",
+        "x86",
+        "arm64",
+        "arm"
+      ]
+    },
+    {
+      "id": "sjmcl",
+      "code": "TG-000017",
+      "name": {
+        "简体中文": "SJMCL",
+        "繁體中文": "SJMCL",
+        "English": "SJMCL"
+      },
+      "category": [
+        "游戏"
+      ],
+      "tags": [
+        "MC启动器"
+      ],
+      "icon": "TG-000017.png",
+      "url": "https://mc.sjtu.cn/sjmcl/",
+      "github": "https://github.com/UNIkeEN/SJMCL",
+      "description": {
+        "简体中文": "上海交通大学 Minecraft 社开发的开源启动器，面向校园和社区用户。",
+        "繁體中文": "由上海交通大學 Minecraft 社開發的開源啟動器，面向校園與社群使用者。",
+        "English": "An open-source launcher developed by the Shanghai Jiao Tong University Minecraft Club, aimed at campus and community users."
+      },
+      "intro": {
+        "简体中文": "SJMC Launcher 是由上海交通大学 Minecraft 社开发的开源启动器，主打跨平台的现代化体验。它支持集中管理多个游戏目录与实例，统一整理存档、模组、资源包、光影和截图，内置从 CurseForge、Modrinth 等平台下载客户端、加载器与整合包的能力，并支持微软账户登录和第三方认证服务。界面清爽、更新及时，还提供命令行安装与扩展机制，适合校园玩家和习惯多实例管理的社区用户。",
+        "繁體中文": "SJMC Launcher 是由上海交通大學 Minecraft 社開發的開源啟動器，主打跨平台的現代化體驗。它支援集中管理多個遊戲目錄與實例，統一整理存檔、模組、資源包、光影與螢幕擷取畫面，內建從 CurseForge、Modrinth 等平台下載客戶端、載入器與整合包的能力，並支援微軟帳號登入與第三方驗證服務。介面清爽、更新及時，還提供命令列安裝與擴充機制，適合校園玩家與習慣多實例管理的社群使用者。",
+        "English": "SJMC Launcher is an open-source launcher developed by the Minecraft Club at Shanghai Jiao Tong University, focused on a modern cross-platform experience. It manages multiple game directories and instances in one place, keeping saves, mods, resource packs, shaders, and screenshots organized, and can download clients, loaders, and modpacks from platforms such as CurseForge and Modrinth. It also supports Microsoft account sign-in and third-party authentication services. With a clean interface, timely updates, and a command-line installer plus extension mechanism, it suits campus players and community users who juggle many instances."
+      },
+      "supplement": {
+        "简体中文": "官方为 Windows、macOS、Linux 都提供了安装包：Windows 端分 x86、x64 与 ARM64，macOS 区分 Apple 芯片与 Intel，Linux 提供 deb、rpm 和便携版。",
+        "繁體中文": "官方為 Windows、macOS、Linux 都提供了安裝包：Windows 端分為 x86、x64 與 ARM64，macOS 區分 Apple 晶片與 Intel，Linux 則提供 deb、rpm 與可攜版。",
+        "English": "Official installers are available for Windows, macOS, and Linux: the Windows builds come in x86, x64, and ARM64, the macOS editions cover Apple silicon and Intel, and Linux offers deb, rpm, and portable versions."
+      },
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Linux"
+      ],
+      "architectures": [
+        "x64",
+        "x86",
+        "arm64",
+        "Apple Silicon"
+      ]
+    },
+    {
+      "id": "verse",
+      "code": "TG-000018",
+      "name": {
+        "简体中文": "Verse",
+        "繁體中文": "Verse",
+        "English": "Verse"
+      },
+      "category": [
+        "游戏"
+      ],
+      "tags": [
+        "MC启动器"
+      ],
+      "icon": "TG-000018.png",
+      "url": "https://www.verselauncher.cn/",
+      "github": "https://github.com/cnklpz/versePc",
+      "description": {
+        "简体中文": "开源的 Minecraft 启动器，提供现代化的界面和便捷的游戏管理。",
+        "繁體中文": "開源的 Minecraft 啟動器，提供現代化的介面與便利的遊戲管理。",
+        "English": "An open-source Minecraft launcher with a modern interface and convenient game management."
+      },
+      "intro": {
+        "简体中文": "Verse 是一款开源的 Minecraft 启动器，界面现代、操作直观，目标是让玩家更轻松地管理游戏。它支持多个游戏版本与实例的集中管理，提供账户登录、模组与整合包安装、下载源选择和自动更新等常用能力，并提供插件机制方便扩展功能。项目仍在持续迭代，社区反馈渠道畅通。适合希望用一款轻量、界面好看的启动器来整理自己的 Minecraft 环境的玩家。",
+        "繁體中文": "Verse 是一款開源的 Minecraft 啟動器，介面現代、操作直覺，目標是讓玩家更輕鬆地管理遊戲。它支援多個遊戲版本與實例的集中管理，提供帳號登入、模組與整合包安裝、下載來源選擇與自動更新等常用功能，並具備外掛機制方便擴充功能。專案仍在持續迭代，社群回饋管道暢通。適合希望用一款輕量、介面好看的啟動器來整理自己 Minecraft 環境的玩家。",
+        "English": "Verse is an open-source Minecraft launcher with a modern, intuitive interface designed to make managing the game easier. It centralizes multiple game versions and instances and covers the essentials: account sign-in, mod and modpack installation, a choice of download sources, and automatic updates, plus a plugin system for extending its features. The project is still under active development, with open channels for community feedback. It is a good fit for players who want a lightweight, good-looking launcher to organize their Minecraft setup."
+      },
+      "supplement": {
+        "简体中文": "官网目前主要放出 Windows 版启动器下载，安卓端标注为制作中、尚未发布；官方开源仓库同时声明支持 Windows、macOS 与 Linux，并提供 dmg、AppImage、deb、rpm 等对应安装包。",
+        "繁體中文": "官網目前主要放出 Windows 版啟動器下載，Android 端標示為製作中、尚未發佈；官方開源倉庫同時聲明支援 Windows、macOS 與 Linux，並提供 dmg、AppImage、deb、rpm 等對應安裝包。",
+        "English": "For now the official site mainly offers a Windows launcher download, with the Android version marked as in progress and not yet released; the official open-source repository states support for Windows, macOS, and Linux, with matching packages such as dmg, AppImage, deb, and rpm."
+      },
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Linux"
+      ],
+      "architectures": [
+        "x64",
+        "Apple Silicon"
+      ]
+    },
+    {
+      "id": "bakaxl",
+      "code": "TG-000019",
+      "name": {
+        "简体中文": "BakaXL",
+        "繁體中文": "BakaXL",
+        "English": "BakaXL"
+      },
+      "category": [
+        "游戏"
+      ],
+      "tags": [
+        "MC启动器"
+      ],
+      "icon": "TG-000019.png",
+      "url": "https://www.bakaxl.com/",
+      "github": "https://github.com/BakaXL-Launcher/BakaXL",
+      "description": {
+        "简体中文": "开源的 Minecraft 启动器，以简洁界面和社区功能为特色。",
+        "繁體中文": "開源的 Minecraft 啟動器，以簡潔介面與社群功能為特色。",
+        "English": "An open-source Minecraft launcher featuring a clean interface and community features."
+      },
+      "intro": {
+        "简体中文": "BakaXL 是一款面向 Minecraft 玩家的启动器，以简洁的界面和活跃的社区功能为特色。它支持管理多个游戏版本与账户、安装常见模组加载器、整理整合包与游戏资源，并提供个性化主题、正版与离线登录等选项，上手门槛较低。除了游戏管理，它还带有社区公告与帮助入口，方便玩家获取使用指引。适合喜欢界面清爽、愿意跟随官方更新节奏的普通玩家。",
+        "繁體中文": "BakaXL 是一款面向 Minecraft 玩家的啟動器，以簡潔的介面與活躍的社群功能為特色。它支援管理多個遊戲版本與帳號、安裝常見模組載入器、整理整合包與遊戲資源，並提供個人化佈景主題、正版與離線登入等選項，上手門檻較低。除了遊戲管理，它還內建社群公告與說明入口，方便玩家取得使用指引。適合喜歡介面清爽、願意跟隨官方更新節奏的一般玩家。",
+        "English": "BakaXL is a launcher for Minecraft players, distinguished by its clean interface and lively community features. It manages multiple game versions and accounts, installs common mod loaders, organizes modpacks and game resources, and offers options such as custom themes plus official and offline sign-in, all with a low learning curve. Beyond game management, it includes community announcements and a help entry point so players can find guidance easily. It suits everyday players who like a tidy interface and are happy to follow the official update cadence."
+      },
+      "supplement": {
+        "简体中文": "当前正式版仅支持 Windows，普通玩家下载官网版本即可；官方预览版已额外提供 Linux 与 macOS 构建，Windows 端也出现了 Arm64 版本，适合用 ARM 设备的玩家尝鲜。",
+        "繁體中文": "目前正式版僅支援 Windows，一般玩家下載官網版本即可；官方預覽版已額外提供 Linux 與 macOS 組建，Windows 端也出現了 Arm64 版本，適合使用 ARM 裝置的玩家搶先體驗。",
+        "English": "The current stable release supports Windows only, so most players can simply download it from the official site; the official preview builds additionally offer Linux and macOS versions, and an Arm64 build has appeared for Windows, giving players on ARM devices an early look."
+      },
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows"
+      ]
+    },
+    {
+      "id": "pyisland",
+      "code": "TG-000020",
+      "name": {
+        "简体中文": "Pyisland",
+        "繁體中文": "Pyisland",
+        "English": "Pyisland"
+      },
+      "category": [
+        "编程"
+      ],
+      "tags": [
+        "学习"
+      ],
+      "icon": "TG-000020.png",
+      "url": "https://pyisland.com/",
+      "github": "https://github.com/Python-island/Python-island",
+      "description": {
+        "简体中文": "Windows 桌面灵动岛，显示系统状态并提供快捷操作、内置 AI 助手。",
+        "繁體中文": "Windows 桌面動態島，顯示系統狀態並提供快捷操作、內建 AI 助理。",
+        "English": "A desktop Dynamic Island for Windows that shows system status, offers quick actions, and includes a built-in AI assistant."
+      },
+      "intro": {
+        "简体中文": "Pyisland 是一款运行在 Windows 上的桌面灵动岛工具，把手机上常见的动态岛交互带到电脑桌面。它以悬浮胶囊的形式常驻屏幕边缘，点击即可展开控制面板，集中查看并操作无线网络、蓝牙、电池等系统状态，还提供屏幕亮度调节、剪贴板链接识别和内置 AI 助手等功能。界面简洁、响应流畅，适合喜欢桌面常驻小组件、希望快速查看和控制系统状态的 Windows 用户。",
+        "繁體中文": "Pyisland 是一款在 Windows 上執行的桌面動態島工具，把手機上常見的動態島互動帶到電腦桌面。它以懸浮膠囊的形式常駐螢幕邊緣，點擊即可展開控制面板，集中檢視並操作無線網路、藍牙、電池等系統狀態，還提供螢幕亮度調整、剪貼簿連結辨識與內建 AI 助理等功能。介面簡潔、回應流暢，適合喜歡桌面常駐小工具、希望快速檢視與控制系統狀態的 Windows 使用者。",
+        "English": "Pyisland is a desktop Dynamic Island for Windows that brings the phone-style Dynamic Island interaction to your PC. It sits at the edge of the screen as a floating capsule; click it to expand a control panel where you can view and manage Wi-Fi, Bluetooth, battery, and other system statuses, along with screen brightness adjustments, clipboard link detection, and a built-in AI assistant. The interface is clean and responsive, making it a good fit for Windows users who like always-on desktop widgets and want to check and control system status at a glance."
+      },
+      "supplement": {
+        "简体中文": "这是运行在 Windows 上的桌面灵动岛工具，官方提供下载与源码，基于 Python + PySide6 实现，明确要求 Windows 10/11；另有 Tauri、Electron 等分支可选，没有网页版或手机端。",
+        "繁體中文": "這是執行在 Windows 上的桌面動態島工具，官方提供下載與原始碼，以 Python + PySide6 實作，明確要求 Windows 10/11；另有 Tauri、Electron 等分支可選，沒有網頁版或手機端。",
+        "English": "This is a desktop Dynamic Island tool for Windows; the official download and source code are available, it is built with Python + PySide6, and it explicitly requires Windows 10/11. Tauri and Electron branches are also available, and there is no web or mobile version."
+      },
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows"
+      ]
+    },
+    {
+      "id": "geek-uninstaller",
+      "code": "TG-000021",
+      "name": {
+        "简体中文": "Geek Uninstaller",
+        "繁體中文": "Geek Uninstaller",
+        "English": "Geek Uninstaller"
+      },
+      "category": [
+        "工具"
+      ],
+      "tags": [
+        "卸载"
+      ],
+      "icon": "TG-000021.png",
+      "url": "https://geekuninstaller.com",
+      "description": {
+        "简体中文": "轻量级软件卸载工具，支持强制卸载和清理残留文件。",
+        "繁體中文": "輕量級軟體解除安裝工具，支援強制移除與清理殘留檔案。",
+        "English": "A lightweight software uninstaller with forced removal and leftover-file cleanup."
+      },
+      "intro": {
+        "简体中文": "Geek Uninstaller 是一款轻量、免安装的 Windows 软件卸载工具，可替代系统自带的卸载入口。它能列出已安装程序并快速卸载，卸载后自动扫描注册表和硬盘中的残留文件与无效项，支持强制移除卸载失败或已损坏的软件，也能管理 Windows 应用商店应用。程序小巧、启动快、几乎不占系统资源，适合需要经常清理软件、保持系统整洁的普通用户和运维人员。",
+        "繁體中文": "Geek Uninstaller 是一款輕量、免安裝的 Windows 軟體解除安裝工具，可取代系統內建的解除安裝入口。它能列出已安裝程式並快速移除，解除安裝後自動掃描登錄檔與硬碟中的殘留檔案和無效項目，支援強制移除解除安裝失敗或已損毀的軟體，也能管理 Microsoft Store 應用程式。程式小巧、啟動快速、幾乎不佔系統資源，適合需要經常清理軟體、保持系統整潔的一般使用者與維運人員。",
+        "English": "Geek Uninstaller is a lightweight, portable uninstaller for Windows that can replace the built-in uninstall entry point. It lists your installed programs for quick removal, then automatically scans the registry and disk for leftover files and invalid entries. It can force-remove programs whose uninstall failed or that have become corrupted, and it also manages Microsoft Store apps. The program is small, starts fast, and uses almost no system resources, making it a good fit for everyday users and IT staff who clean up software often and like to keep their systems tidy."
+      },
+      "supplement": {
+        "简体中文": "仅支持 Windows，官方称兼容 32 位与 64 位系统（Windows 7 至 11）；在 64 位系统上会以原生 64 位程序运行，下载压缩包解压后即可直接使用。",
+        "繁體中文": "僅支援 Windows，官方表示相容於 32 位元與 64 位元系統（Windows 7 至 11）；在 64 位元系統上會以原生 64 位元程式執行，下載壓縮檔解壓縮後即可直接使用。",
+        "English": "Windows only; the vendor states compatibility with both 32-bit and 64-bit systems (Windows 7 through 11). On 64-bit systems it runs as a native 64-bit program, and the downloaded archive can simply be extracted and used right away."
+      },
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows"
+      ],
+      "architectures": [
+        "x86",
+        "x64"
+      ]
+    },
+    {
+      "id": "tiez",
+      "code": "TG-000022",
+      "name": {
+        "简体中文": "TieZ",
+        "繁體中文": "TieZ",
+        "English": "TieZ"
+      },
+      "category": [
+        "工具"
+      ],
+      "tags": [
+        "实用"
+      ],
+      "icon": "TG-000022.png",
+      "url": "https://tiez.name666.top/",
+      "github": "https://github.com/jimuzhe/tiez-clipboard",
+      "description": {
+        "简体中文": "跨平台剪贴板管理工具，支持历史记录、搜索标签、局域网传输与 WebDAV 云同步。",
+        "繁體中文": "跨平台剪貼簿管理工具，支援歷史記錄、搜尋標籤、區域網路傳輸與 WebDAV 雲端同步。",
+        "English": "A cross-platform clipboard manager with history, searchable tags, LAN transfer, and WebDAV cloud sync."
+      },
+      "intro": {
+        "简体中文": "TieZ 是一款跨平台剪贴板管理工具，用来保存并快速找回复制过的内容。它统一记录文本、代码、链接、图片、文件和富文本，支持全文搜索、标签与类型筛选、固定条目和顺序粘贴，还能为不同类型内容指定默认打开程序。工具提供全局快捷键呼出、贴边停靠与本地数据持久化，并通过 WebDAV 在设备间同步，手机端 App 可与电脑互传剪贴板和文件。适合频繁复制粘贴、需要在多设备间流转内容的用户。",
+        "繁體中文": "TieZ 是一款跨平台剪貼簿管理工具，用來儲存並快速找回複製過的內容。它統一記錄文字、程式碼、連結、圖片、檔案與富文字，支援全文搜尋、標籤與類型篩選、固定項目與順序貼上，還能為不同類型的內容指定預設開啟程式。工具提供全域快速鍵呼出、貼邊停靠與本機資料保存，並透過 WebDAV 在裝置間同步，手機端 App 可與電腦互傳剪貼簿和檔案。適合經常複製貼上、需要在多裝置間流轉內容的使用者。",
+        "English": "TieZ is a cross-platform clipboard manager for saving what you copy and finding it again fast. It keeps text, code, links, images, files, and rich text in one place, with full-text search, tag and type filters, pinned entries, and sequential pasting, and it lets you assign a default app for opening each content type. It offers a global hotkey, edge docking, and local data storage, syncs across devices over WebDAV, and its mobile app can exchange clipboard contents and files with your computer. It is a good fit for anyone who copies and pastes constantly and moves content between several devices."
+      },
+      "supplement": {
+        "简体中文": "官方网站现在提供的是 TieZ 剪贴板管理工具：桌面端支持 Windows 10/11 与 macOS（含 Apple 芯片与 Intel），另有 Android 手机端配套 App，可同步剪贴板、局域网传文件与云端同步。",
+        "繁體中文": "官方網站目前提供的是 TieZ 剪貼簿管理工具：桌面端支援 Windows 10/11 與 macOS（含 Apple 晶片與 Intel），另有 Android 手機端配套 App，可同步剪貼簿、區域網路傳檔與雲端同步。",
+        "English": "The official website now offers the TieZ clipboard manager: the desktop version supports Windows 10/11 and macOS (both Apple silicon and Intel), plus a companion Android app for clipboard sync, LAN file transfer, and cloud sync."
+      },
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Android"
+      ],
+      "architectures": [
+        "x64",
+        "x86",
+        "Apple Silicon"
+      ]
+    },
+    {
+      "id": "memreduct",
+      "code": "TG-000023",
+      "name": {
+        "简体中文": "Memreduct",
+        "繁體中文": "Memreduct",
+        "English": "Memreduct"
+      },
+      "category": [
+        "工具"
+      ],
+      "tags": [
+        "系统",
+        "优化"
+      ],
+      "icon": "TG-000023.png",
+      "github": "https://github.com/henrypp/memreduct",
+      "description": {
+        "简体中文": "轻量级内存优化工具，实时监控和清理系统内存。",
+        "繁體中文": "輕量級記憶體優化工具，即時監控與清理系統記憶體。",
+        "English": "A lightweight memory optimizer that monitors and cleans up system memory in real time."
+      },
+      "intro": {
+        "简体中文": "Mem Reduct 是一款轻量级的 Windows 内存优化工具，用于实时监控并清理系统内存。它通过系统底层接口释放工作集、待机列表和缓存等区域，可在托盘常驻显示当前内存占用，并支持按时间间隔或占用阈值自动清理、把清理结果记录到文件以及命令行调用。软件小巧轻便、后台占用极低，设置可保存在程序目录实现便携使用。适合内存较小或长时间运行大型程序的电脑，用来缓解卡顿。",
+        "繁體中文": "Mem Reduct 是一款輕量級的 Windows 記憶體優化工具，用於即時監控並清理系統記憶體。它透過系統底層介面釋放工作集、待機清單與快取等區域，可在系統匣常駐顯示目前記憶體使用量，並支援依時間間隔或使用量門檻自動清理、將清理結果記錄到檔案以及命令列呼叫。軟體小巧輕便、背景佔用極低，設定可儲存在程式目錄以實現可攜式使用。適合記憶體較小或長時間執行大型程式的電腦，用來緩解卡頓。",
+        "English": "Mem Reduct is a lightweight memory optimizer for Windows that monitors and cleans up system memory in real time. It uses low-level system interfaces to release working sets, standby lists, and caches, shows current memory usage from the system tray, and can clean automatically on a timer or when usage crosses a threshold, write results to a log file, and be invoked from the command line. The program is small and light with a very low background footprint, and its settings can be stored in the program folder for portable use. It is a good fit for PCs with limited memory or machines that run large programs for long stretches, helping to ease stutter and slowdowns."
+      },
+      "supplement": {
+        "简体中文": "仅支持 Windows，官方要求 64 位或 ARM64 系统（Windows 7 至 11），不支持 32 位；提供安装版与便携版，便携模式下可在程序目录放置配置文件来保存设置。",
+        "繁體中文": "僅支援 Windows，官方要求 64 位元或 ARM64 系統（Windows 7 至 11），不支援 32 位元；提供安裝版與可攜版，可攜模式下可在程式目錄放置設定檔來保存設定。",
+        "English": "Windows only; the vendor requires a 64-bit or ARM64 system (Windows 7 through 11) and does not support 32-bit. Both installer and portable versions are available, and in portable mode a configuration file placed in the program folder keeps your settings."
+      },
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows"
+      ],
+      "architectures": [
+        "x64",
+        "arm64"
+      ]
+    },
+    {
+      "id": "obs",
+      "code": "TG-000024",
+      "name": {
+        "简体中文": "OBS",
+        "繁體中文": "OBS",
+        "English": "OBS"
+      },
+      "category": [
+        "工具"
+      ],
+      "tags": [
+        "视频",
+        "直播",
+        "录屏"
+      ],
+      "icon": "TG-000024.png",
+      "url": "https://obsproject.com/",
+      "github": "https://github.com/obsproject/obs-studio",
+      "description": {
+        "简体中文": "开源的直播和录屏软件，支持多场景切换和实时混音。",
+        "繁體中文": "開源的直播與螢幕錄影軟體，支援多場景切換與即時混音。",
+        "English": "Open-source live streaming and screen recording software with multi-scene switching and real-time audio mixing."
+      },
+      "intro": {
+        "简体中文": "OBS Studio 是一款免费、开源的直播与录屏软件，广泛用于游戏直播、课程录制和视频创作。它支持多场景切换、窗口与游戏画面捕获、摄像头和麦克风混音、实时滤镜与转场，并可通过插件扩展功能；内置推流设置，能一键把画面推送到常见直播平台，也可直接录制保存到本地。界面布局可自定义，社区教程与插件资源丰富，适合主播、教师、内容创作者以及需要录制演示的普通用户。",
+        "繁體中文": "OBS Studio 是一款免費、開源的直播與螢幕錄影軟體，廣泛用於遊戲直播、課程錄製與影片創作。它支援多場景切換、視窗與遊戲畫面擷取、網路攝影機與麥克風混音、即時濾鏡與轉場，並可透過外掛擴充功能；內建串流設定，能一鍵將畫面推送到常見直播平台，也可直接錄影儲存到本機。介面配置可自訂，社群教學與外掛資源豐富，適合實況主、教師、內容創作者以及需要錄製簡報示範的一般使用者。",
+        "English": "OBS Studio is free, open-source software for live streaming and screen recording, widely used for game streaming, lecture capture, and video production. It supports multi-scene switching, window and game capture, webcam and microphone mixing, real-time filters and transitions, and plug-in extensions; built-in streaming settings let you push your feed to common platforms in one click, or record straight to a local file. The interface layout is customizable and the community offers plenty of tutorials and plug-ins, making it a good fit for streamers, teachers, content creators, and anyone who needs to record a demo."
+      },
+      "supplement": {
+        "简体中文": "官方提供 Windows、macOS 与 Linux 版本，macOS 区分 Intel 与 Apple 芯片两种安装包，Linux 通过官方 Flatpak 和 Ubuntu PPA 分发；Windows 端目前只有 64 位版本。",
+        "繁體中文": "官方提供 Windows、macOS 與 Linux 版本，macOS 區分 Intel 與 Apple 晶片兩種安裝檔，Linux 透過官方 Flatpak 與 Ubuntu PPA 發佈；Windows 端目前只有 64 位元版本。",
+        "English": "Official builds are available for Windows, macOS, and Linux; macOS has separate installers for Intel and Apple silicon, and Linux is distributed through the official Flatpak and the Ubuntu PPA. On Windows, only a 64-bit version is currently offered."
+      },
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Linux"
+      ],
+      "architectures": [
+        "x64",
+        "Apple Silicon"
+      ]
+    },
+    {
+      "id": "human-benchmark",
+      "code": "TG-000025",
+      "name": {
+        "简体中文": "Human Benchmark",
+        "繁體中文": "Human Benchmark",
+        "English": "Human Benchmark"
+      },
+      "category": [
+        "工具"
+      ],
+      "tags": [
+        "趣味",
+        "测试"
+      ],
+      "icon": "TG-000025.png",
+      "url": "https://humanbenchmark.com/",
+      "description": {
+        "简体中文": "认知能力测试网站，提供反应速度、记忆力等基准测试。",
+        "繁體中文": "認知能力測試網站，提供反應速度、記憶力等基準測試。",
+        "English": "A cognitive testing site with benchmark tests for reaction time, memory, and more."
+      },
+      "intro": {
+        "简体中文": "Human Benchmark 是一个在线认知能力测试站点，打开网页即可开始，无需注册或安装。平台提供反应速度、序列记忆、数字记忆、视觉记忆、打字速度、瞄准和色觉等多种小测试，每项通常只花一到几分钟，结束后会给出成绩以及在全部参与者中的百分位排名，方便了解自己的各项表现并与其他用户对比。测试都在浏览器中运行，电脑和手机都能直接打开，也适合当作日常小游戏来放松和提神。",
+        "繁體中文": "Human Benchmark 是一個線上認知能力測試網站，打開網頁即可開始，無需註冊或安裝。平台提供反應速度、序列記憶、數字記憶、視覺記憶、打字速度、瞄準與色覺等多種小測驗，每項通常只花一到幾分鐘，結束後會給出成績以及在所有參與者中的百分位排名，方便了解自己的各項表現並與其他使用者比較。測驗都在瀏覽器中執行，電腦與手機都能直接開啟，也適合當作日常小遊戲來放鬆和提神。",
+        "English": "Human Benchmark is an online cognitive testing site: open the page and start, with no sign-up or installation. It offers a range of short tests covering reaction time, sequence memory, number memory, visual memory, typing speed, aim, and color vision. Each one usually takes just a minute or a few, and at the end you get your score plus a percentile ranking among all participants, so you can see how you perform and compare with other users. Everything runs in the browser on both computers and phones, which also makes it a fun little daily game to unwind and sharpen up."
+      },
+      "supplement": {
+        "简体中文": "打开网页就能做反应速度、记忆力、专注力等认知小测试，成绩可与全球用户对比。无需安装任何程序，电脑和手机浏览器都能直接使用，目前没有官方客户端。",
+        "繁體中文": "打開網頁就能做反應速度、記憶力、專注力等認知小測驗，成績可與全球使用者比較。無需安裝任何程式，電腦與手機瀏覽器都能直接使用，目前沒有官方用戶端。",
+        "English": "Just open the page to take short cognitive tests for reaction time, memory, focus, and more, and compare your scores with users worldwide. No software installation is needed and it works in any desktop or mobile browser; there is currently no official client app."
+      },
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "web"
+      ]
+    },
+    {
+      "id": "huorong",
+      "code": "TG-000026",
+      "name": {
+        "简体中文": "火绒安全软件",
+        "繁體中文": "火絨安全軟體",
+        "English": "Huorong Security"
+      },
+      "category": [
+        "工具"
+      ],
+      "tags": [
+        "安全",
+        "官方"
+      ],
+      "icon": "TG-000026.png",
+      "url": "https://www.huorong.cn/",
+      "description": {
+        "简体中文": "国产安全软件，提供病毒防护、弹窗拦截和系统工具。",
+        "繁體中文": "國產安全軟體，提供病毒防護、彈窗攔截和系統工具。",
+        "English": "A Chinese-made security suite offering virus protection, pop-up blocking, and system tools."
+      },
+      "intro": {
+        "简体中文": "火绒安全软件是面向个人用户的免费终端安全产品，以轻巧、低占用和无广告打扰为特色。它提供病毒与木马查杀、实时防护、U 盘保护、弹窗拦截、恶意网址拦截，并附带系统修复、启动项管理、垃圾清理等常用工具，日常运行时几乎不占用资源。界面简洁，不会捆绑其他软件，也不推送弹窗广告，装上即可使用，各类防护的默认配置对普通用户足够友好。适合希望电脑安静稳定运行、又需要可靠基础防护的家庭与办公用户。",
+        "繁體中文": "火絨安全軟體是面向個人使用者的免費終端安全產品，以輕巧、低佔用和無廣告打擾為特色。它提供病毒與木馬查殺、即時防護、USB 隨身碟防護、彈窗攔截、惡意網址攔截，並附帶系統修復、開機啟動項管理、垃圾清理等常用工具，日常執行時幾乎不佔用資源。介面簡潔，不會綁定其他軟體，也不推送彈窗廣告，裝好即可使用，各類防護的預設設定對一般使用者已經足夠友善。適合希望電腦安靜穩定運行、又需要可靠基礎防護的家庭與辦公使用者。",
+        "English": "Huorong Security is a free endpoint security product for personal users, known for being lightweight, using few resources, and never nagging with ads. It handles virus and Trojan scanning, real-time protection, USB drive protection, pop-up blocking, and malicious URL blocking, and it also includes everyday utilities such as system repair, startup item management, and junk file cleanup, all while barely touching your system resources. The interface is clean, it doesn't bundle other software or push pop-up ads, and it works right after installation, with default protection settings that are friendly enough for ordinary users. It's a solid choice for home and office users who want a quiet, stable PC with dependable basic protection."
+      },
+      "supplement": {
+        "简体中文": "面向个人用户的免费终端安全软件，安装后即可获得病毒查杀与实时防护。官方按设备类型分别打包：常见的 64 位和 32 位电脑各有一版，采用 ARM 架构的 Windows 设备也有专用安装包。",
+        "繁體中文": "面向個人使用者的免費終端安全軟體，安裝後即可獲得病毒查殺與即時防護。官方依裝置類型分別打包：常見的 64 位元和 32 位元電腦各有一版，採用 ARM 架構的 Windows 裝置也有專用安裝包。",
+        "English": "A free endpoint security suite for personal users that delivers virus scanning and real-time protection right after installation. The vendor ships separate packages by device type: one build for the common 64-bit PCs, one for 32-bit PCs, and a dedicated installer for Windows devices on ARM."
+      },
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows"
+      ],
+      "architectures": [
+        "x64",
+        "x86",
+        "arm64"
+      ]
+    },
+    {
+      "id": "mctier",
+      "code": "TG-000027",
+      "name": {
+        "简体中文": "MCTier",
+        "繁體中文": "MCTier",
+        "English": "MCTier"
+      },
+      "category": [
+        "游戏"
+      ],
+      "tags": [
+        "工具"
+      ],
+      "icon": "TG-000027.png",
+      "url": "https://mctier.pmhs.top/",
+      "description": {
+        "简体中文": "虚拟局域网通用组网工具，把电脑和手机连进同一个大厅，支持语音、文件与屏幕共享。",
+        "繁體中文": "虛擬區域網路通用組網工具，把電腦和手機連進同一個大廳，支援語音、檔案與螢幕共享。",
+        "English": "A general-purpose virtual LAN tool that brings PCs and phones into one shared lobby with voice, file, and screen sharing."
+      },
+      "intro": {
+        "简体中文": "MCTier 是一款虚拟局域网组网工具，把处于不同网络环境的电脑和手机拉进同一个「大厅」，让原本无法直连的设备像在同一局域网内互相访问。组网基于 EasyTier，无需公网 IP 即可优先直连，条件不允许时自动转为中继。大厅内集成实时语音与语音小队、文字聊天、文件共享、屏幕共享、双向远程控制和内置变声器，并提供公开大厅广场、连接诊断与游戏快连等联机辅助。既适合和朋友联机玩局域网游戏，也适合跨网传文件、共享屏幕或远程协助他人。",
+        "繁體中文": "MCTier 是一款虛擬區域網路組網工具，把處於不同網路環境的電腦和手機拉進同一個「大廳」，讓原本無法直連的裝置像是在同一個區域網路內互相存取。組網基於 EasyTier，無需公網 IP 即可優先直連，條件不允許時自動轉為中繼。大廳內整合即時語音與語音小隊、文字聊天、檔案共享、螢幕共享、雙向遠端控制和內建變聲器，並提供公開大廳廣場、連線診斷與遊戲快連等連線輔助。既適合和朋友連線玩區域網路遊戲，也適合跨網路傳檔案、共享螢幕或遠端協助他人。",
+        "English": "MCTier is a virtual LAN networking tool that pulls PCs and phones on different networks into the same \"lobby,\" so devices that could never connect directly can reach each other as if they were on one local network. Built on EasyTier, it prefers a direct connection with no public IP required and automatically falls back to a relay when conditions don't allow one. The lobby bundles real-time voice chat and voice squads, text chat, file sharing, screen sharing, two-way remote control, and a built-in voice changer, plus a public lobby plaza, connection diagnostics, and quick-connect helpers for games. It works just as well for playing LAN games with friends as it does for sending files across networks, sharing your screen, or assisting someone remotely."
+      },
+      "supplement": {
+        "简体中文": "把分散的电脑和手机拉进同一个虚拟局域网，方便跨网络联机、语音、传文件和共享屏幕。电脑端与安卓端可同处一个大厅；Linux 版仍处于实验阶段、部分功能受限，暂不支持苹果设备。",
+        "繁體中文": "把分散的電腦和手機拉進同一個虛擬區域網路，方便跨網路連線、語音、傳檔案和共享螢幕。電腦端與 Android 端可同處一個大廳；Linux 版仍處於實驗階段、部分功能受限，暫不支援蘋果裝置。",
+        "English": "Brings scattered PCs and phones into a single virtual LAN, making it easy to play across networks, talk over voice, send files, and share screens. The desktop and Android clients can join the same lobby; the Linux build is still experimental with some features limited, and Apple devices aren't supported yet."
+      },
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "Android",
+        "Linux"
+      ],
+      "architectures": [
+        "x64",
+        "arm64"
+      ]
+    },
+    {
+      "id": "wallpaper-engine",
+      "code": "TG-000028",
+      "name": {
+        "简体中文": "Wallpaper Engine",
+        "繁體中文": "Wallpaper Engine",
+        "English": "Wallpaper Engine"
+      },
+      "category": [
+        "个性化"
+      ],
+      "tags": [
+        "壁纸"
+      ],
+      "icon": "TG-000028.gif",
+      "url": "https://www.wallpaperengine.io/",
+      "description": {
+        "简体中文": "动态壁纸软件，支持创建和使用动态桌面壁纸。",
+        "繁體中文": "動態桌布軟體，支援建立和使用動態桌面桌布。",
+        "English": "Animated wallpaper software that lets you create and use dynamic desktop wallpapers."
+      },
+      "intro": {
+        "简体中文": "Wallpaper Engine 是一款让 Windows 桌面动起来的动态壁纸软件，支持把视频、网页、3D 场景和带交互效果的作品设为壁纸，也可用内置编辑器把图片做成动画作品，并订阅创意工坊中的大量免费资源。它对性能做了优化，可在运行游戏或最大化窗口时自动暂停，笔记本改用电池供电时也会停止，还能让雷蛇、海盗船等灯效硬件与壁纸联动。官方另提供免费手机伴侣应用，可将电脑上收藏的壁纸无线传输到安卓设备使用，适合注重桌面个性化又不愿明显牺牲性能的用户。",
+        "繁體中文": "Wallpaper Engine 是一款讓 Windows 桌面動起來的動態桌布軟體，支援把影片、網頁、3D 場景和帶互動效果的作品設為桌布，也可用內建編輯器把圖片做成動畫作品，並訂閱工作坊中的大量免費資源。它對效能做了最佳化，可在執行遊戲或最大化視窗時自動暫停，筆電改用電池供電時也會停止，還能讓 Razer、Corsair 等燈效硬體與桌布連動。官方另提供免費手機伴侶應用程式，可將電腦上收藏的桌布無線傳輸到 Android 裝置使用，適合注重桌面個人化又不願明顯犧牲效能的玩家。",
+        "English": "Wallpaper Engine is animated wallpaper software that brings your Windows desktop to life. You can set videos, web pages, 3D scenes, and interactive creations as your wallpaper, turn images into animated pieces with the built-in editor, and subscribe to a huge library of free Workshop content. It's tuned for performance: playback pauses automatically while you're gaming or when a window is maximized, and stops when a laptop switches to battery power. It can even sync your wallpaper with lighting hardware from Razer, Corsair, and others. A free companion mobile app lets you send wallpapers from your PC wirelessly to Android devices, making it a great fit for users who care about desktop personalization without a noticeable performance cost."
+      },
+      "supplement": {
+        "简体中文": "让 Windows 桌面用上动态壁纸，可订阅创意工坊里的大量作品，运行时几乎不影响游戏性能。手机端是免费伴侣应用，能把电脑上的壁纸无线传到安卓设备使用；暂不支持苹果系统与 iOS。",
+        "繁體中文": "讓 Windows 桌面用上動態桌布，可訂閱工作坊裡的大量作品，執行時幾乎不影響遊戲效能。手機端是免費伴侶應用程式，能把電腦上的桌布無線傳到 Android 裝置使用；暫不支援蘋果系統與 iOS。",
+        "English": "Brings animated wallpapers to your Windows desktop with a large library of Workshop creations to subscribe to, all with almost no impact on gaming performance. The mobile app is a free companion that sends wallpapers from your PC wirelessly to Android devices; Apple systems and iOS aren't supported yet."
+      },
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "Android"
+      ],
+      "architectures": [
+        "x64",
+        "x86"
+      ]
+    },
+    {
+      "id": "nexbox",
+      "code": "TG-000029",
+      "name": {
+        "简体中文": "NexBox",
+        "繁體中文": "NexBox",
+        "English": "NexBox"
+      },
+      "category": [
+        "工具"
+      ],
+      "icon": "TG-000029.png",
+      "url": "https://nexbox.top/",
+      "github": "https://github.com/MuLiuSaMa/NexBox",
+      "description": {
+        "简体中文": "开源的综合工具箱软件，提供多种实用功能集成。",
+        "繁體中文": "開源的綜合工具箱軟體，提供多種實用功能整合。",
+        "English": "An open-source all-in-one toolbox that bundles a wide range of handy utilities."
+      },
+      "intro": {
+        "简体中文": "NexBox（新境盒）是一款面向 PC 玩家的免费开源游戏工具箱，把过去需要安装多个软件才能完成的事集中到一个界面。它提供 CPU、显卡、内存、硬盘的实时监控与温度趋势，以及磁盘与内存清理、网络和电源优化、启动项管理等系统优化项；还内置显示滤镜与色温调节、游戏准星、游戏内悬浮面板、分辨率与 DLSS 预设管理、Steam 与 Epic 库管理等工具，并附带音乐播放器。软件占用低、核心功能纯本地运行，适合想一站式打理游戏环境、不愿被全家桶打扰的玩家。",
+        "繁體中文": "NexBox 是一款面向 PC 玩家的免費開源遊戲工具箱，把過去需要安裝多個軟體才能完成的事集中到一個介面。它提供 CPU、顯示卡、記憶體、硬碟的即時監控與溫度趨勢，以及磁碟與記憶體清理、網路和電源最佳化、開機啟動項管理等系統最佳化項目；還內建顯示濾鏡與色溫調節、遊戲準心、遊戲內懸浮面板、解析度與 DLSS 預設集管理、Steam 與 Epic 遊戲庫管理等工具，並附帶音樂播放器。軟體佔用低、核心功能純本地執行，適合想一站式打理遊戲環境、不願被全家桶打擾的玩家。",
+        "English": "NexBox is a free, open-source game toolbox for PC players that gathers into one interface the jobs that used to require several separate programs. It offers real-time monitoring and temperature trends for your CPU, GPU, memory, and drives, along with system tuning options such as disk and memory cleanup, network and power optimization, and startup item management. Built-in extras include display filters and color temperature adjustment, a game crosshair, an in-game overlay panel, resolution and DLSS preset management, Steam and Epic library management, and a music player. It uses very few resources and its core features run entirely locally — ideal for players who want a single place to manage their gaming setup without a pile of unwanted bundled software."
+      },
+      "supplement": {
+        "简体中文": "为玩家准备的一体化工具箱，把硬件监控、系统优化、显示增强、游戏辅助和音乐播放收进一个界面。纯本地运行、核心功能无需联网，安装后双击即可使用，目前只有 Windows 版。",
+        "繁體中文": "為玩家準備的一體化工具箱，把硬體監控、系統最佳化、顯示增強、遊戲輔助和音樂播放收進一個介面。純本地執行、核心功能無需連網，安裝後按兩下即可使用，目前只有 Windows 版。",
+        "English": "An all-in-one toolbox built for gamers that puts hardware monitoring, system tuning, display enhancement, game tools, and music playback behind one interface. It runs entirely locally with no internet needed for core features, works right after you install and double-click, and is currently Windows-only."
+      },
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows"
+      ],
+      "architectures": [
+        "x64"
+      ]
+    },
+    {
+      "id": "nvidia-app",
+      "code": "TG-000030",
+      "name": {
+        "简体中文": "NVIDIA APP",
+        "繁體中文": "NVIDIA App",
+        "English": "NVIDIA App"
+      },
+      "category": [
+        "工具"
+      ],
+      "tags": [
+        "驱动",
+        "官方"
+      ],
+      "icon": "TG-000030.png",
+      "url": "https://www.nvidia.cn/software/nvidia-app/",
+      "description": {
+        "简体中文": "NVIDIA 推出的统一 GPU 控制中心，整合驱动更新、游戏优化、录屏和 AI 滤镜等功能。",
+        "繁體中文": "NVIDIA 推出的統一 GPU 控制中心，整合驅動程式更新、遊戲最佳化、螢幕錄影和 AI 濾鏡等功能。",
+        "English": "NVIDIA's unified GPU control center, combining driver updates, game optimization, screen recording, AI filters, and more."
+      },
+      "intro": {
+        "简体中文": "NVIDIA App 是 NVIDIA 官方推出的统一显卡配套应用，用来替代过去的 GeForce Experience。安装后可以一键更新显卡驱动，自动为游戏套用画质与性能优化设置，并在同一界面调整分辨率、刷新率、G-SYNC、DSR 等显示选项。它还支持 ShadowPlay 录屏与截图、直播推流，以及 AI 滤镜和游戏内性能浮层监控。需要搭配 NVIDIA 显卡使用，适合希望用官方工具统一管理驱动与游戏设置、并顺手录制画面的 GeForce 用户。",
+        "繁體中文": "NVIDIA App 是 NVIDIA 官方推出的統一顯示卡配套應用程式，用來取代過去的 GeForce Experience。安裝後可以一鍵更新顯示卡驅動程式，自動為遊戲套用畫質與效能最佳化設定，並在同一介面調整解析度、更新率、G-SYNC、DSR 等顯示選項。它還支援 ShadowPlay 螢幕錄影與截圖、直播串流，以及 AI 濾鏡和遊戲內效能疊層監控。需要搭配 NVIDIA 顯示卡使用，適合希望用官方工具統一管理驅動程式與遊戲設定、並順手錄製畫面的 GeForce 使用者。",
+        "English": "NVIDIA App is NVIDIA's official unified companion app for its graphics cards, replacing GeForce Experience. Once installed, you can update your GPU driver in one click, automatically apply image quality and performance optimizations to your games, and adjust display options such as resolution, refresh rate, G-SYNC, and DSR from the same interface. It also supports ShadowPlay recording and screenshots, live streaming, AI filters, and an in-game performance overlay. An NVIDIA graphics card is required — it's made for GeForce users who want one official tool to manage drivers and game settings and capture footage along the way."
+      },
+      "supplement": {
+        "简体中文": "面向 GeForce 用户的官方显卡配套应用，可统一更新驱动、自动优化游戏设置，并录制或直播画面。目前只提供 Windows 版，需要配合 NVIDIA 显卡使用，没有网页版和手机端。",
+        "繁體中文": "面向 GeForce 使用者的官方顯示卡配套應用程式，可統一更新驅動程式、自動最佳化遊戲設定，並錄製或直播畫面。目前只提供 Windows 版，需要搭配 NVIDIA 顯示卡使用，沒有網頁版和手機端。",
+        "English": "The official graphics card companion app for GeForce users, letting you update drivers, auto-optimize game settings, and record or stream gameplay in one place. It's currently Windows-only and requires an NVIDIA graphics card, with no web or mobile version."
+      },
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows"
+      ]
+    },
+    {
+      "id": "mineradio",
+      "code": "TG-000031",
+      "name": {
+        "简体中文": "Mineradio",
+        "繁體中文": "Mineradio",
+        "English": "Mineradio"
+      },
+      "category": [
+        "工具"
+      ],
+      "tags": [
+        "音乐"
+      ],
+      "icon": "TG-000031.png",
+      "url": "https://mineradio.cn/",
+      "github": "https://github.com/XxHuberrr/Mineradio",
+      "description": {
+        "简体中文": "开源的音乐播放和电台工具，提供在线音乐收听和播放管理功能。",
+        "繁體中文": "開源音樂播放與電台工具，提供線上音樂收聽與播放管理功能。",
+        "English": "An open-source music player and radio tool with online listening and playback management."
+      },
+      "intro": {
+        "简体中文": "Mineradio 是一款免费开源的音乐播放器，界面带有跟随节奏变化的可视化效果，主打本地音乐播放与沉浸式听歌体验。它支持 MP3、FLAC、WAV、OGG、AAC、APE、DSD 等多种无损与常见格式，能读取音频内嵌的歌词和封面，也支持外置歌词文件与桌面歌词显示；并提供迷你模式、播放列表与收藏管理、均衡器等功能，整体轻量无广告。官方提供 Windows 与 Mac 桌面版和安卓版，另有网页版可直接体验，适合平时收听本地音乐收藏、在意界面观感的用户。",
+        "繁體中文": "Mineradio 是一款免費開源的音樂播放器，介面帶有隨節奏變化的視覺化效果，主打本機音樂播放與沉浸式聽歌體驗。它支援 MP3、FLAC、WAV、OGG、AAC、APE、DSD 等多種無損與常見格式，能讀取音訊內嵌的歌詞與封面，也支援外掛歌詞檔與桌面歌詞顯示；並提供迷你模式、播放清單與收藏管理、等化器等功能，整體輕量且沒有廣告。官方提供 Windows 與 Mac 桌面版和 Android 版，另有網頁版可直接體驗，適合平時收聽本機音樂收藏、在意介面觀感的用戶。",
+        "English": "Mineradio is a free, open-source music player with beat-reactive visualizations, built around local music playback and an immersive listening experience. It supports MP3, FLAC, WAV, OGG, AAC, APE, DSD and many other common and lossless formats, reads embedded lyrics and cover art, and also works with external lyric files and desktop lyrics. Mini mode, playlist and favorites management, and an equalizer round out a lightweight, ad-free package. Official Windows, Mac, and Android versions are available, plus a web version you can try right away — a good fit for anyone who listens to a local music collection and cares about how the interface looks."
+      },
+      "supplement": {
+        "简体中文": "开源免费的本地音乐播放器，支持多种无损格式、内嵌与外置歌词和桌面歌词，界面带有可视化效果。官方提供 Windows、Mac 桌面版和安卓版，也有网页版可直接体验。",
+        "繁體中文": "開源免費的本機音樂播放器，支援多種無損格式、內嵌與外掛歌詞及桌面歌詞，介面帶有視覺化效果。官方提供 Windows、Mac 桌面版和 Android 版，也有網頁版可直接體驗。",
+        "English": "A free, open-source local music player with support for many lossless formats, embedded and external lyrics, and desktop lyrics, plus visualizations in the interface. Official Windows, Mac, and Android versions are available, along with a web version you can try directly."
+      },
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Android",
+        "web"
+      ]
+    },
+    {
+      "id": "claude",
+      "code": "TG-000032",
+      "name": {
+        "简体中文": "Claude",
+        "繁體中文": "Claude",
+        "English": "Claude"
+      },
+      "category": [
+        "AI"
+      ],
+      "tags": [
+        "聊天"
+      ],
+      "icon": "TG-000032.png",
+      "url": "https://claude.com/",
+      "description": {
+        "简体中文": "Anthropic 开发的 AI 助手，擅长长文本理解、推理和代码生成。",
+        "繁體中文": "Anthropic 開發的 AI 助理，擅長長文本理解、推理與程式碼生成。",
+        "English": "An AI assistant from Anthropic, strong at long-form comprehension, reasoning, and code generation."
+      },
+      "intro": {
+        "简体中文": "Claude 是 Anthropic 推出的 AI 助手，擅长长文档理解、逻辑推理与代码编写，支持上传 PDF、图片等文件后围绕内容提问，也能通过 Artifacts 直接生成并预览网页、图表和文档。它提供电脑客户端、手机应用和网页版，登录同一账号即可在各端继续之前的对话；桌面端带有可随时唤起的快捷窗口，也可通过扩展连接本地文件与外部工具。日常可用于资料整理、翻译润色和写代码，适合需要处理长篇材料、希望回答严谨且乐于核对依据的知识工作者、开发者和学生。",
+        "繁體中文": "Claude 是 Anthropic 推出的 AI 助理，擅長長文件理解、邏輯推理與程式碼撰寫，支援上傳 PDF、圖片等檔案後針對內容提問，也能透過 Artifacts 直接生成並預覽網頁、圖表和文件。它提供電腦客戶端、手機應用程式和網頁版，登入同一個帳號即可在各端接續先前的對話；桌面端帶有可隨時喚出的快捷視窗，也可透過擴充功能連接本機檔案與外部工具。日常可用於資料整理、翻譯潤色和寫程式，適合需要處理長篇材料、希望回答嚴謹且樂於核對依據的知識工作者、開發者和學生。",
+        "English": "Claude is Anthropic's AI assistant, skilled at understanding long documents, logical reasoning, and writing code. You can upload PDFs, images, and other files and ask questions about their contents, and use Artifacts to generate and preview web pages, charts, and documents on the spot. It comes as a desktop app, a mobile app, and a web version — sign in with the same account to pick up earlier conversations on any device. The desktop app offers a quick-access window you can summon at any time, and extensions let it connect to local files and external tools. Day to day it is useful for organizing material, translation and polishing, and coding — a good fit for knowledge workers, developers, and students who deal with long documents, want rigorous answers, and like to check the sources."
+      },
+      "supplement": {
+        "简体中文": "提供电脑客户端，也有手机应用和网页版，登录同一账号即可随处继续对话。桌面端对硬件较宽容：苹果电脑的 Apple 芯片与 Intel 机型都能装，Windows 的 64 位和 ARM 设备也各有对应版本。",
+        "繁體中文": "提供電腦客戶端，也有手機應用程式和網頁版，登入同一帳號即可隨時隨地接續對話。桌面端對硬體相當寬容：蘋果電腦的 Apple 晶片與 Intel 機型都能安裝，Windows 的 64 位元與 ARM 裝置也各有對應版本。",
+        "English": "There is a desktop app, plus mobile apps and a web version, so signing in with the same account lets you continue a conversation anywhere. The desktop app is forgiving about hardware: both Apple silicon and Intel Macs are supported, and Windows users have separate builds for 64-bit and ARM devices."
+      },
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "iOS",
+        "Android",
+        "web"
+      ],
+      "architectures": [
+        "x64",
+        "arm64",
+        "Apple Silicon"
+      ]
+    },
+    {
+      "id": "gemini",
+      "code": "TG-000033",
+      "name": {
+        "简体中文": "Gemini",
+        "繁體中文": "Gemini",
+        "English": "Gemini"
+      },
+      "category": [
+        "AI"
+      ],
+      "tags": [
+        "聊天"
+      ],
+      "icon": "TG-000033.png",
+      "url": "https://gemini.google.com/",
+      "description": {
+        "简体中文": "Google 开发的多模态 AI 助手，支持文本、图像和代码处理。",
+        "繁體中文": "Google 開發的多模態 AI 助理，支援文字、圖像與程式碼處理。",
+        "English": "A multimodal AI assistant from Google that handles text, images, and code."
+      },
+      "intro": {
+        "简体中文": "Gemini 是 Google 推出的多模态 AI 助手，可以理解文字、图片、音频和视频，并据此回答或生成内容。它支持长文档与多文件上传分析、联网检索、代码生成与调试，还能与 Gmail、Google 文档、日历等服务联动，方便在既有工作流中直接调用；配合图像与视频生成能力，也能应付创意类需求。除了在浏览器中打开即用，官方还提供 iOS 与安卓手机应用，以及 Windows 和 Mac 桌面应用，适合已在使用 Google 生态、需要多模态分析与日常写作辅助的用户。",
+        "繁體中文": "Gemini 是 Google 推出的多模態 AI 助理，可以理解文字、圖片、音訊和影片，並據此回答或生成內容。它支援長文件與多檔案上傳分析、聯網檢索、程式碼生成與除錯，還能與 Gmail、Google 文件、日曆等服務連動，方便在既有工作流程中直接呼叫；搭配圖像與影片生成能力，也能應付創意類需求。除了在瀏覽器開啟即可使用，官方還提供 iOS 與 Android 手機應用程式，以及 Windows 和 Mac 桌面應用程式，適合已在使用 Google 生態系、需要多模態分析與日常寫作輔助的用戶。",
+        "English": "Gemini is Google's multimodal AI assistant: it can understand text, images, audio, and video, then answer questions or generate content from them. It handles long documents and multi-file upload analysis, web-grounded search, code generation, and debugging, and it plugs into Gmail, Google Docs, Calendar, and other services so you can call on it inside your existing workflow; image and video generation cover creative tasks too. Beyond using it right in the browser, Google offers iOS and Android apps as well as Windows and Mac desktop apps — a good fit if you already live in the Google ecosystem and want multimodal analysis plus everyday writing help."
+      },
+      "supplement": {
+        "简体中文": "谷歌的 AI 助手，打开网页就能直接对话和生成内容。官方也提供了 iOS 与安卓手机应用，并为 Windows 和 Mac 推出了桌面应用，可按手头设备任选一种方式使用。",
+        "繁體中文": "Google 的 AI 助理，打開網頁就能直接對話和生成內容。官方也提供了 iOS 與 Android 手機應用程式，並為 Windows 和 Mac 推出桌面應用程式，可依手邊裝置任選一種方式使用。",
+        "English": "Google's AI assistant: open the web page and start chatting or generating content right away. Official iOS and Android apps are available too, along with Windows and Mac desktop apps, so you can pick whichever suits the device you have."
+      },
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "iOS",
+        "Android",
+        "web"
+      ]
+    },
+    {
+      "id": "grok",
+      "code": "TG-000034",
+      "name": {
+        "简体中文": "Grok",
+        "繁體中文": "Grok",
+        "English": "Grok"
+      },
+      "category": [
+        "AI"
+      ],
+      "tags": [
+        "聊天"
+      ],
+      "icon": "TG-000034.png",
+      "url": "https://grok.com/",
+      "description": {
+        "简体中文": "xAI 开发的 AI 助手，以幽默风格和实时信息获取能力为特色。",
+        "繁體中文": "xAI 開發的 AI 助理，以幽默風格和即時資訊取得能力為特色。",
+        "English": "An AI assistant from xAI, known for its humorous style and real-time information access."
+      },
+      "intro": {
+        "简体中文": "Grok 是 xAI 推出的 AI 助手，以风格活泼、敢说敢答和较强的实时信息获取能力为特色，可以直接读取 X（原推特）上的公开讨论，帮助了解最新热点与舆论走向。它能完成问答、写作、翻译、代码生成等常见任务，也支持图片理解与图像生成，并带有深度检索模式，方便围绕一个话题收集多方信息。使用上以网页版和官方手机应用为主，登录账号后即可对话和生成内容，暂未推出正式的电脑客户端，适合关注实时资讯、喜欢轻松交流风格的用户。",
+        "繁體中文": "Grok 是 xAI 推出的 AI 助理，以風格活潑、敢說敢答和較強的即時資訊取得能力為特色，可以直接讀取 X（前身為推特）上的公開討論，幫助了解最新熱點與輿論走向。它能完成問答、寫作、翻譯、程式碼生成等常見任務，也支援圖片理解與圖像生成，並帶有深度檢索模式，方便圍繞一個話題收集多方資訊。使用上以網頁版和官方手機應用程式為主，登入帳號後即可對話和生成內容，暫未推出正式的電腦客戶端，適合關注即時資訊、喜歡輕鬆交流風格的用戶。",
+        "English": "Grok is xAI's AI assistant, known for its lively personality, willingness to answer anything, and strong real-time information access — it can read public discussions on X (formerly Twitter) directly, helping you follow the latest trends and public sentiment. It handles the usual question answering, writing, translation, and code generation, supports image understanding and image generation, and includes a deep search mode for gathering many sources around a topic. It is mainly used through the web version and the official mobile app: sign in and start chatting or generating content. There is no full desktop client yet, which suits users who follow real-time news and enjoy a casual conversational style."
+      },
+      "supplement": {
+        "简体中文": "目前以网页版和官方手机应用为主，登录后即可对话、生成图片，桌面浏览器与手机都能随时使用。官方尚未推出正式的电脑客户端。",
+        "繁體中文": "目前以網頁版和官方手機應用程式為主，登入後即可對話、生成圖片，桌面瀏覽器與手機都能隨時使用。官方尚未推出正式的電腦客戶端。",
+        "English": "For now it is mainly the web version and the official mobile app: sign in to chat and generate images, from a desktop browser or a phone. xAI has not yet released a full desktop client."
+      },
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "web",
+        "iOS",
+        "Android"
+      ]
+    },
+    {
+      "id": "chatgpt",
+      "code": "TG-000035",
+      "name": {
+        "简体中文": "ChatGPT",
+        "繁體中文": "ChatGPT",
+        "English": "ChatGPT"
+      },
+      "category": [
+        "AI"
+      ],
+      "tags": [
+        "聊天"
+      ],
+      "icon": "TG-000035.png",
+      "url": "https://chatgpt.com/",
+      "description": {
+        "简体中文": "OpenAI 开发的 AI 对话助手，支持文本、图像和代码生成。",
+        "繁體中文": "OpenAI 開發的 AI 對話助理，支援文字、圖像與程式碼生成。",
+        "English": "OpenAI's conversational AI assistant, with support for text, image, and code generation."
+      },
+      "intro": {
+        "简体中文": "ChatGPT 是 OpenAI 推出的 AI 对话助手，可用于写作、翻译、编程、数据分析和日常答疑。它能理解上传的图片与文档，围绕文件内容提问或总结，也能生成图像并通过联网搜索获取较新的信息；付费方案还可使用更强的模型以及语音、视频等实时对话功能。使用方式上，既可以直接在浏览器中打开，也提供 Windows 与 Mac 电脑客户端以及 iOS、安卓手机应用，登录同一账号即可在各端同步历史对话，适合学生、开发者和需要日常文字与信息处理助手的普通用户。",
+        "繁體中文": "ChatGPT 是 OpenAI 推出的 AI 對話助理，可用於寫作、翻譯、程式設計、資料分析和日常答疑。它能理解上傳的圖片與文件，針對檔案內容提問或摘要，也能生成圖像並透過聯網搜尋取得較新的資訊；付費方案還可使用更強的模型以及語音、視訊等即時對話功能。使用方式上，既可以直接在瀏覽器開啟，也提供 Windows 與 Mac 電腦客戶端以及 iOS、Android 手機應用程式，登入同一帳號即可在各端同步歷史對話，適合學生、開發者和需要日常文字與資訊處理助手的普通使用者。",
+        "English": "ChatGPT is OpenAI's conversational AI assistant for writing, translation, programming, data analysis, and everyday questions. It understands uploaded images and documents so you can ask about or summarize their contents, generates images, and searches the web for more recent information; paid plans add more capable models plus real-time voice and video conversation. You can use it straight from a browser, or through the Windows and Mac desktop apps and the iOS and Android mobile apps — sign in with one account and your chat history stays in sync across devices. A good fit for students, developers, and anyone who needs a day-to-day helper for text and information."
+      },
+      "supplement": {
+        "简体中文": "既可在网页上直接使用，也提供 Windows 与 Mac 电脑客户端以及 iOS、安卓手机应用。登录同一账号后，各端的对话记录可以接着继续。",
+        "繁體中文": "既可在網頁上直接使用，也提供 Windows 與 Mac 電腦客戶端以及 iOS、Android 手機應用程式。登入同一帳號後，各端的對話記錄可以接續繼續。",
+        "English": "Use it directly on the web, or through the Windows and Mac desktop apps and the iOS and Android mobile apps. Sign in with the same account and you can continue your conversations on any device."
+      },
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "iOS",
+        "Android",
+        "web"
+      ]
+    },
+    {
+      "id": "deepseek",
+      "code": "TG-000036",
+      "name": {
+        "简体中文": "DeepSeek",
+        "繁體中文": "DeepSeek",
+        "English": "DeepSeek"
+      },
+      "category": [
+        "AI"
+      ],
+      "tags": [
+        "聊天"
+      ],
+      "icon": "TG-000036.png",
+      "url": "https://www.deepseek.com/",
+      "chat_url": "https://chat.deepseek.com/",
+      "description": {
+        "简体中文": "深度求索开发的 AI 助手，擅长推理和代码生成。",
+        "繁體中文": "深度求索開發的 AI 助理，擅長推理與程式碼生成。",
+        "English": "An AI assistant built by DeepSeek, strong at reasoning and code generation."
+      },
+      "intro": {
+        "简体中文": "DeepSeek 是深度求索推出的 AI 助手，以推理能力和代码编写见长，回答问题时会把思考过程展开，便于核对与学习。它能完成问答、写作、翻译、数学与逻辑推理、代码生成与调试等任务，支持上传文档后围绕内容提问，并可通过联网搜索补充较新信息。除网页版外，官方还提供 iOS、安卓手机应用以及电脑客户端，桌面端可后台运行并读写本地文件，适合处理耗时较长的任务，对需要长文本处理、编程辅助或希望免费体验较强推理模型的用户比较友好。",
+        "繁體中文": "DeepSeek 是深度求索推出的 AI 助理，以推理能力和程式撰寫見長，回答問題時會展開思考過程，方便核對與學習。它能完成問答、寫作、翻譯、數學與邏輯推理、程式碼生成與除錯等任務，支援上傳文件後針對內容提問，並可透過聯網搜尋補充較新的資訊。除了網頁版之外，官方還提供 iOS、Android 手機應用程式以及電腦用戶端，桌面端可背景執行並讀寫本機檔案，適合處理耗時較長的任務，對需要長文本處理、程式開發輔助或希望免費體驗較強推理模型的使用者相當友善。",
+        "English": "DeepSeek is an AI assistant from DeepSeek that stands out for its reasoning and coding skills; it lays out its thinking when answering, making the logic easy to check and learn from. It handles Q&A, writing, translation, math and logical reasoning, code generation and debugging, supports uploading documents so you can ask questions about their contents, and can search the web to fill in more recent information. Besides the web version, the official team offers iOS and Android apps and a desktop client; the desktop app can run in the background and read or write local files, which suits longer-running tasks. It is a good fit for people who work with long documents, need programming help, or simply want to try a strong reasoning model for free."
+      },
+      "supplement": {
+        "简体中文": "除网页版外，官方还提供 iOS、安卓手机应用和桌面客户端。电脑端安装时注意匹配机型：Windows 版面向 64 位系统，Mac 版需要 Apple 芯片并运行较新的 macOS。",
+        "繁體中文": "除了網頁版之外，官方還提供 iOS、Android 手機應用程式和桌面用戶端。安裝電腦端時請注意機型是否符合：Windows 版適用於 64 位元系統，Mac 版需要 Apple 晶片並執行較新的 macOS。",
+        "English": "Besides the web version, the official team also offers iOS and Android apps and a desktop client. When installing the desktop app, check that it matches your machine: the Windows build targets 64-bit systems, while the Mac build requires an Apple chip and a recent version of macOS."
+      },
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "iOS",
+        "Android",
+        "web"
+      ],
+      "architectures": [
+        "x64",
+        "Apple Silicon"
+      ]
+    },
+    {
+      "id": "kimi",
+      "code": "TG-000037",
+      "name": {
+        "简体中文": "Kimi",
+        "繁體中文": "Kimi",
+        "English": "Kimi"
+      },
+      "category": [
+        "AI"
+      ],
+      "tags": [
+        "聊天"
+      ],
+      "icon": "TG-000037.png",
+      "url": "https://www.kimi.com/",
+      "description": {
+        "简体中文": "月之暗面开发的长文本 AI 助手，支持超长上下文和文档解读。",
+        "繁體中文": "月之暗面開發的長文本 AI 助理，支援超長上下文與文件解讀。",
+        "English": "A long-document AI assistant from Moonshot AI, with ultra-long context and document analysis."
+      },
+      "intro": {
+        "简体中文": "Kimi 是一款擅长长文本与复杂任务的 AI 助手，可以一次读入论文、财报、合同等长篇材料，通读后总结要点并回答细节提问。日常问答、联网搜索之外，它还能把零散资料整理成结构化的研究报告和演示文稿，并通过插件接入专业数据源。对开发者提供终端与编辑器里的编程助手，桌面端进一步支持挂载本地文件夹、定时执行任务和浏览器自动化，适合需要长期处理大量文档的科研、金融与办公人群。",
+        "繁體中文": "Kimi 是一款擅長長文本與複雜任務的 AI 助理，可以一次讀入論文、財報、合約等長篇資料，通讀後總結重點並回答細節提問。除了日常問答、聯網搜尋之外，它還能將零散資料整理成結構化的研究報告和簡報，並透過外掛介接專業資料來源。針對開發者提供終端機與編輯器中的程式開發助理，桌面端更支援掛載本機資料夾、定時執行任務和瀏覽器自動化，適合需要長期處理大量文件的科研、金融與辦公族群。",
+        "English": "Kimi is an AI assistant made for long documents and complex tasks: it can take in papers, financial reports, contracts and other lengthy material all at once, then summarize the key points and answer detailed questions about them. Beyond everyday Q&A and web search, it turns scattered material into structured research reports and slide decks, and connects to professional data sources through plugins. For developers it provides coding assistance in the terminal and editor, while the desktop app adds local folder mounting, scheduled tasks and browser automation — a good fit for research, finance and office users who work through large volumes of documents over time."
+      },
+      "supplement": {
+        "简体中文": "官方提供 Windows 与 macOS 桌面客户端，Mac 分公司芯片与 Intel 两个版本，另有 iOS、Android、鸿蒙手机应用，网页版可直接对话。手机、电脑与网页之间的聊天记录可以同步，桌面端还支持挂载本地文件夹与浏览器自动化。",
+        "繁體中文": "官方提供 Windows 與 macOS 桌面用戶端，Mac 版分為 Apple 晶片與 Intel 兩種版本，另有 iOS、Android、HarmonyOS 手機應用程式，網頁版可直接對話。手機、電腦與網頁之間的聊天記錄可以同步，桌面端還支援掛載本機資料夾與瀏覽器自動化。",
+        "English": "The official releases include Windows and macOS desktop clients — the Mac build comes in both Apple chip and Intel versions — along with iOS, Android and HarmonyOS mobile apps, plus a web version you can chat with directly. Chat history syncs across phone, computer and web, and the desktop app also supports mounting local folders and browser automation."
+      },
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Android",
+        "iOS",
+        "web",
+        "其他"
+      ],
+      "architectures": [
+        "x64",
+        "Apple Silicon"
+      ]
+    },
+    {
+      "id": "qwen-studio",
+      "code": "TG-000038",
+      "name": {
+        "简体中文": "Qwen Studio",
+        "繁體中文": "Qwen Studio",
+        "English": "Qwen Studio"
+      },
+      "category": [
+        "AI"
+      ],
+      "tags": [
+        "聊天"
+      ],
+      "icon": "TG-000038.png",
+      "url": "https://qwen.ai/",
+      "chat_url": "https://chat.qwen.ai/",
+      "description": {
+        "简体中文": "阿里巴巴开发的通义千问 AI 平台。",
+        "繁體中文": "阿里巴巴開發的通義千問 AI 平台。",
+        "English": "The Qwen AI platform developed by Alibaba."
+      },
+      "intro": {
+        "简体中文": "Qwen 官方平台提供的对话入口，打开网页就能直接向通义千问系列模型提问，无需下载安装。日常可以用它查询资料、润色文字、解释代码、翻译外语，也能上传图片做识别与理解，长文档一次读入后可以逐条追问，回答通常会附上推理过程与可核查的参考链接。同一账号在不同设备上打开浏览器即可接着用，适合把它当作随开随用的通用 AI 助手，临时遇到问题不必先找软件。",
+        "繁體中文": "Qwen 官方平台提供的對話入口，打開網頁就能直接向通義千問系列模型提問，不必下載安裝。日常可以用它查資料、潤飾文字、解說程式碼、翻譯外語，也能上傳圖片做辨識與理解；長文件一次讀入後可以逐條追問，回答通常會附上推理過程與可查核的參考連結。同一個帳號在不同裝置上打開瀏覽器就能接著使用，適合當成隨開即用的通用 AI 助理，臨時有問題不必先找軟體。",
+        "English": "The official Qwen platform's chat entry point: open the page and you can ask the Qwen model family questions right away, with nothing to download or install. Day to day you can use it to look things up, polish text, explain code or translate other languages, and you can upload images for recognition and understanding; feed in a long document once and then follow up question by question. Answers usually come with the reasoning and verifiable reference links. Sign in with the same account on any device's browser and pick up where you left off — handy as a general-purpose AI assistant you can use on the spot without hunting for software first."
+      },
+      "supplement": {
+        "简体中文": "以网页版为主要入口，打开站点即可直接对话，不需要安装任何客户端，跨设备用浏览器访问即可。目前未在官方渠道见到与本站点同名的桌面端或手机客户端。",
+        "繁體中文": "以網頁版為主要入口，打開網站即可直接對話，不需要安裝任何用戶端，跨裝置用瀏覽器存取即可。目前未在官方管道看到與本站點同名的桌面端或手機用戶端。",
+        "English": "The web version is the main entry point: open the site and start chatting, with no client to install and access from any device through a browser. So far there is no desktop or mobile client sharing this site's name on official channels."
+      },
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "web"
+      ]
+    },
+    {
+      "id": "qianwen",
+      "code": "TG-000039",
+      "name": {
+        "简体中文": "千问",
+        "繁體中文": "千問",
+        "English": "Qwen"
+      },
+      "category": [
+        "AI"
+      ],
+      "tags": [
+        "聊天"
+      ],
+      "icon": "TG-000039.png",
+      "url": "https://www.qianwen.com/",
+      "description": {
+        "简体中文": "通义千问在线对话平台，提供智能问答和创作辅助。",
+        "繁體中文": "通義千問線上對話平台，提供智慧問答和創作輔助。",
+        "English": "An online chat platform for Qwen, offering smart Q&A and help with creative work."
+      },
+      "intro": {
+        "简体中文": "千问是阿里推出的全能型 AI 助手，主打能聊天更会办事：多轮对话、联网问答之外，它可以直接交付成品文件，一句话生成网页、应用、PPT、Word、Excel 或图片，打开即用。内置工作助理与定时任务，到点自动执行并把结果送回来；语音通话、智能体广场、文档解读、代码处理与学习辅导覆盖了办公、创作和做题讲题等场景，适合学生、职场人和需要快速出活的内容创作者。",
+        "繁體中文": "千問是阿里推出的全能型 AI 助理，主打能聊天更會辦事：除了多輪對話、聯網問答之外，它可以直接交付成品檔案，一句話生成網頁、應用程式、PPT、Word、Excel 或圖片，打開就能用。內建工作助理與定時任務，時間到了自動執行並把結果送回來；語音通話、智慧體廣場、文件解讀、程式碼處理與學習輔導涵蓋了辦公、創作和做題講題等情境，適合學生、上班族和需要快速產出內容的創作者。",
+        "English": "Qwen is Alibaba's all-round AI assistant, built to do more than chat: beyond multi-turn conversation and web-connected Q&A, it delivers finished files directly — one sentence gets you a web page, an app, a PPT, a Word or Excel document, or an image, ready to open. Built-in work assistants and scheduled tasks run automatically at the appointed time and send the results back, while voice calls, an agent gallery, document analysis, code handling and study tutoring cover office work, creative projects and homework help. It suits students, professionals and content creators who need to get things done fast."
+      },
+      "supplement": {
+        "简体中文": "官方同时提供电脑客户端、Mac 客户端以及 iOS、Android 手机应用，网页版也能直接使用。内置对话问答、文档解读、PPT 生成与定时任务等能力，电脑与手机之间的使用记录可以衔接。",
+        "繁體中文": "官方同時提供電腦用戶端、Mac 用戶端以及 iOS、Android 手機應用程式，網頁版也能直接使用。內建對話問答、文件解讀、PPT 生成與定時任務等功能，電腦與手機之間的使用記錄可以銜接。",
+        "English": "The official releases include a Windows client, a Mac client and iOS/Android mobile apps, and the web version works just as directly. Built-in features cover conversational Q&A, document analysis, PPT generation and scheduled tasks, and your activity carries over between computer and phone."
+      },
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Android",
+        "iOS",
+        "web"
+      ]
+    },
+    {
+      "id": "doubao",
+      "code": "TG-000040",
+      "name": {
+        "简体中文": "豆包",
+        "繁體中文": "豆包",
+        "English": "Doubao"
+      },
+      "category": [
+        "AI"
+      ],
+      "tags": [
+        "聊天"
+      ],
+      "icon": "TG-000040.png",
+      "url": "https://www.doubao.com/",
+      "description": {
+        "简体中文": "字节跳动开发的 AI 助手，支持对话、创作和图像生成。",
+        "繁體中文": "字節跳動開發的 AI 助理，支援對話、創作與圖像生成。",
+        "English": "An AI assistant from ByteDance that supports chat, content creation and image generation."
+      },
+      "intro": {
+        "简体中文": "豆包是字节跳动推出的 AI 助手，日常问答、资料总结、写作润色、翻译和编程辅助都能胜任。它支持上传图片与文档做识别解读，一句话生成图片、视频与演示文稿；工作任务模式下可调用浏览器和技能自动跑完流程，桌面端用悬浮球随时呼出，不用离开当前应用。语音输入与通话表现自然，手机和电脑之间的对话记录能接着聊，适合学生、上班族和想随手用 AI 处理杂事的人。",
+        "繁體中文": "豆包是字節跳動推出的 AI 助理，日常問答、資料整理、寫作潤飾、翻譯和程式開發輔助都難不倒它。它支援上傳圖片與文件做辨識解讀，一句話就能生成圖片、影片與簡報；工作任務模式下可呼叫瀏覽器和技能自動跑完整個流程，桌面端用懸浮球隨時呼喚，不必離開目前使用的應用程式。語音輸入與通話表現自然，手機和電腦之間的對話記錄能接著聊，適合學生、上班族和想隨手用 AI 處理雜事的人。",
+        "English": "Doubao is an AI assistant from ByteDance that handles everyday Q&A, summarizing material, polishing your writing, translation and coding help. It accepts uploaded images and documents for recognition and analysis, and turns a single sentence into an image, a video or a slide deck. In task mode it can call on the browser and skills to run a whole workflow automatically, and on desktop a floating ball summons it without leaving the app you're in. Voice input and calls feel natural, and conversations carry over between phone and computer — a good fit for students, office workers and anyone who wants AI on hand for everyday odds and ends."
+      },
+      "supplement": {
+        "简体中文": "官方提供 Windows 与 macOS 桌面客户端，以及 iOS、Android 手机应用，网页版可直接使用。桌面端支持悬浮球快捷唤起，手机与电脑的对话记录可以接着聊，Mac 安装包同时适配 Intel 与 Apple 芯片。",
+        "繁體中文": "官方提供 Windows 與 macOS 桌面用戶端，以及 iOS、Android 手機應用程式，網頁版可直接使用。桌面端支援懸浮球快速喚起，手機與電腦的對話記錄可以接著聊，Mac 安裝檔同時相容於 Intel 與 Apple 晶片。",
+        "English": "The official releases include Windows and macOS desktop clients and iOS/Android mobile apps, and the web version works directly. The desktop app offers a floating ball for quick access, chat history carries over between phone and computer, and the Mac installer supports both Intel and Apple chips."
+      },
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Android",
+        "iOS",
+        "web"
+      ],
+      "architectures": [
+        "x64",
+        "Apple Silicon"
+      ]
+    },
+    {
+      "id": "witch-clipboard",
+      "code": "TG-000041",
+      "name": {
+        "简体中文": "Witch Clipboard",
+        "繁體中文": "Witch Clipboard",
+        "English": "Witch Clipboard"
+      },
+      "category": [
+        "工具"
+      ],
+      "icon": "TG-000041.png",
+      "github": "https://github.com/witchscottishfoldcat/WitchClipboard",
+      "description": {
+        "简体中文": "桌面剪贴板管理器。自动分类、来源搜索、关联配置、本地加密与端到端加密同步",
+        "繁體中文": "桌面剪貼簿管理器。自動分類、依來源搜尋、關聯設定、本機加密與端對端加密同步",
+        "English": "Desktop clipboard manager. Automatic categorisation, search by source, related-item grouping, local encryption and end-to-end encrypted sync."
+      },
+      "intro": {
+        "简体中文": "Witch Clipboard 常驻系统托盘，把复制过的文字、截图和文件统一留存下来，之后既能按内容搜索，也能按当初复制它的程序筛选找回。它自动把条目归入链接、代码、密钥、颜色、路径等类型，支持置顶、标签和分类筛选，还会把短时间内连续复制的模型名、接口地址等内容自动归为一组。历史记录默认只留在本机并加密保存，可标记密码管理器等敏感内容不入库；需要跨设备时再开启端到端加密同步或局域网传输，适合频繁复制粘贴的办公与开发场景。",
+        "繁體中文": "Witch Clipboard 常駐系統匣，把複製過的文字、截圖和檔案統統留存下來，之後既能依內容搜尋，也能依當初複製它的程式篩選找回。它會自動把項目歸入連結、程式碼、金鑰、顏色、路徑等類型，支援置頂、標籤與分類篩選，還會把短時間內連續複製的模型名稱、介面位址等內容自動歸為一組。歷史記錄預設只留在本機並加密儲存，可標記密碼管理等敏感內容不入庫；需要跨裝置時再開啟端對端加密同步或區域網路傳輸，適合頻繁複製貼上的辦公與開發情境。",
+        "English": "Witch Clipboard sits in the system tray and keeps everything you copy — text, screenshots and files — so you can find it later by content or filter it by the app you copied it from. Items are sorted automatically into types such as links, code, keys, colours and paths, and you can pin, tag and filter them; content copied in quick succession, like model names or API endpoints, is grouped together. History stays on your machine and is encrypted by default, and you can mark sensitive items such as password-manager entries to be excluded. When you need it across devices, turn on end-to-end encrypted sync or LAN transfer — a good fit for office and development work with a lot of copy-paste."
+      },
+      "supplement": {
+        "简体中文": "目前只发行 Windows 版本，既有安装包也有免安装便携包，另有面向 Windows ARM 设备的实验性构建，macOS 与 Linux 暂无官方版本。剪贴板历史默认只保存在本机并加密，可选加密云同步与局域网传输。",
+        "繁體中文": "目前只發行 Windows 版本，既有安裝程式也有免安裝的可攜版，另有針對 Windows ARM 裝置的實驗性組建；macOS 與 Linux 尚無官方版本。剪貼簿歷史預設只保存在本機並加密，可選用加密雲端同步與區域網路傳輸。",
+        "English": "Only a Windows version is available for now, offered both as an installer and as a portable no-install package, plus an experimental build for Windows on ARM devices; there is no official macOS or Linux release. Clipboard history is stored locally and encrypted by default, with optional encrypted cloud sync and LAN transfer."
+      },
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows"
+      ],
+      "architectures": [
+        "x64",
+        "arm64"
+      ]
+    },
+    {
+      "id": "lightc",
+      "code": "TG-000042",
+      "name": {
+        "简体中文": "LightC",
+        "繁體中文": "LightC",
+        "English": "LightC"
+      },
+      "category": [
+        "工具"
+      ],
+      "tags": [
+        "清理"
+      ],
+      "icon": "TG-000042.png",
+      "url": "https://www.lightc.app/",
+      "github": "https://github.com/Chunyu33/light-c",
+      "author_url": "https://space.bilibili.com/387797235",
+      "description": {
+        "简体中文": "LightC 是一款 Windows 桌面工具，提供安全垃圾清理、磁盘分析和系统维护功能",
+        "繁體中文": "LightC 是一款 Windows 桌面工具，提供安全垃圾清理、磁碟分析與系統維護功能",
+        "English": "LightC is a Windows desktop tool for safe junk cleaning, disk analysis and system maintenance."
+      },
+      "intro": {
+        "简体中文": "LightC 专注解决 C 盘爆红：扫描并清理系统与软件缓存、聊天软件积压的缓存、大文件、卸载残留、旧驱动和注册表冗余，还能对比两次扫描结果看清空间被谁吃掉，并逐层分析大目录。每一类垃圾都标注安全等级，聊天记录等数据被固定为不可勾选，拿不准的条目默认不替你勾；软件本体带官方签名，可在安装前核对是否被动过手脚，适合想让系统保持轻快又担心误删的普通用户。",
+        "繁體中文": "LightC 專注解決 C 槽爆紅：掃描並清理系統與軟體快取、通訊軟體積壓的快取、大檔案、卸載殘留、舊驅動程式與登錄檔冗餘，還能比對兩次掃描結果，看清空間被誰吃掉，並逐層分析大型目錄。每一類垃圾都標註安全等級，聊天記錄等資料固定為不可勾選，拿不準的項目預設也不會替你勾選；軟體本身帶有官方簽章，可在安裝前核對是否被動過手腳，適合想讓系統保持輕快又擔心誤刪的一般使用者。",
+        "English": "LightC is built to deal with a C: drive that has turned red: it scans and cleans system and application caches, the backlog left behind by chat apps, large files, uninstall leftovers, old drivers and registry clutter, compares two scan results to show what is eating your space, and breaks down large folders layer by layer. Every category of junk carries a safety rating, data such as chat history is locked and cannot be selected, and anything uncertain is left unchecked by default. The software itself is officially signed, so you can verify it has not been tampered with before installing — ideal for everyday users who want a fast system without the risk of deleting something important."
+      },
+      "supplement": {
+        "简体中文": "专为 Windows 打造，只提供 64 位版本，官网给出标准安装包、绿色便携包和内置运行环境的离线安装包三种选择。没有手机端和网页版，使用前建议先备份重要数据。",
+        "繁體中文": "專為 Windows 打造，只提供 64 位元版本，官網提供標準安裝程式、綠色可攜包與內建執行環境的離線安裝程式三種選擇。沒有手機版與網頁版，使用前建議先備份重要資料。",
+        "English": "Built exclusively for Windows and available in 64-bit only, with three options on the official site: a standard installer, a portable green package, and an offline installer with a bundled runtime. There is no mobile or web version; back up important data before you start."
+      },
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows"
+      ],
+      "architectures": [
+        "x64"
+      ]
+    },
+    {
+      "id": "ai-cubby",
+      "code": "TG-000043",
+      "name": {
+        "简体中文": "AI 小抽屉",
+        "繁體中文": "AI 小抽屜",
+        "English": "AI Cubby"
+      },
+      "category": [
+        "工具"
+      ],
+      "icon": "TG-000043.png",
+      "url": "https://www.aicubby.app/",
+      "github": "https://github.com/miragecoa/AI-Cubby",
+      "description": {
+        "简体中文": "把散落的文件、应用、备注和使用记录整理成一个完全本地的私人资源库，让你想得起来，就找得到。",
+        "繁體中文": "把散落的檔案、應用程式、備註與使用記錄整理成一個完全本機的私人資源庫，讓你只要想得起來，就找得到。",
+        "English": "Turns scattered files, apps, notes and usage history into a fully local personal library — if you can remember it, you can find it."
+      },
+      "intro": {
+        "简体中文": "AI Cubby 想解决的是桌面上什么都找不到的问题：它在后台安静记录你打开过的文件、程序和桌面快捷方式，把散落的图片、安装包、文档、游戏与文件夹汇成一个可搜索的本地资料库。重要条目可以打标签、写备注、置顶，也能按类型筛选，用记得住的线索而不是精确文件名来检索；打开次数、使用时长和最近使用时间会一并记下。数据全部留在本机，适合桌面文件越堆越多、又不想手动整理的重度电脑用户。",
+        "繁體中文": "AI Cubby 想解決的是桌面上什麼都找不到的問題：它在背景安靜記錄你開啟過的檔案、程式與桌面捷徑，把散落的圖片、安裝包、文件、遊戲與資料夾匯集成一個可搜尋的本機資料庫。重要項目可以加標籤、寫備註、置頂，也能依類型篩選，用記得的線索而不是精確檔名來檢索；開啟次數、使用時長與最近使用時間都會一併記下。資料全部留在本機，適合桌面檔案越堆越多、又不想手動整理的重度電腦使用者。",
+        "English": "AI Cubby tackles the problem of never being able to find anything on your desktop: it quietly records in the background the files, programs and desktop shortcuts you open, pulling scattered images, installers, documents, games and folders into one searchable local library. Important items can be tagged, annotated and pinned, or filtered by type, so you can search with the clues you remember instead of an exact file name; open counts, time spent and last-used dates are logged too. Everything stays on your machine — made for heavy computer users whose desktops keep piling up and who have no interest in tidying them by hand."
+      },
+      "supplement": {
+        "简体中文": "目前仅提供 Windows 版本，官网同时给出免安装的便携压缩包，解压即可使用，无需注册账号。数据全部保存在本地，macOS 与 Linux 支持仍在官方规划中。",
+        "繁體中文": "目前僅提供 Windows 版本，官網同時提供免安裝的可攜壓縮包，解壓縮即可使用，無需註冊帳號。資料全部保存在本機，macOS 與 Linux 支援仍在官方規劃中。",
+        "English": "Only a Windows version is available at present, alongside a portable no-install archive on the official site that runs as soon as you unpack it, with no account required. All data stays on your machine; macOS and Linux support is still on the official roadmap."
+      },
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows"
+      ],
+      "architectures": [
+        "x64"
+      ]
+    },
+    {
+      "id": "class-widgets-2",
+      "code": "TG-000044",
+      "name": {
+        "简体中文": "Class-Widgets-2",
+        "繁體中文": "Class-Widgets-2",
+        "English": "Class-Widgets-2"
+      },
+      "category": [
+        "工具"
+      ],
+      "icon": "TG-000044.png",
+      "github": "https://github.com/RinLit-233-shiroko/Class-Widgets-2",
+      "author_url": "https://space.bilibili.com/569522843",
+      "description": {
+        "简体中文": "把课表做成桌面小组件，支持多周课表切换与考试倒计时。",
+        "繁體中文": "把課表做成桌面小工具，支援多週課表切換與考試倒數。",
+        "English": "Turns your timetable into a desktop widget, with multi-week schedule switching and exam countdowns."
+      },
+      "intro": {
+        "简体中文": "Class Widgets 2 是一款常驻桌面的电子课程表，以小组件形式显示当前课程、下一节课程和今日剩余安排，上课、课间与放学状态自动切换并弹出提醒。内置课表编辑器，可导入多种格式的课表文件，支持按周次显示不同安排；还能加入事件倒计时（例如考试、活动）和浮动小部件，主题、配色、字号与显示位置都能自行调整。附带插件广场可继续扩展功能，适合学生日常看课表，也适合教室大屏投放使用。",
+        "繁體中文": "Class Widgets 2 是一款常駐桌面的電子課表，以小工具形式顯示目前課程、下一節課與今日剩餘行程，上課、下課與放學狀態會自動切換並跳出提醒。內建課表編輯器，可匯入多種格式的課表檔案，支援依週次顯示不同安排；還能加入事件倒數（例如考試、活動）與浮動小工具，佈景主題、配色、字級與顯示位置都能自行調整。內附外掛廣場可持續擴充功能，適合學生日常查看課表，也適合教室大螢幕投放使用。",
+        "English": "Class Widgets 2 is an electronic timetable that lives on your desktop, showing the current lesson, the next one and what is left in the day as a widget, switching automatically between in-class, break and end-of-day states with pop-up reminders. A built-in timetable editor imports schedule files in several formats and supports different arrangements by week; you can also add event countdowns (for exams or activities, say) and floating widgets, and adjust themes, colours, font sizes and on-screen position. A plugin marketplace extends it further — handy for students checking their schedule day to day, and for classroom displays."
+      },
+      "supplement": {
+        "简体中文": "官方同时发布 Windows 与 macOS 版本：Windows 提供安装程序和免安装压缩包，macOS 分别给出 Intel 与 Apple 芯片两种安装镜像。暂时没有手机端和网页版，程序会内置更新功能。",
+        "繁體中文": "官方同時發佈 Windows 與 macOS 版本：Windows 提供安裝程式與免安裝壓縮包，macOS 分別提供 Intel 與 Apple 晶片兩種安裝映像檔。暫時沒有手機版與網頁版，程式內建更新功能。",
+        "English": "Official releases cover both Windows and macOS: Windows comes with an installer and a no-install archive, while macOS offers separate disk images for Intel and Apple silicon. There is no mobile or web version for now, and the app includes built-in updates."
+      },
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS"
+      ],
+      "architectures": [
+        "x64",
+        "Apple Silicon"
+      ]
+    },
+    {
+      "id": "recordly",
+      "code": "TG-000045",
+      "name": {
+        "简体中文": "Recordly",
+        "繁體中文": "Recordly",
+        "English": "Recordly"
+      },
+      "category": [
+        "剪辑"
+      ],
+      "tags": [
+        "工具"
+      ],
+      "icon": "TG-000045.png",
+      "url": "https://recordly.dev/",
+      "github": "https://github.com/webadderallorg/Recordly",
+      "description": {
+        "简体中文": "Recordly是一款开源屏幕录制和编辑工具，适用于制作演示视频、产品视频等。 接受 PR。",
+        "繁體中文": "Recordly 是一款開源螢幕錄製與剪輯工具，適合製作簡報影片、產品影片等。歡迎提交 PR。",
+        "English": "Recordly is an open-source screen recorder and editor for demo videos, product videos and more. PRs welcome."
+      },
+      "intro": {
+        "简体中文": "Recordly 是一款开源的屏幕录制与视频编辑工具，录完可以在同一个界面里直接做后期，不必在多个软件之间来回搬运素材。它能根据鼠标活动自动生成缩放动效，提供光标平滑、点击反馈与运动模糊，还可加入摄像头画中画气泡、裁剪画面、加速减速、文字图片标注和额外音轨；背景支持壁纸、纯色与渐变，并带圆角、模糊和阴影效果，成片可导出 MP4 或 GIF，适合制作产品演示、教学讲解和操作教程的创作者。",
+        "繁體中文": "Recordly 是一款開源的螢幕錄製與影片剪輯工具，錄完可以在同一個介面裡直接做後製，不必在多個軟體之間來回搬移素材。它能依滑鼠活動自動產生縮放動效，提供游標平滑、點擊回饋與動態模糊，還可加入網路攝影機子母畫面泡泡、畫面裁切、加速減速、文字圖片標註與額外音軌；背景支援桌布、純色與漸層，並帶圓角、模糊與陰影效果，成品可匯出 MP4 或 GIF，適合製作產品簡報、教學解說與操作教學的創作者。",
+        "English": "Recordly is an open-source screen recorder and video editor: once you have finished recording you can do the post-production in the same interface, without shuttling footage between apps. It generates zoom effects automatically from mouse activity, with cursor smoothing, click feedback and motion blur, and you can add a webcam picture-in-picture bubble, crop the frame, speed footage up or slow it down, add text and image annotations, and lay in extra audio tracks. Backgrounds support wallpapers, solid colours and gradients with rounded corners, blur and shadows, and finished clips export to MP4 or GIF — a good fit for creators making product demos, teaching walkthroughs and how-to videos."
+      },
+      "supplement": {
+        "简体中文": "提供 Windows、macOS 与 Linux 桌面客户端，Mac 区分 Intel 与 Apple 芯片，Windows 为安装程序，Linux 为免安装的镜像文件。官方还给出 Homebrew 与 AUR 两种包管理器安装方式，没有手机端和网页版。",
+        "繁體中文": "提供 Windows、macOS 與 Linux 桌面用戶端，Mac 區分 Intel 與 Apple 晶片，Windows 為安裝程式，Linux 為免安裝的映像檔。官方另外提供 Homebrew 與 AUR 兩種套件管理器安裝方式，沒有手機版與網頁版。",
+        "English": "Desktop clients are available for Windows, macOS and Linux: Mac builds are split between Intel and Apple silicon, Windows ships as an installer and Linux as a no-install image file. The project also documents installation via the Homebrew and AUR package managers. There is no mobile or web version."
+      },
+      "listed_at": "2026-09-21 22:35:47",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Linux"
+      ],
+      "architectures": [
+        "x64",
+        "Apple Silicon"
+      ]
+    },
+    {
+      "id": "minecraftworldbrowser",
+      "code": "TG-000046",
+      "name": {
+        "简体中文": "Minecraft Java 世界浏览器",
+        "繁體中文": "Minecraft Java 世界瀏覽器",
+        "English": "Minecraft Java World Browser"
+      },
+      "category": [
+        "工具"
+      ],
+      "tags": [
+        "游戏",
+        "MC"
+      ],
+      "icon": "TG-000046.png",
+      "github": "https://github.com/Aaron88915/MinecraftWorldBrowser",
+      "description": {
+        "简体中文": "MinecraftWorldBrowser是集中查找、浏览、筛选、备份和恢复散落在不同启动器与实例中的 Minecraft Java 世界。",
+        "繁體中文": "MinecraftWorldBrowser 能集中尋找、瀏覽、篩選、備份與還原散落在不同啟動器與執行個體中的 Minecraft Java 世界。",
+        "English": "MinecraftWorldBrowser lets you find, browse, filter, back up, and restore Minecraft Java worlds scattered across different launchers and instances."
+      },
+      "intro": {
+        "简体中文": "Minecraft Java 世界浏览器用来收拾散落在各个启动器与实例里的存档。它会自动扫描常见启动器的游戏目录和整合包结构，把找到的世界集中列出，显示世界名称、游戏版本、游戏模式、加载器、存档大小与真实路径，并支持搜索以及按版本、模式、收藏状态筛选和表头排序。选中的存档可以一键打包成 ZIP 备份并记录原位置，需要时再恢复回原处；配合标签、备注与备份历史，适合同时玩多个整合包、存档越攒越多的玩家。",
+        "繁體中文": "Minecraft Java 世界瀏覽器用來整理散落在各個啟動器與執行個體裡的存檔。它會自動掃描常見啟動器的遊戲目錄與模組包結構，把找到的世界集中列出，顯示世界名稱、遊戲版本、遊戲模式、載入器、存檔大小與真實路徑，並支援搜尋，以及依版本、模式、收藏狀態篩選和點擊表頭排序。選取的存檔可以一鍵打包成 ZIP 備份並記錄原始位置，需要時再還原回原處；搭配標籤、備註與備份歷史，適合同時玩多個模組包、存檔越積越多的玩家。",
+        "English": "Minecraft Java World Browser keeps your saves organized when they are scattered across launchers and instances. It automatically scans the game directories and modpack layouts of popular launchers and lists every world it finds, showing the world name, game version, game mode, loader, save size, and real path. Search is supported, along with filtering by version, mode, and favourite status, plus sorting from the column headers. Any selected save can be packaged into a ZIP backup in one click with its original location recorded, then restored to where it came from when needed. Together with tags, notes, and backup history, it suits players who run several modpacks at once and keep accumulating saves."
+      },
+      "supplement": {
+        "简体中文": "以单个免安装的 Windows 程序分发，下载后双击即可运行，需要系统已启用 .NET Framework 运行环境，建议 Windows 10 或更高版本。没有网页版和手机版，扫描过程只读取文件。",
+        "繁體中文": "以單一免安裝的 Windows 程式發行，下載後雙擊即可執行，需要系統已啟用 .NET Framework 執行環境，建議使用 Windows 10 或以上版本。沒有網頁版和手機版，掃描過程只讀取檔案。",
+        "English": "Distributed as a single portable Windows program: download it and double-click to run. The .NET Framework runtime must be enabled on your system, and Windows 10 or later is recommended. There is no web or mobile version, and scanning only reads files."
+      },
+      "listed_at": "2026-09-21 22:47:23",
+      "systems": [
+        "Windows"
+      ]
+    },
+    {
+      "id": "steelylink-tools",
+      "code": "TG-000047",
+      "name": {
+        "简体中文": "SteelyLink-Tools",
+        "繁體中文": "SteelyLink-Tools",
+        "English": "SteelyLink-Tools"
+      },
+      "category": [
+        "工具"
+      ],
+      "icon": "TG-000047.png",
+      "url": "https://tools.steelylink.com/",
+      "github": "https://github.com/SteelyLink/SteelyLink-Tools",
+      "description": {
+        "简体中文": "111 个专业在线工具，从不接触你的文件。每一个工具都完整运行在你自己的浏览器里。 不上传、不注册、不追踪、不收费。",
+        "繁體中文": "111 個專業線上工具，從不接觸你的檔案。每個工具都完全在你自己的瀏覽器裡執行。不上傳、不註冊、不追蹤、不收費。",
+        "English": "111 professional online tools that never touch your files. Every tool runs entirely in your own browser. No uploads, no sign-up, no tracking, no fees."
+      },
+      "intro": {
+        "简体中文": "SteelyLink Tools 收集了上百个日常用得上的在线小工具，覆盖图片压缩与格式转换、PDF 合并分割与加解密、JSON 格式化与校验、哈希与 Base64 编码、二维码生成识别、单位与进制换算、音频裁剪合并、汇率与银行卡信息查询，以及游戏灵敏度换算等类别，按分类排好点开即用。所有计算都在浏览器本地完成，文件不会上传服务器，也不需要注册或付费，处理敏感文档时相对放心，适合临时遇到格式转换、开发调试或办公小需求的人。",
+        "繁體中文": "SteelyLink Tools 收集了上百個日常用得到的線上小工具，涵蓋圖片壓縮與格式轉換、PDF 合併分割與加解密、JSON 格式化與驗證、雜湊與 Base64 編碼、QR Code 產生與辨識、單位與進位換算、音訊剪裁合併、匯率與金融卡資訊查詢，以及遊戲靈敏度換算等類別，按分類排好、點開即用。所有運算都在瀏覽器本機完成，檔案不會上傳到伺服器，也不需要註冊或付費，處理敏感檔案時相對安心，適合臨時遇到格式轉換、開發偵錯或辦公小需求的人。",
+        "English": "SteelyLink Tools gathers over a hundred handy online utilities for everyday tasks, covering image compression and format conversion, PDF merging, splitting, and encryption, JSON formatting and validation, hashing and Base64 encoding, QR code generation and scanning, unit and numeral-base conversion, audio trimming and merging, exchange-rate and bank-card lookups, and game sensitivity conversion, all sorted by category and ready to use in a click. Every calculation runs locally in your browser: files are never uploaded to a server, and there is nothing to register or pay for, which makes it a reassuring choice for sensitive documents and a good fit whenever you need a quick format conversion, some development debugging, or a small office task."
+      },
+      "supplement": {
+        "简体中文": "纯网页工具集，全部功能都在浏览器本地运行，文件不会被上传，也无需注册或安装客户端。电脑和手机浏览器打开网页即可直接使用，关闭页面后不留下数据。",
+        "繁體中文": "純網頁工具集，全部功能都在瀏覽器本機執行，檔案不會被上傳，也無需註冊或安裝用戶端。用電腦或手機瀏覽器打開網頁即可直接使用，關閉頁面後不留資料。",
+        "English": "A pure web toolkit: every feature runs locally in the browser, files are never uploaded, and there is nothing to register or install. Just open the site in a desktop or mobile browser and start using it; nothing is left behind once you close the page."
+      },
+      "listed_at": "2026-09-21 23:02:59",
+      "systems": [
+        "web"
+      ]
+    },
+    {
+      "id": "fileconverter",
+      "code": "TG-000048",
+      "name": {
+        "简体中文": "FileConverter",
+        "繁體中文": "FileConverter",
+        "English": "FileConverter"
+      },
+      "category": [
+        "工具"
+      ],
+      "icon": "TG-000048.png",
+      "url": "https://file-converter.io/",
+      "github": "https://github.com/Tichau/FileConverter",
+      "description": {
+        "简体中文": "文件转换器是一个非常简单的工具，允许你通过Windows资源管理器的右键菜单转换和压缩一个或多个文件。",
+        "繁體中文": "檔案轉換器是一個非常簡單的工具，讓你透過 Windows 檔案總管的右鍵選單轉換與壓縮一個或多個檔案。",
+        "English": "File Converter is a very simple tool that lets you convert and compress one or more files straight from the Windows Explorer right-click menu."
+      },
+      "intro": {
+        "简体中文": "File Converter 把格式转换做成右键菜单里的一步操作：在资源管理器里选中一个或多个文件，右键挑好目标格式即可批量转换或压缩，不必先打开软件再逐个导入。它覆盖音频、视频、图片与文档等常见格式之间的互转，也能把视频转成 GIF、把图片或文档合成 PDF；转换预设可以自行增删并调整参数，常用操作能保存成自己的右键选项，适合经常需要批量改格式、又不想研究复杂转码软件的普通用户。",
+        "繁體中文": "File Converter 把格式轉換變成檔案總管右鍵選單裡的一個步驟：在檔案總管中選取一個或多個檔案，右鍵挑好目標格式就能批次轉換或壓縮，不必先打開軟體再逐一匯入。它涵蓋音訊、影片、圖片與文件等常見格式之間的互轉，也能把影片轉成 GIF、把圖片或文件合併成 PDF；轉換預設集可以自行增刪並調整參數，常用操作能存成自己的右鍵選項，適合經常需要批次轉換格式、又不想研究複雜轉檔軟體的普通使用者。",
+        "English": "File Converter turns format conversion into a single step in the Explorer right-click menu: select one or more files in File Explorer, choose a target format, and convert or compress them in bulk, with no need to open an app first and import files one by one. It handles conversions between common audio, video, image, and document formats, can turn videos into GIFs, and can combine images or documents into a PDF. Conversion presets can be added, removed, and fine-tuned, and frequently used settings can be saved as your own right-click options, making it ideal for everyday users who often need to batch-convert formats without wrestling with complex transcoding software."
+      },
+      "supplement": {
+        "简体中文": "只支持 Windows，装好后通过资源管理器右键菜单批量转换和压缩文件，无需打开主界面操作。官方主推 64 位安装包，旧版本另有 32 位安装包可供老机器使用，没有网页版和手机版。",
+        "繁體中文": "僅支援 Windows，安裝後透過檔案總管的右鍵選單批次轉換與壓縮檔案，無需打開主介面操作。官方主推 64 位元安裝程式，舊版本另有 32 位元安裝程式可供老舊機器使用，沒有網頁版和手機版。",
+        "English": "Windows only. Once installed, you batch-convert and compress files from the Explorer right-click menu without opening the main interface. The official release is a 64-bit installer, while older versions also offer a 32-bit installer for legacy machines; there is no web or mobile version."
+      },
+      "listed_at": "2026-09-21 23:11:06",
+      "systems": [
+        "Windows"
+      ],
+      "architectures": [
+        "x64",
+        "x86"
+      ]
+    },
+    {
+      "id": "tabbit",
+      "code": "TG-000049",
+      "name": {
+        "简体中文": "Tabbit",
+        "繁體中文": "Tabbit",
+        "English": "Tabbit"
+      },
+      "category": [
+        "工具"
+      ],
+      "icon": "TG-000049.png",
+      "url": "https://www.tabbit.com/",
+      "description": {
+        "简体中文": "内置了AI的浏览器",
+        "繁體中文": "內建 AI 的瀏覽器",
+        "English": "A browser with built-in AI"
+      },
+      "listed_at": "2026-10-05 13:44:54",
+      "systems": [
+        "Windows",
+        "macOS"
+      ]
+    },
+    {
+      "id": "removebg",
+      "code": "TG-000050",
+      "name": {
+        "简体中文": "removebg",
+        "繁體中文": "removebg",
+        "English": "removebg"
+      },
+      "category": [
+        "工具"
+      ],
+      "url": "https://www.remove.bg/",
+      "description": {
+        "简体中文": "抠图网站",
+        "繁體中文": "去背網站",
+        "English": "An online background remover"
+      },
+      "listed_at": "2026-10-05 13:47:33"
+    },
+    {
+      "id": "iconkitchen",
+      "code": "TG-000051",
+      "name": {
+        "简体中文": "IconKitchen",
+        "繁體中文": "IconKitchen",
+        "English": "IconKitchen"
+      },
+      "category": [
+        "工具"
+      ],
+      "url": "https://icon.kitchen/",
+      "description": {
+        "简体中文": "各平台图标制作网站",
+        "繁體中文": "各平台圖示製作網站",
+        "English": "A website for creating app icons for every platform"
+      },
+      "listed_at": "2026-10-05 13:48:53",
+      "systems": [
+        "web"
+      ]
+    },
+    {
+      "id": "gsmanager",
+      "code": "TG-000052",
+      "name": {
+        "简体中文": "GSManager",
+        "繁體中文": "GSManager",
+        "English": "GSManager"
+      },
+      "category": [
+        "工具"
+      ],
+      "icon": "TG-000052.png",
+      "url": "https://www.gsmanager.cn/",
+      "description": {
+        "简体中文": "专为简化游戏服务器的部署、管理和维护而设计",
+        "繁體中文": "專為簡化遊戲伺服器的部署、管理與維護而設計",
+        "English": "Designed to simplify the deployment, management, and maintenance of game servers"
+      },
+      "listed_at": "2026-10-05 13:50:19"
+    }
+  ]
+}

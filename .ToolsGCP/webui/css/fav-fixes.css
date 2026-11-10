@@ -1,0 +1,104 @@
+/* ===========================================================================
+ * 收藏页（收藏夹）专用样式
+ * 
+ * 本文件只放**收藏页**的改动样式，避免污染 components.css / layout.css。
+ * 由 index.html 的 <head> 在所有既有 CSS **之后**引入（保证覆盖顺序）。
+ *
+ * 覆盖内容：
+ *   ① 侧栏标题行（标题 + 两个只有图标的按钮：加号 / 批量移动）
+ *   ② 卡片网格：宽度由 JS 算（内联 width），这里只保证"不拉伸"
+ *   ③ 收藏夹右键菜单（重命名 / 删除，删除红色）
+ * =========================================================================*/
+
+/* ---------- ① 侧栏标题行 ----------
+   标题收藏夹在左，两个 icon-only 按钮在右（新建 = 加号、批量移动 = 文件夹+箭头）。
+   新建收藏夹用**只有图标的加号按钮**放在标题右侧；批量移动同样是纯图标按钮，排在新建右边。*/
+.fav-side-head {
+  display: flex; align-items: center; gap: 4px;
+  padding: 0 4px 2px;
+  margin-bottom: 4px;
+}
+.fav-side-head .sub-title { padding: 0; }
+.fav-side-head .icon-btn {
+  width: 28px; height: 28px; flex: 0 0 auto;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 8px; border: none; background: transparent;
+  color: var(--text-secondary);
+  transition: background 120ms ease, color 120ms ease;
+}
+.fav-side-head .icon-btn:hover { background: var(--hover); color: var(--text); }
+.fav-side-head .icon-btn.is-on { background: var(--accent-soft); color: var(--accent); }
+
+/* ---------- ② 卡片网格：CSS Grid 等分（不拉伸、也不会是 0 宽）----------
+   ⚠️⚠️ 修面条bug 的**根本办法**：
+      之前是 JS 算 itemW → 内联 style 设 width。JS 量容器宽度要等页面挂载 +
+      收藏数据回来，那之前 itemW=0 → 卡片渲染成0 宽 × 196 高= 面条。
+      现在改成 **CSS Grid**：JS 只给列数（--fav-cols），宽度交给 1fr 等分。
+      ⇒ 宽度**永远**是容器的等分，结构上不可能出现 0 宽。
+      ⇒ 每条轨道等宽 ⇒ 最后一行剩下的卡片**不会被拉伸**填满整排
+         （这正是 flex 的 `flex: 1 1 272px` 做不到的）。
+   ⚠️ 作用域限定在 .fav-main，**不影响定制页**（定制页也用 .grid-static）。*/
+.fav-main .grid-static.fav-grid {
+  display: grid;
+  /* 列数由 JS 给（--fav-cols）；兜底 3 列，量不到时布局依然正常*/
+  grid-template-columns: repeat(var(--fav-cols, 3), minmax(0, 1fr));
+  /* 卡片宽度上限 400px（和搜索页的 maxCardW 一致）：列数算错了也不会太宽*/
+  justify-content: start;
+}
+.fav-main .grid-static.fav-grid > .card {
+  /* Grid item 默认 stretch（会撑满轨道）—— 这正是我们要的等分宽度*/
+  width: auto;
+  max-width: 400px;                  /* 与搜索页 maxCardW 一致*/
+  min-width: 0;                      /* 允许轨道被压缩时内容收缩，不撑破网格*/
+  /* ⚠️ task-3 ③（"部分机型简介文字被遮挡"的根治）：
+     `.grid-static .card { height: 196px }`（components.css）是**写死宽高**，
+     正是 AGENTS.md 第 5 条禁止的写法。卡片内容高度并不恒定：
+       · 有 download_page_url 的卡片多一行卡脚按钮（+~32px）；
+       · 不同机型/系统**最小字号**、字体度量、DPI 缩放会把标题/简介/标签行顶高。
+     固定 196 + `.card{overflow:hidden}` → 超出的部分（简介下沿、卡脚）被裁掉，
+     表现就是"简介文字被遮挡"，且**只在部分机器上复现**。
+     → 收藏页改为 height:auto：模板给每张卡内联 `min-height: cardPx.height`
+       保底不塌，内容多时**整卡随内容长高**（grid 行 auto，同行卡片等高）。
+     ⚠️ 这不是"写死另一个高度"，而是把高度**交还给内容**；列宽仍由 1fr 等分。 */
+  height: auto;
+}
+.fav-main .grid-static.fav-grid > .card .card-desc { min-height: 0; }
+.fav-main .grid-static.fav-grid > .card .card-foot { flex: 0 0 auto; }
+
+/* ⚠️ task-3 ①（"匀速整理"的**第二个**根因）：滚动条 ↔ 列数 的反馈回路。
+   .page-scroll 是 overflow-y:auto —— 内容一旦超高就出滚动条，clientWidth **少 8px**；
+   这 8px 恰好可能让列数从 4 变 3（或反向），行数变少 → 内容又不超高 → 滚动条消失
+   → clientWidth 又回来 → 列数再变回去…… ResizeObserver 每轮都重新量、重新排，
+   用户看到的就是"卡片在一格一格地匀速整理"。
+   `scrollbar-gutter: stable` 把滚动条槽**常驻预留**：clientWidth 与内容高度无关，
+   回路从源头断开。右侧只多 8px 固定留白，观感无损。 */
+.fav-main .page-scroll { scrollbar-gutter: stable; }
+
+/* ---------- ④ 网格视图（收藏页右上角的"磁贴 / 网格"切换） ----------
+   ⚠️ 需求：收藏页要和搜索页一样能切"磁贴 / 网格"两种视图。
+      磁贴 = 一行 4 张大卡片（GRID/TILE 那一套参数），网格 = 一行 6 张小卡片。
+   ⚠️ 卡片本身用 `.card.is-grid`（components.css 里已有完整的一套小卡片样式：
+      更小的图标/标题/描述/按钮），高度由 JS 的 cardPx 给（grid 时 ×0.76）。
+   ⚠️ 卡片宽度上限要跟着变：磁贴是 400px（= 搜索页 maxCardW），
+      网格是 240px（= 搜索页 GRID.maxCardW）。
+      上面那条 `.fav-main .grid-static.fav-grid > .card { max-width: 400px }`
+      是 (0,4,1)；这里用 `:root` 抬到 (0,5,1) 压过它 —— 不依赖文件加载顺序。 */
+:root .fav-main .grid-static.fav-grid.is-grid > .card { max-width: 240px; }
+/* 网格视图的卡片间距更紧（和搜索页 GRID.spacing = 12 一致，由 JS 的 favLayout.gap 给）*/
+
+/* ---------- ③ 收藏夹右键菜单 ----------
+   复用 .card-menu 的浮层样式（position/阴影/圆角都在 components.css 里），
+   这里只加删除项的红色（图标 + 文字都要红）。*/
+.fav-menu .card-menu-item.is-danger { color: var(--danger); }
+.fav-menu .card-menu-item.is-danger .ic { color: var(--danger); }
+.fav-menu .card-menu-item.is-danger:hover {
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
+  color: var(--danger);
+}
+/* 禁用态（默认收藏夹不可改名/删除）*/
+.fav-menu .card-menu-item:disabled,
+.fav-menu .card-menu-item.is-danger:disabled {
+  opacity: .42; cursor: default; color: var(--text-disabled);
+}
+.fav-menu .card-menu-item:disabled .ic,
+.fav-menu .card-menu-item.is-danger:disabled .ic { color: var(--text-disabled); }

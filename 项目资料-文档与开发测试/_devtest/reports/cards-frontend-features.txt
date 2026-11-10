@@ -1,0 +1,66 @@
+== ① 「隐藏左侧栏元素」/ F9 已按要求删除（反向断言，防止留半个实现） ==
+  OK   设置页里没有 nav_hide_* 行
+  OK   前端默认配置里没有 nav_hide_* 键
+  OK   nav 的隐藏机制（navHiddenKeys/navVisible/navRevealAll/NAV_HIDEABLE）已移除
+  OK   F9 分支已移除（onKeydown 里不再有 F9）
+  OK   navTop / navBottom 不再做 navVisible 过滤
+  OK   侧栏恢复原样：GCP工坊重新使用 developer（扳手）图标
+  OK   不再渲染 i-workshop（那个自定义图标已删除）
+== ①b 本轮：卡片等宽 / 编辑框不折行 / 重生成就地取代气泡 ==
+  OK   网格卡片不再允许拉伸（flex: 0 0 272px）
+  OK   收藏夹那条覆盖也同步成不拉伸
+  OK   编辑框不再用 border（改用 outline，零布局影响）
+  OK   编辑框显式钉住 pre-wrap（换行行为与气泡一致）
+  OK   原气泡被 aiRegenPlaceholder(i) 就地取代（不是多挂一颗）
+  OK   两处 AI 模板都做了（独立 AI 页 + 悬浮球抽屉）
+  OK   处理期间把被改那条之后的既有内容藏起来（aiRowShown）
+  OK   两处 AI 模板都用 aiRowShown 收尾藏尾
+  OK   重新生成会把 cutAfter 传下去
+  OK   编辑重发也传 cutAfter（用户说"用户的编辑也一样"）
+== ② AI 气泡：按钮放大 / 换位 / 版本树在复制右边 / ◀ n ▶ ==
+  OK   重新生成按钮在复制**左边**（两者换位）
+  OK   版本树 ◀ n ▶ 在复制**右边**
+  OK   气泡按钮放大（≥ 24px，不再是 18px）
+  OK   版本导航按钮同尺寸（不会一排高低不齐）
+  OK   旧的 18px 覆盖已删除（否则放大无效）
+  OK   中间 n 是 vn-page 里的纯插值文字
+  OK   版本外壳不再画底色（n 不是"一个组件 ui"）
+  OK   只有一版时不渲染版本树
+== ③ 定制页：已收藏 / 未收藏 = 筛选（不是排序） ==
+  OK   fav/unfav 走 filter 而不是 sort
+  OK   筛选口径和搜索页一致（!!it._fav === want）
+  OK   旧那版"只排序不过滤"的写法已消失
+  OK   收藏档全空时有专属空态文案（不说假话）
+  OK   zh_CN: empty_no_fav / empty_no_unfav 已补
+  OK   zh_TW: empty_no_fav / empty_no_unfav 已补
+  OK   en_US: empty_no_fav / empty_no_unfav 已补
+  OK   zh_CN: 已删功能的文案键不存在
+  OK   zh_TW: 已删功能的文案键不存在
+  OK   en_US: 已删功能的文案键不存在
+== ④ 浏览器模式：隐藏顶部栏 / F11 交浏览器原生 ==
+  OK   <html> 打 is-browser-mode 标记
+  OK   CSS：浏览器模式隐藏标题栏
+  OK   CSS：--tb-height 归零（浮层不再留 48px 空档）
+  OK   CSS：浏览器模式撤掉窗口缩放热区
+  OK   桌面端不受影响（规则全部带 html.is-browser-mode 前缀）
+  OK   F11 在浏览器模式下提前 return（不 preventDefault、不调后端）
+  OK   F11 在桌面端仍然 preventDefault + toggleFullscreen（行为不变）
+  OK   F11 分支排在 F9 之后（两个键互不干扰）
+== ⑤ 图标：快捷键=键盘（保留）；GCP工坊=扳手（已按要求恢复原样） ==
+  OK   keyboard 图标仍在（设置·快捷键分区用）
+  OK   设置「快捷键」分区用 keyboard（不是齿轮）
+  OK   侧栏 GCP工坊 用回 developer（扳手）图标
+  OK   自定义 workshop 图标已从精灵里删除
+  OK   developer（扳手）图标本身没被改坏
+  OK   dev 分区仍是 developer（没被顺手改掉）
+  OK   keyboard 是键盘形状（外壳 rect + 三排键）
+== ⑥ 后端 DEFAULT_SETTINGS 与配置一致性 ==
+  OK   constants.py 里不再有任何 nav_hide_* 键
+  OK   constants.py 里不再有 nav_reveal/nav_f9 之类的 F9 状态键
+  OK   hotkey_browser 默认值是 Ctrl+Shift+O
+  OK   前端"恢复默认"与后端默认值一致（都是 Ctrl+Shift+O）
+  OK   zh_CN: 已删功能的文案键全部清除
+  OK   zh_TW: 已删功能的文案键全部清除
+  OK   en_US: 已删功能的文案键全部清除
+
+=== 结论：全部通过（57 项） ===

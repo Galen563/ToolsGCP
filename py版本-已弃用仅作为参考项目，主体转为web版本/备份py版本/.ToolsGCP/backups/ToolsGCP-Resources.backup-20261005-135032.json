@@ -1,0 +1,1236 @@
+{
+  "schema_version": "2.0.0",
+  "metadata": {
+    "name": "ToolsGCP Resources",
+    "description": "ToolsGCP 资源索引文件",
+    "icon_dir": ".ToolsGCP/Icon",
+    "updated_at": "2026-10-05T13:50:19+08:00",
+    "total_count": 52
+  },
+  "resources": [
+    {
+      "id": "localsend",
+      "code": "TG-000001",
+      "name": "LocalSend",
+      "category": "工具",
+      "tags": [
+        "工具",
+        "传输"
+      ],
+      "icon": "localsend.png",
+      "url": "https://localsend.org/",
+      "github": "https://github.com/localsend/localsend",
+      "description": "跨平台局域网文件传输工具，支持高效、安全、无需互联网的文件共享。",
+      "supplement": "官方提供 Windows、macOS、Linux 桌面版，并有 Android 与 iOS 手机客户端；同一局域网内的设备可直接互传文件，不需要账号，也不依赖公网服务器。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "全平台"
+      ],
+      "architectures": [
+        "x64",
+        "arm64",
+        "arm",
+        "Apple Silicon"
+      ],
+      "intro": "LocalSend 是一款免费开源的文件传输工具，手机与电脑只要处在同一个局域网，就能直接互传图片、视频、文档乃至整个文件夹，既不需要数据线，也不用登录账号或依赖云端服务器。它会自动发现附近设备，也支持手动输入地址连接，接收方确认后文件才会保存，传输过程经过加密。界面简洁、上手几乎零门槛，适合在家庭、宿舍或办公环境里快速交换大文件，尤其适合不想借助网盘和聊天软件传文件的用户。"
+    },
+    {
+      "id": "pcl-ce",
+      "code": "TG-000002",
+      "name": "PCL CE",
+      "category": "游戏",
+      "tags": [
+        "游戏",
+        "MC启动器"
+      ],
+      "icon": "PCLCE.png",
+      "url": "https://ce.pclc.cc",
+      "github": "https://github.com/PCL-Community/PCL-CE",
+      "description": "Minecraft 启动器，提供更多功能和自定义选项。",
+      "supplement": "由社区维护的 Minecraft 启动器，只提供 Windows 桌面版，安装包分别适配 64 位与 ARM 架构电脑；内置下载与模组管理，可自动补全游戏所需运行环境。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows"
+      ],
+      "architectures": [
+        "x64",
+        "arm64"
+      ],
+      "intro": "PCL CE 是 PCL2 的社区版，由社区开发者维护，特色是让玩家提前体验上游尚未合并的新功能与修复。它支持多个游戏版本与存档的管理，内置资源搜索下载、模组与整合包安装，能够自动检测并补全所需的 Java 运行环境，还针对模组依赖、崩溃日志等常见问题做了优化。界面延续了原版简洁清爽、启动快速的风格，适合已经习惯 PCL 操作方式、希望第一时间用上新特性并愿意反馈问题的 Minecraft 玩家。"
+    },
+    {
+      "id": "steam",
+      "code": "TG-000003",
+      "name": "Steam",
+      "category": "游戏",
+      "tags": [
+        "游戏",
+        "启动器",
+        "官方"
+      ],
+      "icon": "Steam.png",
+      "url": "https://store.steampowered.com/",
+      "description": "游戏数字发行平台，提供游戏购买、下载、社区等功能。",
+      "supplement": "全球主流的游戏发行平台，官方提供 Windows、macOS 与 Linux 桌面客户端；此外还有手机端应用，可用于聊天、令牌与浏览商店，游戏库和好友数据在各端同步。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Linux"
+      ],
+      "architectures": [
+        "x64",
+        "arm64"
+      ],
+      "intro": "Steam 是全球规模领先的 PC 游戏数字发行平台，把商店、游戏库、社区与好友系统整合在一起。用户可以在其中购买和下载游戏、领取免费内容、参与创意工坊与社区讨论，并通过云存档在不同设备间同步进度；成就、截图、直播和好友语音让游戏过程更具社交乐趣。客户端支持自动更新、下载队列管理和远程畅玩，手机端应用则能确认登录、浏览商店和管理令牌。无论偶尔买一款单机大作，还是长期投入联机游戏，都能用它统一管理游戏与好友。"
+    },
+    {
+      "id": "watt-toolkit",
+      "code": "TG-000004",
+      "name": "Watt Toolkit",
+      "category": "工具",
+      "tags": [
+        "游戏",
+        "工具",
+        "网络"
+      ],
+      "icon": "Watt Toolkit.png",
+      "url": "https://steampp.net/",
+      "github": "https://github.com/BeyondDimension/SteamTools",
+      "description": "Steam++，一款开源的Steam增强工具，提供网络加速、社区功能增强等服务。",
+      "supplement": "面向国内用户的 Steam 辅助工具箱，提供 Windows、macOS、Linux 桌面版，可加速社区页面并管理账号、令牌与成就；需配合已安装的 Steam 使用，Windows ARM 暂未支持。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Linux"
+      ],
+      "architectures": [
+        "x64",
+        "arm64",
+        "Apple Silicon"
+      ],
+      "intro": "Watt Toolkit（原 Steam++）是一款开源的多功能工具箱，主要面向国内网络环境下的 Steam 玩家。它通过本地反向代理改善 Steam 社区、创意工坊等页面的访问体验，也支持部分海外站点加速；此外还提供多账号快速切换、游戏成就管理、本地两步验证令牌和游戏窗口化等实用工具。所有处理都在本机完成，令牌等敏感信息不会上传。适合经常访问 Steam 社区、想集中管理账号与成就的用户，使用前需先安装官方 Steam 客户端。"
+    },
+    {
+      "id": "pcl2",
+      "code": "TG-000005",
+      "name": "PCL2",
+      "category": "游戏",
+      "tags": [
+        "游戏",
+        "MC启动器"
+      ],
+      "icon": "PCL2.png",
+      "url": "https://meloong.com/PCL",
+      "github": "https://github.com/Meloong-Git/PCL",
+      "author_url": "https://ifdian.net/p/0164034c016c11ebafcb52540025c377",
+      "description": "Minecraft启动器，提供游戏版本管理、模组下载、整合包安装等功能。",
+      "supplement": "经典 Minecraft 启动器，官方仅提供 Windows 桌面版，下载后可绿色免安装直接运行；内置下载、模组与整合包管理，并会自动检测补全运行环境，暂无手机端与网页版。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows"
+      ],
+      "intro": "PCL2（Plain Craft Launcher 2）是一款人气很高的 Minecraft 启动器，以启动速度快、界面清爽和上手门槛低受到玩家欢迎。它支持原版及各主流模组加载器的版本安装与切换，内置模组、整合包、资源包和光影的搜索下载，能够自动检测并补全游戏所需的 Java 运行环境，游戏崩溃后还会提供日志分析和排查建议。启动器免安装、占用空间小，配置与存档都在本地，适合希望少折腾配置、专注于游戏的 Minecraft 玩家。"
+    },
+    {
+      "id": "afdian",
+      "code": "TG-000006",
+      "name": "爱发电",
+      "category": "平台",
+      "tags": [
+        "平台",
+        "创作",
+        "赞助",
+        "官方"
+      ],
+      "icon": "ifdian.png",
+      "url": "https://ifdian.net/",
+      "description": "创作者赞助与会员订阅平台，支持持续创作支持。",
+      "supplement": "面向创作者的赞助与会员订阅平台，官方提供 iOS 与 Android 手机应用，也可以直接用浏览器访问网页版；没有桌面客户端，登录、支付与查看内容均可多端进行。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "iOS",
+        "Android",
+        "web"
+      ],
+      "intro": "爱发电是一个连接创作者与粉丝的赞助与会员订阅平台。创作者可以发布创作计划并设置不同价位的赞助档位，粉丝按月或按次付费支持，并在订阅期内查看对应档位的专享内容，如文章、图片、音频和视频等。平台支持微信、支付宝等常见支付方式，提供付费内容加密和私信沟通能力，方便双方长期互动。它适合插画、写作、播客、独立开发等各类创作者，也适合希望持续支持喜爱作者的粉丝，在网页和手机应用上都能使用。"
+    },
+    {
+      "id": "epic-games",
+      "code": "TG-000007",
+      "name": "Epic Games",
+      "category": "游戏",
+      "tags": [
+        "游戏",
+        "启动器",
+        "官方"
+      ],
+      "icon": "Epic.png",
+      "url": "https://www.epicgames.com",
+      "description": "游戏数字发行平台，提供游戏购买、免费领取及社交功能。",
+      "supplement": "官方游戏商城与启动器，提供 Windows 与 macOS 桌面客户端用于购买、下载和管理游戏；可在网页端领取免费游戏，手机端商店目前仅在部分地区开放。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS"
+      ],
+      "architectures": [
+        "x64"
+      ],
+      "intro": "Epic Games 是知名游戏发行平台与虚幻引擎的开发商，其桌面启动器提供从购买、下载到管理的完整游戏体验，并长期每周限时免费赠送游戏。商店内既有第三方大作也有大量独立作品，购买后可在库中安装并自动更新，同时支持好友列表、语音聊天与成就系统，跨平台联机让不同设备的玩家也能一起游玩。除客户端外，还可以通过网页浏览商店、领取免费游戏和管理账号，适合关注首发大作、独立游戏以及免费福利的玩家。"
+    },
+    {
+      "id": "wegame",
+      "code": "TG-000008",
+      "name": "WeGame",
+      "category": "游戏",
+      "tags": [
+        "游戏",
+        "启动器",
+        "官方"
+      ],
+      "icon": "WeGame.png",
+      "url": "https://www.wegame.com",
+      "description": "游戏发行平台，提供游戏下载、社区、直播等功能。",
+      "supplement": "腾讯旗下的游戏平台，官方提供 Windows 客户端与 Mac 端，Mac 版还区分 Intel 与 M 系列芯片两种安装包；可用于管理游戏、查看时长与好友动态，暂无 Linux 版本。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS"
+      ],
+      "architectures": [
+        "x64",
+        "arm64",
+        "Apple Silicon"
+      ],
+      "intro": "WeGame 是腾讯推出的游戏平台，面向国内玩家提供游戏下载、更新、启动与社区服务。用户可以在平台内购买或领取游戏，统一管理已安装的作品并查看游玩时长，还能浏览攻略、直播和好友动态，方便找到同好一起开黑；内置的辅助工具与网络优化也让部分网游的启动、更新更顺畅。除电脑客户端外，官方还提供 Mac 版本供苹果电脑用户使用，适合经常游玩腾讯系网游、希望在国内网络环境下获得便捷下载和社区体验的玩家。"
+    },
+    {
+      "id": "python",
+      "code": "TG-000009",
+      "name": "Python",
+      "category": "编程",
+      "tags": [
+        "编程语言",
+        "官方"
+      ],
+      "icon": "Python.png",
+      "url": "https://www.python.org/",
+      "github": "https://github.com/python/cpython",
+      "description": "简洁易学的高级编程语言，支持多种编程范式，拥有丰富的标准库和第三方生态。",
+      "supplement": "通用编程语言运行环境，官方为 Windows 提供常规与 ARM 架构安装包，为 macOS 提供适配 Intel 与 Apple Silicon 的安装包；Linux 可通过源码或系统仓库安装。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Linux"
+      ],
+      "architectures": [
+        "x64",
+        "x86",
+        "arm64",
+        "Apple Silicon"
+      ],
+      "intro": "Python 是一门语法简洁、易读易学的高级编程语言，广泛应用于数据分析、人工智能、Web 开发、自动化脚本、科学计算和编程教学等场景。它拥有成熟的标准库和庞大的第三方生态，多数常见需求都能找到现成的库直接调用，配合交互式解释器和包管理工具，从写第一个小程序到搭建大型项目都比较顺畅。Python 支持面向对象、函数式等多种编程风格，跨平台表现一致，既适合零基础入门者，也适合需要快速完成数据处理与原型开发的工程师和科研人员。"
+    },
+    {
+      "id": "bilibili",
+      "code": "TG-000010",
+      "name": "哔哩哔哩",
+      "category": "视频平台",
+      "tags": [
+        "视频平台",
+        "官方"
+      ],
+      "icon": "bilibili.png",
+      "url": "https://www.bilibili.com/",
+      "description": "视频弹幕社区，提供动画、游戏、科技、生活等领域的视频内容与互动。",
+      "supplement": "国内主流的视频与弹幕社区，在浏览器访问官网即可观看、投稿和互动；官方另有 Windows、macOS 电脑客户端与 iOS、Android 手机 App，账号、收藏与观看记录多端同步。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "全平台"
+      ],
+      "intro": "哔哩哔哩（B 站）是国内知名的视频与弹幕社区，内容覆盖动画、游戏、科技、知识、生活、音乐、影视等众多分区。用户既可以观看视频，也能投稿创作、发布动态与专栏，并通过弹幕、评论、投币、收藏和关注与其他观众互动；直播、番剧追更、课程学习和视频合集等功能，让平台兼具娱乐与学习属性。同一账号在网页、电脑客户端和手机应用之间同步，收藏、历史与关注列表可以随时接着看，适合喜欢弹幕文化、乐于参与社区讨论或希望边玩边学的用户。"
+    },
+    {
+      "id": "douyin",
+      "code": "TG-000011",
+      "name": "抖音",
+      "category": "视频平台",
+      "tags": [
+        "视频平台",
+        "官方"
+      ],
+      "icon": "douyin.png",
+      "url": "https://www.douyin.com/",
+      "description": "短视频创作与分享平台，提供视频编辑、直播、社交等功能。",
+      "supplement": "短视频平台，用浏览器打开官网即可浏览、搜索和发布内容，扫码登录后与手机端数据同步；官方另有电脑版客户端与 iOS、Android 手机 App，适合在大屏上观看和做创作管理。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "全平台"
+      ],
+      "intro": "抖音是一个以短视频为核心的创作与分享平台，用户可以拍摄、剪辑并发布短视频，也能通过直播与观众实时互动。内容覆盖生活记录、美食、旅行、才艺、知识科普、影视剪辑等众多领域，依靠推荐机制把作品分发给可能感兴趣的观众；平台还提供滤镜、特效、配乐和字幕等创作工具，没有剪辑基础也能快速做出成片。除观看和发布，还能关注创作者、评论互动、参与话题活动，并在网页版、电脑客户端和手机应用上登录同一账号。"
+    },
+    {
+      "id": "blender",
+      "code": "TG-000012",
+      "name": "Blender",
+      "category": "建筑/设计",
+      "tags": [
+        "建筑/设计",
+        "官方"
+      ],
+      "icon": "Blender.png",
+      "url": "https://www.blender.org/",
+      "github": "https://github.com/blender/blender",
+      "description": "开源的三维创作套件，支持建模、动画、渲染、仿真、视频编辑等功能。",
+      "supplement": "开源三维创作软件，官方提供 Windows、macOS 与 Linux 桌面版，Windows ARM 电脑和 Apple Silicon 机型也有对应安装包；另提供免安装压缩包与微软商店等分发方式。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Linux"
+      ],
+      "architectures": [
+        "x64",
+        "arm64",
+        "Apple Silicon"
+      ],
+      "intro": "Blender 是一款完全开源且免费的三维创作套件，流程覆盖建模、雕刻、材质贴图、动画绑定、特效模拟、渲染与视频剪辑。它内置 Cycles 与 EEVEE 等渲染引擎，支持 Python 脚本与插件扩展，社区活跃、教程丰富；凭借完整而持续迭代的功能，被广泛用于动画短片、游戏美术、产品与建筑可视化、概念设计等领域。由于免费又功能齐全，它既适合想入门三维创作的学生与爱好者，也适合希望以较低成本完成专业项目的工作室和独立创作者。"
+    },
+    {
+      "id": "unity",
+      "code": "TG-000013",
+      "name": "Unity",
+      "category": "游戏引擎",
+      "tags": [
+        "游戏引擎",
+        "官方"
+      ],
+      "icon": "Unity.png",
+      "url": "https://unity.com/",
+      "description": "跨平台游戏引擎，支持2D/3D游戏开发、AR/VR内容创作。",
+      "supplement": "Unity 官方编辑器提供 Windows、macOS 与 Linux 三个桌面版本，其中 Windows on Arm 和 Apple 芯片 Mac 都有原生版本。除桌面端外，还能把作品发布到手机、网页和主机等平台。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Linux"
+      ],
+      "architectures": [
+        "x64",
+        "arm64",
+        "Apple Silicon"
+      ],
+      "intro": "Unity 是一款面向游戏与实时三维内容开发的跨平台引擎，广泛用于 2D/3D 游戏、AR/VR 应用和交互式展示项目。它提供可视化编辑器、物理与动画系统、材质与光照工具，并内置资源商店和云端协作能力，开发者可以用同一套项目面向手机、桌面、网页和主机发布。对希望从零学习游戏开发、或需要成熟商业化工具链的团队都很合适。"
+    },
+    {
+      "id": "godot",
+      "code": "TG-000014",
+      "name": "Godot",
+      "category": "游戏引擎",
+      "tags": [
+        "游戏引擎",
+        "官方"
+      ],
+      "icon": "Godot.png",
+      "url": "https://godotengine.org/",
+      "github": "https://github.com/godotengine/godot",
+      "description": "开源跨平台游戏引擎，支持2D/3D游戏开发，使用节点系统架构。",
+      "supplement": "除 Windows、macOS、Linux 桌面版外，官方还直接提供可在手机上运行的 Android 编辑器和浏览器内打开的网页版编辑器，作品也能导出到 iOS 等更多平台；引擎免费开源，压缩包解压即用。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Linux",
+        "Android",
+        "iOS",
+        "web"
+      ],
+      "architectures": [
+        "x64",
+        "x86",
+        "arm64",
+        "arm",
+        "Apple Silicon"
+      ],
+      "intro": "Godot 是一款完全免费、开源的游戏引擎，采用节点与场景的组织方式，脚本语言轻量易上手，也支持 C# 等方案。它内置 2D 与 3D 渲染、物理、动画、界面和音频工具，项目文件为纯文本，便于版本管理与团队协作；除桌面端外还提供手机端与浏览器内编辑器，作品可导出到多个平台。适合独立开发者、学生和小团队从原型一路做到正式作品。"
+    },
+    {
+      "id": "trae",
+      "code": "TG-000015",
+      "name": "Trae",
+      "category": "编程",
+      "tags": [
+        "IDE编辑器",
+        "编程"
+      ],
+      "icon": "trae.png",
+      "url": "https://www.trae.cn/",
+      "description": "字节跳动推出的 AI 原生 IDE，可在国际版与国内版之间切换。",
+      "supplement": "桌面端覆盖 Windows、macOS 与 Linux，另提供网页版和手机端 App，同一账号可多端协同；需要注意 macOS 版只提供 Apple 芯片版本，Intel Mac 用户暂无法使用。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "全平台"
+      ],
+      "architectures": [
+        "x64",
+        "Apple Silicon"
+      ],
+      "default_variant": "cn",
+      "variants": [
+        {
+          "key": "cn",
+          "label": "国内版",
+          "url": "https://www.trae.cn/"
+        },
+        {
+          "key": "global",
+          "label": "国际版",
+          "url": "https://www.trae.ai/"
+        }
+      ],
+      "intro": "Trae 是字节跳动推出的 AI 编程与办公工具，包含面向开发的 IDE 和面向文档、数据分析的办公平台。它支持用自然语言描述需求，由 AI 直接生成或修改代码，也能自动拆解并执行任务，同时保留传统编辑器界面与工作模式切换。产品覆盖桌面端、网页端与手机端，账号数据可多端同步。适合希望把重复性编码和日常文档工作交给 AI、同时保留人工验收环节的开发者与办公用户。"
+    },
+    {
+      "id": "hmcl",
+      "code": "TG-000016",
+      "name": "HMCL",
+      "category": "游戏",
+      "tags": [
+        "游戏",
+        "MC启动器"
+      ],
+      "icon": "HMCL.png",
+      "url": "https://hmcl.huangyuhui.net/",
+      "github": "https://github.com/HMCL-dev/HMCL",
+      "description": "开源的 Minecraft 启动器，支持离线模式、多人联机和 Mod 管理。",
+      "supplement": "官方以 Java 通用包的形式分发，Windows、macOS 与 Linux（含 FreeBSD）都能运行，对 CPU 架构没有特殊要求；Windows 用户可直接下载安装包，其他平台使用通用 jar 或启动脚本。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Linux"
+      ],
+      "architectures": [
+        "x64",
+        "x86",
+        "arm64",
+        "arm"
+      ],
+      "intro": "HMCL 是一款开源、免费的 Minecraft 启动器，可以在图形界面里集中管理多个游戏版本与实例，并一键安装 Forge、Fabric、OptiFine 等常见模组加载器。它还提供模组与整合包管理、账号登录（含离线模式）、游戏参数调整和自动更新等能力，界面简洁、中文支持完善。作为纯 Java 编写的老牌启动器，它对系统要求较低、更新活跃，各类 Minecraft 玩家都能快速上手。"
+    },
+    {
+      "id": "sjmcl",
+      "code": "TG-000017",
+      "name": "SJMCL",
+      "category": "游戏",
+      "tags": [
+        "游戏",
+        "MC启动器"
+      ],
+      "icon": "SJMCL.png",
+      "url": "https://mc.sjtu.cn/sjmcl/",
+      "github": "https://github.com/UNIkeEN/SJMCL",
+      "description": "上海交通大学 Minecraft 社开发的开源启动器，面向校园和社区用户。",
+      "supplement": "官方为 Windows、macOS、Linux 都提供了安装包：Windows 端分 x86、x64 与 ARM64，macOS 区分 Apple 芯片与 Intel，Linux 提供 deb、rpm 和便携版。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Linux"
+      ],
+      "architectures": [
+        "x64",
+        "x86",
+        "arm64",
+        "Apple Silicon"
+      ],
+      "intro": "SJMC Launcher 是由上海交通大学 Minecraft 社开发的开源启动器，主打跨平台的现代化体验。它支持集中管理多个游戏目录与实例，统一整理存档、模组、资源包、光影和截图，内置从 CurseForge、Modrinth 等平台下载客户端、加载器与整合包的能力，并支持微软账户登录和第三方认证服务。界面清爽、更新及时，还提供命令行安装与扩展机制，适合校园玩家和习惯多实例管理的社区用户。"
+    },
+    {
+      "id": "verse",
+      "code": "TG-000018",
+      "name": "Verse",
+      "category": "游戏",
+      "tags": [
+        "游戏",
+        "MC启动器"
+      ],
+      "icon": "Verse.png",
+      "url": "https://www.verselauncher.cn/",
+      "github": "https://github.com/cnklpz/versePc",
+      "description": "开源的 Minecraft 启动器，提供现代化的界面和便捷的游戏管理。",
+      "supplement": "官网目前主要放出 Windows 版启动器下载，安卓端标注为制作中、尚未发布；官方开源仓库同时声明支持 Windows、macOS 与 Linux，并提供 dmg、AppImage、deb、rpm 等对应安装包。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Linux"
+      ],
+      "architectures": [
+        "x64",
+        "Apple Silicon"
+      ],
+      "intro": "Verse 是一款开源的 Minecraft 启动器，界面现代、操作直观，目标是让玩家更轻松地管理游戏。它支持多个游戏版本与实例的集中管理，提供账户登录、模组与整合包安装、下载源选择和自动更新等常用能力，并提供插件机制方便扩展功能。项目仍在持续迭代，社区反馈渠道畅通。适合希望用一款轻量、界面好看的启动器来整理自己的 Minecraft 环境的玩家。"
+    },
+    {
+      "id": "bakaxl",
+      "code": "TG-000019",
+      "name": "BakaXL",
+      "category": "游戏",
+      "tags": [
+        "游戏",
+        "MC启动器"
+      ],
+      "icon": "BakaXL.png",
+      "url": "https://www.bakaxl.com/",
+      "github": "https://github.com/BakaXL-Launcher/BakaXL",
+      "description": "开源的 Minecraft 启动器，以简洁界面和社区功能为特色。",
+      "supplement": "当前正式版仅支持 Windows，普通玩家下载官网版本即可；官方预览版已额外提供 Linux 与 macOS 构建，Windows 端也出现了 Arm64 版本，适合用 ARM 设备的玩家尝鲜。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows"
+      ],
+      "intro": "BakaXL 是一款面向 Minecraft 玩家的启动器，以简洁的界面和活跃的社区功能为特色。它支持管理多个游戏版本与账户、安装常见模组加载器、整理整合包与游戏资源，并提供个性化主题、正版与离线登录等选项，上手门槛较低。除了游戏管理，它还带有社区公告与帮助入口，方便玩家获取使用指引。适合喜欢界面清爽、愿意跟随官方更新节奏的普通玩家。"
+    },
+    {
+      "id": "pyisland",
+      "code": "TG-000020",
+      "name": "Pyisland",
+      "category": "编程",
+      "tags": [
+        "编程",
+        "学习"
+      ],
+      "icon": "Pyisland.png",
+      "url": "https://pyisland.com/",
+      "github": "https://github.com/Python-island/Python-island",
+      "description": "Windows 桌面灵动岛，显示系统状态并提供快捷操作、内置 AI 助手。",
+      "supplement": "这是运行在 Windows 上的桌面灵动岛工具，官方提供下载与源码，基于 Python + PySide6 实现，明确要求 Windows 10/11；另有 Tauri、Electron 等分支可选，没有网页版或手机端。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows"
+      ],
+      "intro": "Pyisland 是一款运行在 Windows 上的桌面灵动岛工具，把手机上常见的动态岛交互带到电脑桌面。它以悬浮胶囊的形式常驻屏幕边缘，点击即可展开控制面板，集中查看并操作无线网络、蓝牙、电池等系统状态，还提供屏幕亮度调节、剪贴板链接识别和内置 AI 助手等功能。界面简洁、响应流畅，适合喜欢桌面常驻小组件、希望快速查看和控制系统状态的 Windows 用户。"
+    },
+    {
+      "id": "geek-uninstaller",
+      "code": "TG-000021",
+      "name": "Geek Uninstaller",
+      "category": "工具",
+      "tags": [
+        "工具",
+        "卸载"
+      ],
+      "icon": "Geek Uninstaller.png",
+      "url": "https://geekuninstaller.com",
+      "description": "轻量级软件卸载工具，支持强制卸载和清理残留文件。",
+      "supplement": "仅支持 Windows，官方称兼容 32 位与 64 位系统（Windows 7 至 11）；在 64 位系统上会以原生 64 位程序运行，下载压缩包解压后即可直接使用。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows"
+      ],
+      "architectures": [
+        "x86",
+        "x64"
+      ],
+      "intro": "Geek Uninstaller 是一款轻量、免安装的 Windows 软件卸载工具，可替代系统自带的卸载入口。它能列出已安装程序并快速卸载，卸载后自动扫描注册表和硬盘中的残留文件与无效项，支持强制移除卸载失败或已损坏的软件，也能管理 Windows 应用商店应用。程序小巧、启动快、几乎不占系统资源，适合需要经常清理软件、保持系统整洁的普通用户和运维人员。"
+    },
+    {
+      "id": "tiez",
+      "code": "TG-000022",
+      "name": "TieZ",
+      "category": "工具",
+      "tags": [
+        "工具",
+        "实用"
+      ],
+      "icon": "Tiez.png",
+      "url": "https://tiez.name666.top/",
+      "github": "https://github.com/jimuzhe/tiez-clipboard",
+      "description": "跨平台剪贴板管理工具，支持历史记录、搜索标签、局域网传输与 WebDAV 云同步。",
+      "supplement": "官方网站现在提供的是 TieZ 剪贴板管理工具：桌面端支持 Windows 10/11 与 macOS（含 Apple 芯片与 Intel），另有 Android 手机端配套 App，可同步剪贴板、局域网传文件与云端同步。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Android"
+      ],
+      "architectures": [
+        "x64",
+        "x86",
+        "Apple Silicon"
+      ],
+      "intro": "TieZ 是一款跨平台剪贴板管理工具，用来保存并快速找回复制过的内容。它统一记录文本、代码、链接、图片、文件和富文本，支持全文搜索、标签与类型筛选、固定条目和顺序粘贴，还能为不同类型内容指定默认打开程序。工具提供全局快捷键呼出、贴边停靠与本地数据持久化，并通过 WebDAV 在设备间同步，手机端 App 可与电脑互传剪贴板和文件。适合频繁复制粘贴、需要在多设备间流转内容的用户。"
+    },
+    {
+      "id": "memreduct",
+      "code": "TG-000023",
+      "name": "Memreduct",
+      "category": "工具",
+      "tags": [
+        "工具",
+        "系统",
+        "优化"
+      ],
+      "icon": "memreduct.png",
+      "github": "https://github.com/henrypp/memreduct",
+      "description": "轻量级内存优化工具，实时监控和清理系统内存。",
+      "supplement": "仅支持 Windows，官方要求 64 位或 ARM64 系统（Windows 7 至 11），不支持 32 位；提供安装版与便携版，便携模式下可在程序目录放置配置文件来保存设置。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows"
+      ],
+      "architectures": [
+        "x64",
+        "arm64"
+      ],
+      "intro": "Mem Reduct 是一款轻量级的 Windows 内存优化工具，用于实时监控并清理系统内存。它通过系统底层接口释放工作集、待机列表和缓存等区域，可在托盘常驻显示当前内存占用，并支持按时间间隔或占用阈值自动清理、把清理结果记录到文件以及命令行调用。软件小巧轻便、后台占用极低，设置可保存在程序目录实现便携使用。适合内存较小或长时间运行大型程序的电脑，用来缓解卡顿。"
+    },
+    {
+      "id": "obs",
+      "code": "TG-000024",
+      "name": "OBS",
+      "category": "工具",
+      "tags": [
+        "视频",
+        "直播",
+        "录屏"
+      ],
+      "icon": "OBS.png",
+      "url": "https://obsproject.com/",
+      "github": "https://github.com/obsproject/obs-studio",
+      "description": "开源的直播和录屏软件，支持多场景切换和实时混音。",
+      "supplement": "官方提供 Windows、macOS 与 Linux 版本，macOS 区分 Intel 与 Apple 芯片两种安装包，Linux 通过官方 Flatpak 和 Ubuntu PPA 分发；Windows 端目前只有 64 位版本。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Linux"
+      ],
+      "architectures": [
+        "x64",
+        "Apple Silicon"
+      ],
+      "intro": "OBS Studio 是一款免费、开源的直播与录屏软件，广泛用于游戏直播、课程录制和视频创作。它支持多场景切换、窗口与游戏画面捕获、摄像头和麦克风混音、实时滤镜与转场，并可通过插件扩展功能；内置推流设置，能一键把画面推送到常见直播平台，也可直接录制保存到本地。界面布局可自定义，社区教程与插件资源丰富，适合主播、教师、内容创作者以及需要录制演示的普通用户。"
+    },
+    {
+      "id": "human-benchmark",
+      "code": "TG-000025",
+      "name": "Human Benchmark",
+      "category": "工具",
+      "tags": [
+        "趣味",
+        "测试"
+      ],
+      "icon": "humanbenchmark.png",
+      "url": "https://humanbenchmark.com/",
+      "description": "认知能力测试网站，提供反应速度、记忆力等基准测试。",
+      "supplement": "打开网页就能做反应速度、记忆力、专注力等认知小测试，成绩可与全球用户对比。无需安装任何程序，电脑和手机浏览器都能直接使用，目前没有官方客户端。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "web"
+      ],
+      "intro": "Human Benchmark 是一个在线认知能力测试站点，打开网页即可开始，无需注册或安装。平台提供反应速度、序列记忆、数字记忆、视觉记忆、打字速度、瞄准和色觉等多种小测试，每项通常只花一到几分钟，结束后会给出成绩以及在全部参与者中的百分位排名，方便了解自己的各项表现并与其他用户对比。测试都在浏览器中运行，电脑和手机都能直接打开，也适合当作日常小游戏来放松和提神。"
+    },
+    {
+      "id": "huorong",
+      "code": "TG-000026",
+      "name": "火绒安全软件",
+      "category": "工具",
+      "tags": [
+        "工具",
+        "安全",
+        "官方"
+      ],
+      "icon": "huorong.png",
+      "url": "https://www.huorong.cn/",
+      "description": "国产安全软件，提供病毒防护、弹窗拦截和系统工具。",
+      "supplement": "面向个人用户的免费终端安全软件，安装后即可获得病毒查杀与实时防护。官方按设备类型分别打包：常见的 64 位和 32 位电脑各有一版，采用 ARM 架构的 Windows 设备也有专用安装包。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows"
+      ],
+      "architectures": [
+        "x64",
+        "x86",
+        "arm64"
+      ],
+      "intro": "火绒安全软件是面向个人用户的免费终端安全产品，以轻巧、低占用和无广告打扰为特色。它提供病毒与木马查杀、实时防护、U 盘保护、弹窗拦截、恶意网址拦截，并附带系统修复、启动项管理、垃圾清理等常用工具，日常运行时几乎不占用资源。界面简洁，不会捆绑其他软件，也不推送弹窗广告，装上即可使用，各类防护的默认配置对普通用户足够友好。适合希望电脑安静稳定运行、又需要可靠基础防护的家庭与办公用户。"
+    },
+    {
+      "id": "mctier",
+      "code": "TG-000027",
+      "name": "MCTier",
+      "category": "游戏",
+      "tags": [
+        "游戏",
+        "工具"
+      ],
+      "icon": "MCTierIcon.png",
+      "url": "https://mctier.pmhs.top/",
+      "description": "虚拟局域网通用组网工具，把电脑和手机连进同一个大厅，支持语音、文件与屏幕共享。",
+      "supplement": "把分散的电脑和手机拉进同一个虚拟局域网，方便跨网络联机、语音、传文件和共享屏幕。电脑端与安卓端可同处一个大厅；Linux 版仍处于实验阶段、部分功能受限，暂不支持苹果设备。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "Android",
+        "Linux"
+      ],
+      "architectures": [
+        "x64",
+        "arm64"
+      ],
+      "intro": "MCTier 是一款虚拟局域网组网工具，把处于不同网络环境的电脑和手机拉进同一个「大厅」，让原本无法直连的设备像在同一局域网内互相访问。组网基于 EasyTier，无需公网 IP 即可优先直连，条件不允许时自动转为中继。大厅内集成实时语音与语音小队、文字聊天、文件共享、屏幕共享、双向远程控制和内置变声器，并提供公开大厅广场、连接诊断与游戏快连等联机辅助。既适合和朋友联机玩局域网游戏，也适合跨网传文件、共享屏幕或远程协助他人。"
+    },
+    {
+      "id": "wallpaper-engine",
+      "code": "TG-000028",
+      "name": "Wallpaper Engine",
+      "category": "个性化",
+      "tags": [
+        "个性化",
+        "壁纸"
+      ],
+      "icon": "wallpaper_engine.gif",
+      "url": "https://www.wallpaperengine.io/",
+      "description": "动态壁纸软件，支持创建和使用动态桌面壁纸。",
+      "supplement": "让 Windows 桌面用上动态壁纸，可订阅创意工坊里的大量作品，运行时几乎不影响游戏性能。手机端是免费伴侣应用，能把电脑上的壁纸无线传到安卓设备使用；暂不支持苹果系统与 iOS。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "Android"
+      ],
+      "architectures": [
+        "x64",
+        "x86"
+      ],
+      "intro": "Wallpaper Engine 是一款让 Windows 桌面动起来的动态壁纸软件，支持把视频、网页、3D 场景和带交互效果的作品设为壁纸，也可用内置编辑器把图片做成动画作品，并订阅创意工坊中的大量免费资源。它对性能做了优化，可在运行游戏或最大化窗口时自动暂停，笔记本改用电池供电时也会停止，还能让雷蛇、海盗船等灯效硬件与壁纸联动。官方另提供免费手机伴侣应用，可将电脑上收藏的壁纸无线传输到安卓设备使用，适合注重桌面个性化又不愿明显牺牲性能的用户。"
+    },
+    {
+      "id": "nexbox",
+      "code": "TG-000029",
+      "name": "NexBox",
+      "category": "工具",
+      "tags": [
+        "工具"
+      ],
+      "icon": "NexBox.png",
+      "url": "https://nexbox.top/",
+      "github": "https://github.com/MuLiuSaMa/NexBox",
+      "description": "开源的综合工具箱软件，提供多种实用功能集成。",
+      "supplement": "为玩家准备的一体化工具箱，把硬件监控、系统优化、显示增强、游戏辅助和音乐播放收进一个界面。纯本地运行、核心功能无需联网，安装后双击即可使用，目前只有 Windows 版。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows"
+      ],
+      "architectures": [
+        "x64"
+      ],
+      "intro": "NexBox（新境盒）是一款面向 PC 玩家的免费开源游戏工具箱，把过去需要安装多个软件才能完成的事集中到一个界面。它提供 CPU、显卡、内存、硬盘的实时监控与温度趋势，以及磁盘与内存清理、网络和电源优化、启动项管理等系统优化项；还内置显示滤镜与色温调节、游戏准星、游戏内悬浮面板、分辨率与 DLSS 预设管理、Steam 与 Epic 库管理等工具，并附带音乐播放器。软件占用低、核心功能纯本地运行，适合想一站式打理游戏环境、不愿被全家桶打扰的玩家。"
+    },
+    {
+      "id": "nvidia-app",
+      "code": "TG-000030",
+      "name": "NVIDIA APP",
+      "category": "工具",
+      "tags": [
+        "工具",
+        "驱动",
+        "官方"
+      ],
+      "icon": "NVIDIA App.png",
+      "url": "https://www.nvidia.cn/software/nvidia-app/",
+      "description": "NVIDIA 推出的统一 GPU 控制中心，整合驱动更新、游戏优化、录屏和 AI 滤镜等功能。",
+      "supplement": "面向 GeForce 用户的官方显卡配套应用，可统一更新驱动、自动优化游戏设置，并录制或直播画面。目前只提供 Windows 版，需要配合 NVIDIA 显卡使用，没有网页版和手机端。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows"
+      ],
+      "intro": "NVIDIA App 是 NVIDIA 官方推出的统一显卡配套应用，用来替代过去的 GeForce Experience。安装后可以一键更新显卡驱动，自动为游戏套用画质与性能优化设置，并在同一界面调整分辨率、刷新率、G-SYNC、DSR 等显示选项。它还支持 ShadowPlay 录屏与截图、直播推流，以及 AI 滤镜和游戏内性能浮层监控。需要搭配 NVIDIA 显卡使用，适合希望用官方工具统一管理驱动与游戏设置、并顺手录制画面的 GeForce 用户。"
+    },
+    {
+      "id": "mineradio",
+      "code": "TG-000031",
+      "name": "Mineradio",
+      "category": "工具",
+      "tags": [
+        "工具",
+        "音乐"
+      ],
+      "icon": "MR.png",
+      "url": "https://mineradio.cn/",
+      "github": "https://github.com/XxHuberrr/Mineradio",
+      "description": "开源的音乐播放和电台工具，提供在线音乐收听和播放管理功能。",
+      "supplement": "开源免费的本地音乐播放器，支持多种无损格式、内嵌与外置歌词和桌面歌词，界面带有可视化效果。官方提供 Windows、Mac 桌面版和安卓版，也有网页版可直接体验。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Android",
+        "web"
+      ],
+      "intro": "Mineradio 是一款免费开源的音乐播放器，界面带有跟随节奏变化的可视化效果，主打本地音乐播放与沉浸式听歌体验。它支持 MP3、FLAC、WAV、OGG、AAC、APE、DSD 等多种无损与常见格式，能读取音频内嵌的歌词和封面，也支持外置歌词文件与桌面歌词显示；并提供迷你模式、播放列表与收藏管理、均衡器等功能，整体轻量无广告。官方提供 Windows 与 Mac 桌面版和安卓版，另有网页版可直接体验，适合平时收听本地音乐收藏、在意界面观感的用户。"
+    },
+    {
+      "id": "claude",
+      "code": "TG-000032",
+      "name": "Claude",
+      "category": "AI",
+      "tags": [
+        "AI",
+        "聊天"
+      ],
+      "icon": "Claude.png",
+      "url": "https://claude.com/",
+      "description": "Anthropic 开发的 AI 助手，擅长长文本理解、推理和代码生成。",
+      "supplement": "提供电脑客户端，也有手机应用和网页版，登录同一账号即可随处继续对话。桌面端对硬件较宽容：苹果电脑的 Apple 芯片与 Intel 机型都能装，Windows 的 64 位和 ARM 设备也各有对应版本。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "iOS",
+        "Android",
+        "web"
+      ],
+      "architectures": [
+        "x64",
+        "arm64",
+        "Apple Silicon"
+      ],
+      "intro": "Claude 是 Anthropic 推出的 AI 助手，擅长长文档理解、逻辑推理与代码编写，支持上传 PDF、图片等文件后围绕内容提问，也能通过 Artifacts 直接生成并预览网页、图表和文档。它提供电脑客户端、手机应用和网页版，登录同一账号即可在各端继续之前的对话；桌面端带有可随时唤起的快捷窗口，也可通过扩展连接本地文件与外部工具。日常可用于资料整理、翻译润色和写代码，适合需要处理长篇材料、希望回答严谨且乐于核对依据的知识工作者、开发者和学生。"
+    },
+    {
+      "id": "gemini",
+      "code": "TG-000033",
+      "name": "Gemini",
+      "category": "AI",
+      "tags": [
+        "AI",
+        "聊天"
+      ],
+      "icon": "Gemini.png",
+      "url": "https://gemini.google.com/",
+      "description": "Google 开发的多模态 AI 助手，支持文本、图像和代码处理。",
+      "supplement": "谷歌的 AI 助手，打开网页就能直接对话和生成内容。官方也提供了 iOS 与安卓手机应用，并为 Windows 和 Mac 推出了桌面应用，可按手头设备任选一种方式使用。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "iOS",
+        "Android",
+        "web"
+      ],
+      "intro": "Gemini 是 Google 推出的多模态 AI 助手，可以理解文字、图片、音频和视频，并据此回答或生成内容。它支持长文档与多文件上传分析、联网检索、代码生成与调试，还能与 Gmail、Google 文档、日历等服务联动，方便在既有工作流中直接调用；配合图像与视频生成能力，也能应付创意类需求。除了在浏览器中打开即用，官方还提供 iOS 与安卓手机应用，以及 Windows 和 Mac 桌面应用，适合已在使用 Google 生态、需要多模态分析与日常写作辅助的用户。"
+    },
+    {
+      "id": "grok",
+      "code": "TG-000034",
+      "name": "Grok",
+      "category": "AI",
+      "tags": [
+        "AI",
+        "聊天"
+      ],
+      "icon": "Grok.png",
+      "url": "https://grok.com/",
+      "description": "xAI 开发的 AI 助手，以幽默风格和实时信息获取能力为特色。",
+      "supplement": "目前以网页版和官方手机应用为主，登录后即可对话、生成图片，桌面浏览器与手机都能随时使用。官方尚未推出正式的电脑客户端。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "web",
+        "iOS",
+        "Android"
+      ],
+      "intro": "Grok 是 xAI 推出的 AI 助手，以风格活泼、敢说敢答和较强的实时信息获取能力为特色，可以直接读取 X（原推特）上的公开讨论，帮助了解最新热点与舆论走向。它能完成问答、写作、翻译、代码生成等常见任务，也支持图片理解与图像生成，并带有深度检索模式，方便围绕一个话题收集多方信息。使用上以网页版和官方手机应用为主，登录账号后即可对话和生成内容，暂未推出正式的电脑客户端，适合关注实时资讯、喜欢轻松交流风格的用户。"
+    },
+    {
+      "id": "chatgpt",
+      "code": "TG-000035",
+      "name": "ChatGPT",
+      "category": "AI",
+      "tags": [
+        "AI",
+        "聊天"
+      ],
+      "icon": "ChatGPT.png",
+      "url": "https://chatgpt.com/",
+      "description": "OpenAI 开发的 AI 对话助手，支持文本、图像和代码生成。",
+      "supplement": "既可在网页上直接使用，也提供 Windows 与 Mac 电脑客户端以及 iOS、安卓手机应用。登录同一账号后，各端的对话记录可以接着继续。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "iOS",
+        "Android",
+        "web"
+      ],
+      "intro": "ChatGPT 是 OpenAI 推出的 AI 对话助手，可用于写作、翻译、编程、数据分析和日常答疑。它能理解上传的图片与文档，围绕文件内容提问或总结，也能生成图像并通过联网搜索获取较新的信息；付费方案还可使用更强的模型以及语音、视频等实时对话功能。使用方式上，既可以直接在浏览器中打开，也提供 Windows 与 Mac 电脑客户端以及 iOS、安卓手机应用，登录同一账号即可在各端同步历史对话，适合学生、开发者和需要日常文字与信息处理助手的普通用户。"
+    },
+    {
+      "id": "deepseek",
+      "code": "TG-000036",
+      "name": "DeepSeek",
+      "category": "AI",
+      "tags": [
+        "AI",
+        "聊天"
+      ],
+      "icon": "DeepSeek.png",
+      "url": "https://www.deepseek.com/",
+      "chat_url": "https://chat.deepseek.com/",
+      "description": "深度求索开发的 AI 助手，擅长推理和代码生成。",
+      "supplement": "除网页版外，官方还提供 iOS、安卓手机应用和桌面客户端。电脑端安装时注意匹配机型：Windows 版面向 64 位系统，Mac 版需要 Apple 芯片并运行较新的 macOS。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "iOS",
+        "Android",
+        "web"
+      ],
+      "architectures": [
+        "x64",
+        "Apple Silicon"
+      ],
+      "intro": "DeepSeek 是深度求索推出的 AI 助手，以推理能力和代码编写见长，回答问题时会把思考过程展开，便于核对与学习。它能完成问答、写作、翻译、数学与逻辑推理、代码生成与调试等任务，支持上传文档后围绕内容提问，并可通过联网搜索补充较新信息。除网页版外，官方还提供 iOS、安卓手机应用以及电脑客户端，桌面端可后台运行并读写本地文件，适合处理耗时较长的任务，对需要长文本处理、编程辅助或希望免费体验较强推理模型的用户比较友好。"
+    },
+    {
+      "id": "kimi",
+      "code": "TG-000037",
+      "name": "Kimi",
+      "category": "AI",
+      "tags": [
+        "AI",
+        "聊天"
+      ],
+      "icon": "kimi.png",
+      "url": "https://www.kimi.com/",
+      "description": "月之暗面开发的长文本 AI 助手，支持超长上下文和文档解读。",
+      "supplement": "官方提供 Windows 与 macOS 桌面客户端，Mac 分公司芯片与 Intel 两个版本，另有 iOS、Android、鸿蒙手机应用，网页版可直接对话。手机、电脑与网页之间的聊天记录可以同步，桌面端还支持挂载本地文件夹与浏览器自动化。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Android",
+        "iOS",
+        "web",
+        "其他"
+      ],
+      "architectures": [
+        "x64",
+        "Apple Silicon"
+      ],
+      "intro": "Kimi 是一款擅长长文本与复杂任务的 AI 助手，可以一次读入论文、财报、合同等长篇材料，通读后总结要点并回答细节提问。日常问答、联网搜索之外，它还能把零散资料整理成结构化的研究报告和演示文稿，并通过插件接入专业数据源。对开发者提供终端与编辑器里的编程助手，桌面端进一步支持挂载本地文件夹、定时执行任务和浏览器自动化，适合需要长期处理大量文档的科研、金融与办公人群。"
+    },
+    {
+      "id": "qwen-studio",
+      "code": "TG-000038",
+      "name": "Qwen Studio",
+      "category": "AI",
+      "tags": [
+        "AI",
+        "聊天"
+      ],
+      "icon": "Qwen Studio.png",
+      "url": "https://qwen.ai/",
+      "chat_url": "https://chat.qwen.ai/",
+      "description": "阿里巴巴开发的通义千问 AI 平台。",
+      "supplement": "以网页版为主要入口，打开站点即可直接对话，不需要安装任何客户端，跨设备用浏览器访问即可。目前未在官方渠道见到与本站点同名的桌面端或手机客户端。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "web"
+      ],
+      "intro": "Qwen 官方平台提供的对话入口，打开网页就能直接向通义千问系列模型提问，无需下载安装。日常可以用它查询资料、润色文字、解释代码、翻译外语，也能上传图片做识别与理解，长文档一次读入后可以逐条追问，回答通常会附上推理过程与可核查的参考链接。同一账号在不同设备上打开浏览器即可接着用，适合把它当作随开随用的通用 AI 助手，临时遇到问题不必先找软件。"
+    },
+    {
+      "id": "qianwen",
+      "code": "TG-000039",
+      "name": "千问",
+      "category": "AI",
+      "tags": [
+        "AI",
+        "聊天"
+      ],
+      "icon": "qwen.png",
+      "url": "https://www.qianwen.com/",
+      "description": "通义千问在线对话平台，提供智能问答和创作辅助。",
+      "supplement": "官方同时提供电脑客户端、Mac 客户端以及 iOS、Android 手机应用，网页版也能直接使用。内置对话问答、文档解读、PPT 生成与定时任务等能力，电脑与手机之间的使用记录可以衔接。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Android",
+        "iOS",
+        "web"
+      ],
+      "intro": "千问是阿里推出的全能型 AI 助手，主打能聊天更会办事：多轮对话、联网问答之外，它可以直接交付成品文件，一句话生成网页、应用、PPT、Word、Excel 或图片，打开即用。内置工作助理与定时任务，到点自动执行并把结果送回来；语音通话、智能体广场、文档解读、代码处理与学习辅导覆盖了办公、创作和做题讲题等场景，适合学生、职场人和需要快速出活的内容创作者。"
+    },
+    {
+      "id": "doubao",
+      "code": "TG-000040",
+      "name": "豆包",
+      "category": "AI",
+      "tags": [
+        "AI",
+        "聊天"
+      ],
+      "icon": "doubao.png",
+      "url": "https://www.doubao.com/",
+      "description": "字节跳动开发的 AI 助手，支持对话、创作和图像生成。",
+      "supplement": "官方提供 Windows 与 macOS 桌面客户端，以及 iOS、Android 手机应用，网页版可直接使用。桌面端支持悬浮球快捷唤起，手机与电脑的对话记录可以接着聊，Mac 安装包同时适配 Intel 与 Apple 芯片。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Android",
+        "iOS",
+        "web"
+      ],
+      "architectures": [
+        "x64",
+        "Apple Silicon"
+      ],
+      "intro": "豆包是字节跳动推出的 AI 助手，日常问答、资料总结、写作润色、翻译和编程辅助都能胜任。它支持上传图片与文档做识别解读，一句话生成图片、视频与演示文稿；工作任务模式下可调用浏览器和技能自动跑完流程，桌面端用悬浮球随时呼出，不用离开当前应用。语音输入与通话表现自然，手机和电脑之间的对话记录能接着聊，适合学生、上班族和想随手用 AI 处理杂事的人。"
+    },
+    {
+      "id": "witch-clipboard",
+      "code": "TG-000041",
+      "name": "Witch Clipboard",
+      "category": "工具",
+      "tags": [
+        "工具"
+      ],
+      "icon": "Witch Clipboard.png",
+      "github": "https://github.com/witchscottishfoldcat/WitchClipboard",
+      "description": "桌面剪贴板管理器。自动分类、来源搜索、关联配置、本地加密与端到端加密同步",
+      "supplement": "目前只发行 Windows 版本，既有安装包也有免安装便携包，另有面向 Windows ARM 设备的实验性构建，macOS 与 Linux 暂无官方版本。剪贴板历史默认只保存在本机并加密，可选加密云同步与局域网传输。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows"
+      ],
+      "architectures": [
+        "x64",
+        "arm64"
+      ],
+      "intro": "Witch Clipboard 常驻系统托盘，把复制过的文字、截图和文件统一留存下来，之后既能按内容搜索，也能按当初复制它的程序筛选找回。它自动把条目归入链接、代码、密钥、颜色、路径等类型，支持置顶、标签和分类筛选，还会把短时间内连续复制的模型名、接口地址等内容自动归为一组。历史记录默认只留在本机并加密保存，可标记密码管理器等敏感内容不入库；需要跨设备时再开启端到端加密同步或局域网传输，适合频繁复制粘贴的办公与开发场景。"
+    },
+    {
+      "id": "lightc",
+      "code": "TG-000042",
+      "name": "LightC",
+      "category": "工具",
+      "tags": [
+        "工具",
+        "清理"
+      ],
+      "icon": "LightC-2.png",
+      "url": "https://www.lightc.app/",
+      "github": "https://github.com/Chunyu33/light-c",
+      "author_url": "https://space.bilibili.com/387797235",
+      "description": "LightC 是一款 Windows 桌面工具，提供安全垃圾清理、磁盘分析和系统维护功能",
+      "supplement": "专为 Windows 打造，只提供 64 位版本，官网给出标准安装包、绿色便携包和内置运行环境的离线安装包三种选择。没有手机端和网页版，使用前建议先备份重要数据。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows"
+      ],
+      "architectures": [
+        "x64"
+      ],
+      "intro": "LightC 专注解决 C 盘爆红：扫描并清理系统与软件缓存、聊天软件积压的缓存、大文件、卸载残留、旧驱动和注册表冗余，还能对比两次扫描结果看清空间被谁吃掉，并逐层分析大目录。每一类垃圾都标注安全等级，聊天记录等数据被固定为不可勾选，拿不准的条目默认不替你勾；软件本体带官方签名，可在安装前核对是否被动过手脚，适合想让系统保持轻快又担心误删的普通用户。"
+    },
+    {
+      "id": "ai-cubby",
+      "code": "TG-000043",
+      "name": "AI 小抽屉",
+      "category": "工具",
+      "tags": [
+        "工具"
+      ],
+      "icon": "AI 小抽屉.png",
+      "url": "https://www.aicubby.app/",
+      "github": "https://github.com/miragecoa/AI-Cubby",
+      "description": "把散落的文件、应用、备注和使用记录整理成一个完全本地的私人资源库，让你想得起来，就找得到。",
+      "supplement": "目前仅提供 Windows 版本，官网同时给出免安装的便携压缩包，解压即可使用，无需注册账号。数据全部保存在本地，macOS 与 Linux 支持仍在官方规划中。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows"
+      ],
+      "architectures": [
+        "x64"
+      ],
+      "intro": "AI Cubby 想解决的是桌面上什么都找不到的问题：它在后台安静记录你打开过的文件、程序和桌面快捷方式，把散落的图片、安装包、文档、游戏与文件夹汇成一个可搜索的本地资料库。重要条目可以打标签、写备注、置顶，也能按类型筛选，用记得住的线索而不是精确文件名来检索；打开次数、使用时长和最近使用时间会一并记下。数据全部留在本机，适合桌面文件越堆越多、又不想手动整理的重度电脑用户。"
+    },
+    {
+      "id": "class-widgets-2",
+      "code": "TG-000044",
+      "name": "Class-Widgets-2",
+      "category": "工具",
+      "tags": [
+        "工具"
+      ],
+      "icon": "Class-Widgets-2.png",
+      "github": "https://github.com/RinLit-233-shiroko/Class-Widgets-2",
+      "author_url": "https://space.bilibili.com/569522843",
+      "description": "把课表做成桌面小组件，支持多周课表切换与考试倒计时。",
+      "supplement": "官方同时发布 Windows 与 macOS 版本：Windows 提供安装程序和免安装压缩包，macOS 分别给出 Intel 与 Apple 芯片两种安装镜像。暂时没有手机端和网页版，程序会内置更新功能。",
+      "listed_at": "2026-09-21 00:40:14",
+      "systems": [
+        "Windows",
+        "macOS"
+      ],
+      "architectures": [
+        "x64",
+        "Apple Silicon"
+      ],
+      "intro": "Class Widgets 2 是一款常驻桌面的电子课程表，以小组件形式显示当前课程、下一节课程和今日剩余安排，上课、课间与放学状态自动切换并弹出提醒。内置课表编辑器，可导入多种格式的课表文件，支持按周次显示不同安排；还能加入事件倒计时（例如考试、活动）和浮动小部件，主题、配色、字号与显示位置都能自行调整。附带插件广场可继续扩展功能，适合学生日常看课表，也适合教室大屏投放使用。"
+    },
+    {
+      "id": "recordly",
+      "code": "TG-000045",
+      "name": "Recordly",
+      "category": "剪辑",
+      "tags": [
+        "工具",
+        "剪辑"
+      ],
+      "icon": "Recordly.png",
+      "url": "https://recordly.dev/",
+      "github": "https://github.com/webadderallorg/Recordly",
+      "description": "Recordly是一款开源屏幕录制和编辑工具，适用于制作演示视频、产品视频等。 接受 PR。",
+      "supplement": "提供 Windows、macOS 与 Linux 桌面客户端，Mac 区分 Intel 与 Apple 芯片，Windows 为安装程序，Linux 为免安装的镜像文件。官方还给出 Homebrew 与 AUR 两种包管理器安装方式，没有手机端和网页版。",
+      "listed_at": "2026-09-21 22:35:47",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Linux"
+      ],
+      "architectures": [
+        "x64",
+        "Apple Silicon"
+      ],
+      "intro": "Recordly 是一款开源的屏幕录制与视频编辑工具，录完可以在同一个界面里直接做后期，不必在多个软件之间来回搬运素材。它能根据鼠标活动自动生成缩放动效，提供光标平滑、点击反馈与运动模糊，还可加入摄像头画中画气泡、裁剪画面、加速减速、文字图片标注和额外音轨；背景支持壁纸、纯色与渐变，并带圆角、模糊和阴影效果，成片可导出 MP4 或 GIF，适合制作产品演示、教学讲解和操作教程的创作者。"
+    },
+    {
+      "id": "minecraftworldbrowser",
+      "code": "TG-000046",
+      "name": "Minecraft Java 世界浏览器",
+      "category": "工具",
+      "tags": [
+        "游戏",
+        "工具",
+        "MC"
+      ],
+      "icon": "Minecraft Java 世界浏览器.png",
+      "github": "https://github.com/Aaron88915/MinecraftWorldBrowser",
+      "description": "MinecraftWorldBrowser是集中查找、浏览、筛选、备份和恢复散落在不同启动器与实例中的 Minecraft Java 世界。",
+      "supplement": "以单个免安装的 Windows 程序分发，下载后双击即可运行，需要系统已启用 .NET Framework 运行环境，建议 Windows 10 或更高版本。没有网页版和手机版，扫描过程只读取文件。",
+      "listed_at": "2026-09-21 22:47:23",
+      "systems": [
+        "Windows"
+      ],
+      "intro": "Minecraft Java 世界浏览器用来收拾散落在各个启动器与实例里的存档。它会自动扫描常见启动器的游戏目录和整合包结构，把找到的世界集中列出，显示世界名称、游戏版本、游戏模式、加载器、存档大小与真实路径，并支持搜索以及按版本、模式、收藏状态筛选和表头排序。选中的存档可以一键打包成 ZIP 备份并记录原位置，需要时再恢复回原处；配合标签、备注与备份历史，适合同时玩多个整合包、存档越攒越多的玩家。"
+    },
+    {
+      "id": "steelylink-tools",
+      "code": "TG-000047",
+      "name": "SteelyLink-Tools",
+      "category": "工具",
+      "tags": [
+        "工具"
+      ],
+      "icon": "SteelyLink-Tools.png",
+      "url": "https://tools.steelylink.com/",
+      "github": "https://github.com/SteelyLink/SteelyLink-Tools",
+      "description": "111 个专业在线工具，从不接触你的文件。每一个工具都完整运行在你自己的浏览器里。 不上传、不注册、不追踪、不收费。",
+      "supplement": "纯网页工具集，全部功能都在浏览器本地运行，文件不会被上传，也无需注册或安装客户端。电脑和手机浏览器打开网页即可直接使用，关闭页面后不留下数据。",
+      "listed_at": "2026-09-21 23:02:59",
+      "systems": [
+        "web"
+      ],
+      "intro": "SteelyLink Tools 收集了上百个日常用得上的在线小工具，覆盖图片压缩与格式转换、PDF 合并分割与加解密、JSON 格式化与校验、哈希与 Base64 编码、二维码生成识别、单位与进制换算、音频裁剪合并、汇率与银行卡信息查询，以及游戏灵敏度换算等类别，按分类排好点开即用。所有计算都在浏览器本地完成，文件不会上传服务器，也不需要注册或付费，处理敏感文档时相对放心，适合临时遇到格式转换、开发调试或办公小需求的人。"
+    },
+    {
+      "id": "fileconverter",
+      "code": "TG-000048",
+      "name": "FileConverter",
+      "category": "工具",
+      "tags": [
+        "工具"
+      ],
+      "icon": "FileConverter.png",
+      "url": "https://file-converter.io/",
+      "github": "https://github.com/Tichau/FileConverter",
+      "description": "文件转换器是一个非常简单的工具，允许你通过Windows资源管理器的右键菜单转换和压缩一个或多个文件。",
+      "supplement": "只支持 Windows，装好后通过资源管理器右键菜单批量转换和压缩文件，无需打开主界面操作。官方主推 64 位安装包，旧版本另有 32 位安装包可供老机器使用，没有网页版和手机版。",
+      "listed_at": "2026-09-21 23:11:06",
+      "systems": [
+        "Windows"
+      ],
+      "architectures": [
+        "x64",
+        "x86"
+      ],
+      "intro": "File Converter 把格式转换做成右键菜单里的一步操作：在资源管理器里选中一个或多个文件，右键挑好目标格式即可批量转换或压缩，不必先打开软件再逐个导入。它覆盖音频、视频、图片与文档等常见格式之间的互转，也能把视频转成 GIF、把图片或文档合成 PDF；转换预设可以自行增删并调整参数，常用操作能保存成自己的右键选项，适合经常需要批量改格式、又不想研究复杂转码软件的普通用户。"
+    },
+    {
+      "id": "tabbit",
+      "code": "TG-000049",
+      "name": "Tabbit",
+      "category": "工具",
+      "tags": [
+        "工具"
+      ],
+      "icon": "Tabbit.png",
+      "url": "https://www.tabbit.com/",
+      "description": "内置了AI的浏览器",
+      "listed_at": "2026-10-05 13:44:54",
+      "systems": [
+        "Windows",
+        "macOS"
+      ]
+    },
+    {
+      "id": "removebg",
+      "code": "TG-000050",
+      "name": "removebg",
+      "category": "工具",
+      "tags": [
+        "工具"
+      ],
+      "url": "https://www.remove.bg/",
+      "description": "抠图网站",
+      "listed_at": "2026-10-05 13:47:33"
+    },
+    {
+      "id": "iconkitchen",
+      "code": "TG-000051",
+      "name": "IconKitchen",
+      "category": "工具",
+      "tags": [
+        "工具"
+      ],
+      "url": "https://icon.kitchen/",
+      "description": "各平台图标制作网站",
+      "listed_at": "2026-10-05 13:48:53",
+      "systems": [
+        "web"
+      ]
+    },
+    {
+      "id": "gsmanager",
+      "code": "TG-000052",
+      "name": "GSManager",
+      "category": "工具,游戏",
+      "tags": [
+        "工具",
+        "游戏"
+      ],
+      "url": "https://www.gsmanager.cn/",
+      "description": "专为简化游戏服务器的部署、管理和维护而设计",
+      "listed_at": "2026-10-05 13:50:19"
+    }
+  ]
+}

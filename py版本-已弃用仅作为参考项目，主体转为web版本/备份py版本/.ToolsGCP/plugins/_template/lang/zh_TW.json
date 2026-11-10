@@ -1,0 +1,15 @@
+{
+  "nav_title": "我的外掛",
+  "nav_home": "首頁",
+  "nav_stats": "統計",
+
+  "title": "我的外掛",
+  "intro": "這是 ToolsGCP 外掛範本。改 app.py / ui / core 裡的程式碼，就能變成你自己的外掛。",
+
+  "stats_line": "資源庫共 {total} 個程式，{categories} 個類別，{repo} 個有程式碼倉庫",
+  "open_times": "這個外掛已經被開啟 {n} 次（存在外掛自己的 data 目錄裡）",
+
+  "stats_title": "統計分析",
+  "search_placeholder": "輸入關鍵字，Enter 搜尋資源庫",
+  "search_button": "搜尋"
+}

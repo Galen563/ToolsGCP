@@ -1,0 +1,39 @@
+=== 语法 / 导入 ===
+PY_COMPILE OK
+IMPORT OK
+JS OK app.js
+JS OK icons.js
+JS OK rich-input.js
+JSON OK
+
+=== Python 套件 ===
+test_ai_thinking_stream            PASS
+test_ai_versions                   PASS
+test_ai_regen_behavior             PASS
+test_ai_assistant_branch_tree      PASS
+test_ai_error_i18n                 PASS
+test_boot_screen_theme             PASS
+test_browser_mode_tray             PASS
+test_browser_tab_icon              PASS
+test_settings_sync                 PASS
+test_op_log_path                   PASS
+test_splash_theme                  PASS
+test_traymenu_hover                PASS
+test_restart_relay                 PASS
+test_autostart_toggle              PASS
+
+=== Node（不需要 mock 服务）===
+test_ai_pure_logic                 PASS
+test_cards_contracts               PASS
+test_r2_visual_css                 PASS
+
+=== Node（需要 mock 服务）===
+test_cards_layout_matrix           PASS
+settings_probe_jsdom               PASS
+test_input_menu_click              PASS
+test_unsaved_dialog_removed        PASS
+test_ai_jsdom(11 用例)           PASS
+test_ai_version_scroll             PASS
+test_i18n_english_leak             PASS(见报告)
+
+SWEEP_DONE

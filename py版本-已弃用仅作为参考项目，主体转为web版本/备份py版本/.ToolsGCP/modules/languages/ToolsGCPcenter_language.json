@@ -1,0 +1,132 @@
+{
+  "tools_gcp_title": {
+    "简体中文": "收藏",
+    "繁體中文": "收藏",
+    "English": "Favorites"
+  },
+  "folders": {
+    "简体中文": "收藏夹",
+    "繁體中文": "收藏夾",
+    "English": "Folders"
+  },
+  "new_folder": {
+    "简体中文": "新建收藏夹",
+    "繁體中文": "新增收藏夾",
+    "English": "New Folder"
+  },
+  "rename_folder": {
+    "简体中文": "重命名",
+    "繁體中文": "重新命名",
+    "English": "Rename"
+  },
+  "delete_folder": {
+    "简体中文": "删除",
+    "繁體中文": "刪除",
+    "English": "Delete"
+  },
+  "default_folder": {
+    "简体中文": "默认收藏夹",
+    "繁體中文": "預設收藏夾",
+    "English": "Default"
+  },
+  "empty": {
+    "简体中文": "这个收藏夹还是空的，去搜索页点卡片上的收藏图标添加吧",
+    "繁體中文": "這個收藏夾還是空的，去搜尋頁點卡片上的收藏圖示新增吧",
+    "English": "This folder is empty. Tap the bookmark icon on a card to add one."
+  },
+  "hint": {
+    "简体中文": "点卡片上的收藏图标可以取消收藏",
+    "繁體中文": "點卡片上的收藏圖示可以取消收藏",
+    "English": "Click the bookmark icon on a card to remove it"
+  },
+  "count": {
+    "简体中文": "共 {n} 项",
+    "繁體中文": "共 {n} 項",
+    "English": "{n} items"
+  },
+  "folder_created": {
+    "简体中文": "已新建收藏夹",
+    "繁體中文": "已新增收藏夾",
+    "English": "Folder created"
+  },
+  "folder_renamed": {
+    "简体中文": "已重命名",
+    "繁體中文": "已重新命名",
+    "English": "Folder renamed"
+  },
+  "folder_deleted": {
+    "简体中文": "已删除收藏夹",
+    "繁體中文": "已刪除收藏夾",
+    "English": "Folder deleted"
+  },
+  "removed": {
+    "简体中文": "已取消收藏",
+    "繁體中文": "已取消收藏",
+    "English": "Removed from favorites"
+  },
+  "cannot_delete_default": {
+    "简体中文": "默认收藏夹不能删除或重命名",
+    "繁體中文": "預設收藏夾不能刪除或重新命名",
+    "English": "The default folder cannot be deleted or renamed"
+  },
+  "coming_soon": {
+    "简体中文": "功能开发中...",
+    "繁體中文": "功能開發中...",
+    "English": "Feature Coming Soon..."
+  },
+  "cancel": {
+    "简体中文": "取消",
+    "繁體中文": "取消",
+    "English": "Cancel"
+  },
+  "cancel_move": {
+    "简体中文": "取消移动",
+    "繁體中文": "取消移動",
+    "English": "Cancel move"
+  },
+  "move_confirm": {
+    "简体中文": "确定移动",
+    "繁體中文": "確定移動",
+    "English": "Move"
+  },
+  "move_items": {
+    "简体中文": "批量移动",
+    "繁體中文": "批次移動",
+    "English": "Move in bulk"
+  },
+  "move_to": {
+    "简体中文": "移动到",
+    "繁體中文": "移動到",
+    "English": "Move to"
+  },
+  "moved": {
+    "简体中文": "已把 {n} 个移动到「{folder}」",
+    "繁體中文": "已把 {n} 個移動到「{folder}」",
+    "English": "Moved {n} item(s) to \"{folder}\""
+  },
+  "need_other_folder": {
+    "简体中文": "只有一个收藏夹，先新建一个再移动吧",
+    "繁體中文": "只有一個收藏夾，先新建一個再移動吧",
+    "English": "Only one folder exists — create another one first"
+  },
+  "nothing_selected": {
+    "简体中文": "你还没有勾选任何项",
+    "繁體中文": "你還沒有勾選任何項",
+    "English": "Nothing selected yet"
+  },
+  "select_all": {
+    "简体中文": "全选",
+    "繁體中文": "全選",
+    "English": "Select all"
+  },
+  "default_folder_reserved": {
+    "简体中文": "默认收藏夹不能改名或删除",
+    "繁體中文": "預設收藏夾不能改名或刪除",
+    "English": "The default folder cannot be renamed or deleted"
+  },
+  "confirm_delete_folder": {
+    "简体中文": "确定要删除收藏夹「{name}」吗？\n里面的 {n} 项收藏也会一起删除。",
+    "繁體中文": "確定要刪除收藏夾「{name}」嗎？\n裡面的 {n} 項收藏也會一起刪除。",
+    "English": "Delete the folder \"{name}\"?\nIts {n} saved item(s) will be removed too."
+  }
+}

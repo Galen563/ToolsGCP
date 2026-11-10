@@ -1,0 +1,3425 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark" data-accent="blue">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark light">
+<title>ToolsGCP</title>
+<!-- 浏览器模式（Ctrl+Shift+O）页签要显示**程序图标**：
+     ⚠️ 必须显式声明 favicon，否则浏览器只会按同源根目录去找 /favicon.ico，
+        本地 WSGI（webhost）没有这个文件 → 页签只剩默认地球图标。
+        logo.png 就是程序图标本体（180×180 PNG，现代浏览器直接支持 PNG favicon），
+        走既有的 /res/<name> 路由（= .ToolsGCP/logo.png），不新增任何路由/文件。
+        桌面端 WebView2 的窗口图标由 native/appicon.py 单独设，和这里无关。 -->
+<link rel="icon" type="image/png" href="/res/logo.png">
+<link rel="apple-touch-icon" href="/res/logo.png">
+
+<!-- 首帧就上主题 + 底色：深色启动不会闪白
+     ⚠️⚠️ 本轮修复「浅色主题程序窗口中的启动加载画面背景仍为深色主题」的**真根因**。
+     用户看的"窗口中的启动加载画面"是 webui 的 .boot-screen（不是 splash.py 那个
+     180px 原生浮窗 —— 那个已被离屏+真机取证证明底色算对了）。
+     旧逻辑只有两个信息源：
+       ① localStorage['toolsgcp.theme'] —— 但 pywebview 默认 private_mode=True，
+          WebView2 跑在**每次全新的临时 profile** 里（实测 %APPDATA%\pywebview、
+          %LOCALAPPDATA%\pywebview 都不存在），这个键**每次启动必然为空**；
+       ② 退到系统 prefers-color-scheme —— 本机 Windows 应用模式是深色
+          （AppsUseLightTheme=0），于是"用户明明在软件里选了浅色主题，首帧仍是黑的"。
+     现在多了**第 0 个、也是最优先的信息源**：后端在 `/` 这条路由上把真实的
+     `theme` / `accent_color` 直接烘进 HTML（<meta id="tg-boot-theme">，
+     见 desktop/webhost.py 的 _boot_theme / _inject_boot_theme）。
+     后端本来就读得到那份配置，而且桌面端与浏览器模式共用同一个 WSGI app ⇒
+     **两端一起修好**，也不用去动 private_mode（改它会牵动 WebView2 profile 位置，
+     副作用大得多）。
+     ⚠️ 用 <meta> 属性而不是内联 JSON：这个脚本在 <head> 里、Vue 挂载之前跑，
+        任何异常都会让首帧白屏/黑屏，所以每一句都包在 try 里，
+        拿不到 meta 就退回原来那两级判定（行为不比旧版差）。 -->
+<script>
+  (function () {
+    var root = document.documentElement;
+    var dark = true;
+    var accent = '';
+    try {
+      var boot = document.getElementById('tg-boot-theme');
+      if (boot && boot.getAttribute('data-dark')) {
+        dark = boot.getAttribute('data-dark') === '1';
+        accent = boot.getAttribute('data-accent') || '';
+      }
+    } catch (e) { /* 没有 meta（比如直接开本地文件）：走下面的老逻辑 */ }
+    try {
+      if (!accent) {
+        var saved = localStorage.getItem('toolsgcp.theme');
+        if (!document.getElementById('tg-boot-theme')) {
+          dark = saved ? saved === 'dark'
+            : (!window.matchMedia || window.matchMedia('(prefers-color-scheme: dark)').matches);
+        }
+        accent = localStorage.getItem('toolsgcp.accent') || 'blue';
+      }
+      root.setAttribute('data-theme', dark ? 'dark' : 'light');
+      root.setAttribute('data-accent', accent || 'blue');
+      /* ⚠️ 底色必须跟着主题走：这一层是"页面内容合成之前"用户实际看到的颜色，
+         以前**写死** #1C1C1C（shell.py 建窗的 background_color 也是同一层黑），
+         浅色主题下就会露出黑底 —— 也就是用户说的"背景仍为深色"。 */
+      root.style.background = dark ? '#1C1C1C' : '#F3F4F7';
+    } catch (e) { /* 用默认深色 */ }
+  })();
+</script>
+
+<!-- 启动时不要框选第一个按钮 -------------------------------------------------
+     宿主（WebView）/浏览器在装载后会把焦点交给页面里第一个可聚焦元素，
+     也就是左侧栏的展开按钮 <button class="nav-burger">，表现为一启动就有个框框
+     选中它。这里只清理**用户还没操作过**时的自动聚焦：
+       · 用户一旦按下鼠标/键盘/滚轮（touched=true），焦点行为完全交回浏览器；
+       · 输入框（input/textarea/select/contenteditable）的自动聚焦是有意的，不动它；
+     配合 base.css 的 :focus-visible 规则：键盘 Tab 仍有清晰焦点环（无障碍保留），
+     鼠标点击 / 程序聚焦不会再出现焦点框。-->
+<script>
+  (function () {
+    var touched = false;
+    ['mousedown', 'pointerdown', 'keydown', 'touchstart', 'wheel'].forEach(function (ev) {
+      window.addEventListener(ev, function () { touched = true; }, true);
+    });
+    function isField(el) {
+      if (!el || !el.tagName) return false;
+      if (el.isContentEditable) return true;
+      var t = el.tagName.toLowerCase();
+      return t === 'input' || t === 'textarea' || t === 'select';
+    }
+    function dropAutoFocus() {
+      if (touched) return;
+      var el = document.activeElement;
+      if (!el || el === document.body || el === document.documentElement) return;
+      if (isField(el)) return;
+      if (typeof el.blur === 'function') el.blur();
+    }
+    document.addEventListener('focusin', dropAutoFocus, true);
+    ['DOMContentLoaded', 'load'].forEach(function (ev) {
+      window.addEventListener(ev, function () {
+        dropAutoFocus();
+        setTimeout(dropAutoFocus, 0);
+        setTimeout(dropAutoFocus, 150);
+        setTimeout(dropAutoFocus, 600);
+      });
+    });
+  })();
+</script>
+
+<!-- Tailwind 运行时：本地优先，缺失时 CDN 兜底-->
+<script src="/static/js/vendor/tailwind.js"
+        onerror="var s=document.createElement('script');s.src='https://cdn.tailwindcss.com/3.4.16';document.head.appendChild(s);"></script>
+<script>
+  if (window.tailwind) {
+    tailwind.config = {
+      darkMode: ['selector', '[data-theme="dark"]'],
+      corePlugins: { preflight: false },
+      theme: {
+        extend: {
+          fontFamily: { ui: ['var(--ui-font)'] },
+          colors: {
+            page: 'var(--page)', card: 'var(--card-solid)', ink: 'var(--text)',
+            ink2: 'var(--text-secondary)', ink3: 'var(--text-disabled)',
+            accent: 'var(--accent)', accentsoft: 'var(--accent-soft)',
+            line: 'var(--divider)', danger: 'var(--danger)',
+            ok: 'var(--success)', warn: 'var(--warning)',
+          },
+        },
+      },
+    };
+  }
+</script>
+
+<!-- Vue 3 全局构建-->
+<script src="/static/js/vendor/vue.global.prod.js"
+        onerror="var s=document.createElement('script');s.src='https://unpkg.com/vue@3.5.13/dist/vue.global.prod.js';document.head.appendChild(s);"></script>
+<!-- 模块化 CSS（拆分自原 style.css，按职责分文件）-->
+<link rel="stylesheet" href="/static/css/variables.css">
+<link rel="stylesheet" href="/static/css/base.css">
+<link rel="stylesheet" href="/static/css/components.css">
+<link rel="stylesheet" href="/static/css/layout.css">
+<link rel="stylesheet" href="/static/css/animations.css">
+<link rel="stylesheet" href="/static/css/overlays.css">
+<!-- 各页面自己的补丁样式（必须放在所有既有 CSS 之后，保证覆盖顺序）-->
+<link rel="stylesheet" href="/static/css/fav-fixes.css">
+<link rel="stylesheet" href="/static/css/settings-fixes.css">
+<link rel="stylesheet" href="/static/css/download-fixes.css">
+<!-- 本批次补丁（下载页按钮行 / 制作器下载地址字段）-->
+<link rel="stylesheet" href="/static/css/r22-fixes.css">
+<!-- 云端资源库加载遮罩-->
+<link rel="stylesheet" href="/static/css/r24-fixes.css">
+<!-- 下载页 UI（进度条 / 速度 / 状态配色 / 清空下拉 / 右键菜单）-->
+<link rel="stylesheet" href="/static/css/download-ui.css">
+<!-- GCP-AI 聊天界面 5 项改造（发送按钮方形纸飞机 / 历史行手型 / 润色撤销 /
+     气泡版本导航与原地编辑 / 等待提示与流式输出）。必须在所有既有 CSS 之后。-->
+<link rel="stylesheet" href="/static/css/ai-fixes.css">
+
+<link rel="preload" as="image" href="/res/logo.png">
+</head>
+
+<body>
+<div id="app" v-cloak>
+
+<!-- ============ 无边框窗口的缩放热区 ============
+     窗口不再让 WebView2 内缩（内缩会在四周留一圈父窗口底色 = 用户说的"四周白边/黑边、
+     还加粗了"）。改成 8 个不可见的窄热区压在窗口最边缘：
+       · 宽度 6px（角落 10x10），完全透明、不显示任何颜色 → 视觉上没有边框；
+       · pointerdown → window.start_resize → 原生 WM_NCLBUTTONDOWN 模态缩放（和标题栏
+         拖动同一套系统循环，手感与系统窗口一致）；
+       · 光标形状交给 CSS（ns/ew/nwse-resize）；
+       · 最大化/全屏时整个容器 v-if 隐藏：此时不该再拖边（会把窗口拽出最大化）。
+     ⚠️ 层级 130：高于页面/插件页（120），低于模态弹窗（140）/toast/提示（160+）。-->
+<div class="win-resize" v-if="!win.fullscreen && !win.maximized" aria-hidden="true">
+  <span class="wr wr-t" @pointerdown.prevent="startResize('top')"></span>
+  <span class="wr wr-b" @pointerdown.prevent="startResize('bottom')"></span>
+  <span class="wr wr-l" @pointerdown.prevent="startResize('left')"></span>
+  <span class="wr wr-r" @pointerdown.prevent="startResize('right')"></span>
+  <span class="wr wr-tl" @pointerdown.prevent="startResize('topleft')"></span>
+  <span class="wr wr-tr" @pointerdown.prevent="startResize('topright')"></span>
+  <span class="wr wr-bl" @pointerdown.prevent="startResize('bottomleft')"></span>
+  <span class="wr wr-br" @pointerdown.prevent="startResize('bottomright')"></span>
+</div>
+
+
+<!-- ⚠️ 资源库加载提示（"正在寻找资源文件…"）**不再放在这里**。
+     需求：它以前是一层**全屏弹窗式**的浮层卡片（毛玻璃 + 圆角 + 阴影），
+     盖住整个窗口（连标题栏和左侧导航都一起盖掉），观感像"弹了个窗"。
+     → 现在改成**页面内**的加载 UI：直接放在搜索页 / 定制页 / 收藏页各自的
+       section 里，显示在**页面内容的空白中心**，不遮标题栏、不遮左侧导航、
+       也没有任何"浮起来的卡片"边框/阴影/毛玻璃（见 r24-fixes.css）。
+     → 三处页面的 markup 完全一样，这里不再重复贴；要看就去那三个 section 里。-->
+
+<!-- 主应用-->
+<div class="app-root" :class="{ 'is-fullscreen': win.fullscreen, 'is-maximized': win.maximized }">
+
+<!-- ══════════════════ 标题栏 48px ══════════════════
+     这里的三个按钮都是**自绘**的（desktop/shell.py 的 FRAMELESS_WINDOW=True），
+     点击不是模拟效果，而是直接发窗口命令：
+       minimize → window.minimize（ShowWindow SW_MINIMIZE）
+       最大化/还原 → window.toggle_maximize（铺满工作区，顶部栏保留）
+       关闭    → window.close（和系统 × 完全相同的 WM_CLOSE 路径）
+     · 全屏按钮作用于**整个程序**，不是只把顶部栏全屏；只有 F11 会完全全屏和退出完全全屏。
+       所以中间那个按钮改成了**最大化/还原整个程序**
+       （顶部栏仍然保留），真正的完全全屏只由 F11 触发（onKeydown → toggleFullscreen），
+       不再有任何鼠标入口，也不再显示右上角浮动"退出全屏"胶囊。
+     · 图标：未最大化用 i-fullscreen（镂空正方形），最大化后用 i-fullscreen_exit（双镂空正方形）。
+     · 按钮外面那圈 1px 轮廓已由 CSS 去掉（.tb-btn 不再画 border，focus 也不显示 outline）。-->
+<header class="titlebar fx-noise" :class="{ 'is-hidden': win.fullscreen }" @mousedown="onTitleDown" @dblclick="onTitleDouble">
+  <div class="titlebar-left">
+    <img class="titlebar-icon" src="/res/logo.png" alt="" draggable="false">
+    <span class="titlebar-title">{{ info.app }}</span>
+  </div>
+  <div class="titlebar-drag"></div>
+  <!-- 三个按钮：点击后发的是系统原生命令 ——
+       minimize     → frame.minimize（ShowWindow SW_MINIMIZE）
+       最大化/还原   → frame.toggle_maximize（铺满工作区；不是全屏，顶部栏保留）
+       关闭         → request_close（走和系统 × 完全相同的 WM_CLOSE 路径）
+       ⚠️ 用户反馈：全屏按钮应该是"整个程序最大化"而不是把标题栏也切掉；
+         完全全屏（隐藏标题栏）只允许 F11 → toggleFullscreen。
+       · 图标沿用 i-fullscreen（镂空正方形）/ i-fullscreen_exit（双镂空正方形）；
+       · title 跟随 win.maximized 在最大化 / 还原之间切换，syncWindow 会回填真实状态。-->
+  <div class="titlebar-buttons no-drag">
+    <button class="tb-btn" :title="t('title_minimize', '最小化')" :aria-label="t('title_minimize', '最小化')" @click="minimizeWindow" tabindex="-1">
+      <svg class="ic" width="12" height="12"><use href="#i-win_min"></use></svg>
+    </button>
+    <button class="tb-btn" :title="win.maximized ? t('title_restore', '还原') : t('title_maximize', '最大化')"
+            :aria-label="win.maximized ? t('title_restore', '还原') : t('title_maximize', '最大化')" @click="maximizeWindow" tabindex="-1">
+      <svg class="ic" width="12" height="12">
+        <use :href="win.maximized ? '#i-fullscreen_exit' : '#i-fullscreen'"></use></svg>
+    </button>
+    <button class="tb-btn tb-close" :title="t('title_close', '关闭')" :aria-label="t('title_close', '关闭')" @click="closeWindow" tabindex="-1">
+      <svg class="ic" width="12" height="12"><use href="#i-close"></use></svg>
+    </button>
+  </div>
+</header>
+
+<div class="app-body">
+
+<!-- ══════════════════ 左侧导航 ══════════════════-->
+<div class="nav-rail" @mouseenter="onNavEnter"></div>
+
+<nav class="nav" :class="{ 'is-expanded': navOpen, 'fx-noise': navOpen }" @mouseenter="onNavEnter" @mouseleave="onNavLeave">
+  <!-- 动态选中标（需求：像 py 版那样"来回滑动"的选中块）。
+       整块只有**一个**，位置/高度由 app.js 用 requestAnimationFrame 驱动：
+       缓动是 easeInOutCubic（起步慢 → 中间快 → 结束慢），
+       动画时长按移动距离算（跨度越大越久）—— 就是原版那种"有物理感"的滑动。-->
+  <span class="nav-indicator" :class="{ 'is-ready': navIndicator.ready }"
+        :style="{ transform: 'translateY(' + navIndicator.top + 'px)', height: navIndicator.height + 'px' }"></span>
+
+  <div class="nav-head">
+    <button class="nav-burger" :title="t('title_toggle_nav', '展开 / 收起导航')" tabindex="-1" @click="toggleNav">
+      <svg class="ic" width="16" height="16"><use href="#i-global_nav"></use></svg>
+    </button>
+  </div>
+
+  <div class="nav-group">
+    <button v-for="item in navTop" :key="item.key" class="nav-item"
+            :class="{ 'is-active': isActive(item.key) }" :title="item.label" @click="goto(item.key)">
+      <span class="nav-pill"></span>
+      <svg class="ic nav-icon" width="17" height="17"><use :href="'#i-' + item.icon"></use></svg>
+      <span class="nav-label">{{ item.label }}</span>
+    </button>
+  </div>
+
+  <div class="nav-divider"></div>
+  <div class="nav-spacer"></div>
+
+  <div class="nav-group nav-bottom">
+    <button v-for="item in navBottom" :key="item.key" class="nav-item"
+            :data-nav-key="item.key"
+            :class="{ 'is-active': isActive(item.key) }" :title="item.label" @click="goto(item.key)">
+      <span class="nav-pill"></span>
+      <svg class="ic nav-icon" width="17" height="17"><use :href="'#i-' + item.icon"></use></svg>
+      <span class="nav-label">{{ item.label }}</span>
+      <span v-if="item.key === 'notice' && unread.length" class="nav-badge">{{ unreadCount }}</span>
+      <!-- 下载红点。
+           ⚠️ 位置规则：
+             · 更多**没展开**时 → 红点在侧栏更多按钮的右上角；
+             · 更多**展开了** → 红点**快速移动**到浮层里下载那一项的最右侧。
+           ⚠️ 实现：两处都渲染同一个红点，靠 CSS 的位置 + transition 做"移动"动画：
+              moreOpen 时侧栏那个淡出、浮层那个淡入（视觉上就是"飞"过去了）。-->
+      <span v-if="item.key === 'more' && downloadBadge.count"
+            class="nav-badge nav-badge-dl" :class="{ 'is-moved': moreOpen }">
+        {{ downloadBadge.count }}
+      </span>
+    </button>
+  </div>
+</nav>
+
+<!-- 更多弹层-->
+<div v-if="moreOpen" class="more-pop fx-noise" @click.stop>
+  <button v-for="item in moreItems" :key="item.key" class="more-item"
+          :class="{ 'is-active': page === item.key }" @click="goto(item.key)">
+    <svg class="ic" width="14" height="14"><use :href="'#i-' + item.icon"></use></svg>
+    <span>{{ item.label }}</span>
+    <!-- 红点"飞"到这里（浮层里下载项的最右侧）-->
+    <span v-if="item.key === 'download' && downloadBadge.count"
+          class="nav-badge nav-badge-dl is-here">{{ downloadBadge.count }}</span>
+  </button>
+</div>
+<div v-if="moreOpen" class="pop-backdrop" @click="closePops"></div>
+
+<!-- ══════════════════ 卡片右键菜单（@给GCP-AI / 测 Ping） ══════════════════-->
+<transition name="pop">
+  <div v-if="cardMenu" class="card-menu" :style="{ left: cardMenu.x + 'px', top: cardMenu.y + 'px' }"
+       @contextmenu.prevent @click.stop>
+    <button class="card-menu-item" @click="cardMenuMention">
+      <svg class="ic" width="15" height="15"><use href="#i-at"></use></svg>
+      <span>{{ t('card_menu_mention', '@给GCP-AI') }}</span>
+    </button>
+    <button class="card-menu-item" @click="cardMenuPing">
+      <svg class="ic" width="15" height="15"><use href="#i-sync"></use></svg>
+      <span>{{ t('card_menu_ping', '测 Ping') }}</span>
+    </button>
+  </div>
+</transition>
+
+<!-- ══════════════════ 主内容区 ══════════════════-->
+<main class="content" @click="closeSidebar">
+
+<!-- 启动画面（需求：不要全屏盖住，而是在**内容区中央**显示一小块启动 UI）
+     ⚠️ 以前是 `position: fixed; inset: 0; z-index: 190` 的**全屏遮罩**，
+        连标题栏和左侧导航都盖掉 → 观感像"弹了个窗"。
+     → 后来改放进 <main class="content"> 里（absolute + inset:0 只覆盖内容区）。
+     ⚠️⚠️ **本轮按用户需求整块删除**（用户原话：「启动程序时有一瞬间出现了一个东西
+        严重偏离了中心的 ui 的启动画面，并且这个界面是深色主题背景的，然后又突然
+        切换到了浅色主题……我想把这个直接删除不要了」）。
+        删除范围只到**这层 webui 遮罩 UI**：
+          · `booting` 状态机本身**保留**（continueBoot / 隐私协议时序 / 启动步骤日志
+            都靠它，撤掉状态会把启动流程弄断）；
+          · 原生 splash.py 那个独立小浮窗**保留**（用户明确说只删这个覆盖层；
+            设置里「启动动画 / 启动动画时长」两行控制的是它）；
+          · 层级注释留档：以前 .boot-screen z190 必须低于协议弹窗 280，现在遮罩没了，
+            协议弹窗不再被任何东西压住 —— 少一层时序耦合，更稳。 -->
+
+<transition name="page" mode="out-in" @after-enter="onPageAfterEnter">
+  <!-- 首页（海报轮播页）已按需求整体删除：section / 轮播 / 圆点 / 海报发现
+       以及配套的 JS（app.js 里那 480 多行）和 CSS（layout.css 的 .carousel/.slide/.pip）
+       一起清掉了；images/posters/ 目录（5 张海报 6.4MB）也已删除
+       （它走的是通用 /res/image/<path> 路由，没有专门路由要拆）。
+       ⚠️ 现在第一个页面是搜索页；老配置 default_page="首页" 由后端迁移成"搜索"。
+       ⚠️ 下面托盘浮层里的 trayAction('home') **不是**这个首页：那个 key 的含义是
+          "显示主窗口"（对应 shell.py 的 handlers["home"] = show_window），保留不动。 -->
+
+  <!-- 搜索页-->
+  <section v-if="page === 'search' && (!detail || page !== detailPage)" class="page" key="search">
+    <!-- 资源库加载提示（页面内嵌版，不是弹窗卡片）-->
+    <resource-loading v-if="resourceLoading" :dots="loadingDots" :failed="resourceLoadFailed"
+                      @retry="retryResourceLoad" @use-local="useLocalResources"></resource-loading>
+    <div class="page-scroll" data-scroll-key="search" ref="searchScroll" @scroll.passive="onScrollArea">
+      <div class="search-content">
+        <div class="search-row">
+          <div class="search-box" :class="{ 'is-empty': !keyword }">
+            <svg class="ic search-lead" width="16" height="16"><use href="#i-search"></use></svg>
+            <input ref="searchInput" type="text" v-model="keyword" @keydown.enter="runSearch"
+                   :placeholder="t('search_placeholder', '搜索工具、功能或设置...')">
+            <button v-show="keyword" class="search-clear" :title="t('title_clear', '清除')" @click="clearKeyword">
+              <svg class="ic" width="11" height="11"><use href="#i-close"></use></svg>
+            </button>
+            <button v-if="!autoSearch" class="search-go" :title="t('search', '搜索')" @click="runSearch">
+              <svg class="ic" width="15" height="15"><use href="#i-search"></use></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="toolbar-row">
+          <button class="filter-btn" :class="{ 'is-checked': filterOpen }" @click="toggleFilter">
+            <span>{{ t('more_filters', '更多筛选') }}</span>
+            <span class="chevron" :style="{ transform: 'rotate(' + chevronDeg + 'deg)' }">
+              <svg class="ic" width="12" height="12"><use href="#i-chevron_down"></use></svg>
+            </span>
+          </button>
+          <span class="result-count">{{ resultText }}</span>
+          <span class="grow"></span>
+          <span class="sort-label">{{ t('sort_label', '排序') }}：</span>
+          <combo :model-value="sortKey" :options="sortOptions" :width="160" @change="sortKey = $event"></combo>
+          <div v-if="settings.search_show_view_switch" class="segmented view-seg">
+            <button class="seg-item" :class="{ 'is-on': viewMode === 'tile' }"
+                    :title="t('view_tile_tip', '磁贴视图：一行 4 张大卡片')" @click="setView('tile')">
+              <svg class="ic" width="15" height="15"><use href="#i-tiles"></use></svg>
+            </button>
+            <button class="seg-item" :class="{ 'is-on': viewMode === 'grid' }"
+                    :title="t('view_grid_tip', '网格视图：一行 6 张小卡片，只显示收藏按钮')" @click="setView('grid')">
+              <svg class="ic" width="15" height="15"><use href="#i-view"></use></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="filter-panel" :class="{ 'is-open': filterOpen }" :style="{ maxHeight: filterOpen ? panelH + 'px' : '0px' }">
+          <div class="filter-inner">
+            <p class="filter-hint">{{ t('filter_hint', '点下面的条件筛选，每组单选；点「全部」取消该组筛选') }}</p>
+            <div v-for="row in filterRows" :key="row.key" class="filter-row">
+              <span class="filter-row-label">{{ row.label }}</span>
+              <div class="filter-row-items">
+                <button v-for="option in row.options" :key="row.key + ':' + option.value"
+                        class="chip" :class="{ 'is-on': isFilterOn(row.key, option.value) }"
+                        @click="toggleFilterValue(row.key, option.value)">{{ option.label }}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="selectionBar" class="selection-bar">
+          <label class="sel-check">
+            <!-- 三态：none / some（半选，显示横线）/ all。原生 indeterminate 一旦被点击
+                 会自动变 checked=true → 全选；再点一次 checked=false → 取消全选，正好符合需求。-->
+            <input type="checkbox" :checked="allSelected" :indeterminate.prop="selState === 'some'"
+                   @change="selectAll($event.target.checked)">
+            <span>{{ t('select_all', '全选') }}</span>
+          </label>
+          <span class="sel-count">{{ selectedCount }} / {{ selectionItems.length }}</span>
+          <span class="grow"></span>
+          <button class="btn" @click="exitSelection">{{ t('cancel', '取消') }}</button>
+          <button class="btn btn-primary" @click="confirmSelection">{{ settings.deploy_mode
+            ? t('add_to_deploy', '添加到部署清单') : t('add_to_export_list', '添加到导出清单') }}</button>
+        </div>
+
+        <div class="vlist" :class="listAnim" ref="vlist">
+          <div class="vlist-spacer" :style="{ height: vTotal + 'px' }">
+            <template v-for="row in vRows" :key="row.key">
+              <div v-if="row.type === 'group'" class="vgroup" :style="{ top: row.top + 'px' }">
+                <span class="vgroup-title">{{ row.title }}</span>
+              </div>
+              <div v-else class="vrow" :style="{ top: row.top + 'px', height: row.height + 'px', gap: row.gap + 'px' }">
+                <article v-for="it in row.items" :key="it.code" class="card"
+                         :class="{ 'is-selected': it._sel, 'is-grid': viewMode === 'grid' }"
+                         :style="{ width: row.itemW + 'px', height: row.height + 'px' }"
+                         @click="onCardClick(it)" @contextmenu.prevent="openCardMenu(it, $event)">
+                  <span class="card-tint"></span>
+                  <div class="card-head">
+                    <span class="card-icon" :style="{ width: cardPx.icon + 'px', height: cardPx.icon + 'px' }">
+                      <img v-if="it.icon && !iconFailed(it)" :src="iconSrc(it)" :alt="it.name" @error="onIconError($event, it)">
+                      <span v-else class="glyph">{{ firstChar(it.name) }}</span>
+                    </span>
+                    <span class="card-title">{{ it.name }}</span>
+                    <!-- 选择模式下（从搜索页选择 → 添加到部署清单）：
+                         右上角不再显示收藏 / @GCP-AI，换成勾选框（需求）。-->
+                    <label v-if="selectionBar" class="card-select" @click.stop>
+                      <input type="checkbox" :checked="it._sel" @change="it._sel = $event.target.checked">
+                    </label>
+                    <div v-else class="card-btn-group">
+                      <button v-if="settings.ai_enabled" class="card-btn"
+                              :title="t('card_mention_tip', '@给GCP-AI：把这个资源带进 AI 输入框')"
+                              @click.stop="mentionAi(it)">
+                        <svg class="ic" :width="cardPx.buttonIcon" :height="cardPx.buttonIcon"><use href="#i-at"></use></svg>
+                      </button>
+                      <button class="card-btn" :class="{ 'is-fav': it._fav }"
+                              :title="it._fav ? t('card_favorite_added', '已收藏（点击取消收藏）') : t('card_favorite_add', '加入收藏')"
+                              @click.stop="toggleFavorite(it)">
+                        <svg class="ic" :width="cardPx.buttonIcon" :height="cardPx.buttonIcon">
+                          <use :href="it._fav ? '#i-star_solid' : '#i-star'"></use></svg>
+                      </button>
+                    </div>
+                  </div>
+                  <p class="card-desc" :style="{ '--lines': cardPx.lines }">{{ it.description }}</p>
+                  <div class="card-foot">
+                    <div class="card-divider"></div>
+                    <div class="row row-6">
+                      <span v-for="tag in visibleTags(it, tagAvail(it, row.itemW))" :key="tag" class="tag"
+                            :class="{ 'is-official': tag === '官方' }">{{ term(tag) }}</span>
+                      <span v-if="hiddenTagCount(it, tagAvail(it, row.itemW))" class="tag tag-more"
+                            :title="it.category.concat(it.tags || []).join('、')">+{{ hiddenTagCount(it, tagAvail(it, row.itemW)) }}</span>
+                      <span class="grow"></span>
+                      <!-- 需求：网格视图里 GitHub / 官网按钮之前被 v-if 隐藏了，现在恢复。
+                           ⚠️ 真正找到的 bug：外面原来套了一层**没有指令的 `<template>`**。
+                           Vue 3 对"没有 v-if / v-for 的 <template>"按**原生 template 元素**处理，
+                           内容是惰性文档片段（不参与布局、getBoundingClientRect 全 0）——
+                           所以按钮一直在 DOM 里、模板里也有，但用户就是"看不见"。
+                           去掉这层壳，直接放两个 button。-->
+                      <button v-if="settings.search_show_github && isHttp(it.github)" class="card-btn"
+                              :title="t('card_open_repo', '打开代码仓库') + '\n' + it.github"
+                              @click.stop="openLink(it.github, $event)">
+                        <svg class="ic" :width="cardPx.buttonIcon" :height="cardPx.buttonIcon"><use href="#i-github"></use></svg>
+                      </button>
+                      <!-- 卡片右下角**不再**放Releases / 下载按钮
+                           （搜索页还是定制页等等这个新增的下载按钮删除）。
+                           Releases 入口现在只留在**详情页**顶栏那一处。-->
+                      <button v-if="isHttp(it.url)" class="card-btn"
+                              :title="t('card_open_site', '打开官网') + '\n' + it.url"
+                              @click.stop="openLink(it.url, $event)">
+                        <svg class="ic" :width="cardPx.buttonIcon" :height="cardPx.buttonIcon"><use href="#i-globe"></use></svg>
+                      </button>
+                    </div>
+                    <!-- 新增下载页按钮 —— 在 Github / 官网按钮**下面**一行
+                         （在卡片ui界面中是在Github下面或者官网下面的也就是二者或一者的下面）。
+                         ⚠️ 单独一行、右对齐 ⇒ 视觉上就在上面那两个按钮的正下方。-->
+                    <div v-if="isHttp(it.download_page_url)" class="row row-6 card-foot-links">
+                      <span class="grow"></span>
+                      <button class="card-btn"
+                              :title="t('card_open_download_page', '打开下载页面') + '\n' + it.download_page_url"
+                              @click.stop="openLink(it.download_page_url, $event)">
+                        <svg class="ic" :width="cardPx.buttonIcon" :height="cardPx.buttonIcon"><use href="#i-download"></use></svg>
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              </div>
+            </template>
+          </div>
+
+          <div v-if="!filtered.length" class="vlist-empty">
+            <span class="muted">{{ emptyText }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 资源详情页（search / customize / favorites / deploy 都能进入；收藏界面左键点击也会照常进入对应卡片界面里面部署页双击对应条目跳转到对应界面）
+       ⚠️ 详情页只在**它原本来自的那个页面**上显示（detailPage）。
+          —— 也就是从搜索页进详情 → 切到收藏页 → 再切回搜索页，
+          详情还在（而不是变成一个空白的收藏页）。-->
+  <section v-if="(page === 'search' || page === 'customize' || page === 'favorites' || page === 'deploy')
+                && detail && page === detailPage" class="page" key="detail">
+    <div class="page-scroll" ref="detailScroll">
+      <div class="detail-wrap" v-if="detail">
+        <div class="detail-topbar">
+          <button class="btn btn-wide" :title="t('back_tip', '退出 Esc')" @click="closeDetail">
+            <svg class="ic" width="16" height="16"><use href="#i-left_arrow"></use></svg>{{ t('detail_back', '返回') }}
+          </button>
+          <span class="grow"></span>
+          <button v-if="isHttp(detail.github)" class="btn btn-wide"
+                  :title="t('card_releases_tip', '查看这个仓库的 Releases 并直接下载')"
+                  @click="openReleases(detail)">
+            <svg class="ic" width="16" height="16"><use href="#i-download"></use></svg>
+            {{ t('detail_releases', 'Releases') }}
+          </button>
+          <button class="btn btn-wide"
+                  :title="detail._fav ? t('unfavorite_tip', '点击取消收藏') : t('favorite_tip', '加入收藏')"
+                  @click="toggleFavorite(detail)">
+            <svg class="ic" width="16" height="16" :class="{ 'is-fav': detail._fav }"><use :href="detail._fav ? '#i-star_solid' : '#i-star'"></use></svg>
+            {{ detail._fav ? t('favorited', '已收藏') : t('favorite', '收藏') }}
+          </button>
+        </div>
+
+        <header class="detail-hero">
+          <span class="detail-icon">
+            <img v-if="detail.icon && !iconFailed(detail)" :src="iconSrc(detail)" :alt="detail.name" @error="onIconError($event, detail)">
+            <span v-else class="glyph">{{ firstChar(detail.name) }}</span>
+          </span>
+          <div class="detail-hero-text">
+            <h1 class="detail-name">{{ detail.name }}</h1>
+            <p class="cap">{{ t('detail_code_label', '编码：{code}').replace('{code}', detail.code) }}</p>
+            <p class="detail-desc">{{ detail.description }}</p>
+            <!-- 需求：标签要放在**左侧**（就在简介 text 下方），不是被推到最右侧。
+                 原来这里是 `row row-6 right`（右对齐），所以标签跑到右边去了。
+                 ⚠️ task-3 ④ 推广：标签为空 / 作者+聊天都没有时，**整行不渲染**
+                 （空 div 在 flex column gap 里仍占一格，会留一条看不见的空位）。 -->
+            <div v-if="detailTags.length" class="row row-6">
+              <span v-for="tag in detailTags" :key="tag" class="tag"
+                    :class="{ 'is-official': tag === '官方' }">{{ term(tag) }}</span>
+            </div>
+            <div v-if="isHttp(detail.author_url) || isHttp(detail.chat_url)" class="row row-8">
+              <button v-if="isHttp(detail.author_url)" class="btn btn-link"
+                      :title="detail.author_url" @click="openLink(detail.author_url, $event)">
+                <svg class="ic" width="16" height="16"><use href="#i-link"></use></svg>{{ t('row_author', '作者') }}
+              </button>
+              <button v-if="isHttp(detail.chat_url)" class="btn btn-link"
+                      :title="detail.chat_url" @click="openLink(detail.chat_url, $event)">
+                <svg class="ic" width="16" height="16"><use href="#i-link"></use></svg>{{ t('row_chat', '聊天') }}
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <div v-if="detail.variants && detail.variants.length > 1" class="variant-row">
+          <span class="cap">{{ t('variant_label', '版本') }}</span>
+          <div class="segmented variant-seg">
+            <button v-for="v in detail.variants" :key="v.key" class="seg-item"
+                    :class="{ 'is-on': activeVariant === v.key }" @click="chooseVariant(v)">{{ v.label || v.key }}</button>
+          </div>
+        </div>
+
+        <div class="detail-block">
+          <h2 class="detail-section-title">{{ t('section_intro', '应用介绍') }}</h2>
+          <div class="panel">
+            <p v-if="!introParagraphs.length" class="muted">{{ t('no_intro', '这个资源还没有填写应用介绍。') }}</p>
+            <p v-for="(paragraph, i) in introParagraphs" :key="i" class="para">{{ paragraph }}</p>
+            <p v-if="detail.supplement" class="para supplement">{{ detail.supplement }}</p>
+          </div>
+        </div>
+
+        <!-- ⚠️ task-3 ④：空字段（CPU 架构 / 适用系统 / 类别 / 上架时间…）由
+             detailRows 整行剔除（label+value 都不渲染，网格自动收缩不留空位），
+             这里**不再**用 `row.value || '—'` 画占位破折号。
+             全部为空时整个"详细信息"块都不显示（原注释"全空 → 整块不显示"的意图，
+             旧代码从没真正实现过）。 -->
+        <div v-if="detailRows.length" class="detail-block">
+          <h2 class="detail-section-title">{{ t('section_detail', '详细信息') }}</h2>
+          <div class="panel">
+            <div class="detail-grid">
+              <template v-for="row in detailRows" :key="row.label">
+                <span class="detail-key">{{ row.label }}</span>
+                <span v-if="!row.link" class="detail-val">{{ row.value }}</span>
+                <div v-else class="row row-8 detail-val">
+                  <button class="detail-link" :title="row.value" @click="openLink(row.value, $event)">{{ row.value }}</button>
+                  <button class="copy-btn" :class="{ 'is-done': isCopied(row.value) }"
+                          :title="isCopied(row.value) ? t('detail_copied', '已复制') : t('detail_copy_link', '复制链接')"
+                          @click="copyText(row.value)">
+                    <svg class="ic" width="14" height="14"><use :href="isCopied(row.value) ? '#i-accept' : '#i-copy'"></use></svg>
+                  </button>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 定制页（需求：左键卡片也要能进入详情页，所以有 detail 时让位给下面的详情段）-->
+  <section v-if="page === 'customize' && (!detail || page !== detailPage)" class="page" key="customize">
+    <!-- 资源库加载提示（页面内嵌版，不是弹窗卡片）-->
+    <resource-loading v-if="resourceLoading" :dots="loadingDots" :failed="resourceLoadFailed"
+                      @retry="retryResourceLoad" @use-local="useLocalResources"></resource-loading>
+    <div class="page-scroll" data-scroll-key="customize">
+      <div v-if="!customizeOnboarded || customizeEditing" class="onboard-center">
+        <div class="onboard-card">
+          <h2 class="sub-title">{{ t('onboard_title', '先选几个感兴趣的') }}</h2>
+          <p class="body-2">{{ t('onboard_subtitle', '勾几个类别或标签，推荐页就按它们给你排；不想选也可以直接保存。') }}</p>
+          <div class="progress-track"><span class="progress-fill" :style="{ width: interestsRatio }"></span></div>
+          <template v-for="group in interestGroups" :key="group.kind">
+            <div v-if="group.items.length" class="interest-group">
+              <div class="row gap10">
+                <span class="accent-label">{{ group.label }}</span>
+                <span class="hairline"></span>
+              </div>
+              <div class="chip-flow">
+                <button v-for="item in group.items" :key="item.kind + ':' + item.name" class="interest-chip"
+                        :class="{ 'is-on': pickedInterest(item) }" :title="item.name + ' · ' + item.count + ' 条'"
+                        @click="toggleInterest(item)">{{ (pickedInterest(item) ? '✓ ' : '') + term(item.name) }}</button>
+              </div>
+            </div>
+          </template>
+          <p v-if="!interestCatalog.length" class="cap">{{ t('onboard_empty', '资源库里暂时没有可选的喜好标签。') }}</p>
+          <div class="onboard-foot">
+            <button class="btn" @click="resetInterests">
+              <svg class="ic" width="15" height="15"><use href="#i-delete"></use></svg>{{ t('restore_default', '恢复默认') }}
+            </button>
+            <span class="grow"></span>
+            <span class="body-2" :class="{ 'text-accent': selectedInterests.length }">
+              {{ t('selected_count', '已选 {n} 个').replace('{n}', selectedInterests.length) }}</span>
+            <button class="btn" @click="clearInterests">{{ t('select_none', '全不选') }}</button>
+            <button class="btn btn-primary" @click="saveInterests">
+              {{ customizeOnboarded ? t('save', '保存') : t('start', '开始') }}</button>
+          </div>
+        </div>
+      </div>
+      <div v-else class="recommend-wrap">
+        <div class="row gap10">
+          <h2 class="sub-title">{{ t('recommend_title', '为你推荐') }}</h2>
+          <span class="grow"></span>
+          <button class="btn" @click="customizeEditing = true">
+            <svg class="ic" width="15" height="15"><use href="#i-edit"></use></svg>{{ t('edit_interests', '编辑喜好') }}
+          </button>
+        </div>
+        <div class="row gap10">
+          <!-- 需求：定制页的筛选要和搜索页**一致**；按钮位置也跟搜索页对齐（工具栏最左）-->
+          <button class="filter-btn" :class="{ 'is-checked': customFilterOpen }" @click="toggleCustomFilter">
+            <span>{{ t('more_filters', '更多筛选') }}</span>
+            <span class="chevron" :style="{ transform: 'rotate(' + customChevronDeg + 'deg)' }">
+              <svg class="ic" width="12" height="12"><use href="#i-chevron_down"></use></svg>
+            </span>
+          </button>
+          <span class="cap">{{ t('based_on', '根据你选的：') + interestNamesText }}</span>
+          <span class="grow"></span>
+          <span class="sort-label">{{ t('sort_label', '排序') }}：</span>
+          <combo :model-value="customSort" :options="customSortOptions" :width="150"
+                 @change="customSort = $event"></combo>
+          <span class="cap">{{ t('total_recommend', '共 {n} 个推荐').replace('{n}', recommendations.length) }}</span>
+        </div>
+
+        <!-- 和搜索页同款筛选面板（同一份 filterRows、同一套按钮样式）-->
+        <div class="filter-panel customize-filter" :class="{ 'is-open': customFilterOpen }" :style="{ maxHeight: customFilterOpen ? customPanelH + 'px' : '0px' }">
+          <div class="filter-inner">
+            <p class="filter-hint">{{ t('filter_hint', '点下面的条件筛选，每组单选；点「全部」取消该组筛选') }}</p>
+            <div v-for="row in filterRows" :key="'c-' + row.key" class="filter-row">
+              <span class="filter-row-label">{{ row.label }}</span>
+              <div class="filter-row-items">
+                <button v-for="option in row.options" :key="row.key + ':' + option.value"
+                        class="chip" :class="{ 'is-on': isCustomFilterOn(row.key, option.value) }"
+                        @click="toggleCustomFilterValue(row.key, option.value)">{{ option.label }}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="recommendations.length">
+          <!-- 需求：选类别排序时，每个类别要有自己的标题文字（和搜索页的分组一致），
+               而不是所有卡片平铺成一种样式。-->
+          <template v-for="group in recommendGroups" :key="group.key || 'all'">
+            <div v-if="group.title" class="recommend-group-title">
+              <span class="vgroup-title">{{ group.title }}</span>
+              <span class="cap">{{ t('group_count', '{n} 个').replace('{n}', group.count) }}</span>
+            </div>
+            <div class="grid-static">
+              <!-- 需求：卡片与搜索页完全一致 —— 左键进详情、右键弹同一个卡片菜单-->
+              <article v-for="it in group.items" :key="it.code" class="card" @click="onRecommendClick(it)"
+                       @contextmenu.prevent="openCardMenu(it, $event)">
+            <span class="card-tint"></span>
+            <div class="card-head">
+              <span class="card-icon" :style="{ width: cardPx.icon + 'px', height: cardPx.icon + 'px' }">
+                <img v-if="it.icon && !iconFailed(it)" :src="iconSrc(it)" alt="" @error="onIconError($event, it)">
+                <span v-else class="glyph">{{ firstChar(it.name) }}</span>
+              </span>
+              <span class="card-title">{{ it.name }}</span>
+              <!-- 与搜索页一致的右上角按钮组：@给GCP-AI + 收藏-->
+              <div class="card-btn-group">
+                <button v-if="settings.ai_enabled" class="card-btn"
+                        :title="t('card_mention_tip', '@给GCP-AI：把这个资源带进 AI 输入框')"
+                        @click.stop="mentionAi(it)">
+                  <svg class="ic" :width="cardPx.buttonIcon" :height="cardPx.buttonIcon"><use href="#i-at"></use></svg>
+                </button>
+                <button class="card-btn" :class="{ 'is-fav': it._fav }"
+                        :title="it._fav ? t('card_favorite_added', '已收藏（点击取消收藏）') : t('card_favorite_add', '加入收藏')"
+                        @click.stop="toggleFavorite(it)">
+                  <svg class="ic" :width="cardPx.buttonIcon" :height="cardPx.buttonIcon">
+                    <use :href="it._fav ? '#i-star_solid' : '#i-star'"></use></svg>
+                </button>
+              </div>
+            </div>
+            <p class="card-desc" :style="{ '--lines': cardPx.lines }">{{ it.description }}</p>
+            <!-- 底部与搜索页一致：标签 + 外链按钮（不再显示定制页专属的 +分数角标）-->
+            <div class="card-foot">
+              <div class="card-divider"></div>
+              <div class="row row-6">
+                <span v-for="tag in visibleTags(it)" :key="tag" class="tag"
+                      :class="{ 'is-official': tag === '官方' }">{{ term(tag) }}</span>
+                <span class="grow"></span>
+                <button v-if="settings.search_show_github && isHttp(it.github)" class="card-btn"
+                        :title="t('card_open_repo', '打开代码仓库') + '\n' + it.github"
+                        @click.stop="openLink(it.github, $event)">
+                  <svg class="ic" :width="cardPx.buttonIcon" :height="cardPx.buttonIcon"><use href="#i-github"></use></svg>
+                </button>
+                <!-- 定制页同样**删掉**卡片上的Releases / 下载按钮（同搜索页）-->
+                <button v-if="isHttp(it.url)" class="card-btn"
+                        :title="t('card_open_site', '打开官网') + '\n' + it.url"
+                        @click.stop="openLink(it.url, $event)">
+                  <svg class="ic" :width="cardPx.buttonIcon" :height="cardPx.buttonIcon"><use href="#i-globe"></use></svg>
+                </button>
+              </div>
+              <!-- 新增下载页按钮（在 Github / 官网下面一行，同搜索页）-->
+              <div v-if="isHttp(it.download_page_url)" class="row row-6 card-foot-links">
+                <span class="grow"></span>
+                <button class="card-btn"
+                        :title="t('card_open_download_page', '打开下载页面') + '\n' + it.download_page_url"
+                        @click.stop="openLink(it.download_page_url, $event)">
+                  <svg class="ic" :width="cardPx.buttonIcon" :height="cardPx.buttonIcon"><use href="#i-download"></use></svg>
+                </button>
+              </div>
+            </div>
+          </article>
+            </div>
+          </template>
+        </div>
+        <div v-else class="empty-state">
+          <h3 class="strong">{{ emptyRecommendTitle }}</h3>
+          <button class="btn btn-primary" @click="customizeEditing = true">
+            <svg class="ic" width="15" height="15"><use href="#i-edit"></use></svg>{{ t('go_set_interests', '去设置喜好') }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 收藏页-->
+  <section v-if="page === 'favorites' && (!detail || page !== detailPage)" class="page" key="favorites">
+    <!-- 资源库加载提示（页面内嵌版，不是弹窗卡片）-->
+    <resource-loading v-if="resourceLoading" :dots="loadingDots" :failed="resourceLoadFailed"
+                      @retry="retryResourceLoad" @use-local="useLocalResources"></resource-loading>
+    <div class="fav-layout">
+      <aside class="fav-side">
+        <!-- 标题收藏夹右边放两个**只有图标**的按钮：
+             ① 加号 = 新建收藏夹；② 移动图标 = 批量移动。
+             ⚠️ 重命名删除这两个按钮**移除**了 —— 它们改由**右键收藏夹**的
+                菜单提供（见下面 favMenu）。导入/导出保持原样不动。-->
+        <div class="fav-side-head">
+          <h2 class="sub-title">{{ t('folders', '收藏夹') }}</h2>
+          <span class="grow"></span>
+          <button class="icon-btn" :title="t('new_folder', '新建收藏夹')" @click="createFolder">
+            <svg class="ic" width="15" height="15"><use href="#i-add"></use></svg></button>
+          <button class="icon-btn" :class="{ 'is-on': favMoving }"
+                  :title="favMoving ? t('cancel_move', '取消移动') : t('move_items', '批量移动')"
+                  @click="startMoveMode">
+            <svg class="ic" width="15" height="15"><use href="#i-move"></use></svg></button>
+        </div>
+        <div class="list-widget">
+          <!-- 收藏夹列表项支持**右键** → 弹出重命名删除菜单-->
+          <button v-for="f in folders" :key="f.name" class="list-item" :class="{ 'is-on': favFolder === f.name }"
+                  @click="favFolder = f.name" @contextmenu.prevent="openFavMenu($event, f)">
+            {{ f.label }}&nbsp;&nbsp;({{ f.count }})
+          </button>
+          <p v-if="!folders.length" class="cap pad12">{{ t('empty', '这个收藏夹还是空的，去搜索页点收藏图标添加吧') }}</p>
+        </div>
+        <!-- /收藏的导出 / 导入放在收藏页（原话在收藏页合适位置放导出和导入按钮）。
+             导入会先选文件 → 确认条目数 → 选目标收藏夹（可新建）；导出先勾选收藏夹。
+             ⚠️ 这两个按钮**保持原样**（导入和导出按钮不变）。-->
+        <div class="fav-ops-row">
+          <button class="btn btn-half" :title="t('fav_export_tip', '把选中的收藏夹导出成 JSON 文件，方便备份或换机')"
+                  @click="exportFavorites">
+            <svg class="ic" width="15" height="15"><use href="#i-save_as"></use></svg>{{ t('fav_export', '导出') }}
+          </button>
+          <button class="btn btn-half" :title="t('fav_import_tip', '从 JSON 文件导入收藏，可以放进已有收藏夹或新建一个')"
+                  @click="importFavorites">
+            <svg class="ic" width="15" height="15"><use href="#i-download"></use></svg>{{ t('fav_import', '导入') }}
+          </button>
+        </div>
+      </aside>
+
+      <div class="fav-main">
+        <div class="row gap10">
+          <span class="body-1">{{ t('count', '共 {n} 项').replace('{n}', favItems.length) }}</span>
+          <span class="grow"></span>
+          <span class="cap">{{ favMoving ? t('move_to', '移动到') : t('hint', '点卡片上的收藏图标可以取消收藏') }}</span>
+          <!-- 需求：收藏页**右上角**也要有和搜索页一样的"磁贴 / 网格"视图切换 UI。
+               ⚠️ 和搜索页的区别：这里**不受** settings.search_show_view_switch 控制
+                  （那个开关只管搜索页）；收藏页的切换器默认显示。
+               ⚠️ 用的图标 / 提示文案与搜索页完全一致（view_tile_tip / view_grid_tip）。-->
+          <div class="segmented view-seg">
+            <button class="seg-item" :class="{ 'is-on': viewMode === 'tile' }"
+                    :title="t('view_tile_tip', '磁贴视图：一行 4 张大卡片')" @click="setFavView('tile')">
+              <svg class="ic" width="15" height="15"><use href="#i-tiles"></use></svg>
+            </button>
+            <button class="seg-item" :class="{ 'is-on': viewMode === 'grid' }"
+                    :title="t('view_grid_tip', '网格视图：一行 6 张小卡片，只显示收藏按钮')" @click="setFavView('grid')">
+              <svg class="ic" width="15" height="15"><use href="#i-view"></use></svg>
+            </button>
+          </div>
+        </div>
+
+        <div v-if="favMoving" class="selection-bar">
+          <label class="sel-check">
+            <!-- 和搜索页的全选一样是**三态**（none / some 半选 / all）。
+                 原生 indeterminate 被点击会自动变 checked=true → 全选，再点一次 → 取消全选。-->
+            <input type="checkbox" :checked="favAllChecked" :indeterminate.prop="favSelState === 'some'"
+                   @change="favSelectAll($event.target.checked)">
+            <span>{{ t('select_all', '全选') }}</span>
+          </label>
+          <span class="sel-count">{{ favSelectedCount }} / {{ favItems.length }}</span>
+          <span class="grow"></span>
+          <combo :model-value="moveTarget" :options="moveFolderOptions" :width="160"
+                 @change="moveTarget = $event"></combo>
+          <button class="btn" @click="cancelMoveMode">{{ t('cancel', '取消') }}</button>
+          <button class="btn btn-primary" @click="commitMove">{{ t('move_confirm', '确定移动') }}</button>
+        </div>
+
+        <div class="page-scroll" data-scroll-key="favorites" ref="favScroller" @vue:mounted="measureFavGrid">
+          <!-- 卡片网格改成 **CSS Grid** ——
+               · JS 只给**列数**（--fav-cols），宽度由 CSS 的 1fr 等分；
+               · 所以卡片宽度**永远**是容器的等分，不可能出现0 宽的面条；
+               · 每条轨道等宽 ⇒ 最后一行剩下的卡片**不会被拉伸**（flex 做不到）；
+               · 列数用搜索页同一套公式算 ⇒ 宽度和搜索页**完全一致**。
+               ⚠️ task-3 ①：`favMeasured` 门控 = **先量后渲染**。
+               上面的 .page-scroll 是常驻容器（不随收藏数据 v-if 卸载），
+               @vue:mounted 在**插入后、绘制前**同步量好宽度；量到之前网格**不渲染**，
+               所以卡片不会先用兜底列数画一遍、再跳成真实列数（"匀速整理"的观感）。
+               ⚠️ task-3 ③：卡片内联样式从 `height` 改成 `minHeight` ——
+               高度只保底、允许随内容长高（部分机型浏览器**最小字号**把 12px 简介
+               顶大时，固定 196 高 + overflow:hidden 会把简介下沿/卡脚裁掉）。
+               网格行是 auto，行高取整行最高卡，等分轨道不受影响。 -->
+          <div v-if="favItems.length && favMeasured" class="grid-static fav-grid"
+               :class="{ 'is-grid': viewMode === 'grid' }"
+               :style="{ gap: favLayout.gap + 'px', '--fav-cols': favLayout.columns }">
+            <article v-for="it in favItems" :key="it.code" class="card"
+                     :class="{ 'is-selected': favMoving && it._sel, 'is-grid': viewMode === 'grid' }"
+                     :style="{ minHeight: cardPx.height + 'px' }"
+                     @click="favMoving ? toggleRowSelect(it) : openDetail(it)" @contextmenu.prevent="openCardMenu(it, $event)">
+              <span class="card-tint"></span>
+              <div class="card-head">
+                <span class="card-icon" :style="{ width: cardPx.icon + 'px', height: cardPx.icon + 'px' }">
+                  <img v-if="it.icon && !iconFailed(it)" :src="iconSrc(it)" alt="" @error="onIconError($event, it)">
+                  <span v-else class="glyph">{{ firstChar(it.name) }}</span>
+                </span>
+                <span class="card-title">{{ it.name }}</span>
+                <!-- 批量移动模式下，右上角换成**勾选框**（和部署页从搜索页选择
+                     进入搜索页后的样子一致：搜索页在选择模式下也是显示勾选框、隐藏按钮组）。-->
+                <label v-if="favMoving" class="card-select" @click.stop>
+                  <input type="checkbox" :checked="it._sel" @change="it._sel = $event.target.checked">
+                </label>
+                <div v-else class="card-btn-group">
+                  <!-- ⚠️ task-3 ②：收藏页的卡片**必然已收藏**（favItems 就是从
+                       收藏夹 codes 里筛出来的），星标恒为实心 + 强调色 ——
+                       不再依赖 it._fav 这份"缓存副本"的同步时序
+                       （JS 侧已补 loadResources 后 syncFavoriteState，这里再按
+                       页面语义钉死，双保险；点它仍然是取消收藏）。 -->
+                  <button class="card-btn is-fav"
+                          :title="t('card_favorite_added', '已收藏（点击取消收藏）')"
+                          @click.stop="toggleFavorite(it)">
+                    <svg class="ic" :width="cardPx.buttonIcon" :height="cardPx.buttonIcon">
+                      <use href="#i-star_solid"></use></svg>
+                  </button>
+                </div>
+              </div>
+              <p class="card-desc" :style="{ '--lines': cardPx.lines }">{{ it.description }}</p>
+              <div class="card-foot">
+                <div class="card-divider"></div>
+                <div class="row row-6">
+                  <span v-for="tag in visibleTags(it)" :key="tag" class="tag"
+                        :class="{ 'is-official': tag === '官方' }">{{ term(tag) }}</span>
+                  <span class="grow"></span>
+                  <!-- 收藏页卡片右下角也要有 **GitHub / 官网** 按钮
+                       （收藏夹页面卡片ui上右下角的官网或github按钮不能消失隐藏）。
+                       ⚠️ 不加 Releases 按钮 —— 已把搜索页/定制页卡片上的那个删掉了。-->
+                  <button v-if="settings.search_show_github && isHttp(it.github)" class="card-btn"
+                          :title="t('card_open_repo', '打开代码仓库') + '\n' + it.github"
+                          @click.stop="openLink(it.github, $event)">
+                    <svg class="ic" :width="cardPx.buttonIcon" :height="cardPx.buttonIcon"><use href="#i-github"></use></svg>
+                  </button>
+                  <button v-if="isHttp(it.url)" class="card-btn"
+                          :title="t('card_open_site', '打开官网') + '\n' + it.url"
+                          @click.stop="openLink(it.url, $event)">
+                    <svg class="ic" :width="cardPx.buttonIcon" :height="cardPx.buttonIcon"><use href="#i-globe"></use></svg>
+                  </button>
+                </div>
+                <!-- 新增下载页按钮（在 Github / 官网下面一行，同搜索页）-->
+                <div v-if="isHttp(it.download_page_url)" class="row row-6 card-foot-links">
+                  <span class="grow"></span>
+                  <button class="card-btn"
+                          :title="t('card_open_download_page', '打开下载页面') + '\n' + it.download_page_url"
+                          @click.stop="openLink(it.download_page_url, $event)">
+                    <svg class="ic" :width="cardPx.buttonIcon" :height="cardPx.buttonIcon"><use href="#i-download"></use></svg>
+                  </button>
+                </div>
+              </div>
+            </article>
+          </div>
+          <!-- ⚠️ 原来这里是 v-else：先量后渲染的门控（favMeasured）会让"有收藏但还没
+               量完宽度"的那**一帧**落进 v-else，闪一句"这个收藏夹还是空的"。
+               改成显式条件：只有**真的没有收藏**才显示空文案。 -->
+          <p v-if="!favItems.length" class="cap center pad40">{{ t('empty', '这个收藏夹还是空的，去搜索页点卡片上的收藏图标添加吧') }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 收藏夹右键菜单（重命名 / 删除，删除是红色）-->
+    <transition name="pop">
+      <div v-if="favMenu.open" class="card-menu fav-menu" :style="{ left: favMenu.x + 'px', top: favMenu.y + 'px' }"
+           @contextmenu.prevent @click.stop>
+        <button class="card-menu-item" :disabled="favMenu.isDefault"
+                @click="favMenuRename()">
+          <svg class="ic" width="15" height="15"><use href="#i-edit"></use></svg>
+          <span>{{ t('rename_folder', '重命名') }}</span>
+        </button>
+        <button class="card-menu-item is-danger" :disabled="favMenu.isDefault"
+                @click="favMenuRemove()">
+          <svg class="ic" width="15" height="15"><use href="#i-delete"></use></svg>
+          <span>{{ t('delete_folder', '删除') }}</span>
+        </button>
+      </div>
+    </transition>
+
+  </section>
+
+  <!-- GCP 工坊-->
+  <section v-if="page === 'workshop'" class="page" key="workshop">
+    <!-- 工坊页加顶部栏（和下载页同款头部：标题 + Beta功能标签）-->
+    <div class="download-page-head">
+      <span class="sub-title">{{ t('gcp_workshop', 'GCP工坊') }}</span>
+      <span class="beta-tag">{{ t('beta_feature', 'Beta功能') }}</span>
+      <span class="grow"></span>
+    </div>
+    <div class="hairline"></div>
+    <div class="page-scroll" data-scroll-key="workshop"><div class="workshop-blank"></div></div>
+  </section>
+
+  <!-- 公告-->
+  <section v-if="page === 'notice'" class="page" key="notice">
+    <div class="page-scroll" data-scroll-key="notice">
+      <div class="narrow">
+        <div class="row gap8">
+          <svg class="ic title-icon" width="20" height="20"><use href="#i-megaphone"></use></svg>
+          <h2 class="sub-title">{{ t('notice', '公告') }}</h2>
+          <span v-if="unread.length" class="unread-badge">
+            {{ t('unread_count', '{n} 条未读').replace('{n}', unread.length) }}</span>
+          <span class="grow"></span>
+          <button class="btn" :disabled="!unread.length" @click="markAllRead">
+            <svg class="ic" width="15" height="15"><use href="#i-accept"></use></svg>{{ t('mark_all_read', '全部已读') }}
+          </button>
+          <button class="icon-btn" :title="t('refresh', '刷新')" @click="loadNotices(true)">
+            <svg class="ic" width="16" height="16" :class="{ 'is-spin': noticesLoading }"><use href="#i-sync"></use></svg>
+          </button>
+        </div>
+
+        <div class="notice-list" v-if="notices.length">
+          <article v-for="n in notices" :key="n.number || n.id" class="notice-card" :class="{ 'is-unread': !isRead(n.number || n.id) }">
+            <div class="row gap8">
+              <span v-if="!isRead(n.number || n.id)" class="red-dot"></span>
+              <h3 class="strong notice-title">{{ n.title }}</h3>
+              <span class="grow"></span>
+              <span class="cap">{{ n.date }}</span>
+            </div>
+            <p class="body-1 selectable notice-body">{{ n.body }}</p>
+            <div class="row gap10">
+              <span class="cap">{{ n.author }} · #{{ n.number }}</span>
+              <span class="grow"></span>
+              <!-- 每张卡片独立的未读/已读状态：未读可点（只标已读，不开链接）；已读变灰禁用-->
+              <button class="btn btn-sm notice-read-btn" :class="{ 'is-read': isRead(n.number || n.id) }"
+                      :disabled="isRead(n.number || n.id)"
+                      :title="isRead(n.number || n.id) ? t('read', '已读') : t('mark_read', '标为已读')"
+                      @click="markRead(n.number || n.id)">
+                <svg class="ic" width="14" height="14">
+                  <use :href="isRead(n.number || n.id) ? '#i-accept' : '#i-info'"></use></svg>
+                {{ isRead(n.number || n.id) ? t('read', '已读') : t('unread', '未读') }}
+              </button>
+              <button class="btn btn-sm" @click="openNotice(n)">
+                <svg class="ic" width="14" height="14"><use href="#i-link"></use></svg>{{ t('view_on_github', '在 GitHub 查看') }}
+              </button>
+            </div>
+          </article>
+        </div>
+        <div v-else class="notice-empty">
+          <h3 class="strong">{{ noticesLoading ? t('fetching', '正在获取公告…') : t('no_notice', '暂无公告') }}</h3>
+          <p v-if="!noticesLoading" class="cap">{{ noticesError || t('notice_hint', '有新消息会显示在这里。') }}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Github-->
+  <section v-if="page === 'github'" class="page" key="github">
+    <div class="page-scroll" data-scroll-key="github">
+      <div v-if="!lightbox" class="gh-wrap">
+        <div class="gh-grid">
+          <div class="panel gh-card">
+            <h2 class="gh-title big">Github</h2>
+            <div class="row gap18">
+              <span class="avatar-96">
+                <img src="/res/image/Galen563 png.png" alt="Galen563" @error="$event.target.remove()">
+              </span>
+              <div class="body-1">开发者：Galen563<br>开发人员：Galen563 (1人)</div>
+            </div>
+            <div class="gh-links">
+              <p class="body-1">作者Github：
+                <a href="javascript:void(0)" @click="openLink('https://github.com/Galen563', $event)">https://github.com/Galen563</a></p>
+              <p class="body-1">Github：
+                <a href="javascript:void(0)" @click="openLink('https://github.com/Galen563/ToolsGCP', $event)">https://github.com/Galen563/ToolsGCP</a></p>
+              <p class="body-1">官网：
+                <a href="javascript:void(0)" @click="openLink('https://toolsgcp.pages.dev/', $event)">https://toolsgcp.pages.dev/</a></p>
+            </div>
+          </div>
+
+          <div class="panel gh-card center-col">
+            <h2 class="gh-title">赞助</h2>
+            <button class="qr" :title="t('click_zoom', '点击放大图片')" @click="lightbox = sponsorImage">
+              <img :src="sponsorImage" alt="微信赞助二维码">
+            </button>
+            <p class="cap tiny">{{ t('click_zoom', '点击放大图片') }}</p>
+            <div class="sponsor-note">
+              <p class="note-title">{{ t('sponsor_note_title', '赞助时记得写备注') }}</p>
+              <p class="note-body">{{ t('sponsor_note_body', '备注里请写上你的昵称（必填）和实际金额，方便作者核对并郑重致谢。') }}</p>
+            </div>
+          </div>
+
+          <div class="panel gh-card span-2">
+            <h2 class="gh-title">ToolsGCP介绍：</h2>
+            <ul class="gh-list">
+              <li v-for="line in introLines" :key="line">{{ line }}</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div v-else class="lightbox" @click="lightbox = ''">
+        <button class="btn btn-back" @click.stop="lightbox = ''">
+          <svg class="ic" width="16" height="16"><use href="#i-back"></use></svg>{{ t('back', '返回') }}</button>
+        <img :src="lightbox" alt="" @click.stop="lightbox = ''">
+        <p class="cap center">点击图片任意位置关闭</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 反馈-->
+  <section v-if="page === 'feedback'" class="page" key="feedback">
+    <div class="page-scroll" data-scroll-key="feedback">
+      <div v-if="!lightbox" class="narrow">
+        <div class="panel feedback-card">
+          <h2 class="strong fb-title">{{ t('submit_feedback', '提交反馈') }}</h2>
+          <div class="red-line"></div>
+          <p class="body-1">{{ t('fb_body', '遇到问题、想要某个软件被收录，或者对功能有建议，都可以开一个 Issue 告诉作者。开之前请先搜一下有没有人提过同样的内容。') }}</p>
+          <p class="cap tiny">{{ t('fb_tip', '带上系统版本、软件版本和复现步骤，作者处理起来会快很多。') }}</p>
+          <div class="row gap10 right-row">
+            <button class="btn btn-primary btn-wide" @click="openLink(feedbackUrl, $event)">
+              <svg class="ic" width="15" height="15"><use href="#i-chat"></use></svg>{{ t('go_feedback', '前往反馈') }}
+            </button>
+          </div>
+        </div>
+
+        <div class="qq-row">
+          <div class="qq-col" v-for="group in qqGroups" :key="group.number">
+            <button class="copy-number" :class="{ 'is-done': isCopied(group.number) }" @click="copyText(group.number)">
+              <svg class="ic" width="14" height="14"><use :href="isCopied(group.number) ? '#i-accept' : '#i-copy'"></use></svg>
+              <span>{{ isCopied(group.number) ? t('detail_copied', '已复制') : group.label + '：' + group.number }}</span>
+            </button>
+            <button class="qq-image" @click="lightbox = group.image">
+              <img :src="group.image" :alt="group.label">
+            </button>
+          </div>
+        </div>
+      </div>
+      <div v-else class="lightbox" @click="lightbox = ''">
+        <button class="btn btn-back" @click.stop="lightbox = ''">
+          <svg class="ic" width="16" height="16"><use href="#i-back"></use></svg>{{ t('back', '返回') }}</button>
+        <img :src="lightbox" alt="" @click.stop="lightbox = ''">
+        <p class="cap center">点击图片返回</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 查看日志-->
+  <section v-if="page === 'log'" class="page" key="log">
+    <div class="page-scroll" data-scroll-key="log">
+      <div class="narrow-wide">
+        <div class="panel">
+          <h2 class="strong card-title-text">日志操作</h2>
+          <div class="row gap12">
+            <button class="btn btn-primary btn-act" :disabled="!logFiles.length" @click="exportLogs(false)">
+              <svg class="ic" width="15" height="15"><use href="#i-save"></use></svg>{{ t('export_log', '导出日志') }}</button>
+            <button class="btn btn-act" :disabled="!logFiles.length" @click="exportLogs(true)">
+              <svg class="ic" width="15" height="15"><use href="#i-save"></use></svg>{{ t('export_all_log', '导出全部日志') }}</button>
+            <button class="btn btn-act" @click="openLogDir">
+              <svg class="ic" width="15" height="15"><use href="#i-folder"></use></svg>{{ t('open_log_dir', '打开日志目录') }}</button>
+            <button class="btn btn-danger-ghost" :disabled="!hasHistory" @click="confirmClearLogs">
+              <svg class="ic" width="15" height="15"><use href="#i-delete"></use></svg>{{ t('clear_log', '清理历史日志') }}</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3 class="strong card-sub-title">所有日志</h3>
+          <div class="log-list">
+            <div v-for="(file, i) in logFiles" :key="file.path" class="log-item" :class="{ 'is-current': i === 0 }"
+                 :title="t('title_open_log', '双击在系统默认程序里打开这份日志')"
+                 @dblclick="openPath(file.path)">
+              <div class="row gap8">
+                <span class="log-time">{{ file.name }}</span>
+                <span v-if="i === 0" class="log-current">（当前）</span>
+                <span class="grow"></span>
+                <span class="log-path log-size" v-if="file.size">{{ Math.max(1, Math.round(file.size / 1024)) }} KB</span>
+              </div>
+              <span class="log-path">{{ file.rel || file.path }}</span>
+            </div>
+            <div v-if="!logFiles.length" class="log-empty">暂无日志记录</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 应用部署-->
+  <section v-if="page === 'deploy'" class="page" key="deploy">
+    <div class="page-scroll" data-scroll-key="deploy">
+      <div class="deploy-wrap">
+        <!-- 部署页顶部栏（标题 + Beta功能标签），和下载页头部同款-->
+        <div class="download-page-head">
+          <span class="sub-title">{{ t('deploy', '应用部署') }}</span>
+          <span class="beta-tag">{{ t('beta_feature', 'Beta功能') }}</span>
+          <span class="grow"></span>
+        </div>
+        <!-- 模式开关（SwitchButton + 模式名 12pt + 16px 间隔 + 次要色提示）-->
+        <div class="deploy-mode-row">
+          <button class="switch" :class="{ 'is-on': settings.deploy_mode }" @click="toggleDeployMode">
+            <span class="switch-knob"></span></button>
+          <span class="deploy-mode-label">{{ settings.deploy_mode
+            ? t('deploy_mode', '部署模式', 'deploy') : t('export_mode', '导出模式', 'deploy') }}</span>
+          <span class="mode-hint">{{ settings.deploy_mode
+            ? t('deploy_hint', '导入清单后一键自动下载 / 打开官网，快速还原环境', 'deploy')
+            : t('export_hint', '把本机常用软件整理成清单，导出后拷到新电脑', 'deploy') }}</span>
+          <span class="grow"></span>
+        </div>
+
+        <!-- 工具栏：全部左对齐，末尾 addStretch()，没有右侧计数-->
+        <div class="deploy-toolbar">
+          <template v-if="!settings.deploy_mode">
+            <button class="btn" @click="openPicker">
+              <svg class="ic" width="15" height="15"><use href="#i-add"></use></svg>{{ t('add_from_library', '从资源库添加', 'deploy') }}</button>
+            <button class="btn" @click="startDeploySelection">
+              <svg class="ic" width="15" height="15"><use href="#i-search"></use></svg>{{ t('pick_from_search', '从搜索页选择', 'deploy') }}</button>
+            <span class="tb-gap"></span>
+            <button class="btn" @click="exportManifest">
+              <svg class="ic" width="15" height="15"><use href="#i-save_as"></use></svg>{{ t('export_list', '导出清单', 'deploy') }}</button>
+          </template>
+          <template v-else>
+            <button class="btn" @click="importManifest">
+              <svg class="ic" width="15" height="15"><use href="#i-download"></use></svg>{{ t('import_list', '导入清单', 'deploy') }}</button>
+            <button class="btn btn-primary" @click="confirmDeploy">
+              <svg class="ic" width="15" height="15"><use href="#i-play"></use></svg>{{ t('deploy_all', '一键部署', 'deploy') }}</button>
+          </template>
+          <button class="btn" @click="confirmClearDeploy">
+            <svg class="ic" width="15" height="15"><use href="#i-delete"></use></svg>{{ t('clear_list', '清空列表', 'deploy') }}</button>
+          <span class="grow"></span>
+        </div>
+
+        <!-- 8 列表格：图标 / 序数 / 编码 / 软件名称 / 版本 / 安装路径·下载来源 / 状态（纯文本）/ 操作-->
+        <div class="panel table-panel deploy-table">
+          <div class="table-head">
+            <span class="col-icon"></span>
+            <span class="col-idx">{{ t('sequence', '序数', 'deploy') }}</span>
+            <span class="col-code">{{ t('code', '编码', 'deploy') }}</span>
+            <span class="col-name">{{ t('software_name', '软件名称', 'deploy') }}</span>
+            <span class="col-ver">{{ t('version', '版本', 'deploy') }}</span>
+            <span class="col-src">{{ settings.deploy_mode
+              ? t('download_source', '下载来源', 'deploy') : t('install_path', '安装路径', 'deploy') }}</span>
+            <span class="col-status">{{ t('status', '状态', 'deploy') }}</span>
+            <span class="col-op">{{ t('operation', '操作', 'deploy') }}</span>
+          </div>
+          <div class="table-body">
+            <div v-for="(row, i) in deployRows" :key="(row.code || '') + i" class="table-row"
+                 @dblclick="openDeployDetail(row)">
+              <span class="col-icon" :title="row.name">
+                <img v-if="deployIconOf(row)" :src="deployIconOf(row)" alt="">
+                <svg v-else class="ic" width="24" height="24"><use href="#i-application"></use></svg>
+              </span>
+              <span class="col-idx">{{ i + 1 }}</span>
+              <span class="col-code">{{ row.code || '—' }}</span>
+              <span class="col-name ellipsis" :title="row.name">{{ row.name }}</span>
+              <span class="col-ver">{{ row.version }}</span>
+              <span class="col-src ellipsis" :title="deploySourceOf(row)">{{ deploySourceOf(row) }}</span>
+              <span class="col-status cell-text">{{ statusText(row.status) }}</span>
+              <span class="col-op">
+                <!-- 两种模式的行操作统一成删除垃圾桶。
+                     导出模式不再给编辑；部署模式的单条下载 / 打开官网 / 跳过已删除
+                     （下载和打开仍由工具栏的一键部署负责）。-->
+                <button class="icon-btn icon-sm" :title="t('delete', '删除', 'deploy')" @click="removeDeployRow(row)">
+                  <svg class="ic" width="15" height="15"><use href="#i-delete"></use></svg>
+                </button>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 底部：进度条（高 6、无文字、默认隐藏）+ 右侧说明-->
+        <div class="deploy-bottom">
+          <div v-show="deployRunning" class="mini-progress"
+               :class="{ 'is-indeterminate': deployIndeterminate }">
+            <span :style="deployIndeterminate ? null : { width: deployProgress + '%' }"></span>
+          </div>
+          <span class="cap deploy-progress-text">{{ deployStatusText }}</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 插件-->
+  <section v-if="page === 'plugins'" class="page" key="plugins">
+    <div class="page-scroll" data-scroll-key="plugins">
+      <div class="plugin-wrap">
+        <div class="row gap10">
+          <div class="plugin-head-text">
+            <h2 class="sub-title">{{ t('plugins', '插件') }}<span class="beta-tag">{{ t('beta_feature', 'Beta功能') }}</span></h2>
+            <p class="cap">{{ pluginCountText }}</p>
+          </div>
+          <span class="grow"></span>
+          <button class="btn btn-primary" @click="devGuide = true">
+            <svg class="ic" width="15" height="15"><use href="#i-edit"></use></svg>{{ t('want_dev', '我想开发') }}</button>
+        </div>
+        <div class="hairline"></div>
+
+        <div class="row gap8">
+          <div class="search-box plugin-search">
+            <svg class="ic search-lead" width="15" height="15"><use href="#i-search"></use></svg>
+            <input type="text" v-model="pluginQuery" :placeholder="t('search_plugin', '搜索插件（名称 / id / 作者）')">
+          </div>
+          <button class="btn" @click="loadPlugins(true)">
+            <svg class="ic" width="15" height="15" :class="{ 'is-spin': pluginsLoading }"><use href="#i-sync"></use></svg>{{ t('reload', '重新加载') }}</button>
+          <button class="btn" @click="openPluginDir">
+            <svg class="ic" width="15" height="15"><use href="#i-folder"></use></svg>{{ t('open_plugin_dir', '打开插件目录') }}</button>
+          <button class="btn" @click="openLink('https://github.com/Galen563/ToolsGCP', $event)">
+            <svg class="ic" width="15" height="15"><use href="#i-document"></use></svg>{{ t('dev_docs', '开发文档') }}</button>
+          <span class="grow"></span>
+          <div class="segmented view-seg">
+            <button class="seg-item" :class="{ 'is-on': settings.plugin_view !== 'list' }" :title="t('title_view_grid', '井字排版')"
+                    @click="setPluginView('grid')"><svg class="ic" width="15" height="15"><use href="#i-tiles"></use></svg></button>
+            <button class="seg-item" :class="{ 'is-on': settings.plugin_view === 'list' }" :title="t('title_view_list', '列表排版')"
+                    @click="setPluginView('list')"><svg class="ic" width="15" height="15"><use href="#i-menu"></use></svg></button>
+          </div>
+        </div>
+        <!-- 插件目录提示：**两个根目录都会加载**，这里明确告诉用户/开发者该往哪放。
+             ⚠️ 以前这行写死「放在 .ToolsGCP/plugins 下」，exe 打包后那个目录在 exe
+                本体里/可能只读，用户照着做放不进去 —— 所以改成显示**用户可写**的那个
+                （后端 plugins.dirs 给的 user_dir，拿不到才退回旧文案）。 -->
+        <p class="cap">
+          {{ t('plugin_dir_hint_a', '一个文件夹就是一个插件。') }}
+          {{ t('plugin_dir_hint_b', '开发者/用户可把插件放进：') }}
+          <b v-if="pluginDirs.user">{{ pluginDirs.user }}</b>
+          <span v-else>{{ t('plugin_dir_hint_fallback', '.ToolsGCP/plugins') }}</span>
+          {{ t('plugin_dir_hint_c', '（程序自带的插件目录也会一起加载；同名时以用户目录那份为准。）') }}
+          {{ t('plugin_dir_hint_d', '放好后点「重新加载」即可生效。') }}
+        </p>
+
+        <div v-if="filteredPlugins.length && settings.plugin_view !== 'list'" class="plugin-grid">
+          <article v-for="p in filteredPlugins" :key="p.id" class="plugin-card" :class="{ 'is-flash': flashPlugin === p.id }">
+            <div class="row gap10">
+              <span class="plugin-icon"><img v-if="p.icon" :src="p.icon" alt=""><span v-else>{{ p.name.slice(0, 1) }}</span></span>
+              <span class="plugin-names">
+                <span class="strong ellipsis">{{ p.name }}</span>
+                <span class="cap">v{{ p.version }} · {{ p.author }}</span>
+              </span>
+              <span class="grow"></span>
+              <span class="badge" :class="p.status === 'error' ? 'is-error' : (p.enabled ? 'is-on' : 'is-off')"
+                    :title="p.error || ''">
+                {{ p.status === 'error' ? t('status_error', '加载失败') : (p.enabled ? t('status_enabled', '已启用') : t('status_disabled', '已禁用')) }}</span>
+            </div>
+            <div class="hairline thin"></div>
+            <p class="cap plugin-desc">{{ p.description }}</p>
+            <div class="row row-6 plugin-foot">
+              <!-- 备注：图标按钮，点击直接进入输入态并自动聚焦；Enter 保存 / Esc 或点空白取消-->
+              <span v-if="!p.editingNote" class="note-btn" :title="t('note', '备注')" @click="startNote(p)">
+                <svg class="ic" width="11" height="11"><use href="#i-edit"></use></svg>
+                <span class="note-text">{{ p.note || t('note', '备注') }}</span>
+              </span>
+              <input v-else class="input note-input" maxlength="20" v-model="p.noteDraft" :data-pid="p.id"
+                     :placeholder="t('note_placeholder', '写个备注（最多 20 字）')"
+                     @keyup.enter="saveNote(p)" @keyup.esc="cancelNote(p)" @blur="cancelNote(p)">
+              <span class="grow"></span>
+              <button class="switch" :class="{ 'is-on': p.enabled }" :title="t('toggle_tip', '打开 / 关闭这个插件')"
+                      @click="togglePlugin(p)"><span class="switch-knob"></span></button>
+              <!-- ⚠️ 照 py：没有配置页面的插件，这个⚙按钮是**置灰**的（不是打开文件夹）。-->
+              <button class="icon-btn icon-sm"
+                      :disabled="!p.hasConfig"
+                      :title="p.hasConfig ? t('plugin_config', '配置界面')
+                                          : t('config_unavailable', '这个插件没有配置界面（或没加载成功）')"
+                      @click="openPluginPage(p)"><svg class="ic" width="16" height="16"><use href="#i-setting"></use></svg></button>
+              <!-- 需求：内置插件不可删除 —— 垃圾桶**置灰不可点**（之前点了才弹提示）-->
+              <button class="icon-btn icon-sm" :disabled="p.protected"
+                      :title="p.protected ? t('builtin_locked', '内置示例插件，不可删除') : t('delete', '删除')"
+                      @click="deletePlugin(p)">
+                <svg class="ic" width="16" height="16"><use href="#i-delete"></use></svg></button>
+            </div>
+          </article>
+        </div>
+
+        <div v-else-if="filteredPlugins.length" class="plugin-rows">
+          <article v-for="p in filteredPlugins" :key="p.id" class="plugin-row" :class="{ 'is-flash': flashPlugin === p.id }">
+            <span class="plugin-icon big"><img v-if="p.icon" :src="p.icon" alt=""><span v-else>{{ p.name.slice(0, 1) }}</span></span>
+            <span class="plugin-names">
+              <span class="strong">{{ p.name }}</span>
+              <span class="cap ellipsis">{{ p.description }}</span>
+              <span class="cap">v{{ p.version }} 作者：{{ p.author }}</span>
+            </span>
+            <span class="grow"></span>
+            <span class="badge" :class="p.enabled ? 'is-on' : 'is-off'">
+              {{ p.enabled ? t('status_enabled', '已启用') : t('status_disabled', '已禁用') }}</span>
+            <button class="switch is-wide" :class="{ 'is-on': p.enabled }" @click="togglePlugin(p)"><span class="switch-knob"></span></button>
+            <button class="icon-btn" :disabled="!p.hasConfig"
+                    :title="p.hasConfig ? t('plugin_config', '配置界面')
+                                        : t('config_unavailable', '这个插件没有配置界面（或没加载成功）')"
+                    @click="openPluginPage(p)">
+              <svg class="ic" width="16" height="16"><use href="#i-setting"></use></svg></button>
+            <button class="icon-btn" :disabled="p.protected"
+                    :title="p.protected ? t('builtin_locked', '内置示例插件，不可删除') : t('delete', '删除')"
+                    @click="deletePlugin(p)">
+              <svg class="ic" width="16" height="16"><use href="#i-delete"></use></svg></button>
+          </article>
+        </div>
+        <p v-else class="cap center pad40">{{ pluginQuery.trim()
+          ? t('no_match', '没有匹配的插件，换个关键词试试。')
+          : t('no_plugin', '还没有插件。点右上角「我想开发」看看怎么写一个。') }}</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 下载（新增页面，从左侧栏更多进入，位置在插件和提交软件之间）-->
+  <section v-if="page === 'download'" class="page" key="download">
+    <div class="page-scroll" data-scroll-key="download">
+      <div class="download-page">
+        <div class="download-page-head">
+          <span class="sub-title">{{ t('download', '下载') }}</span>
+          <!-- 下载/工坊/AI/插件/部署 的标题旁统一挂Beta功能橙黄标签-->
+          <span class="beta-tag">{{ t('beta_feature', 'Beta功能') }}</span>
+          <span class="grow"></span>
+          <!-- 打开下载目录只留一个**文件夹图标**-->
+          <button class="icon-btn" :title="t('download_open_dir', '打开下载目录')"
+                  @click="openDownloadFolder(null)">
+            <svg class="ic" width="15" height="15"><use href="#i-folder"></use></svg>
+          </button>
+          <!-- 清空改成**下拉按钮**（一个整体组件）：
+               · 点**按钮本身** → 按当前选中的那一项执行（执行前弹二次确认）；
+               · 点**右边的三角** → 展开菜单（清除全部 / 清除已完成 / 清除未完成），
+                 选中后**只改选中状态**、不立刻执行 —— 要再点主按钮才会真删。
+               ⚠️ 按钮文案用 clearScopeLabel()（显示清空·已完成这种），
+                  让用户点之前就知道会清哪一类。-->
+          <div class="dropdown-btn" :class="{ 'is-open': clearMenuOpen }">
+            <button class="btn" :title="t('download_clear_menu', '选择清理范围')" @click="runClearDownloads">
+              <svg class="ic" width="15" height="15"><use href="#i-delete"></use></svg>
+              {{ clearScopeLabel() }}
+            </button>
+            <button class="dropdown-btn-toggle" :title="t('download_clear_menu', '选择清理范围')"
+                    @click.stop="clearMenuOpen = !clearMenuOpen">
+              <svg class="ic" width="12" height="12"><use href="#i-chevron_down"></use></svg>
+            </button>
+            <div v-if="clearMenuOpen" class="dropdown-menu" @click.stop>
+              <button class="dropdown-item" :class="{ 'is-current': clearScope === 'all' }"
+                      @click="chooseClearScope('all')">
+                {{ t('download_clear_all', '清除全部') }}
+              </button>
+              <button class="dropdown-item" :class="{ 'is-current': clearScope === 'finished' }"
+                      @click="chooseClearScope('finished')">
+                {{ t('download_clear_finished', '清除已完成') }}
+              </button>
+              <button class="dropdown-item" :class="{ 'is-current': clearScope === 'unfinished' }"
+                      @click="chooseClearScope('unfinished')">
+                {{ t('download_clear_unfinished', '清除未完成') }}
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="hairline"></div>
+        <div class="download-page-body">
+          <p v-if="!downloads.items.length" class="cap center pad40">{{ t('download_empty', '还没有下载任务。去资源的 Releases 里点一个文件试试。') }}</p>
+          <!-- 任务条。右键 → 菜单（复制下载链接 / 重试）。
+               ⚠️ @contextmenu.prevent + openDownloadMenu 打开自定义菜单（不是浏览器菜单）。
+               ⚠️ 布局按用户的原话改：
+                  · 速度移到**进度条左边**（原来是任务名右边）；
+                  · 已取消 / 下载失败的条目**不显示进度条**；
+                  · 文件名可点击（悬浮有下划线）→ 打开文件；打开程序按钮删掉了；
+                  · 文件名后面显示完成/取消/失败的时间（悬浮提示下载时间）；
+                  · 下载完成的条目：打开目录后面再加一个 ✕。-->
+          <div v-for="it in downloads.items" :key="it.id" class="download-row" :class="'is-' + it.status"
+               @contextmenu.prevent="openDownloadMenu($event, it)">
+            <div class="download-row-main">
+              <div class="download-row-title">
+                <!-- 文件名：done 状态可点击打开文件（悬浮出现下划线）。
+                     ⚠️ 用 button 而不是 span —— 可访问性 + 键盘能操作；
+                     非 done 状态（还没下好）不可点。-->
+                <button v-if="it.status === 'done'" class="download-name ellipsis link"
+                        :title="t('download_open_file', '打开文件')" @click="openDownloaded(it)">
+                  {{ it.name || it.url }}
+                </button>
+                <span v-else class="download-name ellipsis" :title="it.name">{{ it.name || it.url }}</span>
+                <!-- 完成 / 取消 / 失败的时间（悬浮提示下载时间）-->
+                <span v-if="downloadTimeText(it)" class="download-time"
+                      :title="t('download_time_tip', '下载时间')">{{ downloadTimeText(it) }}</span>
+              </div>
+              <!-- 下载成功 → 程序名**下面**一行绿色下载成功-->
+              <span v-if="it.status === 'done'" class="download-done-text">{{ t('download_done_success', '下载成功') }}</span>
+              <span v-else class="cap download-status-text">{{ downloadStatusText(it) }}</span>
+              <!-- 进度条那一行 = [进度条] [速度]。
+                   ⚠️ → 独立的 43% 数字删了，速度挪到进度条右边。
+                   ⚠️ 状态行（上面那行）里的43% · 剩余 12s**保留** ——
+                      用户特意叮嘱不要把剩余时间左边的总进度删除。
+                   ⚠️ 已取消 / 下载失败 → 整行不渲染（需求，不变）。-->
+              <div v-if="it.status !== 'canceled' && it.status !== 'failed'" class="download-bar-wrap">
+                <div class="download-bar" :class="'is-' + it.status">
+                  <span class="download-bar-fill" :style="{ width: (Number(it.percent) || 0) + '%' }"></span>
+                </div>
+                <span class="download-speed">{{ downloadSpeedText(it) }}</span>
+              </div>
+            </div>
+            <div class="download-row-ops">
+              <!-- 下载中：暂停 + 取消-->
+              <button v-if="it.status === 'downloading'" class="icon-btn" :title="t('download_pause_icon', '暂停下载')"
+                      @click.stop="pauseDownload(it)">
+                <svg class="ic" width="15" height="15"><use href="#i-pause"></use></svg>
+              </button>
+              <button v-if="it.status === 'paused'" class="icon-btn" :title="t('download_resume', '继续')"
+                      @click.stop="resumeDownload(it)">
+                <svg class="ic" width="15" height="15"><use href="#i-play"></use></svg>
+              </button>
+              <button v-if="it.status === 'downloading' || it.status === 'paused'" class="icon-btn"
+                      :title="t('cancel', '取消')" @click.stop="cancelDownload(it)">
+                <svg class="ic" width="15" height="15"><use href="#i-cancel"></use></svg>
+              </button>
+              <button v-if="it.status === 'failed'" class="icon-btn" :title="t('download_retry', '重试')"
+                      @click.stop="retryDownload(it)">
+                <svg class="ic" width="15" height="15"><use href="#i-sync"></use></svg>
+              </button>
+              <!-- 打开程序按钮**删掉了** —— 文件名本身就能点开（悬浮有下划线）-->
+              <button v-if="it.status === 'done'" class="icon-btn" :title="t('download_show_in_dir', '打开目录')"
+                      @click.stop="openDownloadFolder(it)">
+                <svg class="ic" width="15" height="15"><use href="#i-folder"></use></svg>
+              </button>
+              <!-- 下载完成的条目，打开目录**后面**也加一个 ✕（只删记录，不删文件）-->
+              <button v-if="it.status === 'done'" class="icon-btn download-remove"
+                      :title="t('download_remove_task', '删除这条任务')" @click.stop="removeDownload(it)">
+                <svg class="ic" width="14" height="14"><use href="#i-close"></use></svg>
+              </button>
+              <!-- 取消状态 → 最右侧一个 ✕ 按钮，点一下把这条任务从列表里删掉-->
+              <button v-if="it.status === 'canceled'" class="icon-btn download-remove"
+                      :title="t('download_remove_task', '删除这条任务')" @click.stop="removeDownload(it)">
+                <svg class="ic" width="14" height="14"><use href="#i-close"></use></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 任务条右键菜单（复制下载链接 / 重试）-->
+    <transition name="pop">
+      <div v-if="downloadMenu.open" class="card-menu download-menu"
+           :style="{ left: downloadMenu.x + 'px', top: downloadMenu.y + 'px' }"
+           @contextmenu.prevent @click.stop>
+        <button class="card-menu-item" @click="copyDownloadUrl()">
+          <svg class="ic" width="14" height="14"><use href="#i-copy"></use></svg>
+          <span>{{ t('download_copy_link', '复制下载链接') }}</span>
+        </button>
+        <!-- ⚠️ 重试在**已取消 / 下载失败**时都出现。
+             done / downloading / paused 不显示（下载中重试没意义）。-->
+        <button v-if="downloadMenu.item && (downloadMenu.item.status === 'failed' || downloadMenu.item.status === 'canceled')"
+                class="card-menu-item" @click="retryDownload(downloadMenu.item)">
+          <svg class="ic" width="14" height="14"><use href="#i-sync"></use></svg>
+          <span>{{ t('download_retry', '重试') }}</span>
+        </button>
+      </div>
+    </transition>
+  </section>
+
+  <!-- 提交软件（资源制作器）-->
+  <section v-if="page === 'maker'" class="page" key="maker">
+    <div class="maker-root">
+      <!-- 页头：标题 + 副标题（wordWrap）-->
+      <div class="maker-header">
+        <div class="maker-title-box">
+          <h2 class="sub-title">{{ t('title', '提交软件', 'maker') }}</h2>
+          <p class="cap">{{ t('subtitle', '制作 / 浏览 / 合并 ToolsGCP 资源库里的条目；改动写进 .ToolsGCP/ToolsGCP-Resources.json，写盘前自动备份。', 'maker') }}</p>
+        </div>
+      </div>
+      <div class="hairline"></div>
+
+      <!-- 工具栏：四个分节 + 资源库条数 + ⓘ
+           分段控制器与上面那条分割线之间要有间隙 → 加 maker-toolbar-gap
+           （CSS 队友：给 .maker-toolbar-gap / .maker-toolbar 补 padding-top 或 margin-top）-->
+      <div class="maker-toolbar maker-toolbar-gap">
+        <div class="segmented maker-seg">
+          <button v-for="s in makerSections" :key="s.key" class="seg-item"
+                  :class="{ 'is-on': activeSection === s.key }" @click="activeSection = s.key">
+            <svg class="ic" width="14" height="14"><use :href="'#i-' + s.icon"></use></svg>{{ s.label }}</button>
+        </div>
+        <span class="grow"></span>
+        <span class="maker-status" :title="libraryTooltip">{{ libraryStatusText }}</span>
+        <i class="tip" :data-tip="t('library_tip', '资源库固定是程序目录下的 .ToolsGCP/ToolsGCP-Resources.json，制作器不会另外生成一份；\n每次写盘前会自动备份到同级 backups/ 目录，只保留最近 20 份。', 'maker')"
+           @mouseenter="showTip" @mouseleave="hideTip">i</i>
+      </div>
+
+      <!-- ============ ① 投稿表单（左四卡 + 右预览/产出） ============-->
+      <div v-if="activeSection === 'form'" class="maker-body" ref="makerBody">
+        <div class="maker-left" ref="makerLeft">
+          <div class="maker-form-scroll" data-scroll-key="maker" ref="formScroll">
+
+            <!-- 卡片 1 基本信息-->
+            <section class="maker-card">
+              <div class="maker-card-head">
+                <span class="maker-card-title"><span class="maker-card-step">1</span>{{ t('basic_info', '基本信息', 'maker') }}</span>
+                <!-- 编辑模式徽标（双击资源浏览的一行后出现；CSS 队友：.maker-edit-badge 配色/间距）-->
+                <span v-if="maker.editingExisting" class="cap maker-edit-badge"
+                      :title="t('edit_mode_tip', '当前在编辑资源库里已有的条目，产出区可以「保存到原列表」写回它', 'maker')">
+                  {{ t('edit_mode', '编辑已有资源', 'maker') }}：{{ maker.loadedName || maker.name || '—' }}
+                  <template v-if="maker.editingCode">（{{ maker.editingCode }}）</template>
+                </span>
+              </div>
+              <div class="form-grid">
+                <label class="field">
+                  <span class="field-label">{{ t('name_required', '名称 *', 'maker') }}
+                    <i class="tip" :data-tip="t('tip_icon_name', '软件的名字；导入图片后图片会被自动改成这个名字', 'maker')"
+                       @mouseenter="showTip" @mouseleave="hideTip">i</i></span>
+                  <input class="input" v-model="maker.name" :placeholder="t('ph_name', '例如：LocalSend', 'maker')" @input="onNameChanged">
+                </label>
+                <label class="field">
+                  <span class="field-label">{{ t('id', '标识 id *', 'maker') }}
+                    <i class="tip" :data-tip="t('tip_id', '资源库里的唯一标识，只允许小写字母/数字/连字符', 'maker')"
+                       @mouseenter="showTip" @mouseleave="hideTip">i</i></span>
+                  <input class="input" v-model="maker.id" :placeholder="t('ph_id', '英文小写，例如 localsend', 'maker')" @input="onIdChanged">
+                </label>
+                <label class="field">
+                  <span class="field-label">{{ t('code', '编码', 'maker') }}
+                    <i class="tip" :data-tip="t('tip_code', '系统自动分配的唯一编码（可留空），部署清单靠它指代程序', 'maker')"
+                       @mouseenter="showTip" @mouseleave="hideTip">i</i></span>
+                  <input class="input readonly" :value="maker.code" readonly>
+                </label>
+                <div class="field">
+                  <span class="field-label">{{ t('category', '类别', 'maker') }}
+                    <i class="tip" :data-tip="t('tip_category', '决定它显示在搜索页的哪个分组下，也可以直接输入新类别；\n填好后标签会自动跟着写', 'maker')"
+                       @mouseenter="showTip" @mouseleave="hideTip">i</i></span>
+                  <!-- 原生 datalist 跟全站自绘下拉不一致 → 换成可编辑 combo（对齐 py EditableComboBox）：
+                       31 个内置类别任选 + 允许直接输入自定义类别。
+                       （不符合和其他下拉框 ui 一致样式）：
+                         · 不再写死 :width="240" —— 由 CSS 铺满整格，和上下同格的 input 同宽同高；
+                         · 加 :display-value —— 输入框显示当前语言译名（English 界面显示 "Tools"，
+                           而不是规范中文），落盘时 buildEntry 再还原成规范值（对齐 py）。
+                       CSS 见 components.css 的 .combo-trigger-editable / .combo-edit、
+                       layout.css 的 `.field > .combo.is-editable`。-->
+                  <combo editable :model-value="maker.category" :options="makerCategoryOptions"
+                         :display-value="makerCategoryText"
+                         :placeholder="t('ph_category', '选择或输入类别', 'maker')"
+                         @change="onCategoryChanged"></combo>
+                </div>
+                <div class="field span2">
+                  <span class="field-label">{{ t('platforms', '适用系统', 'maker') }}
+                    <i class="tip" :data-tip="t('tip_systems', '可多选；不选就是留空。\n现在只存进 JSON，主程序搜索页也能按它筛', 'maker')"
+                       @mouseenter="showTip" @mouseleave="hideTip">i</i></span>
+                  <div class="chip-flow">
+                    <button v-for="p in makerPlatforms" :key="p" class="chip"
+                            :class="{ 'is-on': maker.systems.includes(p) }"
+                            :title="t('tip_none_decided', '点一下选中／取消；留空表示还没确定', 'maker')"
+                            @click="toggleChip(maker.systems, p)">{{ term(p) }}</button>
+                  </div>
+                </div>
+                <div class="field span2">
+                  <span class="field-label">{{ t('arch', 'CPU 架构', 'maker') }}
+                    <i class="tip" :data-tip="t('tip_arch', '可多选；留空表示没填。例如 Windows 版常见 x64 / x86，\n手机端常见 arm64', 'maker')"
+                       @mouseenter="showTip" @mouseleave="hideTip">i</i></span>
+                  <div class="chip-flow">
+                    <button v-for="a in makerArchs" :key="a" class="chip"
+                            :class="{ 'is-on': maker.architectures.includes(a) }"
+                            :title="t('tip_none', '点一下选中／取消；留空表示没填', 'maker')"
+                            @click="toggleChip(maker.architectures, a)">{{ a }}</button>
+                  </div>
+                </div>
+                <div class="field span2">
+                  <span class="field-label">{{ t('icon', '图标', 'maker') }}
+                    <i class="tip" :data-tip="t('tip_icon_pick', '可选。导入的图片会自动存到 .ToolsGCP/Icon，\n并按「名称」自动改名，不用自己整理文件名。\n支持 png / jpg / gif / ico / webp / svg，建议 256x256 以上', 'maker')"
+                       @mouseenter="showTip" @mouseleave="hideTip">i</i></span>
+                  <div class="icon-row">
+                    <input class="input readonly" :value="maker.iconName" :placeholder="t('no_image', '尚未选择图片', 'maker')" readonly>
+                    <button class="btn" @click="pickIcon">
+                      <svg class="ic" width="15" height="15"><use href="#i-folder"></use></svg>{{ t('import_image', '导入图片', 'maker') }}</button>
+                  </div>
+                </div>
+                <div class="field span2">
+                  <span class="field-label">{{ t('tags', '标签', 'maker') }}
+                    <i class="tip" :data-tip="t('tip_tags', '默认跟着「类别」自动填；你自己改过之后就不再自动覆盖，\n想恢复联动就点右边的「跟随类别」。写「官方」会显示成金色标签', 'maker')"
+                       @mouseenter="showTip" @mouseleave="hideTip">i</i></span>
+                  <div class="tags-row">
+                    <input class="input" v-model="maker.tags" :placeholder="t('ph_tags', '例如：工具, 系统, 官方', 'maker')" @input="onTagsEdited">
+                    <button class="btn" @click="restoreTagsFollow">
+                      <svg class="ic" width="15" height="15"><use href="#i-sync"></use></svg>{{ t('follow_category', '跟随类别', 'maker') }}</button>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- 卡片 2 链接与简介-->
+            <section class="maker-card">
+              <div class="maker-card-head">
+                <span class="maker-card-title"><span class="maker-card-step">2</span>{{ t('links_only', '链接与简介', 'maker') }}</span>
+              </div>
+              <div class="form-grid">
+                <label class="field">
+                  <span class="field-label">{{ t('url', '官网', 'maker') }}
+                    <i class="tip" :data-tip="t('tip_url', '可选。点卡片上的「官网」时跳转的地址；\n只写 example.com 也行，保存时会自动补上 https://', 'maker')"
+                       @mouseenter="showTip" @mouseleave="hideTip">i</i></span>
+                  <input class="input" v-model="maker.url" :placeholder="t('ph_url', 'https://example.com（没有可留空）', 'maker')">
+                </label>
+                <!-- 新增下载地址= 下载**页面**的网页地址（不是安装包直链）。
+                     ⚠️ → 就在官网这一栏下面。
+                     ⚠️ 放独立一行（不跟官网并排），因为它是官网的**下一项**。-->
+                <label class="field field-full">
+                  <span class="field-label">{{ t('download_page_url', '下载地址', 'maker') }}
+                    <i class="tip" :data-tip="t('tip_download_page_url', '下载**页面**的网址（用户点卡片上的「下载」按钮后打开的那个页面）。\n不是安装包直链 —— 直链是「资源浏览」里另外填的。', 'maker')"
+                       @mouseenter="showTip" @mouseleave="hideTip">i</i></span>
+                  <input class="input" v-model="maker.downloadPageUrl"
+                         :placeholder="t('ph_download_page_url', 'https://example.com/download（没有可留空）', 'maker')">
+                </label>
+                <div class="field">
+                  <span class="field-label">{{ t('github', '开源仓库', 'maker') }}
+                    <i class="tip" :data-tip="t('tip_repo_platform', '选好平台后会自动补上前缀；卡片右下角会出现仓库按钮', 'maker')"
+                       @mouseenter="showTip" @mouseleave="hideTip">i</i></span>
+                  <div class="repo-row">
+                    <combo :model-value="maker.repoPlatform" :options="repoPlatformOptions" :width="110"
+                           @change="onRepoPlatformChanged"></combo>
+                    <span v-if="repoPrefix" class="repo-prefix">{{ repoPrefix }}</span>
+                    <input class="input" v-model="maker.github" :readonly="maker.repoPlatform === 'none'"
+                           :placeholder="repoPlaceholder">
+                  </div>
+                  <span class="repo-preview">{{ repoPreviewText }}</span>
+                </div>
+              </div>
+            </section>
+
+            <!-- 卡片 3 多语言字段（紧跟卡片 2）-->
+            <section class="maker-card">
+              <div class="maker-card-head">
+                <span class="maker-card-title"><span class="maker-card-step">3</span>{{ t('lang_fields_default_on', '多语言字段（三种语言一起提交）', 'maker') }}</span>
+                <span class="card-head-actions">
+                  <span class="cap">{{ t('lang_fields_hint', '按语言分别填写简介、应用介绍与补充', 'maker') }}</span>
+                  <i class="tip" :data-tip="t('lang_fields_tip', '三种语言完全相同时不会写成字典。', 'maker')"
+                     @mouseenter="showTip" @mouseleave="hideTip">i</i>
+                </span>
+              </div>
+              <!-- 多语言字段常开（删掉开关按钮），且不再填写名称-->
+              <div class="i18n-body">
+                <div class="segmented i18n-seg">
+                  <button v-for="(lang, i) in makerLanguages" :key="lang" class="seg-item"
+                          :class="{ 'is-on': i18nLangIndex === i }" @click="i18nLangIndex = i">
+                    {{ lang === 'English' ? 'English' : t(lang === '简体中文' ? 'zh_cn' : 'zh_tw', lang, 'maker') }}</button>
+                </div>
+                <div class="tri-lang">
+                  <div class="lang-col" v-for="lang in [makerLanguages[i18nLangIndex]]" :key="lang">
+                    <label class="field">
+                      <span class="field-label">{{ t('description', '简介', 'maker') }}</span>
+                      <input class="input" v-model="maker.i18n[lang].description" :placeholder="t('ph_desc_main', '一句话说明它是什么、能干什么（可留空）', 'maker')">
+                    </label>
+                    <label class="field">
+                      <span class="field-label">{{ t('intro', '应用介绍', 'maker') }}</span>
+                      <textarea class="input" v-model="maker.i18n[lang].intro"
+                                :placeholder="t('ph_intro_main', '详情页「应用介绍」里显示的正文（没有可留空）：支持 Markdown 语法…', 'maker')"></textarea>
+                    </label>
+                    <label class="field">
+                      <span class="field-label">{{ t('supplement', '补充', 'maker') }}</span>
+                      <textarea class="input" v-model="maker.i18n[lang].supplement"
+                                :placeholder="t('ph_supplement_main', '补充说明（没有可留空）：使用场景、注意事项、系统要求……', 'maker')"></textarea>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- 卡片 4 其它链接（无序号徽标）-->
+            <section class="maker-card">
+              <div class="maker-card-head">
+                <span class="maker-card-title">{{ t('other_links', '其它链接（可留空）', 'maker') }}</span>
+              </div>
+              <div class="form-grid">
+                <label class="field">
+                  <span class="field-label">{{ t('author_page', '作者主页', 'maker') }}</span>
+                  <input class="input" v-model="maker.author_url" :placeholder="t('ph_author_page', '作者主页（没有可留空）', 'maker')">
+                </label>
+                <label class="field">
+                  <span class="field-label">{{ t('chat_url', '聊天地址', 'maker') }}</span>
+                  <input class="input" v-model="maker.chat_url" :placeholder="t('ph_chat', '聊天/交流地址（没有可留空）', 'maker')">
+                </label>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <div class="maker-right" ref="makerRight">
+          <!-- 卡片 5 实时预览-->
+          <section class="maker-card preview-card" ref="previewCard">
+            <div class="maker-card-head">
+              <span class="maker-card-title">{{ t('preview', '实时预览', 'maker') }}</span>
+            </div>
+            <div class="preview-inner">
+              <div class="preview-upper">
+                <span class="preview-icon">
+                  <img v-if="previewIcon" :src="previewIcon" alt=""><span v-else>?</span>
+                </span>
+                <span class="preview-text">
+                  <span class="preview-name">{{ previewName }}</span>
+                  <span class="preview-desc">{{ previewDesc }}</span>
+                </span>
+              </div>
+              <div class="preview-divider"></div>
+              <div class="preview-tags">
+                <span v-for="tag in previewTagList" :key="tag" class="tag">{{ tag }}</span>
+                <span v-if="!previewTagList.length" class="cap">{{ t('（无标签）', '（无标签）', 'maker') }}</span>
+              </div>
+            </div>
+            <p class="preview-status" :class="'is-' + statusLevel">{{ statusLine }}</p>
+          </section>
+
+          <!-- 卡片 6 产出（编辑模式下多保存到原列表；CSS 队友：.maker-output-card 与预览卡之间的间距/阴影）-->
+          <section class="maker-card action-card maker-output-card">
+            <div class="maker-card-head">
+              <span class="maker-card-title">{{ t('output', '产出', 'maker') }}</span>
+            </div>
+            <p class="cap action-tip">{{ t('then_do_one', '填好必填项后，下面任选一项产出即可（不必全做）。', 'maker') }}</p>
+            <!-- 编辑已有资源时的专属按钮（写回载入时那一条，按原 id/code 覆盖）-->
+            <button v-if="maker.editingExisting" class="btn btn-primary btn-block" @click="saveToOriginal">
+              <svg class="ic" width="15" height="15"><use href="#i-accept"></use></svg>{{ t('save_to_original', '保存到原列表', 'maker') }}</button>
+            <button class="btn btn-primary btn-block" @click="exportDraft">
+              <svg class="ic" width="15" height="15"><use href="#i-link"></use></svg>{{ t('gen_draft', '生成稿件（发给作者）', 'maker') }}</button>
+            <button class="btn btn-primary btn-block" @click="appendToLibrary">
+              <svg class="ic" width="15" height="15"><use href="#i-add"></use></svg>{{ t('append_local', '追加到本机资源库', 'maker') }}</button>
+            <button class="btn btn-block" @click="saveStandalone">
+              <svg class="ic" width="15" height="15"><use href="#i-save_as"></use></svg>{{ t('save_as_new', '另存为独立资源库', 'maker') }}</button>
+            <button class="btn btn-block" @click="clearForm">
+              <svg class="ic" width="15" height="15"><use href="#i-delete"></use></svg>{{ t('clear_form', '清空表单', 'maker') }}</button>
+            <p v-if="maker.editingExisting" class="cap maker-edit-hint">
+              {{ t('append_editing_hint', '「追加」会在资源库再存一条；要改载入的这一条请用上面的「保存到原列表」。', 'maker') }}</p>
+            <p class="cap library-status" :title="libraryTooltip">{{ libraryLabel }}</p>
+          </section>
+        </div>
+      </div>
+
+      <!-- ============ ② 资源浏览（11 列表格） ============-->
+      <div v-else-if="activeSection === 'browser'" class="maker-section-scroll">
+        <div class="maker-browser-bar">
+          <div class="search-box maker-search">
+            <svg class="ic search-lead" width="15" height="15"><use href="#i-search"></use></svg>
+            <input type="text" v-model="browserQuery" :placeholder="t('search_library', '按编码 / 名称 / 标签 / id 搜索', 'maker')">
+          </div>
+          <combo :model-value="browserCategory" :options="browserCategoryOptions" :width="140"
+                 @change="browserCategory = $event"></combo>
+          <button class="btn" @click="reloadLibrary">
+            <svg class="ic" width="15" height="15"><use href="#i-sync"></use></svg>{{ t('reload', '重新载入', 'maker') }}</button>
+          <button class="btn" @click="openLibraryFile">
+            <svg class="ic" width="15" height="15"><use href="#i-folder"></use></svg>{{ t('open_library', '打开资源库文件', 'maker') }}</button>
+          <span class="grow"></span>
+          <!-- （产出位置中的载入现有资源来编辑按钮删除）：
+               双击任意一行已是编辑入口，这个载入到制作资源按钮删掉（含 loadSelectedIntoForm）。-->
+          <button class="btn" @click="deleteSelectedEntries">
+            <svg class="ic" width="15" height="15"><use href="#i-delete"></use></svg>{{ t('delete_selected', '删除选中条目', 'maker') }}</button>
+        </div>
+        <div class="panel browser-panel">
+          <div class="browser-scroll">
+            <div class="browser-head">
+              <span class="b-icon">{{ t('icon', '图标', 'maker') }}</span>
+              <span class="b-code">{{ t('code', '编码', 'maker') }}</span>
+              <span class="b-name">{{ t('name', '名称', 'maker') }}</span>
+              <span class="b-cat">{{ t('category', '类别', 'maker') }}</span>
+              <span class="b-tags">{{ t('tags', '标签', 'maker') }}</span>
+              <span class="b-url">{{ t('url', '官网', 'maker') }}</span>
+              <span class="b-repo">{{ t('github', '开源仓库', 'maker') }}</span>
+              <span class="b-desc">{{ t('description', '简介', 'maker') }}</span>
+              <span class="b-intro">{{ t('intro', '应用介绍', 'maker') }}</span>
+              <span class="b-supp">{{ t('supplement', '补充', 'maker') }}</span>
+              <span class="b-time">{{ t('column_listed_at', '上架时间', 'maker') }}</span>
+            </div>
+            <div v-for="r in browserRows" :key="r.code" class="browser-row"
+                 :class="{ 'is-sel': browserSelected === r.code }"
+                 @click="browserSelected = r.code" @dblclick.stop="editExistingEntry(r)">
+              <span class="b-icon"><img v-if="r.icon" :src="r.icon" alt="" :title="r.iconName"></span>
+              <span class="b-code">{{ r.code }}</span>
+              <span class="b-name ellipsis" :title="r.name">{{ r.name }}</span>
+              <span class="b-cat ellipsis">{{ (r.category || []).join(', ') }}</span>
+              <span class="b-tags ellipsis">{{ (r.tags || []).join(', ') }}</span>
+              <span class="b-url ellipsis" :title="r.url">{{ r.url }}</span>
+              <span class="b-repo ellipsis" :title="r.github">{{ r.github }}</span>
+              <span class="b-desc ellipsis" :title="r.description">{{ r.description }}</span>
+              <span class="b-intro ellipsis" :title="r.intro">{{ r.intro }}</span>
+              <span class="b-supp ellipsis" :title="r.supplement">{{ r.supplement }}</span>
+              <span class="b-time">{{ r.listed_at }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="browser-foot">
+          <span class="cap">{{ t('browser_hint', '双击任意一行直接进入编辑界面（表单会带进这一条，产出区出现「保存到原列表」）；表头会出现「编辑已有资源」徽标；\n「上架时间」是新资源入库的时间。', 'maker') }}</span>
+          <span class="grow"></span>
+          <span class="cap">{{ browserCountText }}</span>
+        </div>
+      </div>
+
+      <!-- ============ ③ 批量合成 ============-->
+      <div v-else-if="activeSection === 'batch'" class="maker-section-scroll">
+        <section class="maker-card">
+          <div class="maker-card-head">
+            <span class="maker-card-title">{{ t('① 选择合成模式', '① 选择合成模式', 'maker') }}</span>
+          </div>
+          <p class="cap">{{ t('batch_mode_desc', '追加模式：把投稿的条目合进本机资源库，已经有的编码会自动跳过。\n新建模式：把多个投稿文件合并成一个新的 JSON，原来的文件不动。', 'maker') }}</p>
+          <div class="batch-rows">
+            <div class="batch-row">
+              <span class="batch-label">{{ t('合成模式', '合成模式', 'maker') }}</span>
+              <span class="grow"></span>
+              <combo :model-value="batchMode" :options="batchModeOptions" :width="240" @change="batchMode = $event"></combo>
+            </div>
+            <div class="batch-row">
+              <span class="batch-label">{{ t('重复条目', '重复条目', 'maker') }}
+                <i class="tip" :data-tip="t('判断重复的依据：编码相同，或者标识 id 相同', '判断重复的依据：编码相同，或者标识 id 相同', 'maker')"
+                   @mouseenter="showTip" @mouseleave="hideTip">i</i></span>
+              <span class="grow"></span>
+              <combo :model-value="batchDup" :options="batchDupOptions" :width="240" @change="batchDup = $event"></combo>
+            </div>
+          </div>
+        </section>
+
+        <section class="maker-card">
+          <div class="maker-card-head">
+            <span class="maker-card-title">{{ t('② 选择要合成的 JSON 文件', '② 选择要合成的 JSON 文件', 'maker') }}</span>
+          </div>
+          <p class="cap">{{ t('batch_files_hint', '可以一次选多个；文件里是列表或 {"resources": [...]} 都能识别。', 'maker') }}</p>
+          <div class="maker-browser-bar">
+            <button class="btn" @click="batchAddFiles">
+              <svg class="ic" width="15" height="15"><use href="#i-add"></use></svg>{{ t('添加文件', '添加文件', 'maker') }}</button>
+            <button class="btn" @click="batchRemoveSelected">
+              <svg class="ic" width="15" height="15"><use href="#i-delete"></use></svg>{{ t('移除选中', '移除选中', 'maker') }}</button>
+            <button class="btn" @click="batchClearFiles">
+              <svg class="ic" width="15" height="15"><use href="#i-cancel"></use></svg>{{ t('清空列表', '清空列表', 'maker') }}</button>
+            <span class="grow"></span>
+            <span class="cap">{{ t('files_selected', '已选 {n} 个文件', 'maker').replace('{n}', batchFiles.length) }}</span>
+          </div>
+          <div class="batch-file-list">
+            <button v-for="(f, i) in batchFiles" :key="f.name + i" class="batch-file"
+                    :class="{ 'is-on': batchFileIndex === i }" @click="batchFileIndex = i">
+              <span class="ellipsis">{{ f.name }}</span><span class="cap">{{ f.count }} 条</span></button>
+            <p v-if="!batchFiles.length" class="cap">{{ t('点上面的「添加文件」挑几个投稿 JSON。', '点上面的「添加文件」挑几个投稿 JSON。', 'maker') }}</p>
+          </div>
+        </section>
+
+        <section class="maker-card">
+          <div class="maker-card-head">
+            <span class="maker-card-title">{{ t('③ 输出位置', '③ 输出位置', 'maker') }}</span>
+          </div>
+          <div v-if="batchMode === 'append'" class="batch-row">
+            <span class="batch-label">{{ t('目标资源库', '目标资源库', 'maker') }}</span>
+            <span class="grow"></span>
+            <span class="cap" :title="libraryTooltip">{{ libraryLabel }}</span>
+          </div>
+          <div v-else class="batch-row">
+            <span class="batch-label">{{ t('保存到', '保存到', 'maker') }}</span>
+            <input class="input" v-model="batchOutput" :placeholder="t('选择新 JSON 的保存位置', '选择新 JSON 的保存位置', 'maker')">
+            <button class="btn" @click="batchChooseOutput">
+              <svg class="ic" width="15" height="15"><use href="#i-save_as"></use></svg>{{ t('选择…', '选择…', 'maker') }}</button>
+          </div>
+          <p class="cap">{{ t('mode_tip', batchMode === 'append'
+            ? '会把合进来的条目直接写进本机资源库，写入前会自动备份一份。'
+            : '只生成一个新文件，本机资源库不受影响，之后可以再导进来。', 'maker') }}</p>
+        </section>
+
+        <section class="maker-card">
+          <div class="maker-card-head">
+            <span class="maker-card-title">{{ t('④ 检查并执行', '④ 检查并执行', 'maker') }}</span>
+          </div>
+          <p class="cap">{{ batchPreviewText }}</p>
+          <div class="maker-browser-bar">
+            <button class="btn" @click="batchPreview">
+              <svg class="ic" width="15" height="15"><use href="#i-view"></use></svg>{{ t('预览结果', '预览结果', 'maker') }}</button>
+            <span class="grow"></span>
+            <button class="btn btn-primary" @click="batchRun">
+              <svg class="ic" width="15" height="15"><use href="#i-accept"></use></svg>{{ t('开始合成', '开始合成', 'maker') }}</button>
+          </div>
+        </section>
+      </div>
+
+      <!-- ============ ④ 使用说明 ============-->
+      <div v-else class="maker-section-scroll">
+        <section v-for="(block, i) in makerHelpBlocks" :key="i" class="maker-card">
+          <div class="maker-card-head" v-if="block.title">
+            <span class="maker-card-title">{{ block.title }}</span>
+          </div>
+          <p class="help-body">{{ block.body }}</p>
+        </section>
+      </div>
+    </div>
+  </section>
+
+  <!-- AI 侧边栏整页-->
+  <section v-if="page === 'ai'" class="page" key="ai">
+    <div class="ai-embedded">
+      <div class="ai-head">
+        <span class="ai-brand">GCP-AI</span>
+        <span class="beta-tag">{{ t('beta_feature', 'Beta功能') }}</span>
+        <span class="grow"></span>
+        <button class="icon-btn" :title="t('ai_new_chat', '新对话')" @click="aiNewChat">
+          <svg class="ic" width="16" height="16"><use href="#i-add"></use></svg></button>
+        <button class="icon-btn" :class="{ 'is-on': aiHistoryOpen }" :title="t('ai_history', '历史对话')" @click="aiHistory">
+          <svg class="ic" width="16" height="16"><use href="#i-history"></use></svg></button>
+      </div>
+      <div class="hairline"></div>
+      <div class="ai-messages">
+        <!-- 需求：AI 初始那句提示也要是**聊天气泡**样式，不是裸文本-->
+        <div v-if="!aiMessages.length" class="bubble-row is-ai">
+          <div class="bubble is-ai ai-welcome">{{ aiWelcomeText }}</div>
+        </div>
+        <!-- ============ 气泡：版本导航 + 原地编辑（参考 DeepSeek 网页版） ============
+             ⚠️ 这里的 (m, i) 里 **i 就是后端 messages 的绝对下标**（sessionToMessages 保持 1:1、
+                不过滤不排序）。翻版本 / 重新生成 / 编辑重发都要把 i 交给后端，
+                而"切用户版本"会整段替换它后面的消息 → 下标全部漂移，
+                所以每次都只能用后端刚返回的这份列表里的 i，绝不能缓存旧 i。 -->
+        <!-- ⚠️ 用 <template v-for> 包一层再在子节点上写 v-if：
+             Vue3 里 v-if 与 v-for 同节点时 v-if 优先、拿不到 i，必须这样拆开。
+             `aiRowShown(i)` = 重新生成/编辑重发期间，把**被改那条之后**的既有内容先藏起来
+             （用户报的"下面所有内容属于所有版、全都不消失"）。 -->
+        <template v-for="(m, i) in aiMessages" :key="i">
+        <div v-if="aiRowShown(i)" class="bubble-row" :class="'is-' + m.role">
+          <div class="bubble-wrap" :class="'is-' + m.role">
+            <!-- 用户消息点「编辑」→ **原地**变成可编辑气泡：
+                 复用同一个 .bubble 类（字号/padding 全继承），尺寸**交给排版引擎**：
+                 CSS 里 `field-sizing: content` + `max-width: 78%`（见 ai-fixes.css）。
+                   · 短文本 = 小框自适应（不是固定长条，也不需要任何 px 下限）；
+                   · 打字变长 → 框跟着长（旧版用内联 width 钉死，怎么打都不长，本轮就是修这个）；
+                   · 到 78% 才折行 = "到一定长度自动换行"，
+                     不会出现"你好呀"被压成"你好↵呀"（那需要固定窄宽，现在结构上不存在）。
+                 :style 只保留一个 min-height 垫值，防进入编辑瞬间塌成一条线。
+                 Enter = ✓ 保存并发送（作为新版本），Shift+Enter 换行，Esc = ✕ 取消。-->
+            <textarea v-if="aiIsEditing(i)" class="bubble ai-bubble-edit is-user"
+                      v-model="aiEditDraft" :style="aiEditBoxStyle" rows="1"
+                      @input="aiEditBoxAutoGrow"
+                      @keydown.esc="aiCancelEdit"
+                      @keydown.enter.exact.prevent="aiAcceptEdit(i)"></textarea>
+            <div v-else-if="aiRegenPlaceholder(i)" class="ai-pending">
+              {{ t('ai_pending', 'AI正在查看问题') }}<span class="dot dot-1">.</span><span
+                    class="dot dot-2">.</span><span class="dot dot-3">.</span>
+            </div>
+            <!-- 本轮需求：气泡正文不再是裸文本插值，而是**片段数组**渲染（aiBubbleParts）：
+                 · 用户气泡里的 @名称(编码) → 蓝色下划线**可点击**跳详情
+                   （用户报的"@ 内容发送后变成不可点击、无下划线"）；
+                 · AI 气泡里的 资源编号 / 应用名 / "设置<API Key>" → 同样蓝色下划线可点击
+                   （编号/应用名跳详情，设置<API Key> 跳 设置 → GCP-AI）。
+                 ⚠️ 绝不 v-html：AI 正文是不可信文本，拼 HTML 等于开 XSS。
+                 思考块（.ai-think）在正文**上面**，DeepSeek 网页版那种展开/收起。
+                 右键弹自定义菜单（复制 / 全选 → 取消全选）。-->
+            <div v-else class="bubble" :class="[{ 'is-error': !!m.error }, 'is-' + m.role]"
+                 :data-i="i" @contextmenu.prevent.stop="openAiCtx($event, i)">
+              <div v-if="aiThinkOf(m, i)" class="ai-think" :class="{ 'is-streaming': aiThinkOf(m, i).streaming }">
+                <button class="ai-think-head" type="button"
+                        @mousedown.prevent @click.prevent="aiThinkToggle(aiThinkOf(m, i).key)">
+                  <svg class="ic" width="13" height="13"><use href="#i-brain"></use></svg>
+                  <span class="ai-think-text">{{ aiThinkLabel(aiThinkOf(m, i)) }}</span>
+                  <svg class="ic ai-think-caret" width="11" height="11">
+                    <use :href="aiThinkIsOpen(aiThinkOf(m, i).key) ? '#i-chevron_up' : '#i-chevron_down'"></use>
+                  </svg>
+                </button>
+                <div v-if="aiThinkIsOpen(aiThinkOf(m, i).key)" class="ai-think-body">
+                  {{ aiThinkOf(m, i).text }}
+                </div>
+              </div>
+              <span v-for="(part, pi) in aiBubbleParts(m, i)" :key="pi"
+                    :class="{ 'ai-mention': !!part.mention, 'ai-inline-link': !!part.link, 'ai-slash-cmd': !!part.cmd }"
+                    :data-code="part.code || ''"
+                    @click="part.mention ? onAiTokenClick({ code: part.code, name: part.name, text: part.text }) : (part.link ? onAiLinkClick(part, $event) : null)">{{ part.t != null ? part.t : part.text }}</span><span v-if="i === aiStreamingIndex"
+                 class="ai-stream-cursor"></span></div>
+            <div class="bubble-actions">
+              <!-- 编辑态：原来的按钮整排换成 ✕ / ✓（尺寸仍跟着按钮排，那一行不会跳）-->
+              <template v-if="aiIsEditing(i)">
+                <button class="bubble-btn" :title="t('cancel', '取消')" @click="aiCancelEdit">
+                  <svg class="ic" width="14" height="14"><use href="#i-close"></use></svg></button>
+                <button class="bubble-btn" :title="t('ai_edit_send', '保存并发送')"
+                        @click="aiAcceptEdit(i)">
+                  <svg class="ic" width="14" height="14"><use href="#i-check"></use></svg></button>
+              </template>
+              <template v-else>
+                <!-- 顺序（本轮需求）：AI = **[重新生成] [复制] [◀ n ▶]**。
+                     用户原话：「AI的重新生成按钮和复制按钮交换位置，他的版本树ui也出现后
+                     放在复制右边」→ 重生成挪到最左，复制紧跟其后，版本树在复制**右边**。
+                     用户消息没有重新生成，所以是 [复制] [编辑] [◀ n ▶]。-->
+                <button v-if="m.role === 'ai' && !aiBusy" class="bubble-btn"
+                        :title="t('ai_regen', '重新生成这条回答')" @click="aiRegenerate(i)">
+                  <svg class="ic" width="14" height="14"><use href="#i-sync"></use></svg>
+                </button>
+                <button class="bubble-btn" :title="isCopied(m.text) ? t('copied', '已复制') : t('copy', '复制')"
+                        @click="copyText(m.text)">
+                  <svg class="ic" width="14" height="14">
+                    <use :href="isCopied(m.text) ? '#i-accept' : '#i-copy'"></use></svg>
+                </button>
+                <!-- 用户消息可编辑（✓ 之后成为新版本，旧回复仍挂在旧版本下）-->
+                <button v-if="m.role === 'user' && !aiBusy" class="bubble-btn is-edit"
+                        :title="t('ai_edit', '编辑这条消息')" @click="aiStartEdit(i)">
+                  <svg class="ic" width="14" height="14"><use href="#i-edit"></use></svg>
+                </button>
+                <!-- 版本树 ◀ n ▶：需求「我喜欢有 ◀ n ▶ 的按钮，而且 **n 只是 2 个按钮之间的
+                     实时根据这个版本树改变的 text，而不是属于一个组件 ui**」
+                     → 两个箭头是按钮，中间那个 n **就是一段普通文字**（跟着翻页实时变），
+                     不再套"整块胶囊"那种组件外壳（见 ai-fixes.css：.variant-nav 不再画底色）。
+                     默认停在最后一版；只有一版时整块不渲染（用户要求）。-->
+                <div v-if="aiVariantCount(m) > 1" class="variant-nav">
+                  <button class="vn-btn" :disabled="!aiCanSwitchVariant() || aiVariantPage(m) <= 1"
+                          :title="t('ai_version_prev', '上一版')"
+                          @click="aiSwitchVariant(i, aiVariantPage(m) - 1)">
+                    <svg class="ic" width="12" height="12"><use href="#i-left_arrow"></use></svg></button>
+                  <span class="vn-page">{{ aiVariantPage(m) }}/{{ aiVariantCount(m) }}</span>
+                  <button class="vn-btn"
+                          :disabled="!aiCanSwitchVariant() || aiVariantPage(m) >= aiVariantCount(m)"
+                          :title="t('ai_version_next', '下一版')"
+                          @click="aiSwitchVariant(i, aiVariantPage(m) + 1)">
+                    <svg class="ic" width="12" height="12"><use href="#i-right_arrow"></use></svg></button>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+        </template>
+        <!-- 「AI正在查看问题...」：⚠️ 这只是渲染层的一行提示，
+             **不是一条消息**（不进 aiMessages、不落会话文件），
+             后端一开始吐字（第一个 delta）或这次请求结束就整块消失。
+             ⚠️ 只有**普通提问**才会用到这一行（那时还没有对应的 AI 气泡可落位）；
+             重新生成/编辑重发时，占位气泡是**就地取代**那颗气泡本体画的
+             （见上面 `aiRegenPlaceholder`），所以这里不能再画一份，否则会冒两颗。 -->
+        <div v-if="aiBusy && aiPending && aiPendingAfter < 0" class="bubble-row is-ai">
+          <div class="ai-pending">{{ t('ai_pending', 'AI正在查看问题') }}<span class="dot dot-1">.</span><span
+                 class="dot dot-2">.</span><span class="dot dot-3">.</span></div>
+        </div>
+      </div>
+      <div class="ai-input-row" @keydown.capture="aiAtKeydown($event)">
+        <!-- 任务 2：不在最底部时，AI 聊天区右下角（输入框正上方）浮出一颗圆形「回到底部」按钮。
+             · 图标 = #i-chevron_down（那个 V 形箭头）；
+             · 只在 aiBackBottomVisible（不在底部 & 面板可见）时出现；
+             · 正在输出时外轮廓有一圈旋转的淡光（见 ai-fixes.css 的 .ai-back-bottom.is-streaming）。
+             ⚠️ 挂在 .ai-input-row 里（它本身 position:relative），bottom:calc(100% + …) 抬到输入框上方 ——
+                这样不占消息区布局、不会因为按钮出现/消失把聊天内容顶来顶去。
+             ⚠️ 独立 AI 页与悬浮抽屉**两处都要有**（改一处记得改两处）。-->
+        <button v-if="aiBackBottomVisible" type="button" class="ai-back-bottom"
+                :class="{ 'is-streaming': aiStreaming }"
+                :title="t('ai_back_to_bottom', '回到底部')"
+                :aria-label="t('ai_back_to_bottom', '回到底部')"
+                @click.stop="aiBackToBottom">
+          <svg class="ic" width="16" height="16"><use href="#i-chevron_down"></use></svg>
+        </button>
+        <!-- 输入 "/" 时的命令提示（插件制作辅助的 ai.chat_hints）。
+             绝对定位在输入行上方，不占布局、不挡输入；点一下把命令填进输入框。-->
+        <div v-if="aiSlashHints.length" class="ai-slash-hint">
+          <button v-for="hint in aiSlashHints" :key="hint.id" class="ai-slash-chip"
+                  @click="applyAiHint(hint)">
+            <span class="ai-slash-insert">{{ hint.insert }}</span>
+            <span class="ai-slash-label">{{ hint.label }}</span>
+          </button>
+        </div>
+        <!-- 本轮需求：主动输入「@」也要像 /plugin 那样弹候选 —— 列出资源库里的软件
+             （编号 + 名称，**按编号从小到大从上往下**），可滚动、↑↓ 选择、回车插入。
+             样式与 .ai-slash-hint 同一套浮层语言（见 ai-fixes.css 的 .ai-at-pop）。-->
+        <div v-if="aiAtOpen && aiAtCandidates.length" class="ai-at-pop" @click.stop>
+          <div class="ai-at-head">
+            <span class="ai-at-title">@{{ aiAtQuery }}</span>
+            <span class="grow"></span>
+            <span class="ai-at-tip">{{ t('ai_at_tip', '↑↓ 选择 · Enter 插入 · Esc 关闭') }}</span>
+          </div>
+          <div class="ai-at-list">
+            <button v-for="(it, i) in aiAtCandidates" :key="it.code" type="button"
+                    class="ai-at-item" :class="{ 'is-on': i === aiAtPicked }"
+                    @click="applyAiAt(it)" @mouseenter="aiAtPicked = i">
+              <span class="ai-at-code">{{ it.code }}</span>
+              <span class="ai-at-name">{{ it.name }}</span>
+            </button>
+          </div>
+        </div>
+        <!-- ==========================================================================
+             输入框结构（本轮改造后）：一个大框 .ai-box（边框/圆角/聚焦光圈都在**框**上）
+               ├ .ai-box-text  = 富文本输入区（min-height = 2 行，超过才长高）
+               └ .ai-box-bar   = 框内最下排
+                    左：模型胶囊（点开的弹层 = 上半模型列表 + 底部思考区）
+                    右：润色（只剩图标）→ 发送
+             ⚠️ 本轮把**思考滑块从这一排整个删掉**（连占位/tooltip/开关），搬进模型弹层底部；
+                这一排左侧现在只剩模型胶囊一个控件。
+             ⚠️ 两处（独立页 + 抽屉）结构完全一致，改一处记得改两处。
+             ⚠️ 根节点仍带 .ai-input 类（focusAiInput() 的 querySelector 依赖它）。
+             ========================================================================-->
+        <div class="ai-box">
+          <div class="ai-box-text">
+            <rich-ai-input ref="aiInputPageRef" v-model="aiDraft"
+                           :commands="aiCommandWords"
+                           :class="{ 'is-locked': aiInputLocked }"
+                           :disabled="aiInputLocked"
+                           :title="t('ai_input_hint', 'Enter 发送，Shift+Enter 换行')"
+                           :placeholder="t('ai_input_placeholder', '说一个你想要的软件或网站…')"
+                           @send="aiSend()" @token-click="onAiTokenClick"></rich-ai-input>
+          </div>
+          <div class="ai-box-bar">
+            <div class="ai-box-left">
+              <!-- 模型切换胶囊：只显示**已填 API Key** 的服务商的模型（后端 ai.model_choices 过滤）；
+                   旧后端没有这个接口时整块不渲染（不画一个空壳骗人）。
+                   图标本轮换成 `model`（等距立方体）—— 芯片读起来像硬件，
+                   立方体才是各类 AI 客户端里"选模型"的通用视觉语言。-->
+              <div v-if="aiModelVisible" class="ai-model-wrap">
+                <button class="ai-model-chip" :title="t('ai_model_tip', '切换模型（只显示已填 Key 的服务商）')"
+                        @click.stop="toggleAiModelMenu()">
+                  <svg class="ic" width="14" height="14"><use href="#i-model"></use></svg>
+                  <span class="ai-model-name">{{ aiModelNoKey
+                    ? t('ai_model_no_key', '未配置 API Key') : (aiModelCurrent || t('ai_model_pick', '选择模型')) }}</span>
+                  <!-- ⚠️ 本轮：图标**不再换 symbol**（chevron_down ⇄ chevron_up 换 <use href>
+                       是替换节点，浏览器无法补间 = 硬切）。固定用 chevron_down，
+                       展开时由 CSS 给它 rotate(180deg) —— down 转 180° 的形状就是 up，
+                       视觉完全等价，而且这一段翻转**可以是动画**。见 ai-fixes.css。 -->
+                  <svg class="ic ai-model-caret" :class="{ 'is-open': aiModelOpen }"
+                       width="11" height="11"><use href="#i-chevron_down"></use></svg>
+                </button>
+                <transition name="pop">
+                  <div v-if="aiModelOpen" class="ai-model-pop" @click.stop>
+                    <!-- 本轮改造：弹层两层结构。**只有上半部分（模型列表）滚动**，
+                         下半部分思考区固定在底部不随滚动移动（flex 布局，滚动限制在
+                         .ai-model-scroll 容器内）。思考 UI 已从输入框整排删掉搬到这里。 -->
+                    <div class="ai-model-scroll">
+                      <p v-if="aiModelNoKey" class="ai-model-empty">
+                        {{ t('ai_model_no_key_body', '还没有任何服务商填过 API Key。') }}
+                        <button class="ai-model-link" @click="gotoSettingsAi">{{ t('ai_model_go_settings', '去设置里填写') }}</button>
+                      </p>
+                      <template v-else>
+                        <!-- ⚠️⚠️ 本轮修复「同厂商两条档案的模型切换会同时变」（用户原话：
+                             「他有2个同时切换而且同时改变切换状态的bug，应该他们都是独立的」）。
+                             两处 key 都曾经是错的：
+                               ① :key="group.provider" —— 同一个厂商两条档案 = 两个 key 相同
+                                  的兄弟节点 → Vue 直接复用/合并 DOM，看着就"一起变"；
+                               ② :class="{ 'is-on': model.name === aiModelCurrent }" ——
+                                  判定**只看模型名**，两家都有 DeepSeek-V4.1-Flash 时
+                                  两边同时打勾。必须比 **档案 id + 模型名** 这一整对。
+                             后端 model_choices 的每个 group 都带 `id`（档案 id），
+                             选中态与 current 都按它比。 -->
+                        <div v-for="group in aiModelGroups" :key="group.id || group.provider" class="ai-model-group">
+                          <p class="ai-model-group-label">{{ aiProviderLabel(group) }}</p>
+                          <!-- 对勾放在模型名**前面** + 左侧固定空隙（.ai-model-mark 占位），
+                               保证选中/不选中**行宽不跳**、对勾也放得下。 -->
+                          <button v-for="model in group.models" :key="model.name" type="button"
+                                  class="ai-model-item"
+                                  :class="{ 'is-on': aiModelIsOn(group, model) }"
+                                  @click="aiPickModel(group, model)">
+                            <span class="ai-model-mark">
+                              <svg v-if="aiModelIsOn(group, model)" class="ic" width="13" height="13">
+                                <use href="#i-check"></use></svg>
+                            </span>
+                            <span class="ai-model-item-name">{{ model.name }}</span>
+                            <span v-if="model.supports_thinking" class="ai-model-badge">
+                              {{ t('ai_model_thinking', '思考') }}</span>
+                          </button>
+                        </div>
+                      </template>
+                    </div>
+                    <!-- ═══ 弹层底部：思考区（Codex 风格分段滑块）═══
+                         · 档位/名称跟随**当前所选模型**（后端 thinking_levels：[{value,label,effort}]）；
+                         · ⚠️ 本轮需求（用户原话）：「未填写任何APIkey时模型展开ui后里面不应该有
+                           思考ui组件」→ **一个 Key 都没填时整块不出现**（连禁用占位都不要，
+                           因为此时弹层里只有一句"去设置里填写"，画个灰滑块毫无意义）；
+                           有 Key 但当前模型不支持思考 → 仍画禁用占位（弹层高度稳定）。
+                         · ⚠️ 本轮契约变更（ai-backend 已核实各家官方档位）：thinking_levels 的
+                           **第一档不再恒为 off** —— kimi-k3/k3.1-pro 官方是 low/high/max
+                           （思考恒开、没有关这一档），k2.7-code 只有单档 on。
+                           档位名/档数全部由后端这张表驱动，前端不写死、不本地化（F7）。
+                         · 按下即选、按住横向拖动跟手、键盘 ←/→ 也能调（div 可聚焦）。 -->
+                    <div v-if="!aiModelNoKey" class="ai-think-dock"
+                         :class="{ 'is-disabled': !aiThinkSupported }"
+                         tabindex="0" :aria-label="t('ai_think_label', '思考')"
+                         @keydown="aiThinkSegKeydown($event)">
+                      <div class="ai-think-dock-head">
+                        <span class="ai-think-dock-label">{{ t('ai_think_label', '思考') }}</span>
+                        <span class="grow"></span>
+                        <!-- 强度名直接显示后端给的官方 label（off/low/high/max/minimal/on），
+                             绝不在前端翻译成"关/低/中/高"（用户本轮点名要求） -->
+                        <span class="ai-think-dock-state">{{ aiThinkLevelText(aiThinkingLevel) }}</span>
+                      </div>
+                      <div class="ai-think-seg" :class="{ 'is-disabled': !aiThinkSupported, 'is-single': aiThinkIsSingle }"
+                           :style="aiThinkSparkStyle">
+                        <div class="ai-think-seg-rail" @pointerdown="aiThinkSegDown($event)">
+                          <span class="ai-think-seg-fill" :style="aiThinkFillStyle"></span>
+                          <!-- ⚠️⚠️ 本轮需求（用户原话）：「中间那些节点搞成小圆点，
+                               如果滑动条到最右处中间的小圆点全部隐藏」。
+                               ① 形态：1px 竖线 → **小圆点**（CSS .ai-think-seg-notch）；
+                               ② 画哪几个由 aiThinkNotches 给（下标表：只含中间档，
+                                  单档/推到最右 → 空数组）。
+                               ⚠️ 绝不在这里写 `v-for` + `v-if` 同元素：Vue 3 中 v-if 优先于
+                                  v-for，条件里**读不到** li，会直接报错、整块弹层画不出来。
+                               两处弹层（独立 AI 页 / 侧栏抽屉）必须同步改。 -->
+                          <span v-for="li in aiThinkNotches" :key="'n' + li"
+                                class="ai-think-seg-notch"
+                                :style="{ left: 'calc(100% * ' + li + ' / ' + (aiThinkLevelsFull.length - 1) + ')' }"></span>
+                          <span class="ai-think-seg-thumb" :style="aiThinkSegHeadStyle"></span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </transition>
+              </div>
+            </div>
+            <span class="grow"></span>
+            <div class="ai-box-right">
+              <!-- 润色：本轮**去掉文字**只留图标，放在发送按钮**左边**（用户原话）。
+                   两态还是靠图标区分：普通态 AI 星标 / 可撤销态「返回上一个」。
+                   ⚠️ 本轮修正（用户原话「润色按钮点击之后我不需要这个改为转圈图标，改回原本的那个图标」）：
+                      润色中图标**不变**（旧版这里用 v-if 临时换成"同步"图标再叠旋转类转圈，已撤掉），
+                      进行中反馈 = .is-busy 呼吸（见 ai-fixes.css ③-b）+ title「润色中…」+ 输入框锁定。
+                   ⚠️ 思考 UI 已从这一排整排移除（连占位/tooltip/开关），搬进模型弹层底部。
+                   ⚠️ 本轮需求：一个 API Key 都没填时**灰色不可点击**（aiPolishBlocked）。 -->
+              <button v-if="settings.ai_enabled && settings.ai_polish_enabled" class="ai-polish is-icon"
+                      :class="{ 'is-undo': !!aiPolishOriginal && !aiPolishing, 'is-busy': aiPolishing }"
+                      :disabled="aiPolishBlocked || aiPolishing || aiBusy || !aiDraft.trim()"
+                      :title="aiPolishing ? t('ai_polishing', '润色中…')
+                                : aiPolishBlocked ? t('ai_polish_need_key_tip', '还没有填写 API Key，先在设置里配置一个服务商的 API Key')
+                                : aiPolishOriginal ? t('ai_undo_polish_tip', '撤销润色，恢复成润色前的原文')
+                                                   : t('ai_polish_btn_tip', '润色输入框里的文字：只调整措辞和表达，不发送、不进入历史对话')"
+                      @click="aiPolish()">
+                <svg class="ic" width="15" height="15">
+                  <use :href="aiPolishOriginal ? '#i-undo' : '#i-robot'"></use></svg>
+              </button>
+              <!-- 发送按钮：经典**纸飞机**图标 + **圆角方形**（见 ai-fixes.css：radius 10，不是圆形）。
+                   ⚠️ disabled 是**真禁用**（:disabled 属性 → 浏览器不发 click），
+                      CSS 那边同时掐掉 hover 变色并画 not-allowed 光标。
+                      忙时（等待/流式输出中）变成「停止」。-->
+              <button class="ai-send" :class="{ 'is-stop': aiBusy }"
+                      :disabled="aiBusy ? false : !aiDraft.trim()"
+                      :title="aiBusy ? t('ai_stop', '停止') : t('ai_send', '发送')"
+                      @click="aiBusy ? aiStop() : aiSend()">
+                <svg class="ic" width="16" height="16">
+                  <use :href="aiBusy ? '#i-stop' : '#i-send'"></use></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <transition name="slide-in">
+        <!-- 需求：独立 AI 页的历史对话要和悬浮球抽屉里的**右侧栏**一致，不要全屏历史页。
+             这里用 fixed 定位贴右，宽度固定 392px、上边留出标题栏高度。-->
+        <div v-if="aiHistoryOpen" class="ai-history is-page-panel">
+          <div class="ai-history-head">
+            <button class="icon-btn" :title="t('ai_back', '返回对话')" @click="closeAiHistory">
+              <svg class="ic" width="16" height="16"><use href="#i-left_arrow"></use></svg></button>
+            <span class="sub-title">{{ t('ai_history', '历史对话') }}</span>
+            <span class="grow"></span>
+            <button class="btn btn-sm btn-danger-ghost" :disabled="!aiHistoryList.length" @click="clearAiHistory">
+              <svg class="ic" width="13" height="13"><use href="#i-delete"></use></svg>{{ t('clear', '清空') }}</button>
+          </div>
+          <div class="hairline"></div>
+          <div class="ai-history-body">
+            <div v-if="!aiHistoryList.length" class="ai-history-empty">
+              <svg class="ic" width="40" height="40"><use href="#i-history"></use></svg>
+              <p class="strong">{{ t('ai_history_empty', '还没有历史对话') }}</p>
+              <p class="cap">{{ t('ai_history_empty_tip', '和 GCP-AI 聊过之后，记录会出现在这里。') }}</p>
+            </div>
+            <template v-else>
+              <article v-for="s in aiHistoryList" :key="s.id" class="history-item"
+                       :class="{ 'is-on': s.id === aiSessionId }" @click="openAiSession(s.id)">
+                <div class="history-item-head">
+                  <span class="history-title">{{ s.title || t('ai_new_chat', '新对话') }}</span>
+                  <span class="grow"></span>
+                  <button class="icon-btn tiny" :title="t('delete', '删除')" @click.stop="deleteAiSession(s.id)">
+                    <svg class="ic" width="12" height="12"><use href="#i-delete"></use></svg></button>
+                </div>
+                <p class="history-text">{{ s.preview }}</p>
+                <p class="history-meta">{{ s.updated_at }} · {{ t('ai_msg_count', '{n} 条').replace('{n}', s.count) }}</p>
+              </article>
+            </template>
+          </div>
+        </div>
+      </transition>
+    </div>
+  </section>
+
+  <!-- 设置-->
+  <section v-if="page === 'settings'" class="page" key="settings">
+    <div class="settings-layout">
+      <aside class="settings-side">
+        <h2 class="sub-title">{{ t('settings_title', '设置') }}</h2>
+        <div class="search-box settings-search" :class="{ 'is-empty': !settingQuery }">
+          <svg class="ic search-lead" width="15" height="15"><use href="#i-search"></use></svg>
+          <input type="text" v-model="settingQuery" :placeholder="t('settings_search_hint', '搜索设置项…')"
+                 @keydown.enter="jumpFirstHit" @keydown.esc="clearSettingQuery($event)">
+          <!-- 与搜索页同款的清除按钮（.search-clear）：点一下清空并恢复板块列表；Esc 同效 -->
+          <button v-show="settingQuery" class="search-clear settings-search-clear"
+                  :title="t('title_clear', '清除')" @click="clearSettingQuery">
+            <svg class="ic" width="11" height="11"><use href="#i-close"></use></svg>
+          </button>
+        </div>
+
+        <div v-if="!settingQuery.trim()" class="list-widget grow-list">
+          <button v-for="section in sections" :key="section.key" class="list-item plain"
+                  :class="{ 'is-on': currentSection === section.key }" @click="scrollSection(section.key)">
+            <svg class="ic section-ic" width="16" height="16"><use :href="'#i-' + sectionIcon(section.key)"></use></svg>
+            <span class="grow">{{ section.label }}</span>
+          </button>
+        </div>
+        <div v-else class="list-widget grow-list">
+          <button v-for="(hit, i) in settingHits" :key="i" class="list-item plain search-hit search-hit-merged"
+                  @click="jumpToRow(hit)">
+            <!-- 结果格式：「板块-设置项」一行显示（用户要求，例如「快捷键-浏览器中打开」）。
+                 三语正确性由 settingHits 里的 section/label 保证（都来自 t() 的当前语言文案）。
+                 ⚠️ 本轮（用户原话）：「设置搜索栏"-"前面部分颜色用组件配色的颜色
+                    而不是黑色或白色」→ "-" 之前那段（板块名）单独一个 span，
+                    颜色走 var(--accent)（跟着"强调色"设置走）；
+                    "-" 与后面的设置项名仍是正常正文色。
+                 ⚠️ 拆 span 不能影响省略号：溢出截断仍然挂在最外层 .hit-merged 上。 -->
+            <span class="hit-merged"><span class="hit-merged-section">{{ hit.section }}</span><span class="hit-merged-dash">-</span>{{ hit.label }}</span>
+          </button>
+          <p v-if="!settingHits.length" class="cap pad12">{{ t('settings_search_none', '没找到这个设置项') }}</p>
+        </div>
+      </aside>
+
+      <div class="settings-main" data-scroll-key="settings" ref="settingsScroll" @scroll.passive="syncSectionFromScroll">
+        <div class="settings-content">
+          <div v-for="section in sections" :key="section.key" :data-key="section.key" class="settings-section">
+            <h2 class="section-title">{{ section.label }}</h2>
+
+            <!-- 一张卡片里如果**没有任何可见行**，整张卡片（外壳）一起隐藏。
+                 之前只隐藏"行"，空的圆角卡片壳还留在页面上（用户说的"还留了 2 部分露了出来"）。
+                 用 <template v-for> 包一层，而不是在同一个元素上写 v-if + v-for ——
+                 这样 v-if 能直接拿到 card 变量，key 也还在 template 上，Vue 不会警告。-->
+            <template v-for="(card, ci) in section.cards" :key="ci">
+            <div v-if="cardHasVisibleRow(card)" class="settings-card">
+              <template v-for="(row, ri) in card" :key="(row.key || 'x') + ri">
+                <div v-if="isVisible(row)" class="setting-row" :data-row-key="row.key"
+                     :class="{ 'has-desc': !!row.tip || !!row.desc, 'is-flash': flashRow === rowKey(section, row),
+                              'is-indent': !!row.indent, 'is-disabled': !!row.disabled }">
+
+                  <div v-if="row.type === 'subtitle'" class="setting-subtitle">{{ row.text }}</div>
+                  <!-- ══════════════════ 服务商配置列表（本轮：长条卡片 → 列表） ══════════════════
+                       需求原话（本轮，逐条对应）：
+                         · 「服务商那里在添加服务商下面增加一个列表ui，不然看着放这些
+                           长条卡片ui太难受了」→ 改成**一个列表容器 + 行 + 分隔线**，
+                           不再是一条条各自带描边/圆角/内边距的卡片；
+                         · 「点击编辑之后保存，他会创建一个新的长条卡片ui而不是保存在
+                           原有的里面」→ 前端把 `editing.id` 一起提交，后端 save_profile
+                           按 id **原地替换**（见 desktop/api/ai.py 同处注释）；
+                         · 「第一个长条卡片ui不要有特殊的光圈在周围，要与其他的一致」→
+                           is-active 那圈主色描边/竖标整块删掉，所有行同一套样式；
+                         · 「这个ui上面不要放接口地址」→ 行里不再显示 api_base，
+                           弹窗里也没有接口地址输入框（地址由后端按厂商官方值落盘）；
+                         · 「很多ui摆放和大小不规范导致ui贴近边缘不留标准间距」→
+                           所有间距走 settings-fixes.css 里的一组 --ai-prof-* 令牌，
+                           列表左右各留 14px、行内 10/12px，按钮统一 26px 高。
+
+                       ⚠️ 数据全部来自后端 `ai.profiles()`（单一事实源是 settings 里的
+                          ai_provider_profiles 有序数组，顺序即优先级）。
+                       ⚠️ v-for 的 :key 必须用 **prof.id**，不能用 provider：
+                          同一家两条档案会撞 key，Vue 会复用错节点
+                          （编辑/删除点一条动到另一条就是这么来的）。 -->
+                  <div v-else-if="row.type === 'provider-profiles'" class="ai-prof-wrap">
+                    <div class="ai-prof-bar">
+                      <span class="ai-prof-bar-count" v-if="aiProfiles.length">
+                        {{ t('ai_prof_list_count', '已配置 {n} 个服务商')
+                             .replace('{n}', aiProfiles.length) }}
+                      </span>
+                      <span class="grow"></span>
+                      <button type="button" class="btn primary ai-prof-add" @click="aiAddProfile">
+                        <svg class="ic" width="13" height="13"><use href="#i-add"></use></svg>
+                        {{ t('ai_prof_add', '添加服务商') }}
+                      </button>
+                    </div>
+
+                    <p v-if="!aiProfiles.length" class="ai-prof-empty">
+                      {{ t('ai_prof_empty', '还没有配置任何服务商，点右上角「添加服务商」。') }}
+                    </p>
+
+                    <div v-else class="ai-prof-list">
+                      <!-- 表头：和行共用同一套网格列宽，保证上下对齐 -->
+                      <div class="ai-prof-row is-head">
+                        <span class="ai-prof-c1">{{ t('ai_prof_col_name', '名称') }}</span>
+                        <span class="ai-prof-c2">{{ t('ai_prof_supported', '支持模型') }}</span>
+                        <span class="ai-prof-c3">{{ t('ai_prof_col_actions', '操作') }}</span>
+                      </div>
+                      <div v-for="prof in aiProfiles" :key="prof.id || prof.provider"
+                           class="ai-prof-row">
+                        <div class="ai-prof-c1">
+                          <div class="ai-prof-title">
+                            <span class="ai-prof-name">{{ prof.label || prof.provider }}</span>
+                            <span v-if="!prof.has_key" class="ai-prof-nokey">
+                              {{ t('ai_prof_no_key', '未填 Key') }}</span>
+                          </div>
+                          <div class="ai-prof-vendor">{{ aiProfVendorLabel(prof) }}</div>
+                        </div>
+                        <!-- 第二列：支持模型（数量是变量，写在标题行里）+ chip 列表 -->
+                        <div class="ai-prof-c2">
+                          <em class="ai-prof-count">{{ aiProfCountText(prof) }}</em>
+                          <span v-for="m in prof.models" :key="m"
+                                class="ai-prof-chip">{{ m }}</span>
+                        </div>
+                        <div class="ai-prof-c3 ai-prof-actions">
+                          <button type="button" class="btn sm ai-prof-btn"
+                                  :disabled="aiProfBusy(prof.id || prof.provider)"
+                                  @click="aiTestProfile(prof)">
+                            {{ t('ai_prof_test', '测试连接') }}
+                          </button>
+                          <button type="button" class="btn sm ai-prof-btn"
+                                  :title="t('edit', '编辑')" @click="aiEditProfile(prof)">
+                            <svg class="ic" width="13" height="13"><use href="#i-edit"></use></svg>
+                          </button>
+                          <button type="button" class="btn sm ai-prof-btn is-danger"
+                                  :title="t('delete', '删除')" @click="aiDeleteProfile(prof)">
+                            <svg class="ic" width="13" height="13"><use href="#i-delete"></use></svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <p v-else-if="row.type === 'note'" class="setting-note" :class="{ 'is-warn': !!row.warn }">{{ row.text }}</p>
+                  <div v-else-if="row.type === 'divider'" class="setting-divider"></div>
+                  <!-- 云端资源库状态行（文字 + 最右侧重试图标）-->
+                  <div v-else-if="row.type === 'cloud-status'" class="setting-note cloud-status-note">
+                    <span class="cloud-status-text">{{ cloudStatusText }}</span>
+                    <span class="grow"></span>
+                    <button class="icon-btn" :class="{ 'is-busy': cloudSyncing }"
+                            :title="t('cloud_retry', '重新获取云端资源库')" :disabled="cloudSyncing"
+                            @click="refreshCloudLibrary(true)">
+                      <svg class="ic" width="14" height="14"><use href="#i-sync"></use></svg>
+                    </button>
+                  </div>
+
+                  <!-- 存储位置迁移进度（原版 cards_storage.py 的 ProgressBar + x/y 提示）-->
+                  <div v-else-if="row.type === 'progress'" class="setting-progress">
+                    <div class="progress-track">
+                      <span class="progress-fill" :style="{ width: storageMigrate.percent + '%' }"></span>
+                    </div>
+                    <p class="progress-text">
+                      {{ storageMigrate.text || t('storage_migrating', '正在迁移…') }}
+                      <span v-if="storageMigrate.total">（{{ storageMigrate.done }}/{{ storageMigrate.total }}）</span>
+                    </p>
+                  </div>
+
+                  <template v-else>
+                    <div class="setting-text">
+                      <div class="setting-label">
+                        <span>{{ row.label }}</span>
+                        <i v-if="row.tip" class="tip" :data-tip="row.tip"
+                           @mouseenter="showTip" @mouseleave="hideTip">i</i>
+                      </div>
+                      <div v-if="row.desc" class="setting-desc">{{ row.desc }}</div>
+                    </div>
+
+                    <div class="setting-control" :class="{ 'is-wide': !!row.wide }">
+                      <!-- ⚠️ 状态文字必须和控件**并列**，不能抢走 v-if 链。
+                           之前用 v-if(statusText) + v-else-if(控件)，导致所有带 statusText 的行
+                           （下载限速的 checkbox、快捷键的输入框）只显示文字、控件根本不渲染 ——
+                           这就是"下载限速只有个无限制、没有勾选框和滑块"的根因。-->
+                      <span v-if="row.statusText" class="switch-status">{{ row.statusText }}</span>
+
+                      <combo v-if="row.type === 'select'" :model-value="draft[row.key]"
+                             :options="row.options" :width="row.width || 200"
+                             :editable="!!row.editable" :placeholder="row.placeholder || ''"
+                             :disabled="!!row.disabled"
+                             @change="onRowChange(row, $event)"></combo>
+
+                      <button v-else-if="row.type === 'switch'" class="switch" :class="{ 'is-on': !!draft[row.key] }"
+                              @click="onRowChange(row, !draft[row.key])"><span class="switch-knob"></span></button>
+
+                      <label v-else-if="row.type === 'checkbox'" class="sel-check">
+                        <input type="checkbox" :checked="!!draft[row.key]" @change="onRowChange(row, $event.target.checked)">
+                        <span>{{ row.boxLabel || '' }}</span></label>
+
+                      <div v-else-if="row.type === 'slider'" class="range-wrap">
+                        <input type="range" class="range" :min="row.min" :max="row.max" :step="row.step || 1"
+                               :value="draft[row.key]" @wheel.prevent="onSliderWheel(row, $event)"
+                               @input="onRowInput(row, $event.target.value)">
+                        <input type="text" class="num-input" :value="draft[row.key]"
+                               @wheel.prevent="onSliderWheel(row, $event)"
+                               @change="onRowCommit(row, $event.target.value)">
+                        <span class="unit">{{ row.unit }}</span>
+                      </div>
+
+                      <div v-else-if="row.type === 'hotkey'" class="hotkey-wrap">
+                        <input class="input hotkey-input" :class="{ 'is-recording': recording === row.key }"
+                               type="text" readonly :value="draft[row.key]"
+                               :placeholder="recording === row.key ? t('hotkey_recording_short', '请按下组合键…') : t('hotkey_placeholder', '点击这里，然后按下组合键')"
+                               @click="startRecord(row, $event)" @focus="startRecord(row, $event)"
+                               @blur="stopRecording(false)" @keydown="recordHotkey(row, $event)">
+                        <button class="btn btn-sm" @click="resetHotkey(row)">{{ t('hotkey_reset', '恢复默认') }}</button>
+                      </div>
+
+                      <div v-else-if="row.type === 'text'" class="inline-control">
+                        <input class="input" type="text" :value="draft[row.key]" :placeholder="row.placeholder || ''"
+                               @keydown.enter.prevent="onRowCommit(row, $event.target.value)"
+                               @change="onRowCommit(row, $event.target.value)">
+                        <button v-if="row.action" class="btn btn-sm btn-primary" @click="fire(row.action, row)">{{ row.actionLabel }}</button>
+                      </div>
+
+                      <div v-else-if="row.type === 'dir'" class="inline-control">
+                        <input class="input path-input" type="text" :value="draft[row.key]" :placeholder="row.placeholder || ''"
+                               @change="onRowCommit(row, $event.target.value)">
+                        <button class="btn btn-sm" @click="fire(row.action, row)">
+                          <svg class="ic" width="14" height="14"><use href="#i-folder"></use></svg>{{ row.actionLabel }}</button>
+                      </div>
+
+                      <div v-else-if="row.type === 'path-ro'" class="inline-control">
+                        <input class="input path-input" type="text" readonly :value="row.value" :title="row.value">
+                        <button class="btn btn-sm" @click="fire(row.action, row)">
+                          <svg class="ic" width="14" height="14"><use :href="row.actionIcon === 'sync' ? '#i-sync' : '#i-folder'"></use></svg>{{ row.actionLabel }}</button>
+                      </div>
+
+                      <div v-else-if="row.type === 'secret'" class="inline-control">
+                        <!-- 需求：去掉右边那个显示/隐藏按钮，改成输入框**自带**的小眼睛；
+                             而且小眼睛**常驻**（不是只在输入时才出现）。-->
+                        <div class="secret-wrap">
+                          <input class="input secret-input" :type="apiKeyVisible ? 'text' : 'password'"
+                                 v-model="apiKeyDraft" :placeholder="t('api_key_placeholder', '请输入 API Key')">
+                          <button type="button" class="eye-btn" tabindex="-1"
+                                  :class="{ 'is-on': apiKeyVisible }"
+                                  :title="apiKeyVisible ? t('hide', '隐藏') : t('show', '显示')"
+                                  @click="toggleKeyVisible">
+                            <svg class="ic" width="16" height="16">
+                              <use :href="apiKeyVisible ? '#i-eye_off' : '#i-eye'"></use></svg>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div v-else-if="row.type === 'actions'" class="inline-actions">
+                        <button class="btn btn-sm" @click="clearApiKey">{{ t('clear', '清空') }}</button>
+                        <button class="btn btn-sm" :disabled="aiTesting" @click="testAiConnection">
+                          {{ aiTesting ? t('ai_testing', '测试中…') : t('ai_test_connection', '测试连接') }}</button>
+                        <button class="btn btn-sm btn-primary" @click="saveApiKey">{{ t('save', '保存') }}</button>
+                      </div>
+
+                      <div v-else-if="row.type === 'dev-state'" class="inline-actions">
+                        <span class="dev-badge">{{ row.admin }}管理员身份验证</span>
+                        <span class="cap tiny">验证成功时间: {{ row.time }}</span>
+                        <span class="grow"></span>
+                        <button class="btn btn-sm" @click="logoutDev">{{ t('exit', '退出') }}</button>
+                      </div>
+
+                      <span v-else-if="row.type === 'readonly'" class="setting-value">{{ row.value }}</span>
+                    </div>
+                  </template>
+                </div>
+              </template>
+            </div>
+            </template>
+
+            <div v-if="section.key === 'about'" class="settings-card about-card">
+              <h3 class="sub-title about-name">{{ info.app }}</h3>
+              <img class="about-logo" src="/res/logo.png" alt="ToolsGCP">
+              <p class="body-1">{{ versionText }}</p>
+              <div class="about-line"></div>
+              <div class="about-update">
+                <span class="body-1">{{ t('check_update', '检查更新') }}</span>
+                <button class="btn btn-primary" style="width:120px" :disabled="checkingUpdate || updateState.downloading" @click="checkUpdate">
+                  <!-- 需求：检查中**只保留文字**，不要左边的转圈 UI-->
+                  <span>{{ checkingUpdate ? t('checking_update', '正在检查更新') : (updateState.downloading ? t('update_downloading', '正在下载更新') : t('check_update', '检查更新')) }}</span>
+                </button>
+                <!-- 下载进度：后端 update.progress 事件驱动（下载完成后由 update.done 弹"立即重启更新"确认框）-->
+                <span v-if="updateState.downloading" class="cap update-progress">
+                  {{ t('update_downloading_percent', '正在下载更新… {n}%').replace('{n}', updateState.percent) }}
+                  <span v-if="updateState.total" class="update-progress-size">
+                    （{{ humanSize(updateState.received) }} / {{ humanSize(updateState.total) }}）
+                  </span>
+                </span>
+                <span v-else-if="updateState.path" class="cap update-progress" :title="updateState.path">
+                  {{ t('update_downloaded_hint', '更新包已下载：{name}').replace('{name}', updateState.filename || 'ToolsGCP.exe') }}
+                  <button class="btn btn-sm" style="margin-left:8px" @click="showUpdateReadyDialog()">
+                    {{ t('restart_and_update', '立即重启并更新') }}
+                  </button>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</transition>
+
+<!-- ══════════════════ 插件配置界面（嵌入右侧内容区，不覆盖标题栏） ══════════════════
+     之前这个面板是 `position: fixed; inset: 0`，会盖住标题栏和左侧栏；
+     现在把它放进 `<main class="content">` 里，CSS 改成 absolute 铺满内容区：
+     顶部标题栏、最小化/全屏/关闭、左侧导航都保持原样，配置页只在右边这块显示。-->
+<transition name="fade">
+  <div v-if="pluginPage" class="plugin-page">
+    <div class="plugin-page-head">
+      <button class="icon-btn" :title="t('ai_back', '返回插件列表')" @click="pluginPage = null">
+        <svg class="ic" width="16" height="16"><use href="#i-back"></use></svg></button>
+      <h3 class="sub-title">{{ pluginPage.name }} · {{ t('plugin_config', '配置界面') }}</h3>
+    </div>
+    <div class="hairline"></div>
+    <!-- ref + @load —— 宿主在 iframe 载入完成、以及切换主题/主题效果/强调色/语言时，
+         通过 postMessage 把真实外观推给配置页（见 app.js 的 syncPluginTheme）；
+         iframe 未载入完成前，这一层的 background: var(--page) 当占位底色，避免默认白底闪一下。-->
+    <iframe ref="pluginFrameRef" class="plugin-frame" :src="pluginPage.frame" frameborder="0"
+            @load="syncPluginTheme('load')"></iframe>
+  </div>
+</transition>
+
+</main>
+
+</div><!-- /.app-body-->
+
+
+<!-- ══════════════════ GitHub Releases 列表弹窗 ══════════════════
+     ⚠️ 弹窗宽度用 is-releases（overlays.css 里 min(880px, 100vw-60px)），比普通 modal 大。-->
+<transition name="modal">
+  <div v-if="releasesDialog.open" class="modal-backdrop" @click.self="closeReleases()">
+    <div class="modal is-releases" role="dialog" aria-modal="true">
+      <div class="releases-head">
+        <span class="sub-title">{{ t('releases_title', 'Releases') }}</span>
+        <span v-if="releasesDialog.repo" class="cap">{{ releasesDialog.repo }}</span>
+        <span class="grow"></span>
+        <!-- 顶部下拉框 —— 官方（已筛选）/ 全部（不筛选，原样列出）。
+             ⚠️ 用项目自绘的 <combo>（不是原生 select，见 AGENTS 第 5 条第 4 点）。
+             选中的值保存在配置里（settings.releases_source），下次进弹窗沿用。
+             ⚠️ 需求（本轮）：**下拉框和刷新按钮交换位置** —— 现在下拉框在前、刷新按钮在后。-->
+        <combo :model-value="releasesSource"
+                :options="releasesSourceOptions" :width="150"
+                @change="changeReleasesSource"></combo>
+        <!-- 重新刷新按钮（在下拉框**右边**，位置已与下拉框互换）-->
+        <button class="icon-btn" :class="{ 'is-busy': releasesDialog.loading }"
+                :title="t('dl_releases_refresh', '重新刷新 Releases')"
+                :disabled="releasesDialog.loading" @click="reloadReleases()">
+          <svg class="ic" width="14" height="14"><use href="#i-sync"></use></svg>
+        </button>
+        <!-- 悬浮提示 —— 说明官方和全部的区别（文案已按用户更正）-->
+        <i class="tip" :data-tip="t('dl_releases_source_tip',
+              '官方：经过筛选的列表 —— 只列出真正发布过安装包 / 附件的版本。\n全部：不经过任何筛选，直接显示 GitHub 上的全部 Releases，并补上每个版本自动生成的源码包（zip / tar.gz）。')"
+           @mouseenter="showTip" @mouseleave="hideTip">i</i>
+        <button class="icon-btn" :title="t('close', '关闭')" @click="closeReleases()">
+          <svg class="ic" width="14" height="14"><use href="#i-close"></use></svg></button>
+      </div>
+      <p class="cap releases-hint">{{ t('releases_hint', '点任意一个文件即可开始下载；带 exe/msi/dmg/AppImage/deb/rpm/zip 的通常是安装包。') }}</p>
+      <div class="releases-body">
+        <p v-if="releasesDialog.loading" class="cap center pad20">{{ t('releases_loading', '正在拉取 Releases…') }}</p>
+        <p v-else-if="releasesDialog.error" class="cap center pad20 is-warn">{{ releasesDialog.error }}</p>
+        <p v-else-if="!releasesDialog.releases.length" class="cap center pad20">{{ t('releases_empty', '这个仓库没有可下载的 Release') }}</p>
+        <div v-for="rel in releasesDialog.releases" :key="rel.tag" class="release-block">
+          <div class="release-head">
+            <span class="release-tag">{{ rel.tag }}</span>
+            <!-- 预发布 = 橙黄色，正式版 = 绿色-->
+            <span class="tag release-badge" :class="rel.prerelease ? 'is-prerelease' : 'is-stable'">
+              {{ rel.prerelease ? t('dl_releases_prerelease', '预发布') : t('dl_releases_stable', '正式版') }}
+            </span>
+            <span class="grow"></span>
+            <span class="cap">{{ rel.published_at }}</span>
+          </div>
+          <div class="release-assets">
+            <button v-for="asset in (rel.assets || [])" :key="asset.name" class="release-asset"
+                    :title="asset.name" @click="downloadAsset(asset, rel, $event)">
+              <svg class="ic" width="13" height="13"><use href="#i-download"></use></svg>
+              <span class="ellipsis">{{ asset.name }}</span>
+              <span class="cap">{{ humanSize(asset.size) }}</span>
+            </button>
+            <span v-if="!(rel.assets || []).length" class="cap">{{ t('releases_no_assets', '这个版本没有附件') }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button v-if="releasesDialog.hasMore" class="btn" :disabled="releasesDialog.loading"
+                @click="loadMoreReleases">{{ t('releases_more', '加载更多') }}</button>
+        <!-- 加载更多旁边加加载全部
+             （在加载更多旁边新增加载全部）→ 一次把剩下的全拉下来。-->
+        <button v-if="releasesDialog.hasMore" class="btn" :disabled="releasesDialog.loading"
+                @click="loadAllReleases()">{{ t('dl_releases_load_all', '加载全部') }}</button>
+        <span class="grow"></span>
+        <button class="btn" @click="closeReleases()">{{ t('close', '关闭') }}</button>
+      </div>
+    </div>
+  </div>
+</transition>
+
+<!-- ══════════════════ 下载页 ══════════════════
+     ⚠️ 的右下角悬浮球已删除（用户要求换成左侧栏里的一个页面）。
+     下载页本体在下面 `<section v-if="page === 'download'">`（普通页面），
+     这里只保留红点飞行动画所需的浮层锚点。-->
+<div v-if="downloadBadge.fly" class="download-badge-fly"
+     :style="{ left: downloadBadge.x + 'px', top: downloadBadge.y + 'px',
+               '--fly-tx': downloadBadge.tx + 'px', '--fly-ty': downloadBadge.ty + 'px' }">
+  <span class="download-badge-count">{{ downloadBadge.count }}</span>
+</div>
+
+<!-- ══════════════════ AI 悬浮球 + 抽屉 ══════════════════-->
+<div v-if="showBall" class="float-ball" :class="{ 'is-paused': ballPaused }" @click="aiOpen = !aiOpen"
+     :title="t('ai_ball_tip', 'GCP-AI（点击打开 / 收起，可在设置里改快捷键）')">
+  <span class="ball-liquid"></span><span class="ball-g">G</span>
+</div>
+
+<transition name="drawer">
+  <aside v-if="aiOpen && !settings.ai_sidebar_mode" class="ai-drawer">
+    <div class="ai-head">
+      <span class="ai-brand">GCP-AI</span>
+      <span class="beta-tag">{{ t('beta_feature', 'Beta功能') }}</span>
+      <span class="grow"></span>
+      <button class="icon-btn" :title="t('ai_new_chat', '新对话')" @click="aiNewChat">
+        <svg class="ic" width="16" height="16"><use href="#i-add"></use></svg></button>
+      <button class="icon-btn" :class="{ 'is-on': aiHistoryOpen }" :title="t('ai_history', '历史对话')" @click="aiHistory">
+        <svg class="ic" width="16" height="16"><use href="#i-history"></use></svg></button>
+      <button class="icon-btn" :title="t('ai_close_drawer', '关闭')" @click="aiOpen = false">
+        <svg class="ic" width="16" height="16"><use href="#i-close"></use></svg></button>
+    </div>
+    <div class="hairline"></div>
+    <div class="ai-messages">
+      <!-- 独立 AI 页同样把欢迎语做成气泡-->
+      <div v-if="!aiMessages.length" class="bubble-row is-ai">
+        <div class="bubble is-ai ai-welcome">{{ aiWelcomeText }}</div>
+      </div>
+      <template v-for="(m, i) in aiMessages" :key="i">
+      <div v-if="aiRowShown(i)" class="bubble-row" :class="'is-' + m.role">
+        <div class="bubble-wrap" :class="'is-' + m.role">
+          <!-- 需求：还原 py 版气泡底部的按钮组。
+               py：AI 消息 = [复制][重新生成][版本翻页器]；用户消息 = [版本翻页器][编辑][复制]。
+               Web 版现在**也有多版本了**（重新生成 / 编辑产生），所以下面把翻页器 ◀ n/m ▶ 和
+               用户消息的「编辑」都补回来 —— 与独立 AI 页那一版结构完全一致（改一处记得改两处）。-->
+          <textarea v-if="aiIsEditing(i)" class="bubble ai-bubble-edit is-user"
+                    v-model="aiEditDraft" :style="aiEditBoxStyle" rows="1"
+                    @input="aiEditBoxAutoGrow"
+                    @keydown.esc="aiCancelEdit"
+                    @keydown.enter.exact.prevent="aiAcceptEdit(i)"></textarea>
+          <!-- 「正在生成」**取代**这颗气泡本体（同独立 AI 页，改一处记得改两处）。
+               等待期显示"正在…"、收到第一段正文切成流式文本、done 后被落盘的新版本接管。
+               ⚠️ 不是一条消息：不进 aiMessages、不落盘。 -->
+          <div v-else-if="aiRegenPlaceholder(i)" class="ai-pending">
+            {{ t('ai_pending', 'AI正在查看问题') }}<span class="dot dot-1">.</span><span
+                  class="dot dot-2">.</span><span class="dot dot-3">.</span>
+          </div>
+          <!-- 气泡正文 = 片段数组渲染（@token / 蓝链 / 思考折叠块），与独立 AI 页同一套
+               （改一处记得改两处）；右键弹自定义菜单（复制 / 全选 → 取消全选）。-->
+          <div v-else class="bubble" :class="[{ 'is-error': !!m.error }, 'is-' + m.role]"
+               :data-i="i" @contextmenu.prevent.stop="openAiCtx($event, i)">
+            <div v-if="aiThinkOf(m, i)" class="ai-think" :class="{ 'is-streaming': aiThinkOf(m, i).streaming }">
+              <button class="ai-think-head" type="button"
+                      @mousedown.prevent @click.prevent="aiThinkToggle(aiThinkOf(m, i).key)">
+                <svg class="ic" width="13" height="13"><use href="#i-brain"></use></svg>
+                <span class="ai-think-text">{{ aiThinkLabel(aiThinkOf(m, i)) }}</span>
+                <svg class="ic ai-think-caret" width="11" height="11">
+                  <use :href="aiThinkIsOpen(aiThinkOf(m, i).key) ? '#i-chevron_up' : '#i-chevron_down'"></use>
+                </svg>
+              </button>
+              <div v-if="aiThinkIsOpen(aiThinkOf(m, i).key)" class="ai-think-body">
+                {{ aiThinkOf(m, i).text }}
+              </div>
+            </div>
+            <span v-for="(part, pi) in aiBubbleParts(m, i)" :key="pi"
+                  :class="{ 'ai-mention': !!part.mention, 'ai-inline-link': !!part.link, 'ai-slash-cmd': !!part.cmd }"
+                  :data-code="part.code || ''"
+                  @click="part.mention ? onAiTokenClick({ code: part.code, name: part.name, text: part.text }) : (part.link ? onAiLinkClick(part, $event) : null)">{{ part.t != null ? part.t : part.text }}</span><span v-if="i === aiStreamingIndex"
+               class="ai-stream-cursor"></span></div>
+          <div class="bubble-actions">
+            <!-- 编辑态：原来的按钮整排换成 ✕ / ✓ -->
+            <template v-if="aiIsEditing(i)">
+              <button class="bubble-btn" :title="t('cancel', '取消')" @click="aiCancelEdit">
+                <svg class="ic" width="14" height="14"><use href="#i-close"></use></svg></button>
+              <button class="bubble-btn" :title="t('ai_edit_send', '保存并发送')"
+                      @click="aiAcceptEdit(i)">
+                <svg class="ic" width="14" height="14"><use href="#i-check"></use></svg></button>
+            </template>
+            <template v-else>
+              <!-- 与独立 AI 页**完全同一套顺序**（改一处记得改两处）：
+                   AI = [重新生成] [复制] [◀ n ▶]，用户 = [复制] [编辑] [◀ n ▶]。 -->
+              <button v-if="m.role === 'ai' && !aiBusy" class="bubble-btn"
+                      :title="t('ai_regen', '重新生成这条回答')" @click="aiRegenerate(i)">
+                <svg class="ic" width="14" height="14"><use href="#i-sync"></use></svg>
+              </button>
+              <button class="bubble-btn" :title="isCopied(m.text) ? t('copied', '已复制') : t('copy', '复制')"
+                      @click="copyText(m.text)">
+                <svg class="ic" width="14" height="14">
+                  <use :href="isCopied(m.text) ? '#i-accept' : '#i-copy'"></use></svg>
+              </button>
+              <button v-if="m.role === 'user' && !aiBusy" class="bubble-btn is-edit"
+                      :title="t('ai_edit', '编辑这条消息')" @click="aiStartEdit(i)">
+                <svg class="ic" width="14" height="14"><use href="#i-edit"></use></svg>
+              </button>
+              <!-- 版本树 ◀ n ▶：中间那个 n 是**跟着版本树实时变的普通文字**，不是组件外壳。 -->
+              <div v-if="aiVariantCount(m) > 1" class="variant-nav">
+                <button class="vn-btn" :disabled="!aiCanSwitchVariant() || aiVariantPage(m) <= 1"
+                        :title="t('ai_version_prev', '上一版')"
+                        @click="aiSwitchVariant(i, aiVariantPage(m) - 1)">
+                  <svg class="ic" width="12" height="12"><use href="#i-left_arrow"></use></svg></button>
+                <span class="vn-page">{{ aiVariantPage(m) }}/{{ aiVariantCount(m) }}</span>
+                <button class="vn-btn"
+                        :disabled="!aiCanSwitchVariant() || aiVariantPage(m) >= aiVariantCount(m)"
+                        :title="t('ai_version_next', '下一版')"
+                        @click="aiSwitchVariant(i, aiVariantPage(m) + 1)">
+                  <svg class="ic" width="12" height="12"><use href="#i-right_arrow"></use></svg></button>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+      </template>
+      <!-- 「AI正在查看问题...」：只在这行渲染，**不是**一条消息（不进历史、不落盘）。
+           只有普通提问会用到（那时还没有可落位的 AI 气泡）；重新生成/编辑重发是
+           就地取代那颗气泡本体画的（见 aiRegenPlaceholder），这里不再画第二颗。-->
+      <div v-if="aiBusy && aiPending && aiPendingAfter < 0" class="bubble-row is-ai">
+        <div class="ai-pending">{{ t('ai_pending', 'AI正在查看问题') }}<span class="dot dot-1">.</span><span
+               class="dot dot-2">.</span><span class="dot dot-3">.</span></div>
+      </div>
+    </div>
+    <div class="ai-input-row is-drawer" @keydown.capture="aiAtKeydown($event)">
+      <!-- 任务 2：悬浮抽屉**同样**要有「回到底部」按钮（与独立 AI 页一致，改一处记得改两处）。
+           位置/显示条件/旋转光圈全部复用同一套类名与样式。-->
+      <button v-if="aiBackBottomVisible" type="button" class="ai-back-bottom"
+              :class="{ 'is-streaming': aiStreaming }"
+              :title="t('ai_back_to_bottom', '回到底部')"
+              :aria-label="t('ai_back_to_bottom', '回到底部')"
+              @click.stop="aiBackToBottom">
+        <svg class="ic" width="16" height="16"><use href="#i-chevron_down"></use></svg>
+      </button>
+      <!-- 抽屉里的 "/" 命令提示，和独立 AI 页同一个浮层（样式由 .ai-slash-hint 统一）-->
+      <div v-if="aiSlashHints.length" class="ai-slash-hint">
+        <button v-for="hint in aiSlashHints" :key="hint.id" class="ai-slash-chip"
+                @click="applyAiHint(hint)">
+          <span class="ai-slash-insert">{{ hint.insert }}</span>
+          <span class="ai-slash-label">{{ hint.label }}</span>
+        </button>
+      </div>
+      <!-- @ 资源候选（同独立 AI 页，改一处记得改两处）-->
+      <div v-if="aiAtOpen && aiAtCandidates.length" class="ai-at-pop" @click.stop>
+        <div class="ai-at-head">
+          <span class="ai-at-title">@{{ aiAtQuery }}</span>
+          <span class="grow"></span>
+          <span class="ai-at-tip">{{ t('ai_at_tip', '↑↓ 选择 · Enter 插入 · Esc 关闭') }}</span>
+        </div>
+        <div class="ai-at-list">
+          <button v-for="(it, i) in aiAtCandidates" :key="it.code" type="button"
+                  class="ai-at-item" :class="{ 'is-on': i === aiAtPicked }"
+                  @click="applyAiAt(it)" @mouseenter="aiAtPicked = i">
+            <span class="ai-at-code">{{ it.code }}</span>
+            <span class="ai-at-name">{{ it.name }}</span>
+          </button>
+        </div>
+      </div>
+      <!-- 本轮重构：与独立 AI 页**完全同一套结构**（一个大框，按钮行在框内最下排；
+           左 = 模型 + 思考滑块，右 = 润色(只剩图标) + 发送）。改一处记得改两处。-->
+      <div class="ai-box">
+        <div class="ai-box-text">
+          <rich-ai-input ref="aiInputDrawerRef" v-model="aiDraft"
+                         :commands="aiCommandWords"
+                         :class="{ 'is-locked': aiInputLocked }"
+                         :disabled="aiInputLocked"
+                         :title="t('ai_input_hint', 'Enter 发送，Shift+Enter 换行')"
+                         :placeholder="t('ai_input_placeholder', '说一个你想要的软件或网站…')"
+                         @send="aiSend()" @token-click="onAiTokenClick"></rich-ai-input>
+        </div>
+        <div class="ai-box-bar">
+          <div class="ai-box-left">
+            <div v-if="aiModelVisible" class="ai-model-wrap">
+              <button class="ai-model-chip" :title="t('ai_model_tip', '切换模型（只显示已填 Key 的服务商）')"
+                      @click.stop="toggleAiModelMenu()">
+                <svg class="ic" width="14" height="14"><use href="#i-model"></use></svg>
+                <span class="ai-model-name">{{ aiModelNoKey
+                  ? t('ai_model_no_key', '未配置 API Key') : (aiModelCurrent || t('ai_model_pick', '选择模型')) }}</span>
+                <!-- 两处弹层共用同一个 aiModelOpen（抽屉只在非侧栏模式渲染、独立页只在
+                     侧栏模式进入，实际互斥）。图标固定 chevron_down + rotate(180deg)，
+                     理由与 CSS 见独立 AI 页那一处的注释。 -->
+                <svg class="ic ai-model-caret" :class="{ 'is-open': aiModelOpen }"
+                     width="11" height="11"><use href="#i-chevron_down"></use></svg>
+              </button>
+              <transition name="pop">
+                <div v-if="aiModelOpen" class="ai-model-pop" @click.stop>
+                  <!-- 两层结构（同独立 AI 页，改一处记得改两处）：上半模型列表（只有这里滚动）、
+                       下半思考区固定在弹层底部。输入框那一排的思考滑块已删除搬到这里。 -->
+                  <div class="ai-model-scroll">
+                  <p v-if="aiModelNoKey" class="ai-model-empty">
+                    {{ t('ai_model_no_key_body', '还没有任何服务商填过 API Key。') }}
+                    <button class="ai-model-link" @click="gotoSettingsAi">{{ t('ai_model_go_settings', '去设置里填写') }}</button>
+                  </p>
+                  <template v-else>
+                    <!-- ⚠️ 与独立 AI 页那一处**完全同步**修改：
+                         :key 用档案 id、选中态用 aiModelIsOn(档案+模型)。
+                         两处弹层共用同一份 aiModelGroups 状态，改一处必改两处。 -->
+                    <div v-for="group in aiModelGroups" :key="group.id || group.provider" class="ai-model-group">
+                      <p class="ai-model-group-label">{{ aiProviderLabel(group) }}</p>
+                      <!-- 对勾在模型名**前面** + 左侧固定空隙（同独立页） -->
+                      <button v-for="model in group.models" :key="model.name" type="button"
+                              class="ai-model-item"
+                              :class="{ 'is-on': aiModelIsOn(group, model) }"
+                              @click="aiPickModel(group, model)">
+                        <span class="ai-model-mark">
+                          <svg v-if="aiModelIsOn(group, model)" class="ic" width="13" height="13">
+                            <use href="#i-check"></use></svg>
+                        </span>
+                        <span class="ai-model-item-name">{{ model.name }}</span>
+                        <span v-if="model.supports_thinking" class="ai-model-badge">
+                          {{ t('ai_model_thinking', '思考') }}</span>
+                      </button>
+                    </div>
+                  </template>
+                  </div>
+                  <!-- 弹层底部思考区（Codex 风格分段滑块，同独立页：两处一起改）
+                       ⚠️ 本轮：`v-if="!aiModelNoKey"` —— 一个 Key 都没填时**整块不出现**
+                          （用户原话「未填写任何APIkey时模型展开ui后里面不应该有思考ui组件」）。 -->
+                  <div v-if="!aiModelNoKey" class="ai-think-dock"
+                       :class="{ 'is-disabled': !aiThinkSupported }"
+                       tabindex="0" :aria-label="t('ai_think_label', '思考')"
+                       @keydown="aiThinkSegKeydown($event)">
+                    <div class="ai-think-dock-head">
+                      <span class="ai-think-dock-label">{{ t('ai_think_label', '思考') }}</span>
+                      <span class="grow"></span>
+                      <span class="ai-think-dock-state">{{ aiThinkLevelText(aiThinkingLevel) }}</span>
+                    </div>
+                    <div class="ai-think-seg" :class="{ 'is-disabled': !aiThinkSupported, 'is-single': aiThinkIsSingle }"
+                         :style="aiThinkSparkStyle">
+                      <div class="ai-think-seg-rail" @pointerdown="aiThinkSegDown($event)">
+                        <span class="ai-think-seg-fill" :style="aiThinkFillStyle"></span>
+                        <!-- 与独立 AI 页那一处**完全一致**（画哪几个中间圆点由
+                             aiThinkNotches 给；改一处必改两处）。 -->
+                        <span v-for="li in aiThinkNotches" :key="'n' + li"
+                              class="ai-think-seg-notch"
+                              :style="{ left: 'calc(100% * ' + li + ' / ' + (aiThinkLevelsFull.length - 1) + ')' }"></span>
+                        <span class="ai-think-seg-thumb" :style="aiThinkSegHeadStyle"></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </transition>
+            </div>
+          </div>
+          <span class="grow"></span>
+          <div class="ai-box-right">
+            <!-- 润色：去掉文字只留图标，放发送按钮左边（同独立 AI 页，两处保持一致）。
+                 ⚠️ 本轮：一个 API Key 都没填时灰色不可点击（aiPolishBlocked，两处一起改）。
+                 ⚠️ 本轮修正：润色中图标不变（撤掉旧版"同步图标 + 旋转类"的转圈临时态），
+                    进行中靠 .is-busy 呼吸 + title「润色中…」+ 输入框锁定（与独立 AI 页同款）。 -->
+            <button v-if="settings.ai_enabled && settings.ai_polish_enabled" class="ai-polish is-icon"
+                    :class="{ 'is-undo': !!aiPolishOriginal && !aiPolishing, 'is-busy': aiPolishing }"
+                    :disabled="aiPolishBlocked || aiPolishing || aiBusy || !aiDraft.trim()"
+                    :title="aiPolishing ? t('ai_polishing', '润色中…')
+                              : aiPolishBlocked ? t('ai_polish_need_key_tip', '还没有填写 API Key，先在设置里配置一个服务商的 API Key')
+                              : aiPolishOriginal ? t('ai_undo_polish_tip', '撤销润色，恢复成润色前的原文')
+                                                 : t('ai_polish_btn_tip', '润色输入框里的文字：只调整措辞和表达，不发送、不进入历史对话')"
+                    @click="aiPolish()">
+              <svg class="ic" width="15" height="15">
+                <use :href="aiPolishOriginal ? '#i-undo' : '#i-robot'"></use></svg>
+            </button>
+            <button class="ai-send" :class="{ 'is-stop': aiBusy }"
+                    :disabled="aiBusy ? false : !aiDraft.trim()"
+                    :title="aiBusy ? t('ai_stop', '停止') : t('ai_send', '发送')"
+                    @click="aiBusy ? aiStop() : aiSend()">
+              <svg class="ic" width="16" height="16">
+                <use :href="aiBusy ? '#i-stop' : '#i-send'"></use></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <transition name="slide-in">
+      <div v-if="aiHistoryOpen" class="ai-history">
+        <div class="ai-history-head">
+          <button class="icon-btn" :title="t('ai_back', '返回对话')" @click="closeAiHistory">
+            <svg class="ic" width="16" height="16"><use href="#i-left_arrow"></use></svg></button>
+          <span class="sub-title">{{ t('ai_history', '历史对话') }}</span>
+          <span class="grow"></span>
+          <button class="btn btn-sm btn-danger-ghost" :disabled="!aiHistoryList.length" @click="clearAiHistory">
+            <svg class="ic" width="13" height="13"><use href="#i-delete"></use></svg>{{ t('clear', '清空') }}</button>
+        </div>
+        <div class="hairline"></div>
+        <div class="ai-history-body">
+          <div v-if="!aiHistoryList.length" class="ai-history-empty">
+            <svg class="ic" width="40" height="40"><use href="#i-history"></use></svg>
+            <p class="strong">{{ t('ai_history_empty', '还没有历史对话') }}</p>
+            <p class="cap">{{ t('ai_history_empty_tip', '和 GCP-AI 聊过之后，记录会出现在这里。') }}</p>
+          </div>
+          <template v-else>
+            <article v-for="s in aiHistoryList" :key="s.id" class="history-item"
+                     :class="{ 'is-on': s.id === aiSessionId }" @click="openAiSession(s.id)">
+              <div class="history-item-head">
+                <span class="history-title">{{ s.title || t('ai_new_chat', '新对话') }}</span>
+                <span class="grow"></span>
+                <button class="icon-btn tiny" :title="t('delete', '删除')" @click.stop="deleteAiSession(s.id)">
+                  <svg class="ic" width="12" height="12"><use href="#i-delete"></use></svg></button>
+              </div>
+              <p class="history-text">{{ s.preview }}</p>
+              <p class="history-meta">{{ s.updated_at }} · {{ t('ai_msg_count', '{n} 条').replace('{n}', s.count) }}</p>
+            </article>
+          </template>
+        </div>
+      </div>
+    </transition>
+  </aside>
+</transition>
+
+<!-- 用户要求：右上角那个浮动的"退出全屏"胶囊整块删除，不要再有任何鼠标退出全屏的入口。
+     完全全屏只由 F11 进出（标题栏隐藏后，再按一次 F11 退出；Esc 不再退全屏）。-->
+
+<!-- ══════════════════ GCP-AI 气泡右键菜单（复制 / 全选 ↔ 取消全选）══════════════════
+     需求演进：上一轮原话是「右键弹出菜单有复制 全选…点全选变取消全选」，
+     本轮改成「右键聊天气泡的全选选项删除保留复制」→ **只剩「复制」一项**。
+     ⚠️ 与通用输入框右键菜单（settings-fe 那边）是两套：这里只管**气泡**。
+        "复制"的语义保留上一轮的约定：有框选就复制选中部分，没框选复制整条气泡。-->
+<transition name="pop">
+  <div v-if="aiCtx.open" class="card-menu ai-ctx-menu"
+       :style="{ left: aiCtx.x + 'px', top: aiCtx.y + 'px' }"
+       @contextmenu.prevent @click.stop>
+    <button class="card-menu-item" @click="aiCtxCopy">
+      <svg class="ic" width="15" height="15"><use href="#i-copy"></use></svg>
+      <span>{{ aiCtx.selected ? t('ai_ctx_copy_sel', '复制选中内容') : t('ai_ctx_copy_all', '复制') }}</span>
+    </button>
+  </div>
+</transition>
+
+<!-- ══════════ 提示(toast)里的可点链接菜单 ══════════
+     本轮需求：「当未填写API Key时或者填写有误会固定回复 其中包括"请填写<API Key>"
+     这个是下滑线字体 点击跳转页面到设置中的GCP-AI 位置（现在的那个是不可点击状态
+     无下划线 不是蓝色字体的普通字体是不对的 还有"<>"不是变量而是就是可点击文本的一部分）」
+     真根因：语言包 ai_no_key_reply 的文案里带着 `<a href="toolsgcp://api_key">API Key</a>`
+     这种 HTML 标签，而 toast 是 {{ }} 纯文本插值 → 用户看到的是**字面的尖括号文字**，
+     自然"不可点、无下划线、不是蓝色"。
+     修法：① 语言包把 HTML 标签删掉，改成普通文字 + `请填写<API Key>` 字面量；
+           ② toast() 把消息切成片段，命中的字面量渲染成蓝色下划线可点（仍不用 v-html）；
+           ③ toast 只显示不接 click，所以点链接时由 JS 就地弹一个**轻量小菜单**：
+              两项 ——「去填写 API Key」跳 设置→GCP-AI；「知道了」只关掉提示。
+     ⚠️ 位置与 .ai-ctx-menu 同层（#app 内、.app-root 收尾之前）：
+        既能用 Vue 事件绑定，又跟着同一套弹层样式（.card-menu）走主题。 -->
+<transition name="pop">
+  <div v-if="toastLink.open" class="card-menu toast-link-menu" role="menu"
+       :style="{ left: toastLink.x + 'px', top: toastLink.y + 'px' }"
+       @click.stop @contextmenu.prevent>
+    <button class="card-menu-item" @click="toastLinkGo">
+      <svg class="ic" width="15" height="15"><use href="#i-setting"></use></svg>
+      <span>{{ t('toast_link_go_settings', '去填写 API Key') }}</span>
+    </button>
+    <button class="card-menu-item" @click="toastLinkClose">
+      <svg class="ic" width="15" height="15"><use href="#i-accept"></use></svg>
+      <span>{{ t('toast_link_dismiss', '知道了') }}</span>
+    </button>
+  </div>
+</transition>
+
+</div><!-- /.app-root-->
+
+<!-- ══════════════════ 托盘右键菜单 ══════════════════-->
+<div v-show="trayMenu" class="tray-menu" ref="trayEl" @click.stop>
+  <button class="tray-item" @click="trayAction('home')">
+    <svg class="ic" width="14" height="14"><use href="#i-home"></use></svg>{{ trayLabel("show_main_window") }}</button>
+  <button class="tray-item" @click="trayAction('search')">
+    <svg class="ic" width="14" height="14"><use href="#i-search"></use></svg>{{ trayLabel("show_search_box") }}</button>
+  <button class="tray-item" @click="trayAction('ai')">
+    <svg class="ic" width="14" height="14"><use href="#i-robot"></use></svg>{{ trayLabel("show_ai_search") }}</button>
+  <div class="tray-sep"></div>
+  <button class="tray-item" @click="trayAction('exit')">
+    <svg class="ic" width="14" height="14"><use href="#i-embed"></use></svg>{{ trayLabel("exit") }}</button>
+</div>
+
+<!-- ══════════════════ 隐私同意 ══════════════════-->
+<transition name="fade">
+  <div v-if="privacy.open" class="modal-backdrop is-privacy">
+    <div class="privacy-card">
+      <h3 class="privacy-title">{{ t('privacy_dialog_title', '用户协议与隐私政策') }}</h3>
+      <div class="privacy-line"></div>
+      <p class="privacy-body">
+        {{ t('privacy_dialog_lead', '使用本程序前请先阅读并同意以下条款：') }}
+        <a href="javascript:void(0)" @click="openLink('https://toolsgcp.pages.dev/user-agreement', $event)">{{ t('privacy_link_user_agreement', '用户使用协议') }}</a>
+        {{ t('privacy_dialog_and', '和') }}
+        <a href="javascript:void(0)" @click="openLink('https://toolsgcp.pages.dev/privacy', $event)">{{ t('privacy_link_privacy_policy', '隐私政策及免责声明') }}</a>{{ t('privacy_dialog_period', '。') }}
+      </p>
+      <div class="row gap10 right-row">
+        <button class="btn btn-primary" style="min-width:100px" @click="acceptPrivacy">{{ t('privacy_agree_btn', '同意') }}</button>
+        <button class="btn btn-danger-ghost" style="min-width:120px" @click="rejectPrivacy">{{ t('privacy_reject_btn', '拒绝并退出') }}</button>
+      </div>
+    </div>
+  </div>
+</transition>
+
+<!-- ══════════════════ 通用对话框 ══════════════════-->
+<!-- ⚠️ backdropClose=false 的对话框（目前只有新公告弹窗）点旁边空白处不关闭，
+     防止用户不小心把公告弹掉；其它对话框仍保持"点空白 = 取消"。-->
+<transition name="modal">
+  <div v-if="dialog.open" class="modal-backdrop" @click.self="dialog.backdropClose && answer(dialog.cancelText)">
+    <div class="modal" :class="{ 'is-danger': dialog.danger, 'is-wide': dialog.wide }" role="dialog" aria-modal="true">
+      <div class="modal-title">{{ dialog.title }}</div>
+      <div class="modal-body" v-if="dialog.body">{{ dialog.body }}</div>
+      <div v-if="dialog.rows" class="fact-grid">
+        <template v-for="row in dialog.rows" :key="row.k">
+          <span class="fact-key">{{ row.k }}</span>
+          <span class="fact-val" :class="{ 'is-strong': row.strong }">{{ row.v }}</span>
+        </template>
+      </div>
+      <div v-if="dialog.notes" class="notes-panel"><p class="selectable">{{ dialog.notes }}</p></div>
+      <p v-if="dialog.extra" class="cap">{{ dialog.extra }}</p>
+      <!-- 收藏夹选择用（同一个对话框里：下拉框 + 选新建收藏夹时才出现的输入框）-->
+      <combo v-if="dialog.select" :model-value="dialog.selectValue" :options="dialog.select"
+             :width="300" style="margin-top:12px" @change="onDialogSelect"></combo>
+      <input v-if="dialog.input" class="input" style="margin-top:12px" v-model="dialog.inputValue"
+             :placeholder="dialog.inputPlaceholder">
+      <!-- 勾选组（收藏夹导出用）：全选行 + 复选项列表，确认回传勾选的 value 数组-->
+      <div v-if="dialog.checks" class="dialog-checks">
+        <label class="sel-check" :class="{ 'is-all': true }">
+          <!-- 全选框也要**三态**（none / some 半选"-" / all），
+               和搜索页的选择条、收藏页批量移动的选择条一致。
+               条件 = 有勾选的但没全选 → 半选。
+               原生 indeterminate 被点击会自动变 checked=true → 全选，再点一次 → 取消全选。-->
+          <input type="checkbox"
+                 :checked="dialog.checks.length > 0 && dialog.checks.every((c) => c.checked)"
+                 :indeterminate.prop="dialogChecksSome"
+                 @change="toggleDialogChecks($event.target.checked)">
+          <span>{{ t('select_all', '全选') }}</span>
+        </label>
+        <label v-for="c in dialog.checks" :key="c.value" class="dialog-check-row">
+          <input type="checkbox" v-model="c.checked">
+          <span>{{ c.label }}</span>
+        </label>
+      </div>
+      <div class="modal-actions">
+        <button v-for="(label, i) in dialog.buttons" :key="i" class="btn"
+                :class="{ 'btn-primary': i === dialog.buttons.length - 1 && !dialog.danger,
+                          'btn-danger': i === dialog.buttons.length - 1 && dialog.danger }"
+                @click="answer(label)">{{ label }}</button>
+      </div>
+    </div>
+  </div>
+</transition>
+
+<!-- ══════════════════ 服务商配置弹窗（本轮重做：内联编辑器 → 弹窗） ══════════════════
+     用户原话：「添加服务商这个整体ui太难看了干脆改为这个弹窗窗口样式的ui，里面也重新设计一下」。
+     复用项目既有的 .modal-backdrop / .modal 外壳（和通用对话框同一套视觉与层级），
+     内部表单重新排版：两列栅格 + 分区，按钮固定在底部右侧。
+     ⚠️ 需求逐条对应：
+       · 「取消按钮放在测试连接按钮左边并且三个按钮放到最右侧」→ 顺序 取消 | 测试连接 | 保存，整组右对齐；
+       · 「当前模型这个选项去除我不需要这个ui」→ 没有这一项（实际模型 = 支持模型第一个）；
+       · 「token限制输出默认是关闭的 还有后最小的token呢」→ 开关默认关 + 最小/最大两个输入；
+       · 「好了之后里面有测试连接和保存 没有清除按钮」→ 没有清除；
+       · 「接口地址默认为填写满的状态」「模型名称是有默认的」→ 后端 add_profile 预填。 -->
+<transition name="fade">
+  <!-- ⚠️⚠️ 本轮修复（用户原话：「在编辑服务商窗口按功能按钮直接关闭掉窗口bug」）。
+       根因是**两条叠加**，都在 CSS/模板的交界处：
+         ① `components.css:14` 的 `.btn:disabled { pointer-events: none }` ——
+            「测试连接」在请求期间是 disabled 的，此时**再按它一下，鼠标事件会
+            穿透这颗按钮**落到下层；下层正好是这层遮罩 `.modal-backdrop`。
+         ② 遮罩上用 `@click.self="aiCancelProfile()"` 实现"点空白处关闭" ——
+            穿透下来的 click 的 target 就是遮罩本身，`.self` 判定成立 → **弹窗被关掉**。
+            表现就是用户说的"按功能按钮直接把窗口关掉了"（其实是按在了一颗
+            正被禁用的按钮上，事件掉到了遮罩里）。
+       修法：不再用 `.self`，改成显式判断**点击位置是否落在弹窗面板之外**
+       （`aiBackdropClose($event)`，见 app.js）。几何判断不受 pointer-events
+       影响，禁用按钮被按下时点坐标仍在面板内 → 不会误关，
+       而"真的点遮罩空白处"仍然照旧关闭。 -->
+  <div v-if="aiProfileEditing" class="modal-backdrop" @click="aiBackdropClose($event)">
+    <div class="modal ai-prof-modal" role="dialog" aria-modal="true">
+      <div class="modal-title">{{ aiProfileEditing._editing
+        ? t('ai_prof_edit_title', '编辑服务商')
+        : t('ai_prof_add_title', '添加服务商') }}</div>
+
+      <div class="ai-prof-grid">
+        <div class="ai-prof-cell">
+          <label>{{ t('ai_prof_vendor', '服务商') }}</label>
+          <!-- ⚠️ Combo 只 emit `change`（没有 update:modelValue），
+               写错事件名会静默不触发：换了厂商而地址/模型/Key 槽全都不跟着变。
+               ⚠️ 本轮需求（用户原话）：「设置中GCP-AI中的服务商那里不要有默认的服务商」
+               → 新建时 provider 是空串，配上 placeholder 显示"请选择服务商"。
+               ⚠️ 这里必须显式给 `:width="0"`：Combo 默认 width=0 → 不写内联宽度，
+                  宽度由 CSS 撑满（见 settings-fixes.css 的 .ai-prof-cell .combo）。 -->
+          <combo :model-value="aiProfileEditing.provider"
+                 :options="aiProviderOptions"
+                 :disabled="!!aiProfileEditing._editing"
+                 :placeholder="t('ai_prof_pick_vendor_ph', '请选择服务商')"
+                 @change="aiProfilePickVendor"></combo>
+        </div>
+        <div class="ai-prof-cell">
+          <label>{{ t('model_name', '模型名称') }}</label>
+          <input class="input" v-model="aiProfileEditing.label"
+                 :placeholder="t('ai_prof_label_ph', '仅作为显示标签，不影响实际调用')">
+        </div>
+
+        <!-- ⚠️ 本轮需求（用户原话）：「还有这个ui上面不要放接口地址这个」
+             → 内置厂商（DeepSeek / OpenAI / Kimi…）的地址是**固定官方值**，
+                让用户填只会填错，所以这一项整块不画：后端 save_profile 在
+                api_base 为空时用 providers.default_api_base(pid) 补齐官方地址。
+             ⚠️ 唯一例外 = 自定义/中转（provider === 'custom'）：
+                `default_api_base('custom')` 返回**空串**，没有地址这条档案根本没法用，
+                而"自定义"这个选项存在的全部意义就是"我自己填地址"。
+                所以只在选中它时才出现这一个输入框（其余厂商界面上一条都看不到）。
+                —— 如果连这个也不想要，删掉下面这段即可，但「自定义」会退化成不可用。 -->
+        <div v-if="aiProfileEditing.provider === 'custom'" class="ai-prof-cell span2">
+          <label>{{ t('ai_api_base', '接口地址') }}</label>
+          <input class="input" v-model="aiProfileEditing.api_base"
+                 :placeholder="t('ai_api_base_placeholder', 'https://api.deepseek.com/v1')">
+          <p class="ai-prof-hint">{{ t('ai_prof_base_hint', 'OpenAI 兼容协议地址，通常以 /v1 结尾；本地模型可填 http://127.0.0.1:端口/v1') }}</p>
+        </div>
+
+        <div class="ai-prof-cell span2">
+          <label>{{ t('api_key', 'API Key') }}</label>
+          <div class="secret-wrap">
+            <input class="input secret-input" :type="apiKeyVisible ? 'text' : 'password'"
+                   v-model="apiKeyDraft" :placeholder="t('api_key_placeholder', '请输入 API Key')">
+            <button type="button" class="eye-btn" tabindex="-1" :class="{ 'is-on': apiKeyVisible }"
+                    :title="apiKeyVisible ? t('hide', '隐藏') : t('show', '显示')"
+                    @click="toggleKeyVisible">
+              <svg class="ic" width="16" height="16">
+                <use :href="apiKeyVisible ? '#i-eye_off' : '#i-eye'"></use></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="ai-prof-cell span2">
+          <div class="ai-prof-cell-head">
+            <label>{{ t('ai_prof_supported', '支持模型') }}</label>
+            <span class="grow"></span>
+            <span class="ai-prof-count-inline">{{ (aiProfileEditing.models || []).length }}</span>
+          </div>
+          <!-- ⚠️ 本轮需求（用户原话）：「如果是自定义 支持模型那里的ui高长被压缩了回复正常」。
+               根因在数据侧：custom 没有官方模型清单 → 勾选区一个 chip 都没有，
+               高度塌成一条。修法两层：CSS 给 min-height（见 settings-fixes.css），
+               这里再补一句占位文案，让"空的"看起来是**等待你输入**而不是坏了。 -->
+          <div class="ai-prof-models">
+            <label v-for="m in aiProfileModelChoices" :key="m" class="ai-prof-model-chip is-check"
+                   :class="{ 'is-on': aiProfileEditing.models.indexOf(m) >= 0 }">
+              <input type="checkbox" :value="m"
+                     :checked="aiProfileEditing.models.indexOf(m) >= 0"
+                     @change="aiProfileToggleModel(m, $event.target.checked)">
+              <span>{{ m }}</span>
+            </label>
+            <p v-if="!aiProfileModelChoices.length" class="ai-prof-models-empty">
+              {{ aiProfileEditing.provider
+                ? t('ai_prof_models_manual', '这家没有内置清单，请在下面手动输入模型名')
+                : t('ai_prof_models_pick_first', '先选择服务商，这里会列出它支持的模型') }}
+            </p>
+          </div>
+          <div class="ai-prof-add-model">
+            <input class="input" v-model="aiProfileNewModel"
+                   :placeholder="t('ai_prof_add_model_ph', '清单外的模型名，回车添加')"
+                   @keydown.enter.prevent="aiProfileAddModel">
+            <button type="button" class="btn sm" @click="aiProfileAddModel">
+              {{ t('ai_prof_add_model', '添加') }}
+            </button>
+          </div>
+        </div>
+
+        <!-- token 限制：开关一行；勾选后输入区出现在**下一行、稍往右缩进**
+             ⚠️ 本轮需求（用户原话）：「token限制输出不勾选它对应的这个ui不会出现，
+                并且这个ui应该放到他的下面一行然后稍稍往右一点点」。
+                旧写法是开关和输入框同一行、不勾选只置灰（is-off opacity）——
+                置灰仍然占着位置，用户要的是"不勾就根本不出现"。 -->
+        <div class="ai-prof-cell span2">
+          <label class="sel-check ai-prof-token-switch">
+            <input type="checkbox" v-model="aiProfileEditing.limit_token">
+            <span>{{ t('ai_prof_max_token', 'token 限制输出') }}</span>
+          </label>
+          <div v-if="aiProfileEditing.limit_token" class="ai-prof-token-inputs">
+            <label>{{ t('min_token', '最小token量') }}
+              <input class="input" type="number" step="0.5" min="0"
+                     v-model.number="aiProfileEditing.min_token">
+            </label>
+            <label>{{ t('max_token', '最大token量') }}
+              <input class="input" type="number" min="256" max="32768" step="256"
+                     v-model.number="aiProfileEditing.max_token">
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- 底部按钮：取消 | 测试连接 | 保存（整组右对齐，顺序按需求） -->
+      <div class="modal-actions ai-prof-modal-actions">
+        <button type="button" class="btn ghost" @click="aiCancelProfile">
+          {{ t('cancel', '取消') }}
+        </button>
+        <button type="button" class="btn" :disabled="aiProfBusy('draft')"
+                @click="aiTestProfileDraft">
+          {{ t('ai_prof_test', '测试连接') }}
+        </button>
+        <button type="button" class="btn btn-primary" @click="aiSaveProfile">
+          {{ t('save', '保存') }}
+        </button>
+      </div>
+    </div>
+  </div>
+</transition>
+
+<!-- ══════════════════ 录制快捷键时的屏幕顶部中央提示 ══════════════════-->
+<transition name="fade">
+  <div v-if="recording" class="hotkey-recording" role="status" aria-live="polite">
+    <span class="hotkey-rec-dot"></span>
+    <span>{{ t('hotkey_recording', '正在录制键位…按下组合键，Esc 取消') }}</span>
+  </div>
+</transition>
+
+<!-- ══════════════════ Toast ══════════════════-->
+<div class="toast-stack" :class="toastClass" aria-live="polite">
+  <transition-group name="toast">
+    <div v-for="toast in toasts" :key="toast.id" class="toast" :class="'is-' + toast.type">
+      <svg class="ic toast-icon" width="16" height="16">
+        <use :href="toast.type === 'success' ? '#i-accept' : (toast.type === 'error' ? '#i-error' : (toast.type === 'warning' ? '#i-warning' : '#i-info'))"></use>
+      </svg>
+      <div class="toast-copy">
+        <div class="toast-title">{{ toast.title }}</div>
+        <!-- ⚠️ 本轮：不再直接 {{ toast.message }}。消息要先切成片段
+                （toastParts），里面的 `请填写<API Key>` / `设置<API Key>` 渲染成
+                **蓝色下划线可点**（用户原话）。仍然**不用 v-html**：toast 文案可能
+                带后端错误原文，拼 HTML 等于开 XSS。 -->
+        <div class="toast-message" :style="toast.pre ? { 'white-space': 'pre-line' } : null"><template v-for="(part, pi) in toastParts(toast)" :key="pi"><button v-if="part.link" type="button" class="toast-link" @click="onToastLinkClick($event, part)">{{ part.text }}</button><span v-else>{{ part.text }}</span></template></div>
+      </div>
+      <!-- 需求：只有有输出内容的提示（例如测 Ping 的结果）才带复制按钮，
+           位置就在关闭按钮左边；正在测试 Ping…这类过程提示不带。-->
+      <button v-if="toast.copy" class="toast-copy-btn" :title="t('copy', '复制')"
+              @click="copyText(toast.copy)">
+        <svg class="ic" width="12" height="12"><use :href="isCopied(toast.copy) ? '#i-accept' : '#i-copy'"></use></svg>
+      </button>
+      <button class="toast-close" @click="dismiss(toast.id)">
+        <svg class="ic" width="11" height="11"><use href="#i-close"></use></svg></button>
+    </div>
+  </transition-group>
+</div>
+
+<!-- ══════════════════ 插件配置界面已移入 <main class="content">（见上） ══════════════════-->
+
+<transition name="modal">
+  <div v-if="devGuide" class="modal-backdrop" @click.self="devGuide = false">
+    <div class="modal is-wide">
+      <div class="modal-title">{{ t('want_dev', '我想开发') }}</div>
+      <pre class="dev-guide selectable">{{ DEV_GUIDE }}</pre>
+      <div class="modal-actions">
+        <button class="btn" @click="openPluginDir">{{ t('open_plugin_dir', '打开插件目录') }}</button>
+        <button class="btn btn-primary" @click="devGuide = false">{{ t('close', '关闭') }}</button>
+      </div>
+    </div>
+  </div>
+</transition>
+
+<!-- ══════════════════ 从资源库添加 ══════════════════-->
+<transition name="modal">
+  <div v-if="picker.open" class="modal-backdrop" @click.self="picker.open = false">
+    <div class="modal is-wide">
+      <div class="modal-title">{{ t('add_from_library', '从资源库添加', 'deploy') }}</div>
+      <div class="search-box" style="margin-top:12px;max-width:none">
+        <svg class="ic search-lead" width="15" height="15"><use href="#i-search"></use></svg>
+        <input type="text" v-model="picker.query" :placeholder="t('search_placeholder', '按编码或名称搜索，例如 TG-000001 / Steam', 'deploy')">
+      </div>
+      <div class="picker-list">
+        <button v-for="it in pickerHits" :key="it.code" class="picker-item"
+                :class="{ 'is-on': picker.picked.includes(it.code) }" @dblclick="applyPicker"
+                @click="togglePick(it.code)">
+          <img v-if="it.icon" :src="it.icon" alt=""><span>{{ it.code }}&nbsp;&nbsp;&nbsp;{{ it.name }}</span>
+        </button>
+        <p v-if="!pickerHits.length" class="cap center pad20">{{ t('unknown_code', '资源库里没有这个编码', 'deploy') }}</p>
+      </div>
+      <p class="cap tiny">{{ t('picker_multi_hint', '可以多选（Ctrl / 点选多条，Shift 连选），双击也会直接添加', 'deploy') }}</p>
+      <div class="modal-actions">
+        <button class="btn" @click="picker.open = false">{{ t('cancel', '取消', 'deploy') }}</button>
+        <button class="btn btn-primary" @click="applyPicker">{{ t('add', '添加', 'deploy') }}</button>
+      </div>
+    </div>
+  </div>
+</transition>
+
+<!-- 这里原来是载入现有资源选择弹层，但**没有任何按钮能打开它**
+     （唯一的入口就是被用户要求删掉的载入到制作资源）。双击资源浏览的一行已经等效，
+     留着就是死 UI + 死代码，所以连同 app.js 的 loadExisting / applyLoadExisting / makerLoad 一起删。-->
+
+
+</div><!-- /#app-->
+
+<!-- 图标精灵-->
+<svg class="sprite" aria-hidden="true"><defs id="icon-defs"></defs></svg>
+
+<!-- i提示气泡-->
+<div id="tip-bubble" role="tooltip"></div>
+
+<!-- ══════════ 全局输入框右键菜单（task-4 ④）══════════
+     与 tip-bubble 同套路：放在 #app 之外的常驻 DOM，由 app.js 末尾的纯 JS 驱动
+     （不占 Vue 状态，切页/卸载天然不残留）。
+     本轮（用户原话）：「所有快捷键文本放在对应文本的右侧并且加个括号放在里面
+     并且菜单要缩小点 现在太大了」→
+       · .imi-key 从 .imi-text **竖排容器里挪出来**，和 .imi-label 同级，
+         靠 .card-menu-item 的 flex 横向排 + margin-left:auto 顶到**最右侧**；
+       · 括号由 app.js 渲染时加（"（Ctrl+C）"），文案仍每次打开用 t() 重刷；
+       · 整份菜单收紧尺寸见 overlays.css 的 .input-menu。
+     ⚠️ 覆盖所有 input / textarea / contenteditable，**排除** AI 气泡（.ai-msg /
+        .ai-bubble-edit，见 app.js 的 INPUT_MENU_EXCLUDE）；**AI 输入框现在走这份
+        通用菜单**（上一轮把它也排除了，结果 AI 输入框右键谁都不接管 = 什么都不弹）。
+     图标 symbol：i-copy / i-paste / i-cut / i-select_all / i-undo / i-redo。-->
+<div id="input-menu" class="card-menu input-menu" role="menu" hidden>
+  <button type="button" class="card-menu-item input-menu-item" data-cmd="copy">
+    <svg class="ic" width="14" height="14"><use href="#i-copy"></use></svg>
+    <span class="imi-label"></span><span class="imi-key" aria-hidden="true">Ctrl+C</span>
+  </button>
+  <button type="button" class="card-menu-item input-menu-item" data-cmd="paste">
+    <svg class="ic" width="14" height="14"><use href="#i-paste"></use></svg>
+    <span class="imi-label"></span><span class="imi-key" aria-hidden="true">Ctrl+V</span>
+  </button>
+  <button type="button" class="card-menu-item input-menu-item" data-cmd="cut">
+    <svg class="ic" width="14" height="14"><use href="#i-cut"></use></svg>
+    <span class="imi-label"></span><span class="imi-key" aria-hidden="true">Ctrl+X</span>
+  </button>
+  <button type="button" class="card-menu-item input-menu-item" data-cmd="select-all">
+    <svg class="ic" width="14" height="14"><use href="#i-select_all"></use></svg>
+    <span class="imi-label"></span><span class="imi-key" aria-hidden="true">Ctrl+A</span>
+  </button>
+  <button type="button" class="card-menu-item input-menu-item" data-cmd="undo">
+    <svg class="ic" width="14" height="14"><use href="#i-undo"></use></svg>
+    <span class="imi-label"></span><span class="imi-key" aria-hidden="true">Ctrl+Z</span>
+  </button>
+  <button type="button" class="card-menu-item input-menu-item" data-cmd="redo">
+    <svg class="ic" width="14" height="14"><use href="#i-redo"></use></svg>
+    <span class="imi-label"></span><span class="imi-key" aria-hidden="true">Ctrl+Y</span>
+  </button>
+</div>
+
+<!-- 主逻辑：经典脚本（非 ES Module），与 index.html 模板直接配合-->
+<script src="/static/js/icons.js"></script>
+<script src="/static/js/rich-input.js"></script>
+<script src="/static/js/app.js"></script>
+</body>
+</html>

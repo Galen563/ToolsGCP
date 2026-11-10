@@ -1,0 +1,77 @@
+{
+  "feedback_title": {
+    "简体中文": "提交反馈",
+    "繁體中文": "提交反饋",
+    "English": "Submit Feedback"
+  },
+  "feedback_body_1": {
+    "简体中文": "在提交反馈之前，先查找一下是否存在重复反馈。如果有重复反馈，那么请不要再提交反馈，这样会加剧维护者的负担。",
+    "繁體中文": "在提交反饋之前，先查找一下是否存在重複反饋。如果有重複反饋，那麼請不要再提交反饋，這樣會加劇維護者的負擔。",
+    "English": "Before submitting feedback, please check for duplicates. If a duplicate exists, please do not submit again to avoid burdening the maintainer."
+  },
+  "feedback_body_2": {
+    "简体中文": "注意：此页面末尾展示所有的反馈，如需查看更多反馈，请前往 GitHub。",
+    "繁體中文": "注意：此頁面末尾展示所有的反饋，如需查看更多反饋，請前往 GitHub。",
+    "English": "Note: All feedback is listed at the end of this page. For more, please visit GitHub."
+  },
+  "feedback_go": {
+    "简体中文": "前往反馈",
+    "繁體中文": "前往反饋",
+    "English": "Go to Feedback"
+  },
+  "feedback_opened": {
+    "简体中文": "已在浏览器中打开",
+    "繁體中文": "已在瀏覽器中打開",
+    "English": "Opened in browser"
+  },
+  "feedback_failed": {
+    "简体中文": "打开失败，请检查默认浏览器",
+    "繁體中文": "打開失敗，請檢查預設瀏覽器",
+    "English": "Failed to open, please check your default browser"
+  },
+  "feedback_toast_title": {
+    "简体中文": "反馈",
+    "繁體中文": "反饋",
+    "English": "Feedback"
+  },
+  "qq_group_label": {
+    "简体中文": "官方QQ改进/建议群：",
+    "繁體中文": "官方QQ改進/建議群：",
+    "English": "Official QQ group (feedback): "
+  },
+  "qq_report_label": {
+    "简体中文": "投诉/举报群：",
+    "繁體中文": "投訴/檢舉群：",
+    "English": "Report group: "
+  },
+  "qq_copy_number": {
+    "简体中文": "复制群号",
+    "繁體中文": "複製群號",
+    "English": "Copy group number"
+  },
+  "qq_copied": {
+    "简体中文": "已复制",
+    "繁體中文": "已複製",
+    "English": "Copied"
+  },
+  "feedback_back": {
+    "简体中文": "返回",
+    "繁體中文": "返回",
+    "English": "Back"
+  },
+  "feedback_click_to_close": {
+    "简体中文": "点击图片返回",
+    "繁體中文": "點擊圖片返回",
+    "English": "Click the image to go back"
+  },
+  "ctrl_open_tip": {
+    "简体中文": "Ctrl+左键：静默打开，不切走",
+    "繁體中文": "Ctrl+左鍵：靜默開啟，不切走",
+    "English": "Ctrl+click: open quietly without switching away"
+  },
+  "qq_copy_tip": {
+    "简体中文": "复制群号 {number}",
+    "繁體中文": "複製群號 {number}",
+    "English": "Copy group number {number}"
+  }
+}

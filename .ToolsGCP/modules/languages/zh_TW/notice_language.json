@@ -1,0 +1,21 @@
+{
+  "mark_read": "標為已讀",
+  "notice_all_read_done": "已全部標為已讀",
+  "notice_btn_later": "稍後",
+  "notice_btn_view": "檢視公告",
+  "notice_dialog_hint": "點「全部已讀」後，左側欄的未讀數字會歸零。",
+  "notice_dialog_more": "還有 {n} 條未讀公告，請到公告頁查看。",
+  "notice_dialog_title": "新公告",
+  "notice_empty": "暫無公告",
+  "notice_empty_hint": "有新消息會顯示在這裡。",
+  "notice_item_meta": "{author} · #{number}",
+  "notice_load_failed": "公告取得失敗，請檢查網路後重試。",
+  "notice_loading": "正在取得公告…",
+  "notice_mark_all_read": "全部已讀",
+  "notice_open_in_github": "在 GitHub 檢視",
+  "notice_refresh": "重新整理",
+  "notice_title": "公告",
+  "notice_unread_count": "{n} 條未讀",
+  "read": "已讀",
+  "unread": "未讀"
+}

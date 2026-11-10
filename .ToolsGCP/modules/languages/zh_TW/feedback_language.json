@@ -1,0 +1,22 @@
+{
+  "ctrl_open_tip": "Ctrl+左鍵：靜默開啟，不切走",
+  "feedback_back": "返回",
+  "feedback_body_1": "在提交反饋之前，先查找一下是否存在重複反饋。如果有重複反饋，那麼請不要再提交反饋，這樣會加劇維護者的負擔。",
+  "feedback_body_2": "注意：此頁面末尾展示所有的反饋，如需查看更多反饋，請前往 GitHub。",
+  "feedback_click_to_close": "點擊圖片返回",
+  "feedback_failed": "打開失敗，請檢查預設瀏覽器",
+  "feedback_go": "前往反饋",
+  "feedback_opened": "已在瀏覽器中打開",
+  "feedback_title": "提交反饋",
+  "feedback_toast_title": "反饋",
+  "qq_copied": "已複製",
+  "qq_copy_number": "複製群號",
+  "qq_copy_tip": "複製群號 {number}",
+  "qq_group_label": "官方QQ改進/建議群：",
+  "qq_report_label": "投訴/檢舉群：",
+  "intro_line_1": "免費開源工具集合",
+  "intro_line_2": "集中收錄常用軟體與網站",
+  "intro_line_3": "支援按類別 / 標籤 / 系統篩選",
+  "intro_line_4": "可收藏、批次部署常用環境",
+  "intro_line_5": "提供資源取得等功能"
+}

@@ -1,0 +1,101 @@
+{
+  "group": "D",
+  "items": [
+    {
+      "id": "kimi",
+      "systems": ["Windows", "macOS", "Android", "iOS", "web", "其他"],
+      "architectures": ["x64", "Apple Silicon"],
+      "supplement": "官方提供 Windows 与 macOS 桌面客户端，Mac 分公司芯片与 Intel 两个版本，另有 iOS、Android、鸿蒙手机应用，网页版可直接对话。手机、电脑与网页之间的聊天记录可以同步，桌面端还支持挂载本地文件夹与浏览器自动化。",
+      "intro": "Kimi 是一款擅长长文本与复杂任务的 AI 助手，可以一次读入论文、财报、合同等长篇材料，通读后总结要点并回答细节提问。日常问答、联网搜索之外，它还能把零散资料整理成结构化的研究报告和演示文稿，并通过插件接入专业数据源。对开发者提供终端与编辑器里的编程助手，桌面端进一步支持挂载本地文件夹、定时执行任务和浏览器自动化，适合需要长期处理大量文档的科研、金融与办公人群。",
+      "note": "来源：官网下载页 kimi.com/products/download（Kimi 官方）——桌面端提供 Windows、macOS(Apple 芯片)、macOS(Intel) 三个客户端，移动端 iOS / Android / HarmonyOS(枚举外，记入\"其他\")，另有网页版；FAQ 注明 Kimi Work 桌面端支持 Windows 与 Apple silicon Mac。架构按官网标注的 macOS Intel(x64)+Apple 芯片 记；Windows 客户端架构官网未标注"
+    },
+    {
+      "id": "qwen-studio",
+      "systems": ["web"],
+      "architectures": [],
+      "supplement": "以网页版为主要入口，打开站点即可直接对话，不需要安装任何客户端，跨设备用浏览器访问即可。目前未在官方渠道见到与本站点同名的桌面端或手机客户端。",
+      "intro": "Qwen 官方平台提供的对话入口，打开网页就能直接向通义千问系列模型提问，无需下载安装。日常可以用它查询资料、润色文字、解释代码、翻译外语，也能上传图片做识别与理解，长文档一次读入后可以逐条追问，回答通常会附上推理过程与可核查的参考链接。同一账号在不同设备上打开浏览器即可接着用，适合把它当作随开随用的通用 AI 助手，临时遇到问题不必先找软件。",
+      "note": "来源：qwen.ai / chat.qwen.ai 为官方网页平台，站点标记为 Qwen 官方。官网虽有 qwen.ai/download 入口，但页面为前端渲染、无法读取客户端清单；Apple App Store / Mac App Store 官方渠道亦未检索到 Alibaba 的 Qwen 桌面或移动客户端。拿不准故按纯 Web 处理，架构留空。同厂的\"千问办公 QwenWork\"另有桌面端，但那是 qwenwork.cn 的独立产品，不计入本条"
+    },
+    {
+      "id": "qianwen",
+      "systems": ["Windows", "macOS", "Android", "iOS", "web"],
+      "architectures": [],
+      "supplement": "官方同时提供电脑客户端、Mac 客户端以及 iOS、Android 手机应用，网页版也能直接使用。内置对话问答、文档解读、PPT 生成与定时任务等能力，电脑与手机之间的使用记录可以衔接。",
+      "intro": "千问是阿里推出的全能型 AI 助手，主打能聊天更会办事：多轮对话、联网问答之外，它可以直接交付成品文件，一句话生成网页、应用、PPT、Word、Excel 或图片，打开即用。内置工作助理与定时任务，到点自动执行并把结果送回来；语音通话、智能体广场、文档解读、代码处理与学习辅导覆盖了办公、创作和做题讲题等场景，适合学生、职场人和需要快速出活的内容创作者。",
+      "note": "来源：官网 qianwen.com/download 页面标题为\"千问PC客户端下载\"；Mac App Store 官方应用\"千问-阿里旗下AI助手\"(id6752689384，开发者 Shanghai Zhixin Puhui Technology Co., Ltd.，bundle com.alibaba.tongyi) 即 macOS 客户端；iOS 官方 App\"千问-阿里AI助手\"(id6466733523)；阿里巴巴集团官方新闻稿称千问App支持 iOS、Android、网页及 PC 平台。官方未标注 CPU 架构，架构留空"
+    },
+    {
+      "id": "doubao",
+      "systems": ["Windows", "macOS", "Android", "iOS", "web"],
+      "architectures": ["x64", "Apple Silicon"],
+      "supplement": "官方提供 Windows 与 macOS 桌面客户端，以及 iOS、Android 手机应用，网页版可直接使用。桌面端支持悬浮球快捷唤起，手机与电脑的对话记录可以接着聊，Mac 安装包同时适配 Intel 与 Apple 芯片。",
+      "intro": "豆包是字节跳动推出的 AI 助手，日常问答、资料总结、写作润色、翻译和编程辅助都能胜任。它支持上传图片与文档做识别解读，一句话生成图片、视频与演示文稿；工作任务模式下可调用浏览器和技能自动跑完流程，桌面端用悬浮球随时呼出，不用离开当前应用。语音输入与通话表现自然，手机和电脑之间的对话记录能接着聊，适合学生、上班族和想随手用 AI 处理杂事的人。",
+      "note": "来源：官网 www.doubao.com/download/desktop 为\"下载豆包客户端\"官方页(Windows/macOS 桌面端)；Mac App Store 官方应用\"豆包\"(id6683305962，bundle com.bot.neotix.doubao，开发者 Beijing Chuntian Zhiyun/字节系)；官方 CDN 安装包 lf-flow-web-cdn.doubao.com/obj/flow-doubao/doubao_pc/2.31.4/Doubao_universal_2.31.4.dmg 为 universal(Intel+Apple 芯片)；iOS 官方 App id6459478672(com.bot.doubao)。Windows 客户端具体架构官方未标注"
+    },
+    {
+      "id": "witch-clipboard",
+      "systems": ["Windows"],
+      "architectures": ["x64", "arm64"],
+      "supplement": "目前只发行 Windows 版本，既有安装包也有免安装便携包，另有面向 Windows ARM 设备的实验性构建，macOS 与 Linux 暂无官方版本。剪贴板历史默认只保存在本机并加密，可选加密云同步与局域网传输。",
+      "intro": "Witch Clipboard 常驻系统托盘，把复制过的文字、截图和文件统一留存下来，之后既能按内容搜索，也能按当初复制它的程序筛选找回。它自动把条目归入链接、代码、密钥、颜色、路径等类型，支持置顶、标签和分类筛选，还会把短时间内连续复制的模型名、接口地址等内容自动归为一组。历史记录默认只留在本机并加密保存，可标记密码管理器等敏感内容不入库；需要跨设备时再开启端到端加密同步或局域网传输，适合频繁复制粘贴的办公与开发场景。",
+      "note": "来源：官方 GitHub 仓库 README\"安装/运行\"——Windows x64: Witch.Clipboard_<版本>_x64-setup.exe，Windows ARM64(实验性): _arm64-setup.exe，另有 x64/ARM64 便携 zip；\"平台支持与已知限制\"表明确写 Windows 10/11 x64 正式支持、Windows 11 ARM64 实验性，且\"正式发行只面向 Windows\"，无 macOS/Linux 产物"
+    },
+    {
+      "id": "lightc",
+      "systems": ["Windows"],
+      "architectures": ["x64"],
+      "supplement": "专为 Windows 打造，只提供 64 位版本，官网给出标准安装包、绿色便携包和内置运行环境的离线安装包三种选择。没有手机端和网页版，使用前建议先备份重要数据。",
+      "intro": "LightC 专注解决 C 盘爆红：扫描并清理系统与软件缓存、聊天软件积压的缓存、大文件、卸载残留、旧驱动和注册表冗余，还能对比两次扫描结果看清空间被谁吃掉，并逐层分析大目录。每一类垃圾都标注安全等级，聊天记录等数据被固定为不可勾选，拿不准的条目默认不替你勾；软件本体带官方签名，可在安装前核对是否被动过手脚，适合想让系统保持轻快又担心误删的普通用户。",
+      "note": "来源：官网 lightc.app 自述\"Windows C 盘智能清理工具\"，下载产物为 LightC_x.x.x_x64-setup.exe、LightC_portable_x64_v*.zip、LightC_webview2_offline_x64_v*.exe；官方 .github/workflows/release.yml 构建矩阵仅 windows-latest，tauri.conf.json bundle targets 仅 nsis；README 要求 Windows 10 或更高。仅 x64，无 x86/ARM 产物"
+    },
+    {
+      "id": "ai-cubby",
+      "systems": ["Windows"],
+      "architectures": ["x64"],
+      "supplement": "目前仅提供 Windows 版本，官网同时给出免安装的便携压缩包，解压即可使用，无需注册账号。数据全部保存在本地，macOS 与 Linux 支持仍在官方规划中。",
+      "intro": "AI Cubby 想解决的是桌面上什么都找不到的问题：它在后台安静记录你打开过的文件、程序和桌面快捷方式，把散落的图片、安装包、文档、游戏与文件夹汇成一个可搜索的本地资料库。重要条目可以打标签、写备注、置顶，也能按类型筛选，用记得住的线索而不是精确文件名来检索；打开次数、使用时长和最近使用时间会一并记下。数据全部留在本机，适合桌面文件越堆越多、又不想手动整理的重度电脑用户。",
+      "note": "来源：官网 aicubby.app 英文页\"Local-first Windows desktop resource manager\"、\"Requires Windows 10 or later. Portable ZIP\"；官方 GitHub README 下载产物为 AI-Cubby-x.x.x-portable-win-x64.zip，FAQ 明确\"Windows is the current focus. macOS and Linux support is on the roadmap\"。仅 Windows x64"
+    },
+    {
+      "id": "class-widgets-2",
+      "systems": ["Windows", "macOS"],
+      "architectures": ["x64", "Apple Silicon"],
+      "supplement": "官方同时发布 Windows 与 macOS 版本：Windows 提供安装程序和免安装压缩包，macOS 分别给出 Intel 与 Apple 芯片两种安装镜像。暂时没有手机端和网页版，程序会内置更新功能。",
+      "intro": "Class Widgets 2 是一款常驻桌面的电子课程表，以小组件形式显示当前课程、下一节课程和今日剩余安排，上课、课间与放学状态自动切换并弹出提醒。内置课表编辑器，可导入多种格式的课表文件，支持按周次显示不同安排；还能加入事件倒计时（例如考试、活动）和浮动小部件，主题、配色、字号与显示位置都能自行调整。附带插件广场可继续扩展功能，适合学生日常看课表，也适合教室大屏投放使用。",
+      "note": "来源：官方 .github/workflows/build&release.yml 构建矩阵 windows-latest / macos-15-intel / macos-latest，发布产物 ClassWidgets-2-Windows.zip、ClassWidgets-*-Win-Installer.exe、ClassWidgets-2-macOS-X64.dmg、ClassWidgets-2-macOS-ARM64.dmg；无 Linux 产物。macOS 的 ARM64 构建按枚举记 Apple Silicon"
+    },
+    {
+      "id": "recordly",
+      "systems": ["Windows", "macOS", "Linux"],
+      "architectures": ["x64", "Apple Silicon"],
+      "supplement": "提供 Windows、macOS 与 Linux 桌面客户端，Mac 区分 Intel 与 Apple 芯片，Windows 为安装程序，Linux 为免安装的镜像文件。官方还给出 Homebrew 与 AUR 两种包管理器安装方式，没有手机端和网页版。",
+      "intro": "Recordly 是一款开源的屏幕录制与视频编辑工具，录完可以在同一个界面里直接做后期，不必在多个软件之间来回搬运素材。它能根据鼠标活动自动生成缩放动效，提供光标平滑、点击反馈与运动模糊，还可加入摄像头画中画气泡、裁剪画面、加速减速、文字图片标注和额外音轨；背景支持壁纸、纯色与渐变，并带圆角、模糊和阴影效果，成片可导出 MP4 或 GIF，适合制作产品演示、教学讲解和操作教程的创作者。",
+      "note": "来源：官方 .github/workflows/release.yml 构建 macOS x64(dmg/zip)、macOS arm64(dmg/zip)、Windows x64(nsis exe)、Linux x64(AppImage)；官方 Release 产物名 Recordly-x64.dmg / Recordly-arm64.dmg / Recordly-linux-x64.AppImage；README 系统要求 macOS 14.0+、Windows 10 Build 19041+、现代 Linux 发行版。arm64 仅 macOS(Apple Silicon) 构建，无 Windows/Linux ARM 产物"
+    },
+    {
+      "id": "minecraftworldbrowser",
+      "systems": ["Windows"],
+      "architectures": [],
+      "supplement": "以单个免安装的 Windows 程序分发，下载后双击即可运行，需要系统已启用 .NET Framework 运行环境，建议 Windows 10 或更高版本。没有网页版和手机版，扫描过程只读取文件。",
+      "intro": "Minecraft Java 世界浏览器用来收拾散落在各个启动器与实例里的存档。它会自动扫描常见启动器的游戏目录和整合包结构，把找到的世界集中列出，显示世界名称、游戏版本、游戏模式、加载器、存档大小与真实路径，并支持搜索以及按版本、模式、收藏状态筛选和表头排序。选中的存档可以一键打包成 ZIP 备份并记录原位置，需要时再恢复回原处；配合标签、备注与备份历史，适合同时玩多个整合包、存档越攒越多的玩家。",
+      "note": "来源：官方 GitHub README——发布为单文件 Windows EXE（MinecraftWorldBrowser-v3.2.10.exe），\"程序为单文件 Windows EXE，不需要安装\"，建议 Windows 10/11 并启用 .NET Framework 4.8；构建脚本用 Windows 自带 .NET Framework 编译器。官方未标注 x86/x64（EXE 未声明目标架构），架构按规则留空"
+    },
+    {
+      "id": "steelylink-tools",
+      "systems": ["web"],
+      "architectures": [],
+      "supplement": "纯网页工具集，全部功能都在浏览器本地运行，文件不会被上传，也无需注册或安装客户端。电脑和手机浏览器打开网页即可直接使用，关闭页面后不留下数据。",
+      "intro": "SteelyLink Tools 收集了上百个日常用得上的在线小工具，覆盖图片压缩与格式转换、PDF 合并分割与加解密、JSON 格式化与校验、哈希与 Base64 编码、二维码生成识别、单位与进制换算、音频裁剪合并、汇率与银行卡信息查询，以及游戏灵敏度换算等类别，按分类排好点开即用。所有计算都在浏览器本地完成，文件不会上传服务器，也不需要注册或付费，处理敏感文档时相对放心，适合临时遇到格式转换、开发调试或办公小需求的人。",
+      "note": "来源：官方站点 tools.steelylink.com——\"111 个专业在线工具…每一个工具都完整运行在你自己的浏览器里\"，全部为浏览器内工具，无桌面/移动客户端安装包，属纯网站服务，架构留空"
+    },
+    {
+      "id": "fileconverter",
+      "systems": ["Windows"],
+      "architectures": ["x64", "x86"],
+      "supplement": "只支持 Windows，装好后通过资源管理器右键菜单批量转换和压缩文件，无需打开主界面操作。官方主推 64 位安装包，旧版本另有 32 位安装包可供老机器使用，没有网页版和手机版。",
+      "intro": "File Converter 把格式转换做成右键菜单里的一步操作：在资源管理器里选中一个或多个文件，右键挑好目标格式即可批量转换或压缩，不必先打开软件再逐个导入。它覆盖音频、视频、图片与文档等常见格式之间的互转，也能把视频转成 GIF、把图片或文档合成 PDF；转换预设可以自行增删并调整参数，常用操作能保存成自己的右键选项，适合经常需要批量改格式、又不想研究复杂转码软件的普通用户。",
+      "note": "来源：官网 file-converter.io 下载区——File Converter 2 兼容 Windows 7/8/10/11，官方只提供 Windows 64 位安装包 FileConverter-2.2-x64-setup.msi；同页仍官方提供旧版 1.x 的 64 位与 32 位安装包(FileConverter-1.2.3-x64-setup.msi / -x86-setup.msi)，故 x86 亦有官方产物。仅 Windows"
+    }
+  ]
+}

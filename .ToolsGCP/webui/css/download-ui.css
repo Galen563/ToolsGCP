@@ -1,0 +1,189 @@
+/* ===========================================================================
+ * 下载页 UI 补丁
+ * 
+ * 覆盖内容：
+ *   ① 进度条占满**整行**（原来固定 160px，窄窗口下被挤没 → 进度条必须可见）
+ *   ② 下载速度放在**进度条轨道右边**（固定宽度占位，数字跳动时轨道不晃）
+ *   ③ 取消状态：任务名划掉 + 灰色斜体；状态文字橙黄
+ *   ④ 下载成功：程序名**下面**一行绿色下载成功
+ *   ⑤ 清空 ▾下拉按钮（一个整体组件：主按钮 + 三角 + 菜单）
+ *   ⑥ 任务条右键菜单（复制下载链接 / 重试）
+ *   ⑦ 操作按钮全部带图标
+ *   ⑧ 复用下载页头部的页面（部署 / 工坊）内边距微调
+ *
+ * 交互约定：
+ *   · 已取消 / 下载失败的条目**不渲染**进度条那一行（HTML 层的 v-if）。
+ *   · 打开程序不是独立按钮：文件名本身是可点的 button，hover 出下划线打开文件。
+ *   · 文件名后面跟完成 / 取消 / 失败的时间戳，title 为下载时间。
+ *   · 下载完成后的操作区 = 打开目录 + ✕ 移除。
+ *   · 下拉选中态（对勾 + 强调色 + 底色）统一到 <combo>，只用 CSS 变量，跟主题走。
+ *
+ * ⚠️ 本文件是**补丁**，在 index.html 里排在所有既有 CSS 的**最后** ——
+ *    所以这里的规则优先级最高，能盖掉 overlays.css 里那套旧写法。
+ * ===========================================================================*/
+
+/* ---------- ① 进度条（占满整行 + 状态配色） ----------
+   ⚠️ 结构：
+        .download-bar-wrap   → 一行（轨道 + 右侧速度）
+          .download-bar       → 轨道（占满剩余宽度）
+            .download-bar-fill → 填充部分（宽度 = 百分比）
+          .download-speed     → 速度（固定宽度，放在轨道**右边**）
+   ⚠️ 进度条旁边**不放**独立的百分比数字；总进度只在状态行里以43% · 剩余 12s显示。
+   ⚠️ --track 以前**在 variables.css 里根本没定义** → overlays.css 里那条
+      `background: var(--track)` 整条声明失效 → 轨道是透明的，进度条在深色底上
+      根本看不见（这就是"进度条显示不出来"的真正根因）。
+      现在 variables.css 已补上这个变量，这里再带一层兜底值做双保险。*/
+.download-bar-wrap {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; min-width: 0;
+}
+.download-bar {
+  flex: 1 1 auto; min-width: 60px; height: 6px;
+  border-radius: 3px; overflow: hidden;
+  /* --track 由 variables.css 定义（深/浅色两套），
+     这里的兜底值只是双保险 —— 有真值时用真值。*/
+  background: var(--track, rgba(255, 255, 255, 0.14));
+}
+/* ⚠️ 选择器写成 `.download-bar > .download-bar-fill`（比 overlays.css 里那条
+   `.download-bar > span` 特异性更高）—— 否则旧的 `background: var(--accent)`
+   会盖掉下面的状态配色（绿/灰/橙黄/红）。*/
+.download-bar > .download-bar-fill {
+  display: block; height: 100%;
+  background: var(--accent);
+  transition: width 200ms ease;
+}
+/* 各状态色：下载中 = accent / 完成 = 绿 / 取消 = 灰 / 暂停 = 橙黄 / 失败 = 红*/
+.download-bar.is-done > .download-bar-fill { background: var(--success); }
+.download-bar.is-canceled > .download-bar-fill { background: var(--text-disabled); }
+.download-bar.is-paused > .download-bar-fill { background: var(--warning); }
+.download-bar.is-failed > .download-bar-fill { background: var(--danger); }
+/* 进度条旁边的独立百分比数字已删（总进度只在状态行43% · 剩余 12s里显示）*/
+
+/* ---------- ② 任务名 + 时间（同一行） ----------*/
+.download-row-title {
+  display: flex; align-items: baseline; gap: 8px; min-width: 0;
+}
+.download-row-title .download-name { flex: 1 1 auto; min-width: 0; }
+/* 文件名变成可点的按钮（done 状态）——
+   ⚠️ button 在 base.css 里被重置过（border:0 / background:none / padding:0），
+      这里再补一条：文字对齐、继承字号、不要浏览器默认的按钮外观。*/
+.download-name.link {
+  cursor: pointer;
+  text-align: left;
+  font-size: 13px;
+  text-decoration: none;
+  transition: color 120ms ease;
+}
+.download-name.link:hover { text-decoration: underline; }
+/* 文件名后面的时间（完成/取消/失败才有）*/
+.download-time {
+  flex: 0 0 auto; white-space: nowrap;
+  font-size: 11.5px; color: var(--text-disabled);
+  font-variant-numeric: tabular-nums;
+}
+/* 速度放在进度条那一行的**右边**（取代原来该位置的独立百分比数字）。
+   固定宽度 —— 速度数字跳动时进度条不跟着左右晃；
+   进度条因此天然比整行短一点（轨道右侧留出的空隙由这一列占位实现）。*/
+.download-speed {
+  flex: 0 0 auto; width: 78px; white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+  font-size: 11.5px;
+  text-align: right;
+}
+
+/* ---------- ③ 取消状态 ----------
+   任务名：被划掉 + 灰色斜体（line-through / --text-disabled / italic 三件套）。*/
+.download-row.is-canceled .download-name {
+  text-decoration: line-through;
+  color: var(--text-disabled);
+  font-style: italic;
+}
+/* 取消状态的状态文字 = 橙黄色*/
+.download-row.is-canceled .download-status-text {
+  color: var(--warning);
+}
+/* 下载中 → **默认字体颜色**。
+   明确写一条，避免被 .download-status-text 的 secondary 规则盖掉。*/
+.download-row.is-downloading .download-status-text { color: var(--text); }
+
+/* ---------- ④ 下载成功：绿色文字（程序名下面那一行） ----------*/
+.download-done-text {
+  color: var(--success);
+  font-size: 12px;
+  font-weight: 600;
+}
+/* 状态文字（百分比 / 剩余时间 / 已取消 …）*/
+.download-status-text {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* ---------- ⑤ 清空 ▾下拉按钮（一个整体组件） ----------
+   主按钮和右边的三角按钮**贴合**（主按钮的右圆角去掉），
+   点三角展开菜单、点主按钮按当前范围执行。*/
+.dropdown-btn {
+  position: relative;
+  display: inline-flex; align-items: stretch;
+}
+.dropdown-btn > .btn {
+  border-top-right-radius: 0; border-bottom-right-radius: 0;
+}
+.dropdown-btn-toggle {
+  width: 26px; border: 1px solid var(--glass-border); border-left: none;
+  border-top-right-radius: 8px; border-bottom-right-radius: 8px;
+  background: var(--glass); color: var(--text);
+  display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease;
+}
+.dropdown-btn-toggle:hover { background: var(--hover-strong); }
+.dropdown-btn.is-open .dropdown-btn-toggle { background: var(--hover-strong); color: var(--accent); }
+.dropdown-menu {
+  position: absolute; top: calc(100% + 6px); right: 0; z-index: 30;
+  min-width: 140px; padding: 4px;
+  display: flex; flex-direction: column; gap: 2px;
+  border-radius: 10px; border: 1px solid var(--glass-border);
+  /* ⚠️ 材质必须跟自绘 <combo> 的 .combo-pop 一致：都用 --pop-* 令牌。
+     这里以前写死 background: var(--card-solid)（实色、没有 backdrop-filter），
+     于是切到毛玻璃 / 亚克力档时，这个「清空 ▾」菜单还是块实色板，
+     和旁边所有下拉框的观感对不上。 */
+  background: color-mix(in srgb, var(--card-solid) calc(var(--pop-alpha) * 100%), transparent);
+  backdrop-filter: blur(var(--pop-blur)) saturate(var(--pop-sat));
+  -webkit-backdrop-filter: blur(var(--pop-blur)) saturate(var(--pop-sat));
+  box-shadow: var(--pop-shadow);
+  animation: popIn 140ms cubic-bezier(.22,.8,.2,1) both;
+}
+/* 缩进与 .combo-item 保持一致：文字左边缘对齐触发器。
+   选中态已不再用对勾，因此不预留 26px —— 否则选项文字会比触发器文字右移一截。 */
+.dropdown-item {
+  height: 28px; padding: 0 10px; position: relative;
+  border: none; border-radius: 7px;
+  background: transparent; color: var(--text);
+  font-size: 12.5px; text-align: left; cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+.dropdown-item:hover { background: var(--hover-strong); }
+
+/* ---------- ⑥ 任务条右键菜单 ----------
+   菜单比通用 .card-menu 收紧：min-width 170 → 148，
+   行高与内边距也单独收一点（不动全局 .card-menu-item）。*/
+.download-menu { min-width: 148px; }
+.download-menu .card-menu-item {
+  min-height: 30px; padding: 0 9px;
+}
+
+/* ---------- ⑦ 操作按钮行 + 删除按钮 ----------*/.download-row-ops {
+  display: flex; gap: 6px; align-items: center;
+  flex: 0 0 auto;
+}
+/* 删除任务（✕ 按钮）*/
+.download-remove:hover {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
+}
+
+/* ---------- ⑧ 复用下载页头部的页面（部署 / 工坊）微调 ----------
+   .download-page-head 的左右内边距是按下载页（body 自带 24px 边距）设计的；
+   部署页的 .deploy-wrap 自己已有 36px 内边距，头部再吃一遍就双重缩进了 → 清零。*/
+.deploy-wrap .download-page-head { padding: 0; }
