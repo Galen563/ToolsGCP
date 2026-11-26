@@ -1,0 +1,1201 @@
+{
+ "steps": [
+  {
+   "tag": "P0_baseline",
+   "ctx": null,
+   "onText": "简体中文",
+   "segRect": {
+    "x": 101,
+    "y": 932.19,
+    "w": 950,
+    "h": 30
+   },
+   "thumb": {
+    "x": 104,
+    "y": 935.19,
+    "w": 312,
+    "h": 24
+   },
+   "on": {
+    "x": 104,
+    "y": 935.19,
+    "w": 312,
+    "h": 24
+   },
+   "dx": 0,
+   "dw": 0,
+   "inline": {
+    "left": "2px",
+    "width": "312px"
+   },
+   "itemWidths": [
+    312,
+    312,
+    312
+   ],
+   "itemFlex": {
+    "flexGrow": "1",
+    "flexBasis": "0px",
+    "minWidth": "0px",
+    "paddingLeft": "8px",
+    "paddingRight": "8px"
+   },
+   "onStyle": {
+    "fontWeight": "400",
+    "paddingLeft": "8px",
+    "transitionProperty": "background, color, transform",
+    "transitionDuration": "0.2s, 0.2s, 0.25s"
+   },
+   "thumbDecl": {
+    "transitionProperty": "left, top, width, height, background, box-shadow",
+    "transitionDuration": "0.22s, 0.22s, 0.22s, 0.22s, 0.16s, 0.16s",
+    "boxSizing": "border-box"
+   },
+   "fonts": "loaded",
+   "appLang": null,
+   "docW": 1416
+  },
+  {
+   "tag": "Q1_to2_away_settled",
+   "ctx": {
+    "away": 2
+   },
+   "onText": "English",
+   "segRect": {
+    "x": 101,
+    "y": 932.19,
+    "w": 950,
+    "h": 30
+   },
+   "thumb": {
+    "x": 736,
+    "y": 935.19,
+    "w": 312,
+    "h": 24
+   },
+   "on": {
+    "x": 736,
+    "y": 935.19,
+    "w": 312,
+    "h": 24
+   },
+   "dx": 0,
+   "dw": 0,
+   "inline": {
+    "left": "634px",
+    "width": "312px"
+   },
+   "itemWidths": [
+    312,
+    312,
+    312
+   ],
+   "itemFlex": {
+    "flexGrow": "1",
+    "flexBasis": "0px",
+    "minWidth": "0px",
+    "paddingLeft": "8px",
+    "paddingRight": "8px"
+   },
+   "onStyle": {
+    "fontWeight": "400",
+    "paddingLeft": "8px",
+    "transitionProperty": "background, color, transform",
+    "transitionDuration": "0.2s, 0.2s, 0.25s"
+   },
+   "thumbDecl": {
+    "transitionProperty": "left, top, width, height, background, box-shadow",
+    "transitionDuration": "0.22s, 0.22s, 0.22s, 0.22s, 0.16s, 0.16s",
+    "boxSizing": "border-box"
+   },
+   "fonts": "loaded",
+   "appLang": null,
+   "docW": 1416
+  },
+  {
+   "tag": "Q1_to2_back_400ms",
+   "ctx": {
+    "away": 2
+   },
+   "onText": "简体中文",
+   "segRect": {
+    "x": 101,
+    "y": 932.19,
+    "w": 950,
+    "h": 30
+   },
+   "thumb": {
+    "x": 104,
+    "y": 935.19,
+    "w": 312,
+    "h": 24
+   },
+   "on": {
+    "x": 104,
+    "y": 935.19,
+    "w": 312,
+    "h": 24
+   },
+   "dx": 0,
+   "dw": 0,
+   "inline": {
+    "left": "2px",
+    "width": "312px"
+   },
+   "itemWidths": [
+    312,
+    312,
+    312
+   ],
+   "itemFlex": {
+    "flexGrow": "1",
+    "flexBasis": "0px",
+    "minWidth": "0px",
+    "paddingLeft": "8px",
+    "paddingRight": "8px"
+   },
+   "onStyle": {
+    "fontWeight": "400",
+    "paddingLeft": "8px",
+    "transitionProperty": "background, color, transform",
+    "transitionDuration": "0.2s, 0.2s, 0.25s"
+   },
+   "thumbDecl": {
+    "transitionProperty": "left, top, width, height, background, box-shadow",
+    "transitionDuration": "0.22s, 0.22s, 0.22s, 0.22s, 0.16s, 0.16s",
+    "boxSizing": "border-box"
+   },
+   "fonts": "loaded",
+   "appLang": null,
+   "docW": 1416
+  },
+  {
+   "tag": "Q1_to2_back_1200ms",
+   "ctx": {
+    "away": 2
+   },
+   "onText": "简体中文",
+   "segRect": {
+    "x": 101,
+    "y": 932.19,
+    "w": 950,
+    "h": 30
+   },
+   "thumb": {
+    "x": 104,
+    "y": 935.19,
+    "w": 312,
+    "h": 24
+   },
+   "on": {
+    "x": 104,
+    "y": 935.19,
+    "w": 312,
+    "h": 24
+   },
+   "dx": 0,
+   "dw": 0,
+   "inline": {
+    "left": "2px",
+    "width": "312px"
+   },
+   "itemWidths": [
+    312,
+    312,
+    312
+   ],
+   "itemFlex": {
+    "flexGrow": "1",
+    "flexBasis": "0px",
+    "minWidth": "0px",
+    "paddingLeft": "8px",
+    "paddingRight": "8px"
+   },
+   "onStyle": {
+    "fontWeight": "400",
+    "paddingLeft": "8px",
+    "transitionProperty": "background, color, transform",
+    "transitionDuration": "0.2s, 0.2s, 0.25s"
+   },
+   "thumbDecl": {
+    "transitionProperty": "left, top, width, height, background, box-shadow",
+    "transitionDuration": "0.22s, 0.22s, 0.22s, 0.22s, 0.16s, 0.16s",
+    "boxSizing": "border-box"
+   },
+   "fonts": "loaded",
+   "appLang": null,
+   "docW": 1416
+  },
+  {
+   "tag": "Q2_remounted",
+   "ctx": null,
+   "onText": "简体中文",
+   "segRect": {
+    "x": 101,
+    "y": 932.19,
+    "w": 950,
+    "h": 30
+   },
+   "thumb": {
+    "x": 104,
+    "y": 935.19,
+    "w": 312,
+    "h": 24
+   },
+   "on": {
+    "x": 104,
+    "y": 935.19,
+    "w": 312,
+    "h": 24
+   },
+   "dx": 0,
+   "dw": 0,
+   "inline": {
+    "left": "2px",
+    "width": "312px"
+   },
+   "itemWidths": [
+    312,
+    312,
+    312
+   ],
+   "itemFlex": {
+    "flexGrow": "1",
+    "flexBasis": "0px",
+    "minWidth": "0px",
+    "paddingLeft": "8px",
+    "paddingRight": "8px"
+   },
+   "onStyle": {
+    "fontWeight": "400",
+    "paddingLeft": "8px",
+    "transitionProperty": "background, color, transform",
+    "transitionDuration": "0.2s, 0.2s, 0.25s"
+   },
+   "thumbDecl": {
+    "transitionProperty": "left, top, width, height, background, box-shadow",
+    "transitionDuration": "0.22s, 0.22s, 0.22s, 0.22s, 0.16s, 0.16s",
+    "boxSizing": "border-box"
+   },
+   "fonts": "loaded",
+   "appLang": null,
+   "docW": 1416
+  },
+  {
+   "tag": "Q2_to1_away_settled",
+   "ctx": {
+    "away": 1
+   },
+   "onText": "繁體中文",
+   "segRect": {
+    "x": 101,
+    "y": 932.19,
+    "w": 950,
+    "h": 30
+   },
+   "thumb": {
+    "x": 420,
+    "y": 935.19,
+    "w": 312,
+    "h": 24
+   },
+   "on": {
+    "x": 420,
+    "y": 935.19,
+    "w": 312,
+    "h": 24
+   },
+   "dx": 0,
+   "dw": 0,
+   "inline": {
+    "left": "318px",
+    "width": "312px"
+   },
+   "itemWidths": [
+    312,
+    312,
+    312
+   ],
+   "itemFlex": {
+    "flexGrow": "1",
+    "flexBasis": "0px",
+    "minWidth": "0px",
+    "paddingLeft": "8px",
+    "paddingRight": "8px"
+   },
+   "onStyle": {
+    "fontWeight": "400",
+    "paddingLeft": "8px",
+    "transitionProperty": "background, color, transform",
+    "transitionDuration": "0.2s, 0.2s, 0.25s"
+   },
+   "thumbDecl": {
+    "transitionProperty": "left, top, width, height, background, box-shadow",
+    "transitionDuration": "0.22s, 0.22s, 0.22s, 0.22s, 0.16s, 0.16s",
+    "boxSizing": "border-box"
+   },
+   "fonts": "loaded",
+   "appLang": null,
+   "docW": 1416
+  },
+  {
+   "tag": "Q2_to1_back_400ms",
+   "ctx": {
+    "away": 1
+   },
+   "onText": "简体中文",
+   "segRect": {
+    "x": 101,
+    "y": 932.19,
+    "w": 950,
+    "h": 30
+   },
+   "thumb": {
+    "x": 104,
+    "y": 935.19,
+    "w": 312,
+    "h": 24
+   },
+   "on": {
+    "x": 104,
+    "y": 935.19,
+    "w": 312,
+    "h": 24
+   },
+   "dx": 0,
+   "dw": 0,
+   "inline": {
+    "left": "2px",
+    "width": "312px"
+   },
+   "itemWidths": [
+    312,
+    312,
+    312
+   ],
+   "itemFlex": {
+    "flexGrow": "1",
+    "flexBasis": "0px",
+    "minWidth": "0px",
+    "paddingLeft": "8px",
+    "paddingRight": "8px"
+   },
+   "onStyle": {
+    "fontWeight": "400",
+    "paddingLeft": "8px",
+    "transitionProperty": "background, color, transform",
+    "transitionDuration": "0.2s, 0.2s, 0.25s"
+   },
+   "thumbDecl": {
+    "transitionProperty": "left, top, width, height, background, box-shadow",
+    "transitionDuration": "0.22s, 0.22s, 0.22s, 0.22s, 0.16s, 0.16s",
+    "boxSizing": "border-box"
+   },
+   "fonts": "loaded",
+   "appLang": null,
+   "docW": 1416
+  },
+  {
+   "tag": "Q2_to1_back_1200ms",
+   "ctx": {
+    "away": 1
+   },
+   "onText": "简体中文",
+   "segRect": {
+    "x": 101,
+    "y": 932.19,
+    "w": 950,
+    "h": 30
+   },
+   "thumb": {
+    "x": 104,
+    "y": 935.19,
+    "w": 312,
+    "h": 24
+   },
+   "on": {
+    "x": 104,
+    "y": 935.19,
+    "w": 312,
+    "h": 24
+   },
+   "dx": 0,
+   "dw": 0,
+   "inline": {
+    "left": "2px",
+    "width": "312px"
+   },
+   "itemWidths": [
+    312,
+    312,
+    312
+   ],
+   "itemFlex": {
+    "flexGrow": "1",
+    "flexBasis": "0px",
+    "minWidth": "0px",
+    "paddingLeft": "8px",
+    "paddingRight": "8px"
+   },
+   "onStyle": {
+    "fontWeight": "400",
+    "paddingLeft": "8px",
+    "transitionProperty": "background, color, transform",
+    "transitionDuration": "0.2s, 0.2s, 0.25s"
+   },
+   "thumbDecl": {
+    "transitionProperty": "left, top, width, height, background, box-shadow",
+    "transitionDuration": "0.22s, 0.22s, 0.22s, 0.22s, 0.16s, 0.16s",
+    "boxSizing": "border-box"
+   },
+   "fonts": "loaded",
+   "appLang": null,
+   "docW": 1416
+  },
+  {
+   "tag": "Q3_narrow_baseline",
+   "ctx": null,
+   "onText": "简体中文",
+   "segRect": {
+    "x": 101,
+    "y": 932.19,
+    "w": 750,
+    "h": 30
+   },
+   "thumb": {
+    "x": 104,
+    "y": 935.19,
+    "w": 245.33,
+    "h": 24
+   },
+   "on": {
+    "x": 104,
+    "y": 935.19,
+    "w": 245.33,
+    "h": 24
+   },
+   "dx": 0,
+   "dw": 0,
+   "inline": {
+    "left": "2px",
+    "width": "245.328px"
+   },
+   "itemWidths": [
+    245.33,
+    245.34,
+    245.33
+   ],
+   "itemFlex": {
+    "flexGrow": "1",
+    "flexBasis": "0px",
+    "minWidth": "0px",
+    "paddingLeft": "8px",
+    "paddingRight": "8px"
+   },
+   "onStyle": {
+    "fontWeight": "400",
+    "paddingLeft": "8px",
+    "transitionProperty": "background, color, transform",
+    "transitionDuration": "0.2s, 0.2s, 0.25s"
+   },
+   "thumbDecl": {
+    "transitionProperty": "left, top, width, height, background, box-shadow",
+    "transitionDuration": "0.22s, 0.22s, 0.22s, 0.22s, 0.16s, 0.16s",
+    "boxSizing": "border-box"
+   },
+   "fonts": "loaded",
+   "appLang": null,
+   "docW": 1416
+  },
+  {
+   "tag": "Q3_to2_away_settled",
+   "ctx": {
+    "away": 2
+   },
+   "onText": "English",
+   "segRect": {
+    "x": 101,
+    "y": 932.19,
+    "w": 750,
+    "h": 30
+   },
+   "thumb": {
+    "x": 602.67,
+    "y": 935.19,
+    "w": 245.33,
+    "h": 24
+   },
+   "on": {
+    "x": 602.67,
+    "y": 935.19,
+    "w": 245.33,
+    "h": 24
+   },
+   "dx": 0,
+   "dw": 0,
+   "inline": {
+    "left": "500.672px",
+    "width": "245.328px"
+   },
+   "itemWidths": [
+    245.33,
+    245.34,
+    245.33
+   ],
+   "itemFlex": {
+    "flexGrow": "1",
+    "flexBasis": "0px",
+    "minWidth": "0px",
+    "paddingLeft": "8px",
+    "paddingRight": "8px"
+   },
+   "onStyle": {
+    "fontWeight": "400",
+    "paddingLeft": "8px",
+    "transitionProperty": "background, color, transform",
+    "transitionDuration": "0.2s, 0.2s, 0.25s"
+   },
+   "thumbDecl": {
+    "transitionProperty": "left, top, width, height, background, box-shadow",
+    "transitionDuration": "0.22s, 0.22s, 0.22s, 0.22s, 0.16s, 0.16s",
+    "boxSizing": "border-box"
+   },
+   "fonts": "loaded",
+   "appLang": null,
+   "docW": 1416
+  },
+  {
+   "tag": "Q3_to2_back_400ms",
+   "ctx": {
+    "away": 2
+   },
+   "onText": "简体中文",
+   "segRect": {
+    "x": 101,
+    "y": 932.19,
+    "w": 750,
+    "h": 30
+   },
+   "thumb": {
+    "x": 104,
+    "y": 935.19,
+    "w": 245.33,
+    "h": 24
+   },
+   "on": {
+    "x": 104,
+    "y": 935.19,
+    "w": 245.33,
+    "h": 24
+   },
+   "dx": 0,
+   "dw": 0,
+   "inline": {
+    "left": "2px",
+    "width": "245.328px"
+   },
+   "itemWidths": [
+    245.33,
+    245.34,
+    245.33
+   ],
+   "itemFlex": {
+    "flexGrow": "1",
+    "flexBasis": "0px",
+    "minWidth": "0px",
+    "paddingLeft": "8px",
+    "paddingRight": "8px"
+   },
+   "onStyle": {
+    "fontWeight": "400",
+    "paddingLeft": "8px",
+    "transitionProperty": "background, color, transform",
+    "transitionDuration": "0.2s, 0.2s, 0.25s"
+   },
+   "thumbDecl": {
+    "transitionProperty": "left, top, width, height, background, box-shadow",
+    "transitionDuration": "0.22s, 0.22s, 0.22s, 0.22s, 0.16s, 0.16s",
+    "boxSizing": "border-box"
+   },
+   "fonts": "loaded",
+   "appLang": null,
+   "docW": 1416
+  },
+  {
+   "tag": "Q3_to2_back_1200ms",
+   "ctx": {
+    "away": 2
+   },
+   "onText": "简体中文",
+   "segRect": {
+    "x": 101,
+    "y": 932.19,
+    "w": 750,
+    "h": 30
+   },
+   "thumb": {
+    "x": 104,
+    "y": 935.19,
+    "w": 245.33,
+    "h": 24
+   },
+   "on": {
+    "x": 104,
+    "y": 935.19,
+    "w": 245.33,
+    "h": 24
+   },
+   "dx": 0,
+   "dw": 0,
+   "inline": {
+    "left": "2px",
+    "width": "245.328px"
+   },
+   "itemWidths": [
+    245.33,
+    245.34,
+    245.33
+   ],
+   "itemFlex": {
+    "flexGrow": "1",
+    "flexBasis": "0px",
+    "minWidth": "0px",
+    "paddingLeft": "8px",
+    "paddingRight": "8px"
+   },
+   "onStyle": {
+    "fontWeight": "400",
+    "paddingLeft": "8px",
+    "transitionProperty": "background, color, transform",
+    "transitionDuration": "0.2s, 0.2s, 0.25s"
+   },
+   "thumbDecl": {
+    "transitionProperty": "left, top, width, height, background, box-shadow",
+    "transitionDuration": "0.22s, 0.22s, 0.22s, 0.22s, 0.16s, 0.16s",
+    "boxSizing": "border-box"
+   },
+   "fonts": "loaded",
+   "appLang": null,
+   "docW": 1416
+  },
+  {
+   "tag": "Q3_unnarrow_baseline",
+   "ctx": null,
+   "onText": "简体中文",
+   "segRect": {
+    "x": 101,
+    "y": 932.19,
+    "w": 950,
+    "h": 30
+   },
+   "thumb": {
+    "x": 104,
+    "y": 935.19,
+    "w": 312,
+    "h": 24
+   },
+   "on": {
+    "x": 104,
+    "y": 935.19,
+    "w": 312,
+    "h": 24
+   },
+   "dx": 0,
+   "dw": 0,
+   "inline": {
+    "left": "2px",
+    "width": "312px"
+   },
+   "itemWidths": [
+    312,
+    312,
+    312
+   ],
+   "itemFlex": {
+    "flexGrow": "1",
+    "flexBasis": "0px",
+    "minWidth": "0px",
+    "paddingLeft": "8px",
+    "paddingRight": "8px"
+   },
+   "onStyle": {
+    "fontWeight": "400",
+    "paddingLeft": "8px",
+    "transitionProperty": "background, color, transform",
+    "transitionDuration": "0.2s, 0.2s, 0.25s"
+   },
+   "thumbDecl": {
+    "transitionProperty": "left, top, width, height, background, box-shadow",
+    "transitionDuration": "0.22s, 0.22s, 0.22s, 0.22s, 0.16s, 0.16s",
+    "boxSizing": "border-box"
+   },
+   "fonts": "loaded",
+   "appLang": null,
+   "docW": 1416
+  },
+  {
+   "tag": "Q3b_to2_away_settled",
+   "ctx": {
+    "away": 2
+   },
+   "onText": "English",
+   "segRect": {
+    "x": 101,
+    "y": 932.19,
+    "w": 950,
+    "h": 30
+   },
+   "thumb": {
+    "x": 736,
+    "y": 935.19,
+    "w": 312,
+    "h": 24
+   },
+   "on": {
+    "x": 736,
+    "y": 935.19,
+    "w": 312,
+    "h": 24
+   },
+   "dx": 0,
+   "dw": 0,
+   "inline": {
+    "left": "634px",
+    "width": "312px"
+   },
+   "itemWidths": [
+    312,
+    312,
+    312
+   ],
+   "itemFlex": {
+    "flexGrow": "1",
+    "flexBasis": "0px",
+    "minWidth": "0px",
+    "paddingLeft": "8px",
+    "paddingRight": "8px"
+   },
+   "onStyle": {
+    "fontWeight": "400",
+    "paddingLeft": "8px",
+    "transitionProperty": "background, color, transform",
+    "transitionDuration": "0.2s, 0.2s, 0.25s"
+   },
+   "thumbDecl": {
+    "transitionProperty": "left, top, width, height, background, box-shadow",
+    "transitionDuration": "0.22s, 0.22s, 0.22s, 0.22s, 0.16s, 0.16s",
+    "boxSizing": "border-box"
+   },
+   "fonts": "loaded",
+   "appLang": null,
+   "docW": 1416
+  },
+  {
+   "tag": "Q3b_to2_back_400ms",
+   "ctx": {
+    "away": 2
+   },
+   "onText": "简体中文",
+   "segRect": {
+    "x": 101,
+    "y": 932.19,
+    "w": 950,
+    "h": 30
+   },
+   "thumb": {
+    "x": 104,
+    "y": 935.19,
+    "w": 312,
+    "h": 24
+   },
+   "on": {
+    "x": 104,
+    "y": 935.19,
+    "w": 312,
+    "h": 24
+   },
+   "dx": 0,
+   "dw": 0,
+   "inline": {
+    "left": "2px",
+    "width": "312px"
+   },
+   "itemWidths": [
+    312,
+    312,
+    312
+   ],
+   "itemFlex": {
+    "flexGrow": "1",
+    "flexBasis": "0px",
+    "minWidth": "0px",
+    "paddingLeft": "8px",
+    "paddingRight": "8px"
+   },
+   "onStyle": {
+    "fontWeight": "400",
+    "paddingLeft": "8px",
+    "transitionProperty": "background, color, transform",
+    "transitionDuration": "0.2s, 0.2s, 0.25s"
+   },
+   "thumbDecl": {
+    "transitionProperty": "left, top, width, height, background, box-shadow",
+    "transitionDuration": "0.22s, 0.22s, 0.22s, 0.22s, 0.16s, 0.16s",
+    "boxSizing": "border-box"
+   },
+   "fonts": "loaded",
+   "appLang": null,
+   "docW": 1416
+  },
+  {
+   "tag": "Q3b_to2_back_1200ms",
+   "ctx": {
+    "away": 2
+   },
+   "onText": "简体中文",
+   "segRect": {
+    "x": 101,
+    "y": 932.19,
+    "w": 950,
+    "h": 30
+   },
+   "thumb": {
+    "x": 104,
+    "y": 935.19,
+    "w": 312,
+    "h": 24
+   },
+   "on": {
+    "x": 104,
+    "y": 935.19,
+    "w": 312,
+    "h": 24
+   },
+   "dx": 0,
+   "dw": 0,
+   "inline": {
+    "left": "2px",
+    "width": "312px"
+   },
+   "itemWidths": [
+    312,
+    312,
+    312
+   ],
+   "itemFlex": {
+    "flexGrow": "1",
+    "flexBasis": "0px",
+    "minWidth": "0px",
+    "paddingLeft": "8px",
+    "paddingRight": "8px"
+   },
+   "onStyle": {
+    "fontWeight": "400",
+    "paddingLeft": "8px",
+    "transitionProperty": "background, color, transform",
+    "transitionDuration": "0.2s, 0.2s, 0.25s"
+   },
+   "thumbDecl": {
+    "transitionProperty": "left, top, width, height, background, box-shadow",
+    "transitionDuration": "0.22s, 0.22s, 0.22s, 0.22s, 0.16s, 0.16s",
+    "boxSizing": "border-box"
+   },
+   "fonts": "loaded",
+   "appLang": null,
+   "docW": 1416
+  },
+  {
+   "tag": "Q4_after_lang_switch",
+   "ctx": null,
+   "onText": "简体中文",
+   "segRect": {
+    "x": 101,
+    "y": 932.19,
+    "w": 950,
+    "h": 30
+   },
+   "thumb": {
+    "x": 104,
+    "y": 935.19,
+    "w": 312,
+    "h": 24
+   },
+   "on": {
+    "x": 104,
+    "y": 935.19,
+    "w": 312,
+    "h": 24
+   },
+   "dx": 0,
+   "dw": 0,
+   "inline": {
+    "left": "2px",
+    "width": "312px"
+   },
+   "itemWidths": [
+    312,
+    312,
+    312
+   ],
+   "itemFlex": {
+    "flexGrow": "1",
+    "flexBasis": "0px",
+    "minWidth": "0px",
+    "paddingLeft": "8px",
+    "paddingRight": "8px"
+   },
+   "onStyle": {
+    "fontWeight": "400",
+    "paddingLeft": "8px",
+    "transitionProperty": "background, color, transform",
+    "transitionDuration": "0.2s, 0.2s, 0.25s"
+   },
+   "thumbDecl": {
+    "transitionProperty": "left, top, width, height, background, box-shadow",
+    "transitionDuration": "0.22s, 0.22s, 0.22s, 0.22s, 0.16s, 0.16s",
+    "boxSizing": "border-box"
+   },
+   "fonts": "loaded",
+   "appLang": "en",
+   "docW": 1416
+  },
+  {
+   "tag": "Q4_to1_away_settled",
+   "ctx": {
+    "away": 1
+   },
+   "onText": "繁體中文",
+   "segRect": {
+    "x": 101,
+    "y": 932.19,
+    "w": 950,
+    "h": 30
+   },
+   "thumb": {
+    "x": 420,
+    "y": 935.19,
+    "w": 312,
+    "h": 24
+   },
+   "on": {
+    "x": 420,
+    "y": 935.19,
+    "w": 312,
+    "h": 24
+   },
+   "dx": 0,
+   "dw": 0,
+   "inline": {
+    "left": "318px",
+    "width": "312px"
+   },
+   "itemWidths": [
+    312,
+    312,
+    312
+   ],
+   "itemFlex": {
+    "flexGrow": "1",
+    "flexBasis": "0px",
+    "minWidth": "0px",
+    "paddingLeft": "8px",
+    "paddingRight": "8px"
+   },
+   "onStyle": {
+    "fontWeight": "400",
+    "paddingLeft": "8px",
+    "transitionProperty": "background, color, transform",
+    "transitionDuration": "0.2s, 0.2s, 0.25s"
+   },
+   "thumbDecl": {
+    "transitionProperty": "left, top, width, height, background, box-shadow",
+    "transitionDuration": "0.22s, 0.22s, 0.22s, 0.22s, 0.16s, 0.16s",
+    "boxSizing": "border-box"
+   },
+   "fonts": "loaded",
+   "appLang": "en",
+   "docW": 1416
+  },
+  {
+   "tag": "Q4_to1_back_400ms",
+   "ctx": {
+    "away": 1
+   },
+   "onText": "简体中文",
+   "segRect": {
+    "x": 101,
+    "y": 932.19,
+    "w": 950,
+    "h": 30
+   },
+   "thumb": {
+    "x": 104,
+    "y": 935.19,
+    "w": 312,
+    "h": 24
+   },
+   "on": {
+    "x": 104,
+    "y": 935.19,
+    "w": 312,
+    "h": 24
+   },
+   "dx": 0,
+   "dw": 0,
+   "inline": {
+    "left": "2px",
+    "width": "312px"
+   },
+   "itemWidths": [
+    312,
+    312,
+    312
+   ],
+   "itemFlex": {
+    "flexGrow": "1",
+    "flexBasis": "0px",
+    "minWidth": "0px",
+    "paddingLeft": "8px",
+    "paddingRight": "8px"
+   },
+   "onStyle": {
+    "fontWeight": "400",
+    "paddingLeft": "8px",
+    "transitionProperty": "background, color, transform",
+    "transitionDuration": "0.2s, 0.2s, 0.25s"
+   },
+   "thumbDecl": {
+    "transitionProperty": "left, top, width, height, background, box-shadow",
+    "transitionDuration": "0.22s, 0.22s, 0.22s, 0.22s, 0.16s, 0.16s",
+    "boxSizing": "border-box"
+   },
+   "fonts": "loaded",
+   "appLang": "en",
+   "docW": 1416
+  },
+  {
+   "tag": "Q4_to1_back_1200ms",
+   "ctx": {
+    "away": 1
+   },
+   "onText": "简体中文",
+   "segRect": {
+    "x": 101,
+    "y": 932.19,
+    "w": 950,
+    "h": 30
+   },
+   "thumb": {
+    "x": 104,
+    "y": 935.19,
+    "w": 312,
+    "h": 24
+   },
+   "on": {
+    "x": 104,
+    "y": 935.19,
+    "w": 312,
+    "h": 24
+   },
+   "dx": 0,
+   "dw": 0,
+   "inline": {
+    "left": "2px",
+    "width": "312px"
+   },
+   "itemWidths": [
+    312,
+    312,
+    312
+   ],
+   "itemFlex": {
+    "flexGrow": "1",
+    "flexBasis": "0px",
+    "minWidth": "0px",
+    "paddingLeft": "8px",
+    "paddingRight": "8px"
+   },
+   "onStyle": {
+    "fontWeight": "400",
+    "paddingLeft": "8px",
+    "transitionProperty": "background, color, transform",
+    "transitionDuration": "0.2s, 0.2s, 0.25s"
+   },
+   "thumbDecl": {
+    "transitionProperty": "left, top, width, height, background, box-shadow",
+    "transitionDuration": "0.22s, 0.22s, 0.22s, 0.22s, 0.16s, 0.16s",
+    "boxSizing": "border-box"
+   },
+   "fonts": "loaded",
+   "appLang": "en",
+   "docW": 1416
+  },
+  {
+   "tag": "Z_final",
+   "ctx": null,
+   "onText": "简体中文",
+   "segRect": {
+    "x": 101,
+    "y": 932.19,
+    "w": 950,
+    "h": 30
+   },
+   "thumb": {
+    "x": 104,
+    "y": 935.19,
+    "w": 312,
+    "h": 24
+   },
+   "on": {
+    "x": 104,
+    "y": 935.19,
+    "w": 312,
+    "h": 24
+   },
+   "dx": 0,
+   "dw": 0,
+   "inline": {
+    "left": "2px",
+    "width": "312px"
+   },
+   "itemWidths": [
+    312,
+    312,
+    312
+   ],
+   "itemFlex": {
+    "flexGrow": "1",
+    "flexBasis": "0px",
+    "minWidth": "0px",
+    "paddingLeft": "8px",
+    "paddingRight": "8px"
+   },
+   "onStyle": {
+    "fontWeight": "400",
+    "paddingLeft": "8px",
+    "transitionProperty": "background, color, transform",
+    "transitionDuration": "0.2s, 0.2s, 0.25s"
+   },
+   "thumbDecl": {
+    "transitionProperty": "left, top, width, height, background, box-shadow",
+    "transitionDuration": "0.22s, 0.22s, 0.22s, 0.22s, 0.16s, 0.16s",
+    "boxSizing": "border-box"
+   },
+   "fonts": "loaded",
+   "appLang": "en",
+   "docW": 1416
+  }
+ ],
+ "errors": [],
+ "note": "task-23 away->back thumb settle",
+ "ready": true,
+ "appReady": true,
+ "navMore": true,
+ "openedMaker": true,
+ "segReady": true,
+ "secBrowser": true,
+ "secForm": true,
+ "narrowed": "750px",
+ "unarrowed": true,
+ "langSet": "direct"
+}

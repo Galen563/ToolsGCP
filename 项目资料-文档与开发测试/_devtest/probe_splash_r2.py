@@ -1,23 +1,44 @@
 # -*- coding: utf-8 -*-
-"""启动画面真机取证（splash-r2 · task-7 · 第 2 轮）
+"""启动画面真机取证（splash-r2 · task-7 · 第 2 轮 · 第 32 轮需求改版后重写主题段）
 
 ⚠️ 这个脚本**会真弹窗口、会截屏**（用户本轮明确允许），测完自己收干净进程。
+
+⚠️⚠️ 第 32 轮需求变更（本脚本 A 段的主题断言就是为此改写）：
+    用户原话「浅色主题的悬浮启动动画底板要和深色一致。不是单纯改个颜色，而是把之前
+    判断主题的那套逻辑删掉——底板固定一种颜色，不需要专门一套检测逻辑服务它」。
+    ⇒ splash.py 里 _read_theme_setting / resolve_splash_dark / _theme_diagnostics /
+      _SPLASH_BG_LIGHT **已整体删除**；_prepare_bitmap 的签名从 (icon_path, dark, scale)
+      变成 (icon_path, scale=1.0)；底板固定 _SPLASH_BG_DARK = (28,28,28,240)。
+    ⇒ 本脚本原来 A 段"读现场 theme → 判 dark → 与 resolve_splash_dark(同值) 比对"的
+      一致性取证**整段作废**（没有这些东西可比了），改成两条新的取证方向：
+        ① 现场配置的 theme 原值仍然打印（它是"用户确实选了浅色"的旁证），
+        ② 但**出图字节必须与 theme 完全无关**：把 theme 逐种写法改一遍，
+           _prepare_bitmap 返回的字节要一模一样，且底板像素恒为 (28,28,28,240)；
+           真机截屏里窗口边缘那一圈必须是**暗的**（不再是 #f3f4f7 那种浅色）。
+      显示路径已经不再读 DATA_DIR，所以"读到的是当前真实数据根"那条一致性检查
+      换成"显示路径对配置零读取"（模块不再 import json + 源码里没有配置读取）。
+    ⇒ _theme_is_light 仍然存在（desktop/shell.py 主窗口配色要用），兼容表在
+      test_splash_theme.py 里逐条测，本脚本不重复。
 
 三个取证动作（对应三条 bug）：
   A. 只起 SplashController（不碰主窗口）：
      · 截"弹之前"的基屏 + "弹之中"的屏，把 splash 矩形**四角**像素和基屏逐点比对
-       → 证明"去底板后圆角外是真透明"（不是黑边/白边/脏边，而是**和桌面一模一样**）；
-     · 采样 logo 中心像素 → 证明画面就是 logo 本身；
+       → 证明"圆角外是真透明"（不是黑边/白边/脏边，而是**和桌面一模一样**）；
+     · 采样 logo 中心像素 → 证明中心是 logo 本身（底板在四周，边距 32px）；
      · 每 10ms 记一次 GetWindowRect → 证明第一帧就居中、没有位置跳变；
-     · 打印 splash 实际读到的 theme / DATA_DIR / dark → 证明浅色分支走没走到。
+     · 打印真实配置的 theme 原值 + 出图字节一致性 → 证明底板**固定深色、与主题无关**
+       （本轮新契约；以前这里证明的是"浅色分支走没走到"）。
   B. 真跑整个程序（`pythonw ToolsGCP.pyw`），在启动时间轴上多次截屏 + 枚举所有
      ToolsGCP / webview 顶层窗口（类名、标题、矩形、可见性、**Z 序**、分层/置顶样式），
      回答"到底有几个窗口、各自在哪、谁压谁"（需求 ② 的"UI 叠加"）。
   C. 事后从真实日志里把 splash 的底色行、主窗口显示行抠出来，和截屏互相印证。
 
 跑法（仓库根目录）：
-    python "项目资料-文档与开发测试/_devtest/probe_splash_r2.py"          # A + C（只弹小窗）
-    python "项目资料-文档与开发测试/_devtest/probe_splash_r2.py" --full   # A + B + C（真起整个程序）
+    python "项目资料-文档与开发测试/_devtest/probe_splash_r2.py"                # 默认：离屏 + 日志，**不弹窗不截屏**
+    python "项目资料-文档与开发测试/_devtest/probe_splash_r2.py" --show         # 才真弹一次 + 截全屏
+    python "项目资料-文档与开发测试/_devtest/probe_splash_r2.py" --show --full  # 才真起整个程序（12s 全屏采样）
+
+⚠️ 第 31 轮起：**默认不碰你的屏幕**。弹窗 / 抓全屏 / 真起程序都需要显式 --show。
 
 产物都落在 项目资料-文档与开发测试/_tmp-ai-test/splash-r2/：
     base.png / splash.png / app_t*.png（截屏）、windows_*.txt（窗口清单）、probe.json（汇总）
@@ -28,6 +49,17 @@ import json
 import os
 import subprocess
 import sys
+# ⚠️ Windows 控制台默认是 GBK 代码页：本文件的断言名里有 ⇒ 这类非 GBK 字符，
+#    直接 print 会抛 UnicodeEncodeError，把取证脚本**从中间打断**
+#    （实测 probe_splash_live.py 因此崩在半路、退出码 1，看起来像断言失败）。
+#    这里只把编不出来的字符替换掉，**不改编码**：中文仍按控制台原编码输出，
+#    不会变乱码；换到 UTF-8 终端（Windows Terminal / PYTHONIOENCODING=utf-8）同样正常。
+try:
+    sys.stdout.reconfigure(errors="replace")
+    sys.stderr.reconfigure(errors="replace")
+except Exception:                            # noqa: BLE001
+    pass
+
 import threading
 import time
 from ctypes import wintypes
@@ -38,6 +70,9 @@ TMP = os.path.join(ROOT, "项目资料-文档与开发测试", "_tmp-ai-test", "
 os.makedirs(TMP, exist_ok=True)
 
 FULL = "--full" in sys.argv
+# 第 31 轮：默认**不弹窗、不截全屏**（用户要一边用电脑一边跑测试）。
+# 真正动屏幕（弹启动画面 / 抓全屏 / 真起整个程序）必须显式加 --show。
+SHOW = "--show" in sys.argv
 ICON = os.path.join(ROOT, ".ToolsGCP", "logo.png")
 REAL_CONFIG = os.path.join(os.environ.get("USERPROFILE", ""), ".ToolsGCP",
                            "config", "toolsgcp_config.json")
@@ -124,8 +159,15 @@ def enum_windows(filter_prefixes=("ToolsGCP", "Chrome_WidgetWin", "Win32", "webv
     def cb(h, _lp):
         U.GetClassNameW(h, cbuf, 256)
         cls = str(cbuf.value)
-        U.GetWindowTextW(h, tbuf, 256)
-        title = str(tbuf.value)
+        # ⚠️ 同进程的窗口**不能**用 GetWindowTextW 取标题：它会给目标窗口的线程
+        #    发 WM_GETTEXT，而 splash 窗口所在线程只 sleep 轮询 stop 标志、**从不泵
+        #    消息**，于是这里会永久阻塞（实测 probe 卡死在这一行，退出码 124）。
+        #    跨进程取标题不会发消息，是安全的 ⇒ 自己进程里的窗口跳过取标题
+        #    （类名已经足够定位，不影响下面任何断言）。
+        title = ""
+        if window_pid(int(h)) != os.getpid():
+            U.GetWindowTextW(h, tbuf, 256)
+            title = str(tbuf.value)
         low = cls.lower()
         hit = (cls.startswith("ToolsGCP") or "webview" in low or "chrome" in low
                or "ToolsGCP" in title)
@@ -246,7 +288,7 @@ def diff_points(a, b, keys):
 
 
 # ======================================================================
-# A) 只起 splash：证明"没有底板 + 四角真透明 + 第一帧居中"
+# A) 只起 splash：证明"圆角外真透明 + 底板在四周 + 第一帧居中"
 # ======================================================================
 def part_a():
     sys.path[:0] = [ROOT, os.path.join(ROOT, ".ToolsGCP"),
@@ -256,28 +298,99 @@ def part_a():
     from desktop import splash as S
     from desktop.native import win32
 
-    note("== A) 真机单起 SplashController（用**用户真实配置**，不改 DATA_DIR）==")
+    note("== A) 真机单起 SplashController（第 32 轮起显示路径**不读配置**，"
+         "真实 theme 只是旁证）==")
     note(f"  DPI 模式: {DPI_MODE}")
+    theme_raw = None
     try:
         with open(REAL_CONFIG, encoding="utf-8") as fh:
             cfg = json.load(fh)
-        note(f"  真实配置 theme={cfg.get('theme')!r} "
+        theme_raw = cfg.get('theme')
+        note(f"  真实配置 theme={theme_raw!r} "
              f"splash_screen_enabled={cfg.get('splash_screen_enabled')!r} "
              f"splash_screen_duration={cfg.get('splash_screen_duration')!r}")
     except Exception as exc:                               # noqa: BLE001
         note(f"  !! 读真实配置失败: {exc}")
+    note(f"  现场 DATA_DIR={constants_mod.DATA_DIR}"
+         f"（本轮起这块数据根**不参与**出图：底板固定深色）")
 
-    diag = S._theme_diagnostics()
-    note(f"  splash 现场: DATA_DIR={diag['data_dir']} cfg_exists={diag['cfg_exists']} "
-         f"theme_raw={diag['theme_raw']} light={diag['light']} dark={diag['dark']} "
-         f"err={diag['error']!r}")
-    check("splash 读到的是**当前真实数据根**（不是 import 期的旧值）",
-          diag["data_dir"] == constants_mod.DATA_DIR, f"{diag['data_dir']}")
-    check("theme=浅色主题 时 resolve_splash_dark() 返回 False（走浅色分支）",
-          diag["dark"] is False, str(diag))
+    # ⚠️⚠️ 第 32 轮需求变更：这里原来调 splash 的 _theme_diagnostics 取现场六元组
+    #    (data_dir/cfg_exists/theme_raw/light/dark/error)，再拿它对 theme_raw 算出的
+    #    dark 判定与 resolve_splash_dark 的返回值比对"读主题 → 判深浅"是否一致，
+    #    外加一条"splash 读到的是当前真实数据根"的一致性断言。
+    #    现在这四个符号（_read_theme_setting / resolve_splash_dark /
+    #    _theme_diagnostics / _SPLASH_BG_LIGHT）已随用户需求**整体删除**，
+    #    底板固定 _SPLASH_BG_DARK，显示路径对配置零读取 ⇒ "现场判定 vs resolve"
+    #    是否一致"已经**没有可比对象**，那三条断言全部作废（不是删掉了事，而是
+    #    换成下面这组"新契约"取证）：
+    #      ① 符号确实没了（谁再加回来就是把本轮需求改回去）；
+    #      ② 出图字节与 theme 无关：把配置里的 theme 逐种写法改一遍（写进**临时**
+    #         数据根，绝不碰用户真实配置），_prepare_bitmap 必须返回逐字节相同的结果；
+    #      ③ 底板像素恒为固定深色 (28,28,28,240)，且全图找不到浅色底板那一档色值；
+    #      ④ 显示路径真的没读配置：模块不 import json、源码里没有打开配置文件的语句。
+    for name in ("_read_theme_setting", "resolve_splash_dark",
+                 "_theme_diagnostics", "_SPLASH_BG_LIGHT"):
+        check(f"splash 已删除 {name}（主题检测逻辑整体作废）", not hasattr(S, name))
 
-    w, h, raw = S._prepare_bitmap(ICON, diag["dark"])
-    note(f"  离屏位图 {w}x{h} 圆角半径={S._corner_radius(w, h)}")
+    w, h, raw = S._prepare_bitmap(ICON)
+    _logo_r = S._corner_radius(w - 2 * S._SPLASH_MARGIN, h - 2 * S._SPLASH_MARGIN)
+    note(f"  离屏位图 {w}x{h} 底板圆角半径={S._SPLASH_RADIUS} logo 自身圆角半径={_logo_r}")
+
+    # ② theme 逐种写法 → 出图字节必须一模一样（新契约的**硬**判据）
+    cfg_dir = os.path.join(TMP, "cfg")
+    os.makedirs(cfg_dir, exist_ok=True)
+    orig_data_dir = constants_mod.DATA_DIR
+    # ⚠️ 保序去重（dict.fromkeys），**不要**写成 set 推导：set 的迭代顺序受
+    #    PYTHONHASHSEED 影响，每次跑出来的取证顺序都不一样，两份日志没法逐行比对。
+    themes = [t for t in dict.fromkeys(
+        [theme_raw, "浅色主题", "深色主题", "跟随系统", "Light Theme"]) if t is not None]
+    try:
+        constants_mod.DATA_DIR = cfg_dir
+        for tv in themes:
+            with open(os.path.join(cfg_dir, "toolsgcp_config.json"), "w",
+                      encoding="utf-8") as fh:
+                fh.write('{"theme": "%s"}' % tv)
+            _, _, t_raw = S._prepare_bitmap(ICON)
+            check(f"配置 theme={tv!r} → 出图字节与基线逐字节相同（底板与主题无关）",
+                  t_raw == raw)
+        # 连"配置文件是个目录"这种会让 open() 直接抛的情况都影响不到出图
+        os.remove(os.path.join(cfg_dir, "toolsgcp_config.json"))
+        os.makedirs(os.path.join(cfg_dir, "toolsgcp_config.json"))
+        _, _, t_raw2 = S._prepare_bitmap(ICON)
+        check("配置路径是目录（open 必抛）→ 出图不变（显示路径根本不打开它）",
+              t_raw2 == raw)
+        os.rmdir(os.path.join(cfg_dir, "toolsgcp_config.json"))
+    finally:
+        constants_mod.DATA_DIR = orig_data_dir
+
+    # ③ 底板像素 = 固定深色（左边距中央那一圈，logo 盖不到的地方）
+    def board_px(x, y):
+        i = (y * w + x) * 4
+        return tuple(raw[i:i + 4])
+    board = board_px(S._SPLASH_MARGIN // 2, h // 2)
+    check("左边距那一圈 = 固定深色 (28,28,28,240) == _SPLASH_BG_DARK",
+          board == tuple(S._SPLASH_BG_DARK), str(board))
+    check("全图找不到浅色底板 (243,244,247,240) 的像素（浅色分支真的没了）",
+          not any(tuple(raw[i:i + 4]) == (243, 244, 247, 240)
+                  for i in range(0, len(raw), 4)))
+    REPORT["theme_probe"] = {"real_theme_raw": theme_raw, "data_dir": orig_data_dir,
+                            "board_pixel": list(board),
+                            "themes_compared": themes,
+                            "bg_constant": list(S._SPLASH_BG_DARK)}
+
+    # ④ 显示路径真的对配置零读取（源码面）
+    with open(os.path.join(ROOT, ".ToolsGCP", "desktop", "splash.py"),
+              encoding="utf-8") as fh:
+        _splash_src = fh.read()
+    _run_body = _splash_src.split("def _run_native", 1)
+    _run_body = _run_body[1].split("def _close_window", 1)[0] if len(_run_body) > 1 else ""
+    check("_run_native 里没有读配置/判主题的动作（只有 DPI + 贴图 + 消息泵）",
+          "_read_theme_setting" not in _run_body
+          and "resolve_splash_dark" not in _run_body
+          and "toolsgcp_config" not in _run_body,
+          "见 _run_native 源码")
+    check("_prepare_bitmap 只按 (icon_path, scale) 调用（新签名，没有 dark）",
+          "_prepare_bitmap(self.icon_path, scale)" in _splash_src)
     REPORT["bitmap"] = {"w": w, "h": h,
                         "radius": S._corner_radius(w, h),
                         "corners": [list(raw[i:i + 4]) for i in
@@ -286,6 +399,29 @@ def part_a():
     check("位图四角 alpha==0（真透明，非脏边）",
           all(raw[i + 3] == 0 for i in
               (0, (w - 1) * 4, (h - 1) * w * 4, ((h - 1) * w + w - 1) * 4)))
+
+    # —— 真透明的**确定性**判据：直接查喂给 UpdateLayeredWindow 的预乘 BGRA 缓冲 ——
+    # ⚠️ 截屏不能当这个判据（动态桌面 + BitBlt 对分层窗口的行为，实测同坐标两张图
+    #    能差 L1=202；见 probe_capture_artifact.py 的对照实验），所以这段无论有没有
+    #    --show 都跑：本轮把底板收成固定深色之后，"alpha=0 必须 RGB 也清零"这条规矩
+    #    没变，它才是"角外不可能有脏边"的根据。
+    packed = S._premultiply_bgra(raw, w, h)
+    bad_pk = [(i, tuple(packed[i:i + 4])) for i in range(0, len(packed), 4)
+              if packed[i + 3] == 0 and any(packed[i:i + 4])]
+    check("预乘缓冲里所有 alpha==0 的像素 BGRA 全 0（真透明、无脏边）",
+          not bad_pk, f"{len(bad_pk)} 个违规")
+    _bi = ((h // 2) * w + S._SPLASH_MARGIN // 2) * 4
+    _a = packed[_bi + 3]
+    check("底板那一圈预乘值 = 固定深色各通道 ×alpha/255（分层窗口要求预乘）",
+          tuple(packed[_bi:_bi + 4]) == (28 * _a // 255, 28 * _a // 255, 28 * _a // 255, _a),
+          str(tuple(packed[_bi:_bi + 4])))
+    check("预乘缓冲中心 = logo 白心 (255,255,255,255)",
+          tuple(packed[((h // 2) * w + w // 2) * 4:((h // 2) * w + w // 2) * 4 + 4])
+          == (255, 255, 255, 255))
+
+    if not SHOW:
+        note("  （未加 --show：默认不弹启动画面、不截全屏，你的屏幕完全不被占用）")
+        return
 
     base = screenshot(os.path.join(TMP, "base.png"))
     check("截屏可用", base is not None)
@@ -374,12 +510,20 @@ def part_a():
         #    下面的 `_premultiply_bgra` 断言（直接查喂给 UpdateLayeredWindow 的缓冲）。
         l1s = {k: v["l1"] for k, v in corner_rows.items()}
         note(f"  （参考）角内 vs 角外 L1（受动态桌面影响，不作判据）: {l1s}")
-        # 底板真没了：窗口内**不存在**任何一块 (28,28,28)/(243,244,247) 的均匀背景带
+        # 第 30 轮：底板加回来（圆角半透明底板 + 居中 logo）⇒ 紧贴窗口边缘那一圈是底板色；
+        # 第 32 轮：需求把"跟随主题的两种底色"改成"**固定深色一种**"，所以这里除了
+        # "是不是灰阶"，还必须是**暗**的（#1c1c1c/240 叠桌面后通道值仍远小于中灰），
+        # 绝不能再出现 #f3f4f7 那种浅色底板（浅色主题摆在那儿也一样）。
         band = [px(shots["splash.png"], r[0] + 1, r[1] + h // 2),
                 px(shots["splash.png"], r[2] - 2, r[1] + h // 2),
                 px(shots["splash.png"], r[0] + w // 2, r[3] - 2)]
-        check("紧贴窗口边缘的点是 logo 自己的像素（没有残留的底板色带）",
-              all(b is not None and abs(b[0] - b[1]) > 12 for b in band), str(band))
+        check("紧贴窗口边缘的点是底板灰阶（R≈G≈B，本轮起只有深色这一种）",
+              all(b is not None and abs(b[0] - b[1]) <= 12 and abs(b[1] - b[2]) <= 12
+                  for b in band), str(band))
+        # ⚠️ 只比 RGB 三通道：本脚本的截图对象是 RGBA 四通道（frombuffer 出来的 img
+        #    存盘时才 convert("RGB")），拿 max(b) 会把 alpha=255 也算进去 ⇒ 恒不成立。
+        check("紧贴窗口边缘的点是**深色**底板（RGB <128 ⇒ 不是 #f3f4f7 那种浅色）",
+              all(b is not None and max(b[:3]) < 128 for b in band), str(band))
 
         # 存一张带周围 24px 的裁剪图，便于目视复核"圆润效果 / 有没有脏边"
         try:
@@ -394,16 +538,16 @@ def part_a():
             note(f"  （裁剪图保存失败：{exc}）")
 
         logo_pt = px(shots["splash.png"], *pts["C"])
-        # 中心应当是 logo 的白心（#FFFFFF 附近）；无论去底板前(深色底 (28,28,28))
-        # 还是后，中心都不是"纯灰阶的底板色"，所以用"是不是接近白"来判定。
+        # 中心应当是 logo 的白心（#FFFFFF 附近）；底板现在是**唯一一块固定深色**
+        # (28,28,28)/240（本轮起不再有浅色那一档），所以用"是不是接近白"判定 logo 盖在中间。
         near_white = logo_pt is not None and min(logo_pt) >= 235
         check("中心是 logo 自己的像素（白心，不是底板灰阶）", near_white, str(logo_pt))
         REPORT["splash_rect"] = list(r)
 
-    # 底板没了 ⇒ splash 矩形面积应当 == 位图面积
+    # 底板回来了 ⇒ splash 矩形面积 == 位图面积（位图本来就含边距）
     if frames:
         r = frames[0][1]
-        check("窗口尺寸 == 位图尺寸（80px 边距的底板真的没了）",
+        check("窗口尺寸 == 位图尺寸（位图已含底板边距）",
               (r[2] - r[0], r[3] - r[1]) == (w, h), f"{(r[2]-r[0], r[3]-r[1])} vs {(w, h)}")
 
 
@@ -425,7 +569,9 @@ def part_b():
     """真起整个程序，按 lead 给的时间轴（splash 0–2s、主窗口 ~3.3s）采样到 12s。
 
     ⚠️ 三条纪律（lead 明确要求）：
-      · **不改 DATA_DIR / 不造临时数据根** —— 就用用户真实环境（theme 已经是浅色主题）；
+      · **不改 DATA_DIR / 不造临时数据根** —— 就用用户真实环境（本轮起 splash
+        根本不读配置，所以环境里写什么 theme 都不会改变启动画面；这里只是让
+        "真实环境"这一条件成立，取证才有意义）；
       · 轮询到 **12 秒**、每 0.4 秒采一次，记下**第一次看到主窗口的时刻**；
       · 起进程时把 **stdout/stderr 重定向到文件**（进程早退的原因只在那里面），
         并用 tasklist 判活。
@@ -556,9 +702,13 @@ def part_c(since_bytes=0):
 def main():
     log_size = os.path.getsize(LOG_FILE) if os.path.exists(LOG_FILE) else 0
     part_a()
-    if FULL:
+    if FULL and SHOW:
         part_b()
         part_c(log_size)
+    elif FULL:
+        note("  （--full 会真起整个程序并抓 12 秒全屏，占用屏幕；"
+             "未加 --show ⇒ 跳过 B 段）")
+        part_c(0)
     else:
         part_c(0)
     fails = [k for k, v in REPORT.get("checks", {}).items() if not v]

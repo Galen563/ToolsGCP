@@ -44,6 +44,8 @@ requirements.txt / README*.md / AGENTS.md      ← 根目录只放这些"门面�
 │  ├─ js/icons.js                              内联 SVG symbol 精灵（id="i-xxx"）
 │  ├─ js/vendor/{vue.global.prod.js,tailwind.js}
 │  └─ css/{variables,base,components,layout,animations,overlays}.css
+├─ about/                                      ← GCP-AI 可翻阅的"软件介绍"正文（见 4 节末）
+├─ legal/                                      ← 用户协议 / 隐私政策全文 txt（同样按需查阅）
 ├─ modules/                                    ← Python 包 `pymodels`（业务逻辑，被 web 版复用）
 │  ├─ pymodels/core/                           资源查询 / 收藏 / 设置 / 插件 / AI / 数据根
 │  ├─ pymodels/utils/                          日志 / 全局热键 / 字体 / 崩溃护栏
@@ -112,6 +114,18 @@ py版本-…/备份py版本/                             旧 PyQt5 版存档（�
 | 改托盘菜单 | `desktop/native/traymenu.py`（自绘分层窗口）+ `tray.py` 里的菜单项 |
 | 改窗口行为 / 启动流程 | `desktop/shell.py`（文件头有一大段时序说明，**先读再改**） |
 | 改资源路径（图片/图标） | `desktop/webhost.py` 的路由 + `desktop/api/resources.py` 的 `icon_url()` |
+| 改"AI 该怎么介绍这款软件 / 开发者信息" | **只改** `.ToolsGCP/about/ToolsGCP_About.txt`（正文不进代码、不进提示词；指引段在 `core/ai/prompt.py` 的 `ABOUT_RULES`，同 `legal/` 那套机制） |
+
+### 「按需查阅」这一族文件（同一个模式，别再各写一套）
+
+协议正文 `legal/*.txt` 和软件介绍 `about/ToolsGCP_About.txt` 都是**正文留在磁盘、
+system 提示词里只放"有这份文件、在哪、必要时用 read_file 去查"**的极短指引
+（`prompt.build_legal_section()` / `prompt.build_about_section()`）。
+要改内容就改 txt，**不要**把长文本塞进代码或每轮提示词（token 成本），
+也**不要**新增"强制每轮植入"的段落。指引段要落在 `build_system_message()` 的拼接里，
+两个 section 相邻放置。`about/` 与 `legal/` 都在 `constants.CONFIG_DIR` 下，
+是**随程序发布的资源目录**（`read_file` 的允许根目录 = `constants.SCRIPT_DIR`，
+所以提示词里一律写相对路径 `.ToolsGCP/about/...`）。
 
 ---
 
@@ -193,3 +207,4 @@ python ToolsGCP.pyw
 | 在主线程 `import PyQt5` | WebView2 初始化会崩（见 `desktop/splash.py` 的注释） |
 | 用 `--onefile` 打包 | `webhost.py` 按 exe 目录找静态资源，onefile 会全 404（用 `--onedir`） |
 | 给卡片/列表写死宽高 | 布局由 JS 按虚拟列表算法计算，会打架 |
+| 不准动只能只读.ToolsGCP\images\icon和.ToolsGCP\ToolsGCP-Resources.json，这是资源文件，如非用户主动直接直白的表示允许你修改才可进行修改，暗示或非直接说明允许修改则视为只读不可修改 |

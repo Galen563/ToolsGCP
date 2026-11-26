@@ -68,6 +68,30 @@ LANG_DIRS = {
 }
 
 
+def mock_terms_table():
+    """三语「类别/标签译名表」：{locale: {规范中文值: 该语言写法}}
+
+    与真实后端 desktop/api/__init__.py 的 I18nDomain._read_all_terms 同构 ——
+    提交软件的多语言分段要按**分段语言**显示类别/标签译名，靠的就是这份表；
+    mock 不给这个键，预览里切分段就看不到变化（探针也就测不到）。
+    """
+    out = {}
+    for folder in ("zh_CN", "zh_TW", "en_US"):
+        table = {}
+        path = os.path.join(DATA, "modules", "languages", folder,
+                            "common_language.json")
+        try:
+            with open(path, "r", encoding="utf-8") as fh:
+                raw = json.load(fh)
+        except Exception:
+            raw = {}
+        for key, value in (raw or {}).items():
+            if key.startswith("term_") and isinstance(value, str) and value:
+                table[key[len("term_"):]] = value
+        out[folder] = table
+    return out
+
+
 def mock_i18n_bundle(language):
     lang = str(language or "").strip() or "简体中文"
     folder = LANG_DIRS.get(lang, "zh_CN")
@@ -89,7 +113,8 @@ def mock_i18n_bundle(language):
                 modules[module] = data
     except Exception:
         pass
-    return {"ok": True, "language": lang, "modules": modules}
+    return {"ok": True, "language": lang, "modules": modules,
+            "terms": mock_terms_table()}
 
 
 MOCK_API = """
@@ -358,6 +383,13 @@ window.pywebview = { api: {
   announcements: { list: async function () { return { ok: true, notices: window.__MOCK_NOTICES__ || [],
       unread: 0 }; } },
   log: { client: async function () { return { ok: true }; } },
+  /* 原生剪贴板 mock —— 提交软件「开源仓库」右边的粘贴按钮读的就是它。
+     默认空串（= 没链接 → 应当给粘贴失败提示）；页面里写
+     window.__MOCK_CLIPBOARD__ = 'https://github.com/a/b' 即可模拟"复制过一条链接"。 */
+  clipboard: {
+    read: async function () { return { ok: true, text: String(window.__MOCK_CLIPBOARD__ || '') }; },
+    write: async function (text) { window.__MOCK_CLIPBOARD__ = String(text || ''); return { ok: true }; },
+  },
 } };
 """ % (json.dumps(RESOURCES, ensure_ascii=False), json.dumps(LATEST))
 

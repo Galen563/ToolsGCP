@@ -1,0 +1,2 @@
+256: '        # 口径必须和读侧（resource_schema.normalize 的 kind=="links" 分支）用**同一个**'
+--- lines startswith '# --' : 0

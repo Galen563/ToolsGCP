@@ -401,23 +401,195 @@
     box-shadow: inset 0 1px 0 rgba(255,255,255,.85);
   }
 
-  /* ---------- 更多模块 ---------- */
-  .modules-panel { display: flex; flex-direction: column; gap: 10px; border-top: 1px solid var(--line); padding-top: 10px; }
-  .module-list { display: flex; flex-direction: column; gap: 8px; }
+  /* =====================================================================
+     更多模块（本轮重做）
+     =====================================================================
+     为什么重做：31 个模块原先是一条平铺长列表，每行「名字+参数+危险标签+来源+描述+开关」
+     全挤在左边、开关飘在最右，扫一眼根本分不清哪些是一类、哪一组被关掉了。
+     现在：① 按职责分组折叠 ② 顶部搜索 + 总进度条 ③ 行内两列（信息左 / 开关右）
+     ④ 危险项用**左侧警示条**而不是整行红（整行红会让这一屏看起来像出错了）。 */
+
+  /* ---------- 工具栏：搜索 + 三键 + 进度 ---------- */
+  .modules-panel { display: flex; flex-direction: column; gap: 12px; border-top: 1px solid var(--line); padding-top: 12px; }
+
+  .mod-toolbar { display: flex; flex-direction: column; gap: 8px; }
+  .mod-toolbar-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+  .search-wrap { position: relative; flex: 1 1 200px; min-width: 150px; }
+  .search-wrap .search-ic {
+    position: absolute; left: 9px; top: 50%; transform: translateY(-50%);
+    width: 13px; height: 13px; color: var(--fg3); pointer-events: none;
+  }
+  .mod-search {
+    width: 100%; font: inherit; font-size: 12px; line-height: 1.5;
+    padding: 7px 10px 7px 28px; border-radius: 8px;
+    border: 1px solid var(--line-strong); background: var(--row); color: var(--fg);
+    transition: border-color .14s ease, background .14s ease;
+  }
+  .mod-search::placeholder { color: var(--fg3); }
+  .mod-search:focus { outline: none; border-color: var(--accent); background: var(--card); }
+  .mod-search-clear {
+    position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+    width: 18px; height: 18px; border: 0; border-radius: 50%; cursor: pointer;
+    background: transparent; color: var(--fg3); font-size: 13px; line-height: 1;
+    display: none; padding: 0;
+  }
+  .mod-search-clear:hover { background: var(--btn-hover); color: var(--fg); }
+  .mod-search-clear.show { display: block; }
+
+  /* ---------- 总进度：一条细线 + 文字，比"已开启 x/y"直观 ---------- */
+  .mod-progress { display: flex; align-items: center; gap: 10px; }
+  .mod-progress-track {
+    flex: 1 1 auto; height: 5px; border-radius: 999px; background: var(--track); overflow: hidden;
+  }
+  .mod-progress-fill {
+    height: 100%; width: 0; border-radius: 999px; background: var(--accent);
+    transition: width .22s ease;
+  }
+  .mod-progress-text { flex: 0 0 auto; font-size: 11.5px; color: var(--fg2); font-variant-numeric: tabular-nums; }
+
+  /* ---------- 分组 ---------- */
+  .module-groups { display: flex; flex-direction: column; gap: 8px; }
+  .group {
+    border: 1px solid var(--line); border-radius: 9px; background: var(--row);
+    overflow: hidden;
+  }
+  .group-head {
+    display: flex; align-items: center; gap: 9px; width: 100%;
+    padding: 9px 12px; border: 0; background: transparent; color: var(--fg);
+    font: inherit; font-size: 12.5px; font-weight: 600; text-align: left; cursor: pointer;
+    transition: background .14s ease;
+  }
+  .group-head:hover { background: var(--btn); }
+  .group-head:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  /* 折叠箭头：靠 rotate 表示开合，不做 height 动画（高度动画会抖且影响滚动位置）。
+     ⚠️⚠️ 修 bug（用户原话）：「每个text标题文字左边的图标这个切换不对，他是围绕着
+        其他点转导致收起时这个位置不是原位而是偏了很多」。
+     根因有三层，缺一条就会偏心：
+       ① .group-arrow 是 <span>，默认 display:inline —— transform 作用在 inline 盒上时，
+          transform-origin 的参照盒和视觉位置不是一回事，转起来会绕着"行内盒的左下"跑；
+       ② 里面塞的 <svg> 也是 inline，有**基线（baseline）对齐**带来的额外下降量，
+          span 的盒子高度实际是 10px + 基线间隙，旋转中心因此不在图标正中心；
+       ③ 没有显式 transform-origin，浏览器按默认 50% 50% 算的是**那个被撑歪的盒**。
+     修法：span 改 inline-flex 居中 + line-height:0（消基线），svg 改 display:block，
+            再显式钉死 transform-origin: center center。
+     结果：折叠/展开只转角度，**位置一个像素都不动**。 */
+  .group-arrow {
+    flex: 0 0 auto; width: 10px; height: 10px; color: var(--fg3);
+    display: inline-flex; align-items: center; justify-content: center;
+    line-height: 0;             /* 消掉 inline 子元素的基线间隙 */
+    transform-origin: center center;
+    transition: transform .16s ease;
+  }
+  /* svg 也必须是块级：inline svg 会带基线下沉，rotate 时就看得出偏心 */
+  .group-arrow svg { display: block; }
+  .group.is-open .group-arrow { transform: rotate(90deg); }
+  /* 关动效档：瞬时切换（和别处的降级口径一致） */
+  :root [data-motion="off"] .group-arrow, html[data-motion="off"] .group-arrow { transition: none; }
+  .group-name { flex: 1 1 auto; min-width: 0; }
+  .group-hint {
+    flex: 0 0 auto; font-size: 11px; font-weight: 500; color: var(--fg3);
+    font-variant-numeric: tabular-nums;
+  }
+  /* 整组关掉时给个低调的提示色，方便一眼找到"这组被关了" */
+  .group.is-off .group-hint { color: var(--off); }
+  .group-body { display: none; flex-direction: column; gap: 6px; padding: 2px 8px 9px; }
+  .group.is-open .group-body { display: flex; }
+
+  /* ---------- 模块行：两列 ---------- */
+  .module-list { display: flex; flex-direction: column; gap: 6px; }
   .module-row {
     display: flex; align-items: flex-start; gap: 12px;
-    padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--row);
+    padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px;
+    background: var(--card); position: relative;
   }
-  .module-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  /* 危险项：左侧一条 3px 警示条（比整行红克制得多） */
+  .module-row.is-danger { padding-left: 14px; }
+  .module-row.is-danger::before {
+    content: ""; position: absolute; left: 0; top: 7px; bottom: 7px; width: 3px;
+    border-radius: 0 3px 3px 0; background: var(--warn);
+  }
+  .module-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+  .row-end { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; padding-top: 1px; }
   .tags { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
   .mono { font-family: "Cascadia Mono", "Consolas", "JetBrains Mono", ui-monospace, monospace; }
-  .module-name { font-size: 13px; font-weight: 600; word-break: break-word; }
+  .module-name { font-size: 12.5px; font-weight: 600; word-break: break-word; letter-spacing: -.1px; }
   .tag {
-    font-size: 11px; line-height: 1.5; color: var(--fg3); background: var(--chip-soft);
-    border: 1px solid var(--line); border-radius: 6px; padding: 0 6px; white-space: nowrap;
+    font-size: 10.5px; line-height: 1.6; color: var(--fg3); background: var(--chip-soft);
+    border: 1px solid var(--line); border-radius: 5px; padding: 0 5px; white-space: nowrap;
   }
+  .tag.is-param { opacity: .8; font-weight: 400; }
   .tag.is-danger { color: var(--warn); border-color: var(--warn-line); background: var(--warn-bg); }
-  .module-desc { font-size: 12px; color: var(--fg2); line-height: 1.6; word-break: break-word; }
+  /* 英文标识符副标签（模块行里跟在三语标题后面的 search_resources 这种）
+     用户要求三语后，标题不再是英文名，但开发者仍需对照，所以留一个低调的 mono 小标签。
+     ⚠️ 必须允许收缩（max-width + ellipsis），否则超长工具名会把开关挤出卡片。 */
+  .tag.is-key {
+    font-size: 9.5px; opacity: .55; max-width: 132px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  /* 模块行：名字区允许收缩（防止长文字把右侧开关顶出去 = 遮挡）
+     ⚠️ flex 子项默认 min-width:auto，长单词（search_resources 这种下划线长串）
+        不会自动换行 → 会把整行撑宽。必须显式 min-width:0。 */
+  .module-text { min-width: 0; }
+  .module-row { min-width: 0; }
+  .tags { min-width: 0; }
+  .module-desc { font-size: 11.5px; color: var(--fg2); line-height: 1.55; word-break: break-word; }
+  /* 关掉的模块整行淡化：让"开着的那批"一眼跳出来 */
+  .module-row.is-muted .module-name { color: var(--fg3); }
+  .module-row.is-muted .module-desc { opacity: .6; }
+
+  .mod-empty { margin: 0; font-size: 12px; color: var(--fg3); line-height: 1.6; padding: 10px 2px; }
+  .mod-empty.is-warn { color: var(--warn); }
+
+  /* ---------- 强制开启（locked）的视觉 ----------
+     ⚠️⚠️ 这里踩过一次方向错误，必须写清楚（用户原话）：
+       「AI Agent配置界面的开关显示是关闭状态的bug」
+       上一轮为了让锁定开关"看起来不可点"，我把它做成了**灰底 + 圆点停左侧** ——
+       那是"关闭"的视觉语言！于是功能上是开着的（enabled=true、后端确实在跑），
+       界面上却显示成"已关闭"，用户完全被误导。
+       正确语义：**强制开启 = 永远是"开"，只是不能关**。
+       所以锁定态必须：
+         · 保留 .on 的强调色背景 + 圆点**在右侧**（= 开）
+         · 用 cursor:not-allowed + 稍降不透明度 + 锁图标 + 「强制开启」徽章
+           来表达"这颗开关你动不了"，而**不是**用"关"的样子表达。
+       ⚠️ 也就是说：这里的 :disabled 只做"不可操作"的反馈，**绝不改开关的开合外观**。 */
+  .badge.is-locked { background: var(--chip); color: var(--chip-fg); display: inline-flex;
+    align-items: center; gap: 4px; }
+  /* 徽章左侧的锁图标
+     ⚠️ 用户原话：「"强制开启"左侧的锁的小图标删除换成"这是内置的强制开启插件，无法关闭。"
+        侧边的那个图标」—— 即：不要 emoji 🔒，要和下方 lock-note 里**同一个线稿 SVG 锁**。
+     做法：用 ::before 挂 background-image（内联 data URI SVG，和 lock-note 的
+     path 完全一致：锁体圆角矩形 + 上方半圆锁梁），颜色跟 currentColor 走不了，
+     所以用 mask 让它可以被 color 染色（--chip-fg）。 */
+  .badge.is-locked::before {
+    content: ""; width: 9px; height: 9px; flex: 0 0 auto; background-color: currentColor;
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round'%3E%3Crect x='4' y='10' width='16' height='11' rx='2'/%3E%3Cpath d='M8 10V7a4 4 0 0 1 8 0v3'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round'%3E%3Crect x='4' y='10' width='16' height='11' rx='2'/%3E%3Cpath d='M8 10V7a4 4 0 0 1 8 0v3'/%3E%3C/svg%3E");
+    -webkit-mask-size: contain; mask-size: contain;
+    -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+    -webkit-mask-position: center; mask-position: center;
+  }
+
+  .switch:disabled,
+  .switch.is-locked { cursor: not-allowed; filter: none; }
+  /* 锁定且处于"开"态：**保持强调色与右侧圆点**，只轻微降透明表示不可点。
+     ⚠️ 不要写 background: var(--track) / transform: none —— 那会把它画成"关闭"。 */
+  .switch.on:disabled,
+  .switch.on.is-locked {
+    background: var(--accent);
+    opacity: .72;
+  }
+  .switch.on:disabled::after,
+  .switch.on.is-locked::after { transform: translateX(18px); }
+  /* 锁定的开关不做 hover 提亮（否则又像"可以点"） */
+  .switch:disabled:hover,
+  .switch.is-locked:hover { filter: none; }
+  /* 锁定说明条 */
+  .lock-note { color: var(--fg3); }
+  .lock-note {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11.5px; color: var(--fg3); line-height: 1.5;
+  }
 
   /* ---------- 最近动作 ---------- */
   .actions-list { display: flex; flex-direction: column; gap: 6px; }
@@ -438,10 +610,31 @@
   .empty.is-warn { color: var(--warn); }
 
   /* ---------- 页面内 toast（不用 host 的提示，自己弹） ---------- */
+  /* ---------- 页面内 toast（跟着主程序「设置 → 提示框位置」走） ----------
+     ⚠️⚠️ 修 bug（用户原话）：「你新加的提示应该遵从设置中的提示框位置」。
+     旧写法把提示条**焊死**在底部居中（bottom:14px），和主程序里那颗
+     「提示框位置」下拉（top / top_right / bottom_right / top_left / bottom_left）
+     完全脱钩 —— 用户在设置里选了右上，配置页的提示还是从底下冒出来。
+     现在：由 JS 给 #toasts 挂方位类（.is-top / .is-tr / .is-br / .is-tl / .is-bl），
+     和宿主 webui/css/overlays.css 的 .toast-stack 方位口径一一对应。
+     ⚠️ iframe 是**自己的视口**，没有侧栏，所以 left 类不套 --nav-* 偏移，直接 16px 贴边。 */
   .toasts {
-    position: fixed; left: 0; right: 0; bottom: 14px; z-index: 60;
-    display: flex; flex-direction: column; align-items: center; gap: 8px;
-    pointer-events: none; padding: 0 14px;
+    position: fixed; z-index: 60;
+    display: flex; flex-direction: column; gap: 8px;
+    pointer-events: none; max-width: calc(100% - 32px);
+  }
+  /* 默认（读不到设置 / 未知值）：保持原样，底部居中 —— 这是最不打扰的落点 */
+  .toasts.is-top, .toasts.is-tr, .toasts.is-br, .toasts.is-tl, .toasts.is-bl {
+    left: auto; right: auto; top: auto; bottom: auto;
+  }
+  .toasts.is-top    { top: 16px; left: 50%; transform: translateX(-50%); align-items: center; }
+  .toasts.is-tr     { top: 16px; right: 16px; align-items: flex-end; }
+  .toasts.is-br     { bottom: 16px; right: 16px; align-items: flex-end; flex-direction: column-reverse; }
+  .toasts.is-tl     { top: 16px; left: 16px; align-items: flex-start; }
+  .toasts.is-bl     { bottom: 16px; left: 16px; align-items: flex-start; flex-direction: column-reverse; }
+  /* 没有任何方位类时的兜底（= 老行为：底部居中） */
+  .toasts:not(.is-top):not(.is-tr):not(.is-br):not(.is-tl):not(.is-bl) {
+    left: 0; right: 0; bottom: 14px; align-items: center; padding: 0 14px;
   }
   .toast {
     max-width: min(560px, 100%); background: var(--toast); color: var(--fg);
@@ -473,7 +666,7 @@
       <p data-i18n="intro"></p>
     </header>
 
-    <!-- 卡片：总开关-->
+    <!-- 卡片：总开关（强制开启的插件会锁死这个开关）-->
     <section class="card">
       <div class="card-head">
         <h2 class="card-title" data-i18n="sec_switch"></h2>
@@ -484,26 +677,53 @@
         <button type="button" class="switch" id="master" role="switch" aria-checked="false"></button>
         <p class="hint grow" id="switch-hint"></p>
       </div>
+      <!-- 强制开启说明：只在 locked 时显示（hidden 由 JS 控制） -->
+      <p class="lock-note" id="lock-note" hidden>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <rect x="4" y="10" width="16" height="11" rx="2"></rect>
+          <path d="M8 10V7a4 4 0 0 1 8 0v3"></path>
+        </svg>
+        <span id="lock-note-text"></span>
+      </p>
     </section>
 
-    <!-- 卡片：更多模块（入口 + 同页展开的模块列表）-->
+    <!-- 卡片：更多模块（工具栏 + 分组列表，全部同页展开）-->
     <section class="card">
-      <h2 class="card-title" data-i18n="sec_modules"></h2>
+      <div class="card-head">
+        <h2 class="card-title" data-i18n="sec_modules"></h2>
+        <span class="badge is-off" id="modules-badge"></span>
+      </div>
       <p class="desc" data-i18n="sec_modules_desc"></p>
       <div class="row row-center">
         <p class="hint grow" id="modules-count"></p>
         <button type="button" class="btn" id="modules-toggle" data-i18n="btn_open_modules"></button>
       </div>
       <div class="modules-panel" id="modules-panel" hidden>
-        <div class="btn-row">
-          <button type="button" class="btn" id="modules-back" data-i18n="btn_back"></button>
-          <span class="grow"></span>
-          <button type="button" class="btn" id="all-on" data-i18n="btn_all_on"></button>
-          <button type="button" class="btn" id="all-off" data-i18n="btn_all_off"></button>
+        <!-- 工具栏：搜索 / 一键三连 / 总进度 -->
+        <div class="mod-toolbar">
+          <div class="mod-toolbar-top">
+            <div class="search-wrap">
+              <svg class="search-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path>
+              </svg>
+              <input type="search" class="mod-search" id="mod-search" autocomplete="off"
+                     data-i18n-placeholder="modules_search_placeholder">
+              <button type="button" class="mod-search-clear" id="mod-search-clear"
+                      aria-label="clear">×</button>
+            </div>
+            <button type="button" class="btn" id="all-on" data-i18n="btn_all_on"></button>
+            <button type="button" class="btn" id="all-off" data-i18n="btn_all_off"></button>
+            <button type="button" class="btn" id="modules-back" data-i18n="btn_back"></button>
+          </div>
+          <div class="mod-progress">
+            <div class="mod-progress-track"><div class="mod-progress-fill" id="mod-progress-fill"></div></div>
+            <span class="mod-progress-text" id="mod-progress-text"></span>
+          </div>
         </div>
-        <h3 class="panel-title" data-i18n="modules_title"></h3>
-        <p class="desc" data-i18n="modules_desc"></p>
-        <div class="module-list" id="modules-list"></div>
+        <!-- 分组列表（JS 按职责重建） -->
+        <div class="module-groups" id="modules-list"></div>
       </div>
     </section>
 
@@ -575,11 +795,27 @@
      ⚠️ 改了 lang/zh_CN.json 记得同步这里，否则纯预览（file://）会看到旧文案。 */
   var FALLBACK_ZH = {
     "title": "AI Agent",
-    "intro": "开启后，直接在任意一个 GCP-AI 聊天界面里说话，它就能替你操作 ToolsGCP。这里只是它的配置界面。",
+    "intro": "这是内置的强制开启插件：开启后，直接在任意一个 GCP-AI 聊天界面里说话，它就能替你操作 ToolsGCP。这里可以逐项开关 AI 的每一只「手」。",
     "sec_switch": "总开关",
-    "sec_switch_desc": "开启后 GCP-AI 才能动手操作 ToolsGCP；关闭后它只会正常聊天。这个开关和设置里的是同一个。",
+    "sec_switch_desc": "这个插件是内置强制开启的，无法关闭；下面每一项「手」仍然可以单独开关。",
     "switch_on": "已开启",
     "switch_off": "已关闭",
+    "status_locked": "强制开启",
+    "switch_locked": "这是内置的强制开启插件，无法关闭。",
+    "switch_locked_hint": "内置强制开启：GCP-AI 永远可以替你操作 ToolsGCP。",
+    "switch_locked_desc": "这个插件是内置的、强制开启的，无法关闭；下面每一项「手」仍然可以逐项开关。",
+    "group_library": "资源库",
+    "group_favorites": "收藏夹",
+    "group_ui": "界面与导航",
+    "group_settings": "设置与外观",
+    "group_plugins": "插件",
+    "group_files": "文件与系统",
+    "group_system": "诊断与日志",
+    "group_other": "其它",
+    "modules_search_placeholder": "搜索模块（名字 / 描述 / 参数）…",
+    "modules_no_match": "没有匹配「{q}」的模块，换个关键词试试。",
+    "modules_badge_all_on": "全部开启",
+    "modules_badge_partial": "已关 {off} 项",
     "switch_hint_on": "GCP-AI 现在可以替你操作 ToolsGCP。",
     "switch_hint_off": "GCP-AI 现在只会聊天；你让它干活时，它会把你引导回这里开启。",
     "switch_unavailable": "Agent 暂时不可用（主窗口还没准备好）。稍后再打开这个页面试试。",
@@ -627,6 +863,8 @@
     dict: {},
     available: false,   // agent_state 成功过没有
     enabled: false,
+    locked: false,      // 强制开启（manifest.locked；老后端不返回时保持 false）
+    modQuery: '',       // 「更多模块」搜索词（只影响展示，不影响数据）
     fx: 'mica',         // 主题效果（mica / glass / acrylic）
     lastTheme: '',     // 最近一次解析用的 host theme（settings-changed 时先记住，再等父窗口写完属性）
     settingOn: false,   // 设置里那个键（和 enabled 不一定同时为真）
@@ -747,6 +985,25 @@
     while (node.firstChild) node.removeChild(node.firstChild);
   }
 
+  /* 提示条方位：跟着主程序「设置 → 提示框位置」。
+     ⚠️ 必须整类先清再挂，否则从 is-top 切到 is-tr 时旧的 is-top 还在，
+        两个类同时命中会让 left/transform 打架（提示条跑到屏幕外）。
+     值来自宿主 settings.toast_position，五种取值和 webui 的 TOAST_POS_CLASS 完全一致。 */
+  var TOAST_POS = {
+    top: 'is-top', top_right: 'is-tr', bottom_right: 'is-br',
+    top_left: 'is-tl', bottom_left: 'is-bl'
+  };
+  var TOAST_POS_CLASSES = ['is-top', 'is-tr', 'is-br', 'is-tl', 'is-bl'];
+  function applyToastPosition(value) {
+    var box = $('toasts');
+    if (!box) return;
+    var cls = TOAST_POS[String(value || '').trim()] || '';
+    for (var i = 0; i < TOAST_POS_CLASSES.length; i += 1) {
+      box.classList.remove(TOAST_POS_CLASSES[i]);
+    }
+    if (cls) box.classList.add(cls);
+  }
+
   function toast(text, level) {
     var box = $('toasts');
     if (!box || !text) return;
@@ -809,6 +1066,13 @@
       var item = findTool(name);
       if (item) setSwitch(nodes[i], item.enabled !== false, animateKey === ANIMATE_ALL || animateKey === name);
       nodes[i].disabled = !!state.preview || state.busy;
+      /* 行上的淡化标记也要跟着拨动 —— 只改开关不改行，关掉的那行看起来还是"亮着"的 */
+      var row = nodes[i].closest ? nodes[i].closest('.module-row') : null;
+      if (row && item) {
+        var on = item.enabled !== false;
+        row.classList.toggle('is-muted', !on);
+        row.setAttribute('data-on', on ? '1' : '0');
+      }
     }
   }
 
@@ -855,8 +1119,51 @@
     });
   }
 
+  /* ★ 本轮修复（用户报「Agent 设置还有一部分操作不了的 bug」的根因）：
+     pywebview 的 api 对象是**渐进填充**的：iframe 拿到 window.pywebview.api 的
+     那一刻，各**域**（api.ai / api.settings）可能还没挂上来 —— 于是
+     · callAi 直接 'no api' → agent_state 失败 → 整页（含全部开关）被判不可用，
+       用户看到的就是"这个也点不动、那个也点不动"；控制台里那条
+       "ai.agent_state is not a function" 就是这件事的原话证据。
+     解法：waitForApi 之后**再等"域"出现**（域感知轮询，2 秒封顶），
+     并把拿到的最新 api 回填 state.api；等到了就照常工作，等不到才降级预览模式。 */
+  function hasDomain(api, domain, method) {
+    try {
+      var d = api && api[domain];
+      if (!d) return false;
+      if (!method) return true;
+      return typeof d[method] === 'function';
+    } catch (e) { return false; }
+  }
+
+  function waitForDomain(domain, method, timeoutMs) {
+    if (hasDomain(state.api, domain, method)) return Promise.resolve(state.api);
+    return new Promise(function (resolve) {
+      var done = false;
+      var timer = 0;
+      var timeout = 0;
+      function finish(value) {
+        if (done) return;
+        done = true;
+        if (timer) window.clearInterval(timer);
+        if (timeout) window.clearTimeout(timeout);
+        resolve(value || null);
+      }
+      function check() {
+        var api = findApi();
+        if (!api) return;
+        state.api = api;                       // 回填最新引用（渐进填充的受害者就在这）
+        if (hasDomain(api, domain, method)) finish(api);
+      }
+      timer = window.setInterval(check, 120);
+      timeout = window.setTimeout(function () { finish(hasDomain(state.api, domain, method) ? state.api : null); },
+                                   timeoutMs || 2000);
+      check();
+    });
+  }
+
   async function getSetting(key) {
-    var api = state.api;
+    var api = await waitForDomain('settings', 'get');
     if (!api) return { ok: false, error: 'no api' };
     try {
       var result = await api.settings.get(key);
@@ -867,7 +1174,7 @@
   }
 
   async function callAi(method) {
-    var api = state.api;
+    var api = await waitForDomain('ai', method);
     if (!api || !api.ai || typeof api.ai[method] !== 'function') return { ok: false, error: 'no api' };
     var args = Array.prototype.slice.call(arguments, 1);
     try {
@@ -1061,6 +1368,9 @@
           }
           if (payload.key === 'theme_effect') applyFx(String(payload.new || ''));
           if (payload.key === 'language') syncHostPrefs(true).catch(function () { /* 兜住 */ });
+          /* 用户在设置里改了「提示框位置」→ 配置页的提示条立刻跟着换方位，
+             不用关掉再重开配置页 */
+          if (payload.key === 'toast_position') applyToastPosition(payload.new);
         });
       }
     } catch (e) { /* 挂不上就靠下面的轮询兜底 */
@@ -1102,23 +1412,45 @@
 
   function renderMaster(animate) {
     var master = $('master');
-    setSwitch(master, state.enabled, !!animate);
+    /* 强制开启（manifest.locked）：开关恒为 on 且**不可点**。
+       ⚠️ 老后端不返回 locked 字段 → 缺省 false，行为退回原来的"可开关"。 */
+    var locked = !!state.locked;
+    setSwitch(master, locked ? true : state.enabled, !!animate);
     var badge = $('master-state');
     if (badge) {
-      badge.textContent = t(state.enabled ? 'switch_on' : 'switch_off');
-      badge.className = 'badge ' + (state.enabled ? 'is-on' : 'is-off');
+      if (locked) {
+        badge.textContent = t('status_locked');
+        badge.className = 'badge is-locked';
+      } else {
+        badge.textContent = t(state.enabled ? 'switch_on' : 'switch_off');
+        badge.className = 'badge ' + (state.enabled ? 'is-on' : 'is-off');
+      }
     }
     var hint = $('switch-hint');
     if (hint) {
       if (!state.available) {
         hint.textContent = t('switch_unavailable');
         hint.className = 'hint is-warn';
+      } else if (locked) {
+        hint.textContent = t('switch_locked_hint');
+        hint.className = 'hint is-on';
       } else {
         hint.textContent = t(state.enabled ? 'switch_hint_on' : 'switch_hint_off');
         hint.className = 'hint ' + (state.enabled ? 'is-on' : 'is-off');
       }
     }
-    if (master) master.disabled = !state.available || state.busy;
+    var note = $('lock-note');
+    if (note) note.hidden = !locked;
+    var noteText = $('lock-note-text');
+    if (noteText && locked) noteText.textContent = t('switch_locked');
+    if (master) {
+      master.disabled = locked || !state.available || state.busy;
+      /* 锁定时同时挂 .is-locked：CSS 用它和 :disabled 联合选择器盖掉 .switch.on 的
+         强调色（只靠 :disabled 会保留蓝色背景，用户看着还以为能点）。 */
+      master.classList.toggle('is-locked', locked);
+      master.setAttribute('aria-disabled', locked ? 'true' : 'false');
+      master.title = locked ? t('switch_locked') : '';
+    }
   }
 
   /* =====================================================================
@@ -1152,10 +1484,116 @@
     return el;
   }
 
-  /* 结构签名：名字/参数/来源/危险标记 + 语言。只要没变就只同步开关，不重建 DOM */
+  /* =====================================================================
+     分组：31 个模块按职责归类
+     =====================================================================
+     为什么按名字归组而不是让后端给组：agent_state 的 tools 里只有 name/source，
+     组是**纯展示概念**，后端不该为界面排版负责；而且以后新增工具时，只要把名字
+     加进下面的映射就自动归位，没加进映射的落到「其它」组里（不会消失）。
+     顺序即展示顺序：越靠前越常用。 */
+  var MODULE_GROUPS = [
+    { key: 'library', i18n: 'group_library', names: [
+      'search_resources', 'get_resource', 'open_resource', 'resource_stats',
+      'list_all_resources'] },
+    { key: 'favorites', i18n: 'group_favorites', names: [
+      'list_favorites', 'set_favorite', 'create_favorite_folder', 'move_favorite'] },
+    { key: 'ui', i18n: 'group_ui', names: [
+      'goto_page', 'notify_user', 'open_page_detail', 'search_view', 'set_window_state',
+      'deploy_list'] },
+    { key: 'settings', i18n: 'group_settings', names: [
+      'get_setting', 'set_setting', 'list_settings', 'update_settings', 'ui_switch',
+      'set_theme', 'set_language', 'set_autostart', 'set_hotkeys'] },
+    { key: 'plugins', i18n: 'group_plugins', names: [
+      'list_plugins', 'set_plugin_enabled', 'open_plugin_config', 'manage_plugins'] },
+    { key: 'files', i18n: 'group_files', names: [
+      'list_dir', 'read_file', 'write_file', 'run_python', 'open_url',
+      'download_resource'] },
+    { key: 'system', i18n: 'group_system', names: [
+      'read_logs', 'export_logs', 'app_diagnostics', 'new_chat'] },
+    { key: 'other', i18n: 'group_other', names: ['self_check'] }
+  ];
+
+  /* 名字 → 组 key 的反查表（每次渲染重建很便宜，但别放在热路径里逐条 indexOf） */
+  function groupOf(name) {
+    for (var i = 0; i < MODULE_GROUPS.length; i += 1) {
+      var group = MODULE_GROUPS[i];
+      if (group.names.indexOf(name) >= 0) return group.key;
+    }
+    return 'other';
+  }
+
+  /* 折叠状态：localStorage 里存 "组key:0|1" 的串。默认全展开（用户点进来就是想看全貌）。 */
+  var COLLAPSE_KEY = 'tgc-agent-groups';
+  var SEARCH_KEY = 'tgc-agent-search';
+  function readCollapsed() {
+    var out = {};
+    try {
+      var raw = window.localStorage.getItem(COLLAPSE_KEY) || '';
+      if (!raw) return out;
+      raw.split(',').forEach(function (pair) {
+        if (!pair) return;
+        var parts = pair.split(':');
+        if (parts.length === 2) out[parts[0]] = parts[1] === '1';
+      });
+    } catch (e) { /* 隐私模式 / 无 localStorage：当作全展开 */ }
+    return out;
+  }
+  function writeCollapsed(map) {
+    try {
+      var parts = [];
+      Object.keys(map).forEach(function (key) { parts.push(key + ':' + (map[key] ? '1' : '0')); });
+      window.localStorage.setItem(COLLAPSE_KEY, parts.join(','));
+    } catch (e) { /* 存不了就算了，不影响功能 */ }
+  }
+
+  function matchSearch(tool, needle) {
+    if (!needle) return true;
+    var haystack = (String(tool.name || '') + ' ' + pickText(tool.description) + ' '
+      + String(tool.parameters || '')).toLowerCase();
+    return haystack.indexOf(needle) >= 0;
+  }
+
+  /* 当前（过滤后）每个组里的模块；搜索时**强制展开**命中的组，否则搜了像没搜到 */
+  function visibleGroups() {
+    var needle = String(state.modQuery || '').trim().toLowerCase();
+    var collapsed = readCollapsed();
+    var buckets = {};
+    for (var i = 0; i < state.tools.length; i += 1) {
+      var tool = state.tools[i];
+      if (!matchSearch(tool, needle)) continue;
+      var key = groupOf(String(tool.name || ''));
+      (buckets[key] = buckets[key] || []).push(tool);
+    }
+    var out = [];
+    for (var j = 0; j < MODULE_GROUPS.length; j += 1) {
+      var meta = MODULE_GROUPS[j];
+      var list = buckets[meta.key];
+      if (!list || !list.length) continue;
+      out.push({
+        key: meta.key, i18n: meta.i18n, tools: list,
+        /* 搜索时一律展开：用户正在找东西，别让他还得再点一下。
+           collapsed[key] === true 表示「用户折叠了这一组」→ open 取反。 */
+        open: needle ? true : (collapsed[meta.key] !== true)
+      });
+      delete buckets[meta.key];
+    }
+    /* 映射表里没登记的新工具：落到「其它」组，绝不隐藏（否者新模块会"人间蒸发"） */
+    var leftovers = [];
+    Object.keys(buckets).forEach(function (key) {
+      if (key === 'other') return;
+      leftovers = leftovers.concat(buckets[key]);
+    });
+    if (leftovers.length) {
+      out.push({ key: 'other', i18n: 'group_other', tools: leftovers,
+                 open: needle ? true : (collapsed.other !== true) });
+    }
+    return out;
+  }
+
+  /* 结构签名：名字/参数/来源/危险标记 + 语言 + 搜索词。只要没变就只同步开关，不重建 DOM */
   function moduleSignature() {
     if (!state.available) return 'unavailable|' + state.code;
-    var parts = ['ok|' + state.code];
+    var parts = ['ok|' + state.code + '|' + String(state.modQuery || '').toLowerCase()];
     for (var i = 0; i < state.tools.length; i += 1) {
       var tool = state.tools[i];
       parts.push([tool.name, tool.parameters, tool.source, tool.danger ? 1 : 0].join('~'));
@@ -1168,7 +1606,10 @@
     if (!list) return;
     var sig = moduleSignature();
     if (list.getAttribute('data-sig') === sig) {
+      /* 结构没变（只是某个开关被拨了）：只同步开关外观 + 分组计数 + 进度条，不重建 DOM */
       updateModuleSwitches(animateKey);
+      updateGroupCounts();
+      renderProgress();
       return;
     }
     keepScroll(function () {
@@ -1178,8 +1619,14 @@
       } else if (!state.tools.length) {
         fragment.appendChild(emptyHint(t('modules_empty'), false));
       } else {
-        for (var i = 0; i < state.tools.length; i += 1) {
-          fragment.appendChild(buildModuleRow(state.tools[i], i));
+        var groups = visibleGroups();
+        if (!groups.length) {
+          /* 搜索没命中：明确说"没找到"，而不是留一片空白 */
+          fragment.appendChild(emptyHint(t('modules_no_match', { q: state.modQuery }), false));
+        } else {
+          for (var g = 0; g < groups.length; g += 1) {
+            fragment.appendChild(buildGroup(groups[g]));
+          }
         }
       }
       clearNode(list);
@@ -1187,12 +1634,97 @@
       list.setAttribute('data-sig', sig);
     });
     updateModuleSwitches(animateKey);
+    renderProgress();
+  }
+
+  /* 一个分组：头部（箭头 + 名字 + 已开 N/M）+ 内容 */
+  function buildGroup(group) {
+    var wrap = document.createElement('div');
+    wrap.className = 'group' + (group.open ? ' is-open' : '');
+    wrap.setAttribute('data-group', group.key);
+
+    var head = document.createElement('button');
+    head.type = 'button';
+    head.className = 'group-head';
+    head.setAttribute('aria-expanded', group.open ? 'true' : 'false');
+    head.addEventListener('click', function () { onGroupToggle(group.key); });
+
+    var arrow = document.createElement('span');
+    arrow.className = 'group-arrow';
+    arrow.innerHTML = '<svg viewBox="0 0 24 24" width="10" height="10" fill="none" '
+      + 'stroke="currentColor" stroke-width="3" stroke-linecap="round" '
+      + 'stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg>';
+
+    var nameEl = document.createElement('span');
+    nameEl.className = 'group-name';
+    nameEl.textContent = t(group.i18n);
+
+    var hintEl = document.createElement('span');
+    hintEl.className = 'group-hint';
+
+    head.appendChild(arrow);
+    head.appendChild(nameEl);
+    head.appendChild(hintEl);
+
+    var body = document.createElement('div');
+    body.className = 'group-body';
+    var inner = document.createElement('div');
+    inner.className = 'module-list';
+    for (var i = 0; i < group.tools.length; i += 1) {
+      inner.appendChild(buildModuleRow(group.tools[i], i));
+    }
+    body.appendChild(inner);
+
+    wrap.appendChild(head);
+    wrap.appendChild(body);
+    updateGroupHead(wrap, group.tools);
+    return wrap;
+  }
+
+  /* 分组头的计数：已开 N / 共 M；整组关掉时给整组一个 .is-off 便于一眼定位 */
+  function updateGroupHead(wrap, tools) {
+    if (!wrap) return;
+    var on = 0;
+    for (var i = 0; i < tools.length; i += 1) {
+      if (tools[i] && tools[i].enabled !== false) on += 1;
+    }
+    var hint = wrap.querySelector('.group-hint');
+    if (hint) hint.textContent = on + '/' + tools.length;
+    wrap.classList.toggle('is-off', on === 0);
+  }
+
+  /* 只刷新每个分组的计数（不重建 DOM）：拨了某一项之后必须调一次 */
+  function updateGroupCounts() {
+    var wraps = document.querySelectorAll('#modules-list .group');
+    for (var i = 0; i < wraps.length; i += 1) {
+      var key = wraps[i].getAttribute('data-group');
+      var tools = [];
+      for (var j = 0; j < state.tools.length; j += 1) {
+        if (groupOf(String(state.tools[j].name || '')) === key) tools.push(state.tools[j]);
+      }
+      updateGroupHead(wraps[i], tools);
+    }
+  }
+
+  /* 总进度：已开 / 总数，同时更新顶部文字与细进度条 */
+  function renderProgress() {
+    var fill = $('mod-progress-fill');
+    var text = $('mod-progress-text');
+    var total = state.tools.length;
+    var on = enabledCount();
+    if (fill) fill.style.width = total ? (Math.round(on / total * 100) + '%') : '0%';
+    if (text) text.textContent = total ? (on + ' / ' + total) : '';
   }
 
   function buildModuleRow(tool, index) {
     var name = String(tool.name || ('#' + (index + 1)));
+    var on = tool.enabled !== false;
     var row = document.createElement('div');
-    row.className = 'module-row';
+    /* 两列布局：信息左（名字 + 参数 + 危险 + 描述）、开关右下。
+       关掉的整行淡化（.is-muted）——"开着的那些"就会自己跳出来。 */
+    row.className = 'module-row'
+      + (tool.danger ? ' is-danger' : '')
+      + (on ? '' : ' is-muted');
 
     var textBox = document.createElement('div');
     textBox.className = 'module-text';
@@ -1200,16 +1732,32 @@
     var tags = document.createElement('div');
     tags.className = 'tags';
 
+    /* ⚠️⚠️ 标题三语（用户原话：「插件界面有些东西只有英文的没用其他2个语言的了，
+       我要的是三语言而且和设置中的语言同切换」）。
+       以前 nameEl 直接放 tool.name（search_resources 这种英文标识符）当**唯一标题**，
+       所以切中文/繁中标题还是全英文。现在：
+         · 主标题 = tool.label（后端按当前语言给的短名，如「搜索资源」/「Search」）；
+         · tool.name 降级成 mono 副标签（开发者对照用，保持等宽小字）。
+       ⚠️ label 缺失时（老后端）回退成 name，行为不倒退。 */
+    var label = String(tool.label || '').trim();
     var nameEl = document.createElement('span');
-    nameEl.className = 'module-name mono';
-    nameEl.textContent = name;
+    nameEl.className = 'module-name';
+    nameEl.textContent = label || name;
     tags.appendChild(nameEl);
+
+    /* 英文标识符：有三语标签时才额外显示（否则它就已经是标题了，别重复） */
+    if (label && label !== name) {
+      var keyEl = document.createElement('span');
+      keyEl.className = 'tag mono is-key';
+      keyEl.textContent = name;
+      tags.appendChild(keyEl);
+    }
 
     var params = String(tool.parameters || '').trim();
     if (params) {
       var paramsEl = document.createElement('span');
-      paramsEl.className = 'tag mono';
-      paramsEl.textContent = t('module_params', { params: params });
+      paramsEl.className = 'tag mono is-param';
+      paramsEl.textContent = params;
       tags.appendChild(paramsEl);
     }
     if (tool.danger) {
@@ -1217,13 +1765,6 @@
       dangerEl.className = 'tag is-danger';
       dangerEl.textContent = t('module_danger');
       tags.appendChild(dangerEl);
-    }
-    var source = String(tool.source || '').trim();
-    if (source) {
-      var sourceEl = document.createElement('span');
-      sourceEl.className = 'tag';
-      sourceEl.textContent = t('module_source', { source: source });
-      tags.appendChild(sourceEl);
     }
 
     var descEl = document.createElement('div');
@@ -1233,19 +1774,52 @@
     textBox.appendChild(tags);
     if (descEl.textContent) textBox.appendChild(descEl);
 
+    var endBox = document.createElement('div');
+    endBox.className = 'row-end';
+
     var sw = document.createElement('button');
     sw.type = 'button';
     sw.className = 'switch';
     sw.setAttribute('role', 'switch');
     sw.setAttribute('aria-label', name);
     sw.setAttribute('data-tool', name);
-    setSwitch(sw, tool.enabled !== false);
+    setSwitch(sw, on);
     sw.disabled = !!state.preview || state.busy;
     sw.addEventListener('click', function () { onModuleToggle(name); });
 
+    endBox.appendChild(sw);
     row.appendChild(textBox);
-    row.appendChild(sw);
+    row.appendChild(endBox);
+    row.setAttribute('data-on', on ? '1' : '0');
     return row;
+  }
+
+  /* 分组折叠：写 localStorage，再只切 class（不重建 DOM —— 重建会丢滚动位置并闪一下） */
+  function onGroupToggle(key) {
+    var collapsed = readCollapsed();
+    /* collapsed[key] === true 表示「现在是折叠的」→ 点一下变展开（false）；
+       否则（未设置或 false）→ 点一下变折叠（true）。 */
+    collapsed[key] = (collapsed[key] !== true);
+    writeCollapsed(collapsed);
+    var wrap = document.querySelector('#modules-list .group[data-group="' + key + '"]');
+    if (!wrap) return;
+    var open = !collapsed[key];
+    wrap.classList.toggle('is-open', open);
+    var head = wrap.querySelector('.group-head');
+    if (head) head.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+
+  /* 搜索框输入：改 state.modQuery → 重算签名 → 触发列表重建（有 120ms 防抖，别每敲一键都重建） */
+  var _searchTimer = 0;
+  function onSearchInput(value) {
+    state.modQuery = String(value || '');
+    var clear = $('mod-search-clear');
+    if (clear) clear.classList.toggle('show', !!state.modQuery);
+    if (_searchTimer) window.clearTimeout(_searchTimer);
+    _searchTimer = window.setTimeout(function () {
+      _searchTimer = 0;
+      renderModuleList();
+    }, 120);
   }
 
   function renderModules(animateKey) {
@@ -1258,12 +1832,24 @@
       toggle.textContent = t('btn_open_modules');
       toggle.disabled = !!state.preview;
     }
+    var badge = $('modules-badge');
+    if (badge && state.available && state.tools.length) {
+      var allOn = enabledCount() === state.tools.length;
+      badge.textContent = allOn ? t('modules_badge_all_on')
+                                : t('modules_badge_partial', { off: state.tools.length - enabledCount() });
+      badge.className = 'badge ' + (allOn ? 'is-on' : 'is-off');
+      badge.hidden = false;
+    } else if (badge) {
+      badge.hidden = true;
+    }
     var back = $('modules-back');
     if (back) back.disabled = !!state.preview;
-    var allOn = $('all-on');
-    if (allOn) allOn.disabled = !!state.preview || !state.available || state.busy;
-    var allOff = $('all-off');
-    if (allOff) allOff.disabled = !!state.preview || !state.available || state.busy;
+    var allOnBtn = $('all-on');
+    if (allOnBtn) allOnBtn.disabled = !!state.preview || !state.available || state.busy;
+    var allOffBtn = $('all-off');
+    if (allOffBtn) allOffBtn.disabled = !!state.preview || !state.available || state.busy;
+    var searchBox = $('mod-search');
+    if (searchBox) searchBox.disabled = !!state.preview || !state.available;
     if (state.modulesOpen) renderModuleList(animateKey);
   }
 
@@ -1425,7 +2011,9 @@
 
   function applyPayload(payload) {
     state.available = true;
-    state.enabled = !!payload.enabled;
+    /* 强制开启：后端回 locked=true 就锁死总开关（老后端没有这个字段 → false） */
+    state.locked = !!payload.locked;
+    state.enabled = !!payload.enabled || state.locked;
     state.settingOn = !!payload.setting_on;
     state.tools = Array.isArray(payload.tools) ? payload.tools.filter(isObject) : [];
     state.stats = isObject(payload.stats) ? payload.stats : {};
@@ -1483,6 +2071,11 @@
 
   async function onMasterToggle() {
     if (state.preview || !state.api || !state.available || state.busy) return;
+    /* 强制开启的插件：后端也会拒绝关闭，这里先拦一道，免得拨了又回弹 */
+    if (state.locked) {
+      toast(t('switch_locked'), 'warn');
+      return;
+    }
     var next = !state.enabled;
     state.enabled = next;
     renderMaster(true);          // 用户真的点击 → 保留滑动动效
@@ -1584,6 +2177,37 @@
     if (toggle) toggle.addEventListener('click', function () { setModulesOpen(true); });
     var back = $('modules-back');
     if (back) back.addEventListener('click', function () { setModulesOpen(false); });
+
+    /* 搜索框：输入即过滤（120ms 防抖），清空按钮一键复位。
+       ⚠️ 用 input 事件而不是 keyup：中文输入法组合期间 keyup 不准，
+          input 在组合确认后才发一次，不会把拼音当成搜索词。 */
+    var searchBox = $('mod-search');
+    if (searchBox) {
+      try {
+        var saved = window.localStorage.getItem(SEARCH_KEY) || '';
+        if (saved) { searchBox.value = saved; state.modQuery = saved; }
+      } catch (e) { /* 无 localStorage */ }
+      searchBox.addEventListener('input', function () {
+        var text = String(searchBox.value || '');
+        try { window.localStorage.setItem(SEARCH_KEY, text); } catch (e) { /* 忽略 */ }
+        onSearchInput(text);
+      });
+      searchBox.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && searchBox.value) {
+          /* 有内容时 Esc 只清空搜索框，**不**冒泡去关整个配置页 */
+          event.stopPropagation();
+          searchBox.value = '';
+          onSearchInput('');
+        }
+      });
+    }
+    var searchClear = $('mod-search-clear');
+    if (searchClear) searchClear.addEventListener('click', function () {
+      var box = $('mod-search');
+      if (box) { box.value = ''; box.focus(); }
+      try { window.localStorage.removeItem(SEARCH_KEY); } catch (e) { /* 忽略 */ }
+      onSearchInput('');
+    });
     var allOn = $('all-on');
     if (allOn) allOn.addEventListener('click', function () { setAllTools(true); });
     var allOff = $('all-off');
@@ -1606,6 +2230,9 @@
     }
     /* 兜底：boot 链路任何一步抛异常也不能让护栏永久挂着（那会冻结所有动效） */
     window.setTimeout(releaseNoAnim, 2000);
+    /* 0.5) 恢复上次的模块搜索词（在首帧渲染之前设好，否则会先闪一版全量列表） */
+    try { state.modQuery = window.localStorage.getItem(SEARCH_KEY) || ''; } catch (e) { /* 无 localStorage */ }
+
     /* 1) 先用内置中文把界面填起来（lang 文件读不到也不会白屏） */
     state.dict = {};
     for (var key in FALLBACK_ZH) { if (Object.prototype.hasOwnProperty.call(FALLBACK_ZH, key)) state.dict[key] = FALLBACK_ZH[key]; }
@@ -1622,6 +2249,12 @@
       return;
     }
     state.api = api;
+
+    /* 2.5) 提示条方位：读一次宿主设置（读不到就保持底部居中的兜底位置）。
+       ⚠️ 放在读语言/主题之前：它只影响后面 toast 的落点，越早越不会出现
+          "第一条提示按老位置闪一下"的观感问题。 */
+    var toastPos = await getSetting('toast_position');
+    if (toastPos && toastPos.ok) applyToastPosition(toastPos.value);
 
     /* 3) 语言 / 主题（先落主题材质，再去等 lang 文件，免得先闪一下云母） */
     var prefs = await readHostPrefs();

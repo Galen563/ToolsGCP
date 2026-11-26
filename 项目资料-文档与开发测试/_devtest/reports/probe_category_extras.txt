@@ -1,0 +1,9 @@
+PASS  ① 候选列表最后两项是「官方」「知名」  {"tail":["官方","知名"],"total":33}
+PASS  ② 三种分段下末尾两项都存在（各语言自己的写法）  {"简体中文":["官方","知名"],"繁體中文":["官方","知名"],"English":["Official","Popular"]}
+PASS  ③ 简体分段输入「知名」→ 还原成规范值  {"pool":"知名"}
+PASS  ③ English 分段输入「Official」→ 还原成规范值「官方」  {"pool":"官方"}
+PASS  ④ 三语独立：English 那份没影响简体那份  {"pool":{"简体中文":"知名","繁體中文":"工具","English":"官方"}}
+PASS  ⑤ makerCategories 仍是 31 项且首项为「工具」  {"len":31}
+
+==== 汇总: 6/6 通过 ====
+probe_category_extras_exit=0

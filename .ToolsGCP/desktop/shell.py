@@ -1,15 +1,29 @@
 """主窗口外壳：把 pywebview 窗口、无边框补丁、托盘、热键、启动画面、前端 ready 组装起来。
-========== 启动时序（与原版 `ToolsGCP.pyw:189-213` 一一对应）==========
-    主线程                          worker 线程
-    ───────                         ───────────
-    1. 建 pywebview 窗口（hidden + **屏幕外**）  2. Qt 启动画面开播（desktop/splash.py）
-    3. webview.start()（进入主线程消息循环）
-    4. 前端加载完成 → api.app.ready() 上报        ← 前端 ready
-    5. 启动画面 finished 回调        ← 启动画面结束
-    6. 两件都完成 → 移回工作区居中 → 打补丁 → show() 一次
-⚠️ 窗口一开始必须 `hidden=True`：原版是"启动画面播完 + 首屏内容加载完"才 show，
-   提前显示会看到白屏/半成品（原版注释："启动流程据此决定何时显示窗口"）。
-⚠️ 打补丁（WS_THICKFRAME + NCCALCSIZE）必须在 show 之前：先显示再改样式会闪一下边框。
+========== 启动时序（本轮改了启动画面的位置与关闭时机，务必按这张表理解）==========
+    入口 ToolsGCP.pyw                主线程                          后台线程
+    ────────────────                ───────                         ───────────
+    0. **立刻顶起启动画面**
+       （纯 Win32 分层窗口，早于
+        import desktop.shell —— 那时
+        pywebview/pythonnet 还没加载，
+        画面必须先于这些出现在屏幕上）
+                                    1. 建 pywebview 窗口（hidden + **屏幕外**）
+                                    2. webview.start()（进入主线程消息循环）
+                                    3. 前端加载完成 → api.app.ready() 上报        ← 前端 ready
+                                    4. 就绪 + 缩放有结论 → 移回工作区居中 → 打补丁 → show() 一次
+                                    5. show **之后**才调 _dismiss_splash() 收掉画面
+    ⚠️⚠️ 与旧时序的两点差别（改动前先看明白，不然会做出死锁）：
+       ① 画面的**显示时长不再有固定值**：`splash_screen_duration` 设置项本轮已删，
+          存活期 = "入口顶起它" → "主窗口真的显示出来"。
+       ② 因此画面**不能**再当显示闸门：旧版 _try_show 要等 `_splash_done`，
+          而现在 `_splash_done` 只在画面被关掉之后才为 True → 保留那条判断
+          就是"窗口等画面、画面等窗口"，窗口永远不会显示。
+          同一条理由也决定了 `wait_splash_done()` / `splash_remaining_ms()`
+          现在必须立刻放行（返回 True / 0），别让前端去等原生画面。
+    ⚠️ 窗口一开始必须 `hidden=True`：提前显示会看到白屏/半成品。
+    ⚠️ 打补丁（WS_THICKFRAME + NCCALCSIZE）必须在 show 之前：先显示再改样式会闪一下边框。
+    ⚠️ 启动画面本体是**纯 Win32**（desktop/splash.py），不是 Qt —— 主线程碰 PyQt5
+       会让进程退出时 100% 崩 0xC0000005。旧文档里"Qt 启动画面"的说法已过期。
 ⚠️⚠️ **为什么还要"建在屏幕外"**：
     pywebview 6.2.1 对 `hidden=True` 的实现是（webview/platforms/winforms.py:777-781）：
         browser.Opacity = 0
@@ -69,6 +83,7 @@ import webview
 from pymodels.constants import IS_AUTOSTART, SCRIPT_DIR, CONFIG_DIR
 
 from .api import Api
+from .httpserver import patch_pywebview_server
 from .native import appicon, autostart, capskeyhook, frame, hotkey, tray, win32
 from .splash import SplashController
 from .webhost import create_app
@@ -103,6 +118,31 @@ ZOOM_GATE_TIMEOUT = 1.5
 #   · 真·全屏用 F11 / 前端全屏按钮都行：统一走 shell.toggle_fullscreen() →
 #     frame.enter_fullscreen/exit_fullscreen（原生 SetWindowPos 铺满显示器 + 置顶让开任务栏，
 #     退出时还原矩形/最大化状态/Z 序）。见 frame.py 里那一大段注释。
+# ★★ 本轮（beta.4 收尾）**推翻上一轮我自己的理解**（用户原话：
+#   「我跟你说窗口右上角的最小化/全屏和关闭按钮要系统原生的，而且 ui 我也没让你动，
+#    你为什么把整个窗口都换了？我的意思是这三个按钮的**内部逻辑**要系统原生，
+#    没有让你动其他的」）。
+#   → 需求真正的含义：窗口外观**一个字都不改**（自绘 48px 品牌栏 + 三颗按钮 + 边缘
+#     缩放热区全部保留），改的是**行为**：
+#       最小化 = WM_SYSCOMMAND(SC_MINIMIZE)（系统自己收进任务栏、带系统动画）
+#       最大化 = WM_SYSCOMMAND(SC_MAXIMIZE / SC_RESTORE)（系统自己算贴边与工作区）
+#       关闭   = WM_CLOSE（和系统 X 完全同一条路，照样触发"关闭到托盘"判断）
+#     这三个实现早就在 frame.py（minimize/toggle_maximize/close_window），
+#     前端按钮直接调 window.minimize / window.toggle_maximize / window.close。
+#   上一轮把 FRAMELESS_WINDOW 改成 False 等于**整窗换成系统标题栏**、
+#   把品牌栏和缩放热区都撤了 —— 那不是需求，是实现跑偏，现在改回来。
+#   全屏（F11）走 frame.enter/exit_fullscreen 的**真全屏**：原生 SetWindowPos
+#   铺满显示器 + 置顶让开任务栏 + 退出还原矩形/最大化/Z 序，不再是"假全屏"。
+# ★★ 再补一轮（本轮需求原话：「窗口我要采用系统原生的最小化 全屏和关闭逻辑，
+#   UI不用变，因为现在这些是自己用代码写得模拟的而不是真实的样子」）：
+#   排查结论 —— 三个按钮的**命令**早就是原生的（frame.minimize=SC_MINIMIZE、
+#   toggle_maximize=SC_MAXIMIZE/SC_RESTORE、close=WM_CLOSE），"不像原生"的真正
+#   来源是 frame.py 把 **DWM 过渡动画**（DWMWA_TRANSITIONS_FORCEDISABLED）关掉了：
+#   Win11 最小化的缩进任务栏动画、最大化的展开动画、关闭的淡出全是 DWM 这套，
+#   关掉之后点按钮是"瞬间消失/瞬间铺开"，观感就成了"假的、代码模拟的"。
+#   → 本轮起 install()/refresh_window_attrs()/set_maximized() 统一改传
+#     disable_transitions(False)（恢复系统默认动画，仍然只是本窗口属性，
+#     不动系统全局、不动 UI、不动按钮命令链路）。
 FRAMELESS_WINDOW = True
 
 WINDOW_TITLE = "ToolsGCP"
@@ -142,7 +182,17 @@ class AppShell:
     """整个桌面上壳（一个实例）"""
 
     def __init__(self, settings_manager, splash_enabled: bool = True,
-                 splash_duration_ms: int = 2000):
+                 splash=None):
+        """`splash` 可以传入**已经在入口启动过**的 SplashController（本轮新时序）。
+
+        ⚠️ 为什么改成"传进来"而不是在这里建：需求要求"启动程序后立马先显示这个 ui，
+           然后才开始正常流程启动 ToolsGCP"。而 `import desktop.shell` 这一步本身就要
+           拉 pywebview / pythonnet / bottle（几百毫秒到几秒，慢机器更久），
+           在 run() 里才建启动画面 = 用户先白等一段黑屏。
+           所以 ToolsGCP.pyw 在**只 import 了 pymodels 常量与设置**的最早时机
+           就把画面顶起来，再把控制器对象交给外壳管理生命周期。
+           没传（老调用点 / 测试）也不要紧：run() 里会自己建一个并启动。
+        """
         self.settings_manager = settings_manager
         # 业务管理器：与原版 MainWindow 的接线保持一致（同一份实例传给所有域）
         # ⚠️ 它们必须在**任何 API 调用之前**就绪：js_api 回调是并发的工作线程，
@@ -227,6 +277,10 @@ class AppShell:
         except Exception as exc:                          # noqa: BLE001
             _log("warn", "启动", "startup", f"读取启动最小化设置失败（按正常启动处理）: {exc}")
         self._show_lock = threading.RLock()
+        # 「页面已加载但 ready 丢失」的 6 秒兜底定时器（见 _on_loaded / _on_loaded_grace）
+        self._loaded_grace = None
+        # hwnd 未就绪时 _try_show 的重试定时器（见 _try_show 里「不提交 _shown」分支）
+        self._show_retry = None
         self._closing = False
         self._quitting = False
         self._tray_hint_shown = False
@@ -235,11 +289,29 @@ class AppShell:
         # 退出确认闸门 —— 前端已经弹过确认框并得到用户同意时置 True，
         #    后端就**不再**弹原生确认框（避免弹两次）。
         self._exit_confirmed = False
+        # 退出看门狗的"取消"信号（见 _arm_exit_watchdog）：
+        #    正常走完 _shutdown() 就置位 → 看门狗线程自己退出，不会误伤。
+        self._exit_watchdog_done = threading.Event()
+        # 看门狗是否已经起过（幂等，避免两条退出路径重复起）
+        self._exit_watchdog_armed = False
         # 给 api 层判断"要不要走原生全屏"用（frameless 模式下全屏是 frame.py 自己实现的）
         self.frameless = FRAMELESS_WINDOW
         self._window_closed = False
-        # 全屏状态（F11 / 按钮 共用；非 frameless 模式下 pywebview 不回报状态，只能自己记）
+        # ⚠️ 本轮：全屏状态**不再用 Python 变量记**（用户原话：「不要用 Python 变量记录
+        #   「当前是不是全屏」，直接读窗口样式」）。唯一真相源 = Win32 GWL_STYLE：
+        #   有 WS_POPUP 且没有 WS_CAPTION = F11 真全屏（见 frame.is_fullscreen）。
+        #   这里只保留一个**兼容占位**（老代码/日志可能还读它），不再作为判据。
         self._fullscreen_state = False
+        # 全屏切换互斥锁：F11 有三条入口（原生 AcceleratorKeyPressed / 页面 keydown /
+        # 前端按钮），分别跑在 GUI 线程和 pywebview 的工作线程上，连按时会并发进来。
+        # 并发切换会让"窗口几何已经改了、WebView2 内容层 bounds 还是旧的"叠在一起，
+        # 用户实测到的就是「快速按 F11 中间有个不能点的间隙」→ 整段必须串行。
+        self._fullscreen_lock = threading.Lock()
+        # 连按 F11 的"排队意图"：上一次切换还在进行时新按下的键**不再被丢弃**，
+        # 而是记成一次待办，切换收尾后自动补跑（用户报的"中间有空档期"就是
+        # 旧版拿不到锁直接拒掉 + 原生 0.35s 去抖连吞按键，两下合起来像失灵）。
+        self._fs_queued = False
+        self._fs_queue_lock = threading.Lock()
         # 前端脚本执行失败/WebView2 已释放的日志限流（退出竞态会连续失败，别刷屏）
         self._js_disposed_logged = False
         self._js_error_logged_at = 0.0
@@ -249,9 +321,15 @@ class AppShell:
         self._final_pos = (None, None)
 
         self._splash_enabled = bool(splash_enabled)
-        self._splash_duration_ms = int(splash_duration_ms or 0)
-        # 启动画面真正开始播放的时刻（run() 里会再设一次；先给个值防止提前被问到）
-        self._splash_started_at = self.started_at
+        # ⚠️ 本轮删掉 `_splash_duration_ms`：显示多久不再由设置决定（需求：
+        #    "程序什么时候出现这个悬浮启动画面就什么时候消失、启动完成后再消失"）。
+        #    保留 `_splash_started_at` 只用于日志里报"画面顶了多久"，不参与任何判定。
+        # 已经启动的控制器（ToolsGCP.pyw 传的）在这里接管；没传则 run() 里自建。
+        if splash is not None:
+            self.splash = splash
+            self._splash_started_at = getattr(splash, "started_at", None) or self.started_at
+        else:
+            self._splash_started_at = self.started_at
         self._ready_watchdog = None
         self._hotkey_status = {}
         self._icon_path = os.path.join(CONFIG_DIR, "logo.png")
@@ -429,6 +507,16 @@ class AppShell:
         # ⚠️ 第一件事：法律文件（用户协议/隐私政策）同意状态校验 —— 在任何网络
         #    资源准备之前（本轮需求）。失败也只记日志，绝不挡启动。
         self._precheck_privacy()
+        # ⚠️⚠️ 把 pywebview 内置的 wsgiref 服务器换成 keep-alive 版本（本轮需求②）。
+        #    为什么必须在这里：pywebview 起服务器时是**按模块全局名**去查
+        #    `webview.http.ThreadedAdapter`（webview/http.py:140），而且是在
+        #    `webview.start()` → `Window._initialize()` 里才查 ⇒ 换晚了就来不及。
+        #    换掉之后的效果：一条 TCP 连接可以连续承载多个请求（原来每个静态
+        #    资源都要新建连接），监听 backlog 从 5 提到 128 ⇒ 浏览器一次性并发
+        #    拉 13 个 CSS/JS 时不会把队列塞满 → "CSS 偶尔没加载、界面退回最基础
+        #    样式"这个偶发问题从根上没了。
+        #    失败只记日志、程序照常起（退回 pywebview 自带服务器）。
+        patch_pywebview_server()
         app = create_app()
         self.api = Api(self)
 
@@ -506,21 +594,39 @@ class AppShell:
         self.window.events.loaded += self._on_loaded
         self.window.events.shown += self._on_shown
 
-        # 启动画面（Qt 原版逻辑，跑在自己的线程里）
-        # ⚠️「启动时最小化到托盘」生效时**不播启动画面**：那是个独立的 Qt 小窗，
-        #    主窗口藏了、画面却弹出来，等于开机自启还是打扰用户（自启默认值
-        #    splash_screen_enabled 也是 False，这里只是给"开了动画 + 开了最小化"
-        #    的组合兜底，让隐藏启动真正做到全程静默）。
+        # ---- 启动画面：接管入口已经顶起来的控制器（没有就自己建一个） ----
+        # ⚠️⚠️ 本轮时序改动（需求原话：「启动动画开启后应该启动程序后立马先显示这个ui
+        #    然后才开始正常流程启动 ToolsGCP，启动完成后再让悬浮启动动画消失」）：
+        #      · **显示**由 ToolsGCP.pyw 在 import 外壳之前就做完了（见那边的注释），
+        #        所以到这里为止画面早就在屏幕上了；
+        #      · **关闭**改由本类在"主窗口真的显示出来之后"调 _dismiss_splash()，
+        #        不再有任何"播够 N 秒"的概念（时长设置项本轮已删）；
+        #      · ⚠️ 因此画面**绝对不能再当显示闸门**：以前 _try_show 要等
+        #        `_splash_done`，而现在 `_splash_done` 只在画面关掉之后才为真
+        #        → 留着那条判断就是"窗口等画面、画面等窗口"的死锁，
+        #        窗口永远不显示（本轮最容易做错的地方，已在 _try_show 里解除）。
+        #    「启动时最小化到托盘」生效时这次不显示主窗口，画面也就没有"显示后才关"
+        #    的时机 → 直接当场收掉，保证静默启动全程无窗（原来的语义不变）。
         splash_enabled = self._splash_enabled and not self._startup_hidden
-        if not splash_enabled and self._splash_enabled:
-            _log("info", "启动", "startup", "启动画面已跳过（本次为最小化到托盘的静默启动）")
-            # 双条件的另一条要**立刻置完成**，否则 _try_show 永远等不到 splash 回调
-            self._splash_done = True
-        self._splash_started_at = time.time()
-        self.splash = SplashController(
-            self._icon_path, self._splash_duration_ms,
-            enabled=splash_enabled, on_finished=self._on_splash_finished)
-        self.splash.start()
+        if self.splash is not None:
+            # 入口已启动：这里只补挂回调 + 处理"这次其实不该显示画面"的组合
+            self.splash.attach_finished(self._on_splash_finished)
+            if not splash_enabled:
+                if self._splash_enabled:
+                    _log("info", "启动", "startup",
+                         "启动画面已关闭（本次为最小化到托盘的静默启动）")
+                self._dismiss_splash("静默启动，不显示画面")
+        else:
+            if not self._splash_enabled:
+                self._splash_done = True
+            self._splash_started_at = time.time()
+            self.splash = SplashController(
+                self._icon_path, enabled=splash_enabled,
+                on_finished=self._on_splash_finished)
+            self.splash.start()
+            if not splash_enabled and self._splash_enabled:
+                _log("info", "启动", "startup",
+                     "启动画面已跳过（本次为最小化到托盘的静默启动）")
 
         # 前端首屏就绪的兜底定时器：超时即视为就绪（与原版 UI_READY_TIMEOUT_MS 语义一致）
         self._ready_watchdog = threading.Timer(
@@ -571,9 +677,22 @@ class AppShell:
                 # ⚠️ 把 window 一起传进去：frame 层要用它把 Form.BackColor /
                 #    WebView2.DefaultBackgroundColor 刷成页面底色（见
                 #    frame._refresh_page_background），否则四角会露出建窗时写死的底色。
-                frame.install(hwnd, dark=self._is_dark(), window=self.window)
-                _log("info", "启动", "startup",
-                     f"窗口外壳就绪 hwnd={hwnd}，已打无边框补丁（可拖边缩放）")
+                patched = frame.install(hwnd, dark=self._is_dark(), window=self.window)
+                # ⚠️ 必须按真实返回值记日志：install() 内部是一整段 try/except，
+                #    任何一步抛异常都返回 False，而此时 WS_THICKFRAME 没打上，
+                #    原生拖边缩放（WM_NCLBUTTONDOWN + HTLEFT）就此永久失效 ——
+                #    但标题栏照样能拖（HTCAPTION 走 SC_MOVE，不吃边框样式），
+                #    所以网友看到的正是「窗口不可拉伸但能拖动」。
+                #    以前这里无条件打「已打无边框补丁」，等于把唯一能区分
+                #    「本机正常 / 对方机器失败」的证据抹掉了。
+                if patched:
+                    _log("info", "启动", "startup",
+                         f"窗口外壳就绪 hwnd={hwnd}，已打无边框补丁（可拖边缩放）")
+                else:
+                    _log("warn", "启动", "startup",
+                         f"窗口外壳就绪 hwnd={hwnd}，但无边框补丁未生效："
+                         "拖边缩放只剩确定性缩放会话这条路（前端边缘热区 → "
+                         "window.resize_begin），原生贴边/最大化还原手感会缺失")
             except Exception as exc:                          # noqa: BLE001
                 _log("err", "启动", "startup", f"窗口外壳初始化失败: {exc}")
         # 图标：窗口句柄一存在就设（show 之后 _on_shown 还会再设一次，见那里的说明）
@@ -635,6 +754,34 @@ class AppShell:
     def _on_loaded(self):
         """页面加载完成（DOM ready）：此时前端脚本开始跑，但还没画完"""
         _log("info", "启动", "startup", "前端页面已加载，等待首屏就绪上报")
+        # ★ 本轮修复（用户原话：「网速慢/无网第一次启动，任务栏托盘都出来了，窗口
+        #    就是不出现……资源加载完毕就给我显示窗口」）：
+        #    app.ready 依赖 pywebview api 注入（bridge），冷启动注入晚于 boot() 时
+        #    ready 可能丢；现在前端有重发保险（app.js 的 reportReady），这里再压一道
+        #    **后端独立兜底**：页面资源既然已经加载完毕，6 秒内还没有首屏就绪上报 →
+        #    直接当就绪放窗口。（比 20 秒的总兜底快得多：用户最多对着 6 秒加载页，
+        #    绝不出现「图标在、窗口永不弹出」。）
+        if not self._frontend_ready:
+            with self._show_lock:
+                old = getattr(self, "_loaded_grace", None)
+                if old is not None:
+                    try:
+                        old.cancel()
+                    except Exception:
+                        pass
+                self._loaded_grace = threading.Timer(6.0, self._on_loaded_grace)
+                self._loaded_grace.daemon = True
+                self._loaded_grace.start()
+
+    def _on_loaded_grace(self):
+        """资源加载完毕 + 6 秒仍无就绪上报：视为就绪，放窗口（永不显示比显示慢严重）"""
+        if self._teardown_started or self._quitting or self._frontend_ready:
+            return
+        self._frontend_ready = True
+        _log("warn", "启动", "startup",
+             "页面已加载但 6 秒内未收到首屏就绪上报（api 注入慢或启动脚本卡住），"
+             "按「资源加载完毕」直接显示窗口")
+        self._try_show()
 
     def _on_shown(self):
         """窗口第一次真正显示：这里做"显示之后才能做"的事
@@ -703,40 +850,72 @@ class AppShell:
         _log("info", "窗口", "window", "主窗口已销毁，已停止向前端推送")
 
     def _on_splash_finished(self):
+        """启动画面自己结束了（被我们关掉 / 降级 / 异常 / 撞上赖屏上限）。
+
+        ⚠️ 本轮起它**不再是显示主窗口的前置条件**，只是记个状态：
+           画面现在活到"主窗口已经显示出来"之后，所以这里再推一次 _try_show
+           只是幂等地确认一次闸门（_try_show 内部还有 _shown 保护，不会重复显示）。
+        """
         self._splash_done = True
         self._log_startup_state()
         self._try_show()
 
-    def splash_remaining_ms(self) -> int:
-        """启动画面还剩多少毫秒（给前端做"启动动画播完再显示界面"用）
-        ⚠️ 需求：把启动动画时长设成 5 就必须真的播满 5 秒。
-            早期只有原生窗口受这个约束，前端自己的 loading 遮罩却在数据一回来就撤了，
-            看起来就是"5 秒没到窗口就出来了"。所以这里把剩余时长也告诉前端。
+    def _dismiss_splash(self, why: str = "主窗口已显示") -> None:
+        """让启动画面消失——本轮唯一的关闭入口，由"主流程启动完成"那一处调用。
+
+        ⚠️ 需求原话：「显示时长相关代码改为程序什么时候出现这个悬浮启动画面就什么时候
+           消失」+「启动完成后再让悬浮启动动画消失」。落地成代码就三句话：
+             · 谁叫它关：只有本方法（主窗口显示后 / 静默启动当场 / 退出流程）；
+             · 什么时候关：主窗口**已经显示出来之后**，绝不在显示之前
+               （否则用户看到的就是"画面一闪而过、界面还没好"）；
+             · 关不掉怎么办：SplashController 内部有 SPLASH_HARD_TIMEOUT_MS 安全网，
+               而且 stop() 只置标志、由建窗那条线程自己销毁，跨线程销毁的崩法不复发。
+        ⚠️ 必须在**非 GUI 线程**也能安全调用：stop() 里是 join(timeout)，
+           所以调用方不能是 GUI 线程本身（会自己等自己）——本方法的两个调用点
+           （显示后的收尾、退出流程）都满足；万一哪天要加新调用点，先确认这条。
         """
-        if self._splash_done:
-            return 0
-        if not self._splash_enabled:
-            return 0
         splash = self.splash
         if splash is None:
-            return 0
-        # 已经播过的毫秒数 = 现在 - 启动时刻（SplashController.start 的时间点）
+            self._splash_done = True
+            return
         try:
-            elapsed_ms = (time.time() - self._splash_started_at) * 1000.0
-        except Exception:
-            return 0
-        left = int(self._splash_duration_ms - elapsed_ms)
-        return max(0, left)
+            started = getattr(splash, "started_at", 0.0) or self._splash_started_at
+            lived_ms = int((time.time() - started) * 1000.0) if started else -1
+        except Exception:                                # noqa: BLE001
+            lived_ms = -1
+        _log("info", "启动", "startup",
+             f"启动画面收尾（{why}）：本次共显示 {lived_ms} ms（时长由主流程决定，非固定值）")
+        try:
+            splash.stop(timeout=2.0)
+        except Exception as exc:                         # noqa: BLE001
+            _log("warn", "启动", "startup", f"关闭启动画面异常（不影响使用）: {exc}")
+        self._splash_done = True
+
+    def splash_remaining_ms(self) -> int:
+        """兼容旧接口：本轮起**恒返回 0**。
+
+        ⚠️ 为什么留这个方法而不是删掉：老前端（以及缓存下来的页面）还会调
+           `app.splash_remaining`，删了会拿到 null 走降级路径、日志里多一条噪音。
+        ⚠️ 为什么恒 0：它原来的语义是"启动动画还得播多少毫秒，前端请等够"。
+           时长设置项本轮已按需求删除，画面的存活改由主流程决定，
+           "前端等原生画面"这件事不再成立 —— 而且如果前端真的去等这个值，
+           就会形成"前端遮罩等原生画面、原生画面等主窗口显示、主窗口显示等前端就绪"
+           的循环等待。返回 0 等于明确告诉前端：不要等，你自己该撤就撤。
+        """
+        return 0
 
     def wait_splash_done(self, timeout: float = 30.0) -> bool:
-        """阻塞等启动画面播完（js_api 工作线程里用；超时也放行）"""
-        splash = self.splash
-        if splash is None:
-            return True
-        try:
-            return bool(splash.wait(timeout))
-        except Exception:
-            return True
+        """兼容旧接口：本轮起**立刻返回 True**，绝不阻塞。
+
+        ⚠️ 为什么必须改成这样（这是一个真实的死锁风险，不是顺手清理）：
+           旧语义是"等启动画面播完"，前端在上报 ready 之前调它。而新时序里画面是
+           **主窗口显示之后**才关的 —— 于是：
+              前端等画面关 → 才调 app.ready → 主窗口才显示 → 才关画面
+           首屏永远不 ready，窗口永远不显示，30 秒后才靠超时挣脱。
+           所以这个接口现在只能"立刻放行"。真正想等画面关的场景
+           （其实已经不存在）应该去看 _dismiss_splash 的调用点，而不是等这里。
+        """
+        return True
 
     def _on_ready_timeout(self):
         if self._frontend_ready or self._teardown_started:
@@ -771,7 +950,7 @@ class AppShell:
                 pass
             self._zoom_gate = None
         _log("dbg", "启动", "startup", "界面缩放已有结论，显示闸门放行")
-        if self._frontend_ready and self._splash_done and not self._shown:
+        if self._frontend_ready and not self._shown:
             threading.Thread(target=self._try_show, name="ToolsGCP-zoom-show",
                              daemon=True).start()
 
@@ -790,6 +969,13 @@ class AppShell:
         if self._frontend_ready:
             return
         self._frontend_ready = True
+        grace = getattr(self, "_loaded_grace", None)
+        if grace is not None:
+            try:
+                grace.cancel()
+            except Exception:
+                pass
+            self._loaded_grace = None
         _log("info", "启动", "startup",
              f"首屏内容加载完成（启动后 {time.time() - self.started_at:.2f}s）")
         self._log_startup_state()
@@ -803,11 +989,14 @@ class AppShell:
 
     # ================= 显示（双条件） =================
     def _try_show(self):
-        """三道条件都满足后**唯一**的一次显示动作
-        ⚠️ 本轮从"双条件"升级为三条件：① 前端首屏就绪 ② 启动画面播完
-           ③ **界面缩放已有结论**（见 mark_zoom_ready / ZOOM_GATE_TIMEOUT）。
-           第三条是为了消灭启动时"窗口先出来、内容随后放大填满"的适配跳变；
-           它自带超时兜底，且 r=1.0（绝大多数机器）时默认就是放行状态。
+        """两道条件都满足后**唯一**的一次显示动作
+        ⚠️ 本轮把"启动画面播完"从闸门里**摘掉了**（旧版是三条件：①前端就绪
+           ②画面播完 ③缩放有结论）。原因见下面代码里的推导：
+           新时序下画面是"主窗口显示之后"才关的，再拿它当条件就是自我死锁。
+           现在两道条件：① 前端首屏就绪 ② **界面缩放已有结论**
+           （见 mark_zoom_ready / ZOOM_GATE_TIMEOUT；第三条是为了消灭启动时
+           "窗口先出来、内容随后放大填满"的适配跳变，自带超时兜底，
+           且 r=1.0 时默认就是放行状态）。
         顺序（每一步都有原因，别调）：
           1. 退出闸门 / 已显示过 → 直接返回；
           2. 补一次无边框补丁（句柄可能刚就绪，先显示再改样式会闪边框）；
@@ -840,7 +1029,13 @@ class AppShell:
                 return
             if self._teardown_started or self._quitting:
                 return
-            if not (self._frontend_ready and self._splash_done):
+            # ⚠️⚠️ 本轮关键改动：**显示闸门不再看启动画面**。
+            #    旧条件里有 `self._splash_done`，而新时序下画面是"主窗口显示之后"
+            #    才被 _dismiss_splash 关掉的 → _splash_done 那时才变 True。
+            #    两条规则同时存在 = 窗口等画面、画面等窗口 = **窗口永远不显示**。
+            #    （AGENTS.md 第 5 节说的"解除循环依赖就是这一处"。）
+            #    现在只剩两道真条件：① 前端首屏就绪 ② 界面缩放有结论。
+            if not self._frontend_ready:
                 return
             # ⚠️ 本轮：第三道闸门——界面缩放有结论前不显示（r=1.0 时默认已放行）。
             #    少了这一条，用户就会看到"窗口先出来、内容随后放大填满"的适配跳变。
@@ -866,15 +1061,37 @@ class AppShell:
                      "启动时最小化到托盘已开启（开机自启）：主窗口已真正隐藏"
                      "（任务栏无按钮），单击/双击托盘图标或右键『显示主窗口』均可呼出")
                 return
+            # ⚠️⚠️ 本轮修复（同「窗口永不显示」家族）：hwnd 还没就绪时**不能**提交 _shown。
+            #    旧写法在锁内无条件 `_shown = True`，若那一刻句柄恰好取不到
+            #    （建窗竞态），后面 show/selfcheck 全是空转，而 _shown 已把
+            #    之后所有 _try_show 触发点（ready 重发 / 兜底定时器 / 画面收尾）
+            #    全部挡死 → 窗口永不显示。现在：不提交、200ms 后重试。
+            hwnd = self.hwnd()
+            if not hwnd:
+                with self._show_lock:
+                    if self._shown:
+                        return
+                    retry = getattr(self, "_show_retry", None)
+                    if retry is None:
+                        retry = threading.Timer(0.2, self._try_show)
+                        retry.daemon = True
+                        self._show_retry = retry
+                        retry.start()
+                _log("dbg", "启动", "startup", "窗口句柄尚未就绪，显示动作 0.2s 后重试")
+                return
             self._shown = True
         try:
             # ① 先补一次补丁（句柄可能刚就绪），再显示 —— 顺序反了会闪一下系统边框
             #    ⚠️ 系统标题栏模式（FRAMELESS_WINDOW=False）下不能打这个补丁，
             #       否则非客户区被清零 = 系统三个按钮消失。
-            hwnd = self.hwnd()
             if hwnd and FRAMELESS_WINDOW:
                 # window 一起传：显示前把 Form/WebView2 底色对齐主题，首帧就不会露色差
-                frame.install(hwnd, dark=self._is_dark(), window=self.window)
+                if not frame.install(hwnd, dark=self._is_dark(), window=self.window):
+                    # 与 _wait_for_window 里那条同源：显示前这次也要留痕，
+                    # 否则日志里只剩「补丁成功」的假象（两处任一失败都得说出来）
+                    _log("warn", "启动", "window",
+                         "显示前补打无边框补丁失败（install 返回 False）："
+                         "拖边缩放只剩确定性缩放会话这条路")
 
             # ② ★ 把"搬回屏幕 → 定尺寸 → 居中 → 显示"整体编组到 GUI 线程
             #    ⚠️ 尺寸传**逻辑像素**（self._final_size 记的就是逻辑像素）：
@@ -906,6 +1123,10 @@ class AppShell:
             self._log_show_selfcheck(hwnd)
 
             _log("info", "启动", "startup", "主窗口已显示（尺寸/位置/图标/补丁均已就位）")
+            # ⑤ ★ 需求落点：主窗口**真的显示出来之后**才收掉启动画面。
+            #    顺序不能提前：用户要的是"画面一直顶到程序出现"，
+            #    在 show 之前关就会看到"画面闪一下、然后对着桌面等界面"。
+            self._dismiss_splash("主窗口已显示")
         except Exception as exc:                          # noqa: BLE001
             _log("err", "启动", "startup", f"显示主窗口失败: {exc}")
 
@@ -1555,6 +1776,57 @@ class AppShell:
 
     # ================= 全屏（前端按钮 / F11 / 页面 keydown 都汇聚到这里） =================
     def toggle_fullscreen(self) -> dict:
+        """全屏切换的对外入口：**串行化** + 切换成功后同步内容层布局。
+
+        真正的切换实现在 `_toggle_fullscreen_now()`（三条入口的日志/事件只有一份）。
+        这里包两层，都是为修「连按 F11 中间出现点不动的间隙」：
+          ① 加锁串行：原生 F11（GUI 线程）和页面 keydown/按钮（工作线程）可能同时进来，
+             两次 SetWindowPos 交错 + saved_rect 被第二次覆盖，就会留下几何对了、
+             内容层没跟上的窗口；拿不到锁时明确返回失败（前端会提示），不静默错位。
+          ② 切完主动调 frame.sync_layout_after_geometry()：原生 SetWindowPos 改的是窗口矩形，
+             WinForms 要等自己的布局交易才把 Dock=Fill 的 WebView2 撑满新客户区，
+             主动跑一轮布局 = 用户看到的每一帧都是满的（建窗路径早有同样的处理）。
+        """
+        if not self._fullscreen_lock.acquire(timeout=0.45):
+            # ★ 本轮修复"连按 F11 中间有空档期"（用户原话：「我预期是迅速切换全屏和
+            #   窗口模式，实际上中间有空档期」）：旧写法在这里**直接拒掉**这次按键
+            #   （前端还会弹一条"上一次全屏切换还没结束"的错误提示，观感就是失灵）。
+            #   现在改成"排队补跑"：把这次按键记成一次待办意图，正在跑的那次收尾后
+            #   自动再切一次 —— 双击 F11 的最终状态 = 用户按下奇数次就一定切换成功，
+            #   一次都不吞。排队只记"还要不要再切一次"（布尔），连按 10 下也只会
+            #   合并成最多一次补跑，不会越积越乱。
+            with self._fs_queue_lock:
+                self._fs_queued = True
+            _log("dbg", "窗口", "fullscreen",
+                 "上一次全屏切换还在进行，本次按键已排队（切换收尾后自动补跑）")
+            return {"ok": True,
+                    "fullscreen": bool(frame.is_fullscreen(self.hwnd())),
+                    "via": "queued", "error": "", "state": {}}
+        try:
+            result = self._toggle_fullscreen_now()
+        finally:
+            self._fullscreen_lock.release()
+        if result.get("ok"):
+            try:
+                frame.sync_layout_after_geometry(self.window)
+            except Exception as exc:                      # noqa: BLE001
+                _log("warn", "窗口", "fullscreen", f"切换后同步内容层布局失败（不影响全屏）: {exc}")
+        # 有排队的按键：等 GUI 布局同步落了地再补跑一次（不在锁里跑，避免自锁）
+        with self._fs_queue_lock:
+            need_replay = bool(self._fs_queued)
+            self._fs_queued = False
+        if need_replay and not self._teardown_started and not self._quitting:
+            def _replay():
+                time.sleep(0.05)
+                try:
+                    self.toggle_fullscreen()
+                except Exception as exc:                  # noqa: BLE001
+                    _log("warn", "窗口", "fullscreen", f"排队的 F11 补跑失败: {exc}")
+            threading.Thread(target=_replay, name="ToolsGCP-fs-replay",
+                             daemon=True).start()
+        return result
+
+    def _toggle_fullscreen_now(self) -> dict:
         """切换全屏（**唯一实现**），返回诊断字典
         返回 `{"ok": bool, "fullscreen": bool, "via": str, "error": str, "state": dict}`；
         `ok=False` 表示"请求确实到了后端，但窗口没变成预期状态"（前端要据此提示，
@@ -1567,11 +1839,11 @@ class AppShell:
         三条最后都落到本方法，日志/事件/状态判断只写一份，不会各有各的行为。
         """
         if self.window is None or self._teardown_started or self._window_closed:
-            return {"ok": False, "fullscreen": bool(getattr(self, "_fullscreen_state", False)),
+            return {"ok": False, "fullscreen": bool(frame.is_fullscreen(self.hwnd())),
                     "via": "none", "error": "窗口还没就绪或正在退出", "state": {}}
         hwnd = self.hwnd()
         if not hwnd:
-            return {"ok": False, "fullscreen": bool(getattr(self, "_fullscreen_state", False)),
+            return {"ok": False, "fullscreen": bool(frame.is_fullscreen(self.hwnd())),
                     "via": "none", "error": "未取得窗口句柄", "state": {}}
         before = frame.fullscreen_diagnostics(hwnd)
         _log("info", "窗口", "fullscreen",
@@ -1582,30 +1854,26 @@ class AppShell:
              f"无边框补丁={bool(self.frameless)}")
         via = "framepos"
         error = ""
-        full = bool(getattr(self, "_fullscreen_state", False))
+        # ★ 真相源 = GWL_STYLE（不再读 Python 变量 _fullscreen_state）
+        full = bool(frame.is_fullscreen(hwnd))
         try:
-            if not getattr(self, "frameless", True):
-                # 系统标题栏模式：交给 pywebview 原生（FormBorderStyle + WindowState），
-                # frame.py 那套原生 SetWindowPos 是给"无边框补丁窗口"设计的。
-                # ⚠️ pywebview 不回报状态（frame._state.fullscreen 不会变），所以这里只能
-                #    按"翻转自己记的状态"来算，不能拿 frame.fullscreen_diagnostics 的结果。
-                self.window.toggle_fullscreen()
-                self._fullscreen_state = not bool(full)
-                full = self._fullscreen_state
-                via = "pywebview"
-            else:
-                target = not frame.is_fullscreen()
-                frame.toggle_fullscreen(hwnd, self.window)
-                full = bool(frame.is_fullscreen())
-                self._fullscreen_state = full
-                if full != target:
-                    error = "全屏切换未生效（窗口几何没有变化，可能是 DPI/多屏或窗口状态异常）"
-                via = ("pywebview-fallback" if frame._state.fullscreen_native
-                       else "framepos")
+            # ★ 本轮起两种外壳模式**都**走 frame.toggle_fullscreen（原生 SetWindowPos 铺满
+            #   显示器 + 置顶让开任务栏 + 退出还原）。旧写法在系统标题栏模式下去调
+            #   pywebview 的 window.toggle_fullscreen()：它把 FormBorderStyle 直接抹成 None、
+            #   Bounds 盖满整个屏幕（连任务栏一起盖），退出时还不还原样式 —— 就是用户报的
+            #   "全屏是假的/其他 bug"。现在 frame.enter/exit 内部自己摘/戴 caption 样式
+            #   （见 frame.toggle_caption_for_fullscreen），两条模式一个实现，不再分叉。
+            target = not frame.is_fullscreen(hwnd)
+            frame.toggle_fullscreen(hwnd, self.window)
+            full = bool(frame.is_fullscreen(hwnd))
+            if full != target:
+                error = "全屏切换未生效（窗口几何没有变化，可能是 DPI/多屏或窗口状态异常）"
+            via = ("pywebview-fallback" if frame._state.fullscreen_native
+                   else "framepos")
         except Exception as exc:                          # noqa: BLE001
             error = f"{type(exc).__name__}: {exc}"
         state = frame.fullscreen_diagnostics(hwnd)
-        ok = (not error) and (bool(full) == bool(self._fullscreen_state))
+        ok = (not error) and (bool(full) == bool(frame.is_fullscreen(hwnd)))
         level = "op" if ok else "err"
         _log(level, "窗口", "fullscreen",
              f"全屏切换完成: 成功={ok} 全屏={full} 路径={via} "
@@ -1861,6 +2129,10 @@ class AppShell:
         #     GUI 线程的关闭流程）。之后 Form 才会真的被销毁；这中间的空档里，任何
         #     已经在跑的推送线程都会在 _send() 里被拦下，不会再碰已释放的 WebView2。
         self._stop_background("窗口关闭（彻底退出）", join_tray=False)
+        # ⚠️ 同 quit_app：这条链路也是编组到 GUI 线程的（Form.Close → Application.Exit
+        #    → webview.start() 返回），GUI 线程的消息泵一旦出问题就会永久卡住 →
+        #    进程退不出去。看门狗兜底（正常退出时它会在 _shutdown() 里自己取消）。
+        self._arm_exit_watchdog()
         return True
 
     def request_close_async(self, delay: float = 0.35, force: bool = False):
@@ -1999,12 +2271,73 @@ class AppShell:
         # ① 关闭推送闸门 + 停止首屏就绪定时器 / 热键 / 托盘（托盘 join 等它真的退出；它是独立线程，
         #    不在 GUI 线程上，这里等 2s 不会影响窗口销毁）
         self._stop_background("用户退出", join_tray=True)
-        # ② 再销毁窗口
+        # ② 看门狗**必须在销毁窗口之前**起：window.destroy() 内部是
+        #    `i.Invoke(...)` —— 同步等 GUI 线程执行。GUI 线程一旦卡住，destroy() 本身就
+        #    永远返回不来，看门狗再晚一步就永远起不上了。
+        self._arm_exit_watchdog()
+        # ③ 再销毁窗口
         try:
             if self.window is not None:
                 self.window.destroy()
         except Exception:
             pass
+
+    def _arm_exit_watchdog(self, timeout: float = 12.0):
+        """退出看门狗：主线程在 N 秒内没有真的退出，就强制结束进程。
+
+        为什么需要（用户原话："托盘我点击退出之后发现在后台还是有ToolsGCP程序的python进程"）：
+            正常退出链路是
+                quit_app() → window.destroy() → pywebview 的 destroy_window()
+                → WinForms Form.Close() → FormClosed 事件 → Application.Exit()
+                → webview.start() 返回 → shell.run() 的 finally → self._shutdown()
+            这条链上**每一环都是编组到 GUI 线程**（pywebview 用 `i.Invoke(...)`）。
+            只要 GUI 线程的消息泵出问题（历史上就发生过：窗口过程里一个常量名写错，
+            每条消息都抛异常被守卫吞掉），Form.Close() 就永远等不到 GUI 线程执行，
+            Application.Exit() 不发生 → webview.start() 不返回 → 主线程永久阻塞 →
+            **进程留在后台退不掉**（任务管理器里还能看到 ToolsGCP 的 python 进程）。
+        兜底策略：
+            · 看门狗是 daemon 线程，正常退出时会在 _shutdown() 里被 _exit_watchdog_done
+              置位后自己结束，**不会**误伤；
+            · 只有超时仍未退出，才 os._exit(0) 强杀 —— 走到这一步说明正常链路已经
+              断了，留着进程只会让用户以为"程序没退掉"，还不如直接结束。
+        ⚠️ 用 os._exit 而不是 sys.exit：sys.exit 只抛 SystemExit，主线程卡在
+           C 扩展（WinForms 消息泵）里时根本没人接得住这个异常。
+        """
+        try:
+            if self._exit_watchdog_done.is_set():
+                return
+            # 幂等：同一进程可能两条退出路径都来（托盘"退出" → quit_app；
+            #    窗口 × → _on_closing），重复起看门狗没意义，留最早那个即可。
+            if getattr(self, "_exit_watchdog_armed", False):
+                return
+            self._exit_watchdog_armed = True
+        except Exception:
+            pass
+
+        def _watch():
+            try:
+                if self._exit_watchdog_done.wait(timeout):
+                    return
+            except Exception:
+                pass
+            _log("err", "启动", "startup",
+                 f"退出超时（{timeout:.0f} 秒内主线程未退出，疑似窗口销毁被卡住）：强制结束进程")
+            try:
+                from pymodels.utils.logger import log
+                log.close()          # 日志器没有 flush()，close() 会先把缓冲写完
+            except Exception:
+                pass
+            try:
+                os._exit(0)
+            except Exception:
+                pass
+
+        try:
+            t = threading.Thread(target=_watch, name="ToolsGCP-exit-watchdog",
+                                 daemon=True)
+            t.start()
+        except Exception as exc:                          # noqa: BLE001
+            _log("warn", "启动", "startup", f"退出看门狗启动失败（忽略）: {exc}")
 
     def restart(self, open_settings: bool = False):
         """重启程序（原版 `restart_program`：起一个新进程后自己退出）
@@ -2067,6 +2400,13 @@ class AppShell:
         # ③ 收尾完成标记（放在 log.close() 之前：这是正常退出的最后一条日志）
         _log("info", "启动", "startup",
              "程序收尾完成：后台组件、启动画面均已停止，进程即将退出")
+        # ④ 通知退出看门狗"正常收尾完成" —— 它自己就结束了，不会再强杀进程。
+        #    放在 log.close() **之前**：看门狗超时时会再写一条日志并 flush，
+        #    那时日志还没关。
+        try:
+            self._exit_watchdog_done.set()
+        except Exception:
+            pass
         try:
             from pymodels.utils.logger import log
             log.close()

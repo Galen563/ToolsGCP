@@ -11,7 +11,7 @@ APP_NAME = "ToolsGCP"
 # ⚠️ 版本号**只此一份**，别再往别处写第二份（pymodels/__init__.py 已经改成从这里转发）。
 #    格式是语义化版本 SemVer：主版本.次版本.修订号[-预发布标识]
 #    完整规则见 docs/VERSIONING.md。这里**不带 v**（只有 git tag 和界面显示才带 v）。
-APP_VERSION = "1.0.0-beta.3"
+APP_VERSION = "1.0.0-beta.4"
 APP_AUTHOR = "Galen563"
 # 本构建自身的通道：beta（预发布）/ stable（正式）。**只影响界面上的标识显示**，
 # "用户想收哪种版本"是另一个概念，存在设置里（见下面的 update_channel）。
@@ -207,7 +207,12 @@ DEFAULT_SETTINGS = {
     "releases_source": "official",
     "deploy_mode": False,  # False=导出模式, True=部署模式（持久化）
     "splash_screen_enabled": False,  # 启动动画开关（需求：默认关闭）
-    "splash_screen_duration": 2,    # 启动动画时长（秒）
+    # ⚠️ 本轮**删除**了 `splash_screen_duration`（启动动画时长）。需求原话：
+    #    「设置中的启动动画时长删除，这个从此就不要了……显示时长相关代码改为程序
+    #     什么时候出现这个悬浮启动画面就什么时候消失」。现在画面的存活时间是
+    #    「入口顶起它 → 主窗口真的显示出来 → 关掉」，没有任何固定秒数。
+    #    老用户配置里可能还留着这个键，它已经不被读取也不会被写回（惰性残留）；
+    #    **不要**再用这个名字新增设置项，否则旧值会凭空复活。
     # 主题效果：mica=云母（默认）/ glass=毛玻璃 / acrylic=亚克力
     # 只影响标题栏、侧栏与弹层的模糊/底噪/高光，内容区永远清晰
     "theme_effect": "mica",
@@ -282,6 +287,22 @@ DEFAULT_SETTINGS = {
     #   stable = 仅正式版
     #   beta   = 仅 Beta 版
     "update_channel": "all",
+    # ⚠️ 本轮新增（用户需求：「设置中的更新下载渠道下面位置新增一个自动检查更新，
+    # 默认下拉框选择在右上角提示，还有弹窗提示和关闭」）：
+    # 启动后自动检查更新的行为，三态：
+    #   corner（默认）= 后台静默检查，发现新版从屏幕右上角滑出精简提示；
+    #   dialog        = 后台静默检查，发现新版直接弹完整「发现新版本」窗口；
+    #   off           = 启动后不进行任何自动检查（设置里的「检查更新」按钮不受影响）。
+    # ⚠️ 纯前端消费（webui/js/app.js autoCheckUpdate），后端只是存的默认值与合并
+    #    基准；默认值必须与 app.js 的 SETTINGS_DEFAULTS.update_auto_check 逐字一致。
+    "update_auto_check": "corner",
+    # 本轮新增：自动检查里被用户点「取消」跳过的那个版本号（tag）。
+    # 空串 = 没跳过过任何版本。需求原话：「点击取消则此次版本将不再进行提示，弹窗提示也同理」
+    # —— 必须落盘（只存内存的话下次启动同一个版本又弹，等于没记住）；
+    # 只影响自动检查，手动点「检查更新」永远照常弹；作者发布新 tag 后自然重新提示。
+    # ⚠️ 消费方在 webui/js/app.js（muteUpdateTag / autoCheckUpdate），
+    #    默认值必须与 SETTINGS_DEFAULTS.update_muted_tag 逐字一致。
+    "update_muted_tag": "",
     "api_key": "",                   # 自定义 API Key（旧字段，已迁移到 api_key_enc_<服务商>）
     "api_key_enc": "",               # 加密后的 API Key 旧单槽（首次读取时迁移到当前服务商槽）
     "model_name": "",                # 模型名称（界面显示名，如 deepseek-v4.1-flash；发送时按官方文档转换）
@@ -358,10 +379,21 @@ DEFAULT_SETTINGS = {
     #     于是同厂商两条档案在界面上是两条独立分组、后端却永远只认靠前那条：
     #     点第二条的模型 = 看着切了、实际没切（用户报的"两个同时改变切换状态"）。
     #     有值且能在数组里找到时，它优先于顺序推导。
-    #   `ai_thinking_level` —— **按模型**分别记住思考档位：{ "<provider>|<model>": "high" }。
+    #   `ai_thinking_level` —— **按档案 + 按模型**分别记住思考档位：
+    #     { "<档案id>|<provider>|<model>": "high" }（键算法见 core/ai/profiles.thinking_key）。
     #     旧设计只有一个全局 `ai_thinking`，换模型就被顶掉（用户原话：
-    #     "每个思考强度都有单独的存储等级几的强度"）。默认档仍然是关（需求"默认关闭"），
-    #     查不到这个模型的记录时回落到 `ai_thinking`（保持旧行为）。
+    #     "每个思考强度都有单独的存储等级几的强度"）。
+    #     ⚠️ 本轮改掉的坑（用户原话："每个思考 ui 都应该是关闭状态，并且每个都是
+    #        独立存储的"）：查不到记录时**不再回落到 `ai_thinking`**。
+    #        那条回退等价于"任何新出现的厂商/档案/模型，默认继承上一个模型的高档位"
+    #        —— 全局值每次切模型都会被刷新，所以新加一家厂商就凭空变成 high/medium。
+    #        现在：查不到 = off；老用户已有的历史值（厂商级旧键 `<provider>|<model>`
+    #        和全局快照）在 desktop/api/ai.py 的 _ensure_thinking_store 里
+    #        **一次性归位**到它真正属于的那条档案上（标记键 `ai_thinking_migrated`，
+    #        ⚠️ 这个标记**绝不能**加进下面的 DEFAULT_SETTINGS：SettingsManager 的合并
+    #        循环会先把它补成默认值，那段迁移就永远变成死代码）。
+    #        `ai_thinking` 从此只是"当前这一次用的档位"的派生快照，谁拿它当默认值谁就
+    #        复现上面那个 bug（前端 app.js 的 aiThinkStoredLevel 同一条纪律）。
     "ai_profile_id": "",
     "ai_thinking_level": {},
     "limit_token_output": False,     # 限制 token 输出（⚠️ 新一轮已从设置页移除，
@@ -375,13 +407,31 @@ DEFAULT_SETTINGS = {
     # 决定回答的长度和细节程度，对应 core/ai/prompt.py 里的 MODE_PROMPTS。
     # ---------- 内置插件 GCP-AI Agent ----------
     # 打开后 GCP-AI 拥有"操作 ToolsGCP 的手"（见 core/ai/agent_tools.py）。
-    # ⚠️ **默认关闭**（需求：插件 GCP-AI Agent 改为默认关闭）：
-    #    关着的时候发请求连一个字的工具提示词都不带，模型只会正常聊天；
-    #    用户要求它"干活"时，它会按固定文案引导用户去插件页打开。
-    "gcp_ai_agent_enabled": False,
+    # ⚠️⚠️ **默认 True = 强制开启**（本轮用户要求原话：「把 Agent 插件设置为强制
+    #    开启无法关闭」）。这个键**只是"保留键"**：值恒为 True，插件中心/设置页
+    #    那一行都置灰锁死，后端 PluginsDomain.set_enabled 与 AgentBridge.set_enabled
+    #    都会拒绝写成 False，并把老配置里的脏值纠正回来。
+    #    → 为什么还留着这个键而不是删掉：manifest 里 enabled_setting 指向它，
+    #      前端卡片开关、capabilities 能力清单、agent_runtime.enabled() 全都读它；
+    #      删键会让这些地方读到 undefined（=假），反而"看起来关着"。
+    #    → 历史语义：上一版这里是 False（默认关闭、只正常聊天）。强制开启是本轮才改的，
+    #      老用户配置里可能还残留 False，由 desktop/api/plugins.py 的
+    #      _repair_agent_setting() 在同步时纠正。
+    "gcp_ai_agent_enabled": True,
     # 单个"手"的开关：{工具名: False} 表示这一项被用户关掉了。
     # ⚠️ 只记**被关掉的**（默认全开），新加的工具自动是开的。
     "gcp_ai_agent_tools_off": [],
+    # ---------- AI 对话模式（输入框旁边那颗胶囊，本轮新增） ----------
+    # 用户原话：「在GCP-AI页面或者右侧窗这个模型选择左侧新增一个一样的ui，不过点击出来
+    #   里面的不一样，只有一个Chat和Agent选项，Chat只能聊天也是默认选项，Agent则可以
+    #   调用AI Agent获取可以行动起来的能力，不单单是只能聊天，不过确实也可以只把它当作
+    #   聊天对象（这两个模式切换也出储存在配置里面）。」
+    #   · "chat"  —— 纯聊天：**不注入工具清单、不跑工具循环**（省 token，也免得模型乱调）；
+    #   · "agent" —— 可以动手：注入 Agent 工具清单并允许工具循环（但仍受逐项开关约束）。
+    # ⚠️ 和 gcp_ai_agent_enabled 的分工：那个是**插件总开关**（强制开启、决定"这套能力
+    #    存不存在"），这个是**每一次对话的用法**（决定"这次要不要真的动手"）。
+    #    插件强制开启 ≠ 每次聊天都要动手 —— 用户明确要求 Chat 是默认选项。
+    "ai_chat_mode": "chat",
     # ---------- 内置插件插件制作辅助（旧名：插件制作器） ----------
     # 默认关闭。开启后可以通过提示词让 AI 按模板做一个新插件并装到 plugins/ 下。
     "gcp_plugin_maker_enabled": False,

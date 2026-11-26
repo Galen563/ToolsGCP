@@ -62,15 +62,38 @@ def parse_listed_at(value):
     return None
 
 
-def tag_filter_options(items) -> list:
+def _canon(value, canonical) -> str:
+    """术语规范化：canonical 由调用方注入。
+    ⚠️ 传 None 时**原样返回** —— 这是本模块「测试不需要语言文件」红线（见文件头 docstring）
+       的落实方式：要规范化的人（API 层）负责把 language_manager.canonical_term 传进来。
+    回调抛异常也不污染筛选结果：退化成不规范化，最多候选回到改动前的样子。
+    """
+    raw = str(value)
+    if canonical is None:
+        return raw
+    try:
+        out = str(canonical(value) or "")
+    except Exception:
+        return raw
+    return out.strip() or raw
+
+
+def tag_filter_options(items, canonical=None) -> list:
     """标签筛选行的选项：类别 ∪ 标签（去重后按名字排序）
     ⚠️ 必须取并集：tags 里去掉了与类别重复的值，只取 tags 会凭空少掉
        工具 / 游戏 / AI这些最常见筛选项。
+    ⚠️ 取值先规范成简体中文规范值再排序：术语表一个概念只登记规范值一个键，不规范化就会
+       出现「游戏平台 / 遊戲平台 / Game platform 三项并列，且三种界面语言下都显示简体中文」
+       —— 第五轮需求③「更多筛选里很多只有简体中文」的正身。
+       并集口径不变：只在 English 池填过的词照样进候选，只是被折成规范值那一项。
     """
     values = set()
     for item in items or []:
-        for value in resource_schema.keywords_of(item):
-            values.add(str(value))
+        # ⚠️ 取**并集**（keywords_all_of）：类别/标签是三个独立语言池，
+        #    用户定夺「各语言值都能被搜到」⇒ 只在 English 池里填过的词也要出现在候选里。
+        #    老数据只有一份 ⇒ 并集 == 显示值 ⇒ 候选列表与改动前一致。
+        for value in resource_schema.keywords_all_of(item):
+            values.add(_canon(value, canonical))
     return sorted(values)
 
 
@@ -118,11 +141,13 @@ def match_keyword(item: dict, keyword: str, digits: str = None) -> bool:
     if keyword in str(item.get("description", "")).lower():
         return True
     # 关键词匹配 = 类别 ∪ 标签（理由同 tag_filter_options）
+    # ⚠️ 用**并集**（keywords_all_of）：各语言池里出现过的词都要能被关键词搜到。
     return any(keyword in str(v).lower()
-               for v in resource_schema.keywords_of(item))
+               for v in resource_schema.keywords_all_of(item))
 
 
-def passes_filters(item: dict, filters: dict, latest=None, is_favorite=None) -> bool:
+def passes_filters(item: dict, filters: dict, latest=None, is_favorite=None,
+                   canonical=None) -> bool:
     """更多筛选的判定：**组内多选是或，组间是与**
     `filters` 取值（与原 FilterPanel.values() 同形）：
         {"category": [...], "tag": [...], "source": [...], "favorite": [...],
@@ -141,14 +166,20 @@ def passes_filters(item: dict, filters: dict, latest=None, is_favorite=None) -> 
 
     categories = filters.get("category") or []
     # category 现在是列表（一条资源可以属于多个类别）：命中任意一个就算通过
-    if categories and not set(resource_schema.categories_of(item)) & set(categories):
+    # ⚠️ 用**并集**比对（categories_all_of）：筛选候选来自并集，比对必须同一口径，
+    #    否则会出现「候选里有『网络』、点了却筛不出来」。
+    # ⚠️ 两侧同一口径规范化：候选给的是规范值，条目可能只在繁体 / English 池里填了别名写法
+    #    （用户投稿只填英文分段是常态），不规范化就一条都筛不出来。
+    #    不传 canonical 时 _canon 原样返回 ⇒ 老口径零改变。
+    if categories and not set(_canon(c, canonical) for c in resource_schema.categories_all_of(item)) \
+            & set(_canon(c, canonical) for c in categories):
         return False
 
     tags = filters.get("tag") or []
     if tags:
-        # 标签筛选看的是类别 ∪ 标签——和筛选行里列出来的选项同一套取值
-        item_tags = [str(t) for t in resource_schema.keywords_of(item)]
-        if not any(t in item_tags for t in tags):
+        # 标签筛选看的是类别 ∪ 标签——和筛选行里列出来的选项同一套取值（并集 + 同一规范化口径）
+        item_tags = {_canon(t, canonical) for t in resource_schema.keywords_all_of(item)}
+        if not any(_canon(t, canonical) in item_tags for t in tags):
             return False
 
     sources = filters.get("source") or []
@@ -199,7 +230,7 @@ def passes_filters(item: dict, filters: dict, latest=None, is_favorite=None) -> 
 
 
 def query(items, keyword: str = "", filters: dict = None, favorites=None,
-          latest: set = None):
+          latest: set = None, canonical=None):
     """把搜索关键词 + 更多筛选一起作用到列表上（原 _apply_filters）
     参数：
         items       = 全部资源（`ResourceLoader.get_all()` 的结果）
@@ -207,6 +238,7 @@ def query(items, keyword: str = "", filters: dict = None, favorites=None,
         filters     = FilterPanel.values() 同形
         favorites   = 收藏管理器（可空；只影响"仅看收藏"）
         latest      = 最新这一档的编码集合
+        canonical   = 术语规范化回调（可空 = 不规范化），见 passes_filters 说明
     ⚠️⚠️ `latest` **必须由调用方先算好**（`latest_codes(items)`），本函数不自己算。
         这是原版的真实语义，别"顺手改成自动算"：
             原流程 = `_refresh_latest_codes(); _apply_filters()`（见
@@ -236,7 +268,8 @@ def query(items, keyword: str = "", filters: dict = None, favorites=None,
     matched = [
         item for item in items
         if match_keyword(item, keyword, digits)
-        and passes_filters(item, filters, latest=latest, is_favorite=is_favorite)
+        and passes_filters(item, filters, latest=latest, is_favorite=is_favorite,
+                             canonical=canonical)
     ]
     return matched, keyword
 

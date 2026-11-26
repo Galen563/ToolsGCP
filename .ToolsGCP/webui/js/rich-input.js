@@ -188,7 +188,12 @@
   var ATOMIC_SELECTOR = '.' + TOKEN_CLASS + ', .' + SLASH_CLASS;
   /* 名称：不含 @ ( ) 与换行（允许中间有空格，例如 "Adobe Photoshop"）；非贪婪，遇到 ( 就停。
      编码：优先 TG-\d{6,}，同时兼容任意 [A-Z]{2,}-\d{4,}（VSCode / IDEA / JetBrains 之类）。*/
-  var MENTION_SOURCE = /@([^@()\r\n]+?)\(([A-Z]{2,}-\d{4,})\)/.source;
+  /* task-12 需求 6：新增**可选** [选中文本] 后缀（group 3）。
+     不带时行为与旧正则逐字符一致（(?:…)? 整段可选）；带时方括号属于 token 的一部分，
+     setText → getPlainText 的往返才不会把 "@Trae(TG-000015)[2026-09-21 00:40]"
+     拆成"token + 普通文本"（那样选中态/删除/序列化三段逻辑全对不上）。
+     字符类排除换行、[ 和 ] —— ] 是唯一终止符，避免吃掉后面的正文。 */
+  var MENTION_SOURCE = /@([^@()\r\n]+?)\(([A-Z]{2,}-\d{4,})\)(?:\[([^\n\[\]]{1,200})\])?/.source;
   /* /命令词：只认/ + 字母开头的短词，避免把 "/home/user" 这种路径也吃掉*/
   var SLASH_RE = /^\/([A-Za-z][A-Za-z0-9_-]*)/;
   /* 命令词白名单默认值（组件 props.commands 可覆盖，方便后端 hints 以后加别的命令）*/

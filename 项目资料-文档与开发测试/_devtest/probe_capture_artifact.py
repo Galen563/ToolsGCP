@@ -9,6 +9,9 @@
   4) 再一张（无窗口，验证桌面是否静态/幻灯片）
 如果 (2) 的"远处 50,50"也变成 (0,0,0)，而 (1)(3)(4) 是壁纸色 → 是 **BitBlt 的抓取伪影**，
 不是渲染 bug；真透明的验证必须改用 PrintWindow / 或"同图内角内 vs 角外"的连续性判据。
+
+⚠️ 第 31 轮起：**默认不跑**（会弹窗 + 连抓 5 张全屏，占用屏幕）；必须显式加 --show。
+   默认状态下它**不弹任何窗、不截任何屏**，你的屏幕完全不被占用。
 """
 import ctypes
 import os
@@ -85,6 +88,13 @@ def splash_rect():
 
 
 def main():
+    # 第 31 轮：默认**不跑** —— 这个脚本会真弹启动画面 + 连抓 5 张全屏截图，
+    # 用户要一边用电脑一边跑测试，不能被它抢屏。要跑必须显式 --show。
+    if "--show" not in sys.argv:
+        print("默认不跑：真机会弹启动画面 + 连抓 5 张全屏截图（会占用你的屏幕）。")
+        print("要跑请显式加 --show：")
+        print('    python "项目资料-文档与开发测试/_devtest/probe_capture_artifact.py" --show')
+        return
     from desktop import splash as S
     icon = os.path.join(ROOT, ".ToolsGCP", "logo.png")
     far = (60, 60)

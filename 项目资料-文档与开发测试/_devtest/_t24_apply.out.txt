@@ -1,0 +1,186 @@
+task-24 迁移 dry-run 全表（code / 字段 / 语言池 / before→after）
+资源库 = C:\Users\Administrator\Desktop\ToolsGCP开发\v1.1.4 - 12\.ToolsGCP\ToolsGCP-Resources.json
+条目数 = 57，schema = 2.1.0
+
+── 将自动修正：17 处 ──
+
+[塌缩+反查] TG-000003.tags  (反查后三池同值)
+    语言池 简体中文       before=["游戏平台", "官方"]
+                           after =["游戏平台", "官方"]
+    语言池 繁體中文       before=["遊戲平台", "官方"]
+                           after =["游戏平台", "官方"]
+    语言池 English    before=["Game platform", "官方"]
+                           after =["游戏平台", "官方"]
+    => 落盘值 ["游戏平台", "官方"]
+
+[塌缩+反查] TG-000007.tags  (反查后三池同值)
+    语言池 简体中文       before=["游戏平台"]
+                           after =["游戏平台"]
+    语言池 繁體中文       before=["遊戲平台"]
+                           after =["游戏平台"]
+    语言池 English    before=["Game platform"]
+                           after =["游戏平台"]
+    => 落盘值 ["游戏平台"]
+
+[塌缩+反查] TG-000008.tags  (反查后三池同值)
+    语言池 简体中文       before=["游戏平台"]
+                           after =["游戏平台"]
+    语言池 繁體中文       before=["遊戲平台"]
+                           after =["游戏平台"]
+    语言池 English    before=["Game platform"]
+                           after =["游戏平台"]
+    => 落盘值 ["游戏平台"]
+
+[塌缩+反查] TG-000014.tags  (反查后三池同值)
+    语言池 简体中文       before=["轻量"]
+                           after =["轻量"]
+    语言池 繁體中文       before=["輕量"]
+                           after =["轻量"]
+    语言池 English    before=["Lightweight"]
+                           after =["轻量"]
+    => 落盘值 ["轻量"]
+
+[塌缩+反查] TG-000041.tags  (反查后三池同值)
+    语言池 简体中文       before=["系统", "粘贴板"]
+                           after =["系统", "粘贴板"]
+    语言池 繁體中文       before=["系统", "粘貼板"]
+                           after =["系统", "粘贴板"]
+    语言池 English    before=["系统", "Clipboard"]
+                           after =["系统", "粘贴板"]
+    => 落盘值 ["系统", "粘贴板"]
+
+[塌缩+反查] TG-000044.tags  (反查后三池同值)
+    语言池 简体中文       before=["学习", "教学辅助"]
+                           after =["学习", "教学辅助"]
+    语言池 繁體中文       before=["学习", "教學輔助"]
+                           after =["学习", "教学辅助"]
+    语言池 English    before=["学习", "Teaching aid"]
+                           after =["学习", "教学辅助"]
+    => 落盘值 ["学习", "教学辅助"]
+
+[塌缩+反查] TG-000048.tags  (反查后三池同值)
+    语言池 简体中文       before=["系统", "文件转换"]
+                           after =["系统", "文件转换"]
+    语言池 繁體中文       before=["系统", "文件轉換"]
+                           after =["系统", "文件转换"]
+    语言池 English    before=["系统", "FileConverter"]
+                           after =["系统", "文件转换"]
+    => 落盘值 ["系统", "文件转换"]
+
+[塌缩+反查] TG-000049.tags  (反查后三池同值)
+    语言池 简体中文       before=["AI原生浏览器"]
+                           after =["AI原生浏览器"]
+    语言池 繁體中文       before=["AI原生瀏覽器"]
+                           after =["AI原生浏览器"]
+    语言池 English    before=["AI-native browser"]
+                           after =["AI原生浏览器"]
+    => 落盘值 ["AI原生浏览器"]
+
+[塌缩+反查] TG-000051.tags  (反查后三池同值)
+    语言池 简体中文       before=["图标生成", "多平台"]
+                           after =["图标生成", "多平台"]
+    语言池 繁體中文       before=["圖標生成", "多平台"]
+                           after =["图标生成", "多平台"]
+    语言池 English    before=["Icon Maker", "Multi-Platform"]
+                           after =["图标生成", "多平台"]
+    => 落盘值 ["图标生成", "多平台"]
+
+[塌缩+反查] TG-000052.tags  (反查后三池同值)
+    语言池 简体中文       before=["服务器部署", "管理"]
+                           after =["服务器部署", "管理"]
+    语言池 繁體中文       before=["伺服器部署", "管理"]
+                           after =["服务器部署", "管理"]
+    语言池 English    before=["Server deployment", "Management"]
+                           after =["服务器部署", "管理"]
+    => 落盘值 ["服务器部署", "管理"]
+
+[塌缩+反查] TG-000053.tags  (反查后三池同值)
+    语言池 简体中文       before=["管理器"]
+                           after =["管理器"]
+    语言池 繁體中文       before=["管理器"]
+                           after =["管理器"]
+    语言池 English    before=["Manager"]
+                           after =["管理器"]
+    => 落盘值 ["管理器"]
+
+[用户指定覆盖] TG-000055.category  (lead 明确要「都改为编程」? 非默认值赢（三池不一致也不自动合，这条按用户指定写扁平 list[str]）)
+    语言池 简体中文       before=["编程"]
+                           after =["编程"]
+    语言池 繁體中文       before=["工具"]
+                           after =["编程"]
+    语言池 English    before=["工具"]
+                           after =["编程"]
+    => 落盘值 ["编程"]
+
+[塌缩+反查] TG-000055.tags  (反查后三池同值)
+    语言池 简体中文       before=["版本控制", "知名"]
+                           after =["版本控制", "知名"]
+    语言池 繁體中文       before=["版本控制", "知名"]
+                           after =["版本控制", "知名"]
+    语言池 English    before=["Version Control", "知名"]
+                           after =["版本控制", "知名"]
+    => 落盘值 ["版本控制", "知名"]
+
+[塌缩+反查] TG-000056.category  (反查后三池同值)
+    语言池 简体中文       before=["社交"]
+                           after =["社交"]
+    语言池 繁體中文       before=["社交"]
+                           after =["社交"]
+    语言池 English    before=["Social"]
+                           after =["社交"]
+    => 落盘值 ["社交"]
+
+[塌缩+反查] TG-000056.tags  (反查后三池同值)
+    语言池 简体中文       before=["社交"]
+                           after =["社交"]
+    语言池 繁體中文       before=["社交"]
+                           after =["社交"]
+    语言池 English    before=["Social"]
+                           after =["社交"]
+    => 落盘值 ["社交"]
+
+[塌缩+反查] TG-000057.category  (反查后三池同值)
+    语言池 简体中文       before=["社交"]
+                           after =["社交"]
+    语言池 繁體中文       before=["社交"]
+                           after =["社交"]
+    语言池 English    before=["Social"]
+                           after =["社交"]
+    => 落盘值 ["社交"]
+
+[塌缩+反查] TG-000057.tags  (反查后三池同值)
+    语言池 简体中文       before=["社交"]
+                           after =["社交"]
+    语言池 繁體中文       before=["社交"]
+                           after =["社交"]
+    语言池 English    before=["Social"]
+                           after =["社交"]
+    => 落盘值 ["社交"]
+
+── 三池不一致（待用户自决，不改盘）：3 处 ──
+
+[三池不一致] TG-000016.tags
+    现值   = {"简体中文": ["MC启动器", "知名"], "繁體中文": ["MC启动器"], "English": ["MC启动器"]}
+    原因   = 各语言池内容不相等（反查回规范中文后仍不相等）? 属于「内容本来就不同」，按口径不自动合并、也不改值
+    建议   = {"简体中文": ["MC启动器", "知名"], "繁體中文": ["MC启动器"], "English": ["MC启动器"]}
+
+[待 lead 定夺] TG-000022.tags
+    现值   = {"简体中文": ["实用", "系统", "粘贴板"], "繁體中文": ["实用", "系统", "粘貼板"], "English": ["实用", "系统", "Clipboard"]}
+    原因   = 任务书把它列为「三池多了『系统』? 不自动改」的例子，但实测三池内容一致（反查后都是 ["实用", "系统", "粘贴板"]）? 前提不成立；已请 lead 定夺，未答复前不动盘
+    建议   = {"简体中文": ["实用", "系统", "粘贴板"], "繁體中文": ["实用", "系统", "粘贴板"], "English": ["实用", "系统", "粘贴板"]}
+      繁體中文 残留显示文本: 粘貼板→粘贴板
+      English 残留显示文本: Clipboard→粘贴板
+
+[三池不一致] TG-000050.tags
+    现值   = {"简体中文": ["抠图", "去背景", "AI图像"], "繁體中文": ["摳圖", "去背", "AI圖像"], "English": ["Background Removal", "AI Cutout", "Photo Tool"]}
+    原因   = 各语言池内容不相等（反查回规范中文后仍不相等）? 属于「内容本来就不同」，按口径不自动合并、也不改值
+    建议   = {"简体中文": ["抠图", "去背景", "AI图像"], "繁體中文": ["抠图", "去背景", "AI图像"], "English": ["去背景", "AI图像", "Photo Tool"]}
+      繁體中文 残留显示文本: 摳圖→抠图; 去背→去背景; AI圖像→AI图像
+      English 残留显示文本: Background Removal→去背景; AI Cutout→AI图像
+
+备份1 滚动 = C:\Users\Administrator\.ToolsGCP\backups\ToolsGCP-Resources.prev.json
+备份2 快照 = C:\Users\Administrator\Desktop\ToolsGCP开发\v1.1.4 - 12\项目资料-文档与开发测试\_devtest\_bak\ToolsGCP-Resources.before_task24.json
+已落盘 17 处
+幂等复跑：二次变更=1 处；二次待自决=3 处
+落盘后脏值残留（含待自决条目）：7 处
+报告已写 C:\Users\Administrator\Desktop\ToolsGCP开发\v1.1.4 - 12\项目资料-文档与开发测试\_devtest\task24_migration_report.txt

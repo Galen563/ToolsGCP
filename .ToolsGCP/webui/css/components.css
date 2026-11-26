@@ -7,10 +7,32 @@
   height: 32px; padding: 0 12px; display: inline-flex; align-items: center; justify-content: center; gap: 7px;
   border-radius: 8px; border: 1px solid var(--glass-border); background: var(--glass);
   color: var(--text); font-size: 12.5px; white-space: nowrap;
-  transition: background 140ms ease, border-color 140ms ease, transform 120ms ease, color 140ms ease;
+  /* 基础段 = "松手回弹"：transform 走 spring 曲线回原位（末端轻微过冲，绝不闪回）；
+     颜色/阴影统一 --dur-hover(200ms) 平滑过渡，禁用 linear。
+     按下的快进曲线写在下面 .btn:active 里 —— 纯 CSS 两段曲线手法，见 animations.css 顶部注释。 */
+  transition: background var(--dur-hover) var(--ease-out-soft),
+              border-color var(--dur-hover) var(--ease-out-soft),
+              color var(--dur-hover) var(--ease-out-soft),
+              box-shadow var(--dur-hover) var(--ease-out-soft),
+              transform var(--dur-release) var(--ease-spring);
 }
-.btn:hover { background: var(--hover-strong); border-color: color-mix(in srgb, var(--text) 14%, transparent); }
-.btn:active { transform: translateY(1px); }
+/* hover 阴影由 --accent 派生（不许写死色值）：极轻的一层辉光，呼应 :active 缩小的"贴下去"感。
+   danger 系被 :not 排除：红底/红字叠 accent 蓝辉光在暗色主题下会发紫，它们有自己的
+   --danger 派生 hover（见下方 .btn-danger/.btn-danger-ghost 规则）。 */
+.btn:hover:not(.btn-danger):not(.btn-danger-ghost) { background: var(--hover-strong); border-color: color-mix(in srgb, var(--text) 14%, transparent); box-shadow: 0 3px 12px color-mix(in srgb, var(--accent) 12%, transparent); }
+/* 按压：scale(.96) 取代旧的 translateY(1px)——位移会让按钮在 flex 行里"跳基线"，
+   缩放以自身为中心、不挤压邻居。:active 内声明的 transition 就是"按住期间"生效的快进段
+   （90ms ease-out，跟手）；松手后本规则失配，落回基础规则的 250ms spring 回弹段。
+   颜色项继续用 --dur-hover：按住瞬间若 class 变化（如 is-on 点亮）仍是 200ms 渐变，
+   不会因为按压把颜色过渡弄丢。 */
+.btn:active {
+  transform: scale(.96);
+  transition: transform var(--dur-press) var(--ease-out-soft),
+              box-shadow var(--dur-press) var(--ease-out-soft),
+              background var(--dur-hover) var(--ease-out-soft),
+              border-color var(--dur-hover) var(--ease-out-soft),
+              color var(--dur-hover) var(--ease-out-soft);
+}
 .btn:disabled { opacity: .42; pointer-events: none; }
 .btn.is-on { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 40%, transparent); background: var(--accent-soft); }
 .btn-primary {
@@ -18,7 +40,11 @@
   border-color: transparent; color: var(--accent-ink); font-weight: 600;
   box-shadow: 0 6px 18px color-mix(in srgb, var(--accent) 22%, transparent);
 }
-.btn-primary:hover { background: var(--accent-strong); }
+/* 主按钮 hover 辉光必须盖过通用 hover 辉光：静止态自带 0 6px 18px 的强调光晕，
+   若被 .btn:hover 的 0 3px 12px 接管，hover 时反而"变小"，与"阴影扩大"手感相反。
+   通用 hover 加 :not() 排除 danger 系后特异性升到 (0,4,0)，这里同步抬到 (0,4,0)
+   （.btn + .btn-primary + :hover + :not(:disabled)）并保持在通用规则之后，顺序赢。 */
+.btn.btn-primary:hover:not(:disabled) { background: var(--accent-strong); box-shadow: 0 8px 22px color-mix(in srgb, var(--accent) 30%, transparent); }
 .btn-sm { height: 28px; padding: 0 10px; border-radius: 7px; font-size: 12px; }
 .btn-wide { min-width: 100px; }
 .btn-half { flex: 1 1 auto; }
@@ -27,22 +53,43 @@
 .btn-back { min-width: 90px; }
 .btn-act { min-width: 120px; }
 .btn-danger { background: var(--danger); color: #fff; }
+/* danger 系 hover：辉光/提亮全部从 --danger 派生（与 accent 辉光同强度档位、同 200ms——
+   background/box-shadow 在 .btn 基础规则里已挂 --dur-hover 过渡，这里只写状态值即可平滑）。 */
+.btn-danger:hover { background: color-mix(in srgb, var(--danger) 88%, #fff); box-shadow: 0 3px 12px color-mix(in srgb, var(--danger) 26%, transparent); }
 .btn-danger-ghost {
   color: var(--danger); border: 1px solid color-mix(in srgb, var(--danger) 45%, transparent); background: transparent;
   padding: 6px 14px; border-radius: 6px;
 }
-.btn-danger-ghost:hover { background: color-mix(in srgb, var(--danger) 10%, transparent); }
+.btn-danger-ghost:hover { background: color-mix(in srgb, var(--danger) 10%, transparent); box-shadow: 0 3px 12px color-mix(in srgb, var(--danger) 18%, transparent); }
 .btn-danger-ghost:disabled { opacity: .4; }
 
 .icon-btn {
   width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center;
   border-radius: 8px; color: var(--text-secondary);
-  transition: background 130ms ease, color 130ms ease, transform 120ms ease;
+  /* 两段曲线同 .btn：基础 = 松手回弹（spring 250ms），快进写在 :active。 */
+  transition: background var(--dur-hover) var(--ease-out-soft),
+              color var(--dur-hover) var(--ease-out-soft),
+              box-shadow var(--dur-hover) var(--ease-out-soft),
+              transform var(--dur-release) var(--ease-spring);
 }
-.icon-btn:hover { background: var(--hover-strong); color: var(--text); }
-.icon-btn:active { transform: scale(.94); }
+.icon-btn:hover { background: var(--hover-strong); color: var(--text); box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 10%, transparent); }
+/* .94→.96：与 .btn 按压深度统一（需求：全站一个手感）；快进 90ms、松手回弹见上。 */
+.icon-btn:active {
+  transform: scale(.96);
+  transition: transform var(--dur-press) var(--ease-out-soft),
+              box-shadow var(--dur-press) var(--ease-out-soft),
+              background var(--dur-hover) var(--ease-out-soft),
+              color var(--dur-hover) var(--ease-out-soft);
+}
 .icon-btn:disabled { opacity: .4; pointer-events: none; }
 .icon-btn.is-on { background: var(--accent-soft); color: var(--accent); }
+/* ⚠️ 本轮（用户：「快捷键中的恢复默认按钮改为正方形图标，为那个和公告页面刷新按钮
+   一样的图标」）：快捷键行的"恢复默认"文字按钮换成纯图标正方形按钮。
+   外观与公告页刷新那颗 .icon-btn **完全同款**（同一个类就继承了全部状态），这里只补
+   两条它特有的：有边框（在 hotkey-wrap 里和输入框并排，纯幽灵态会看着像没渲染）
+   + 悬浮描边加深。文案没了，含义走 data-tip 全局气泡 + 原生 title（模板处已绑）。 */
+.hotkey-reset-btn { border: 1px solid var(--glass-border); background: var(--glass); }
+.hotkey-reset-btn:hover { border-color: color-mix(in srgb, var(--accent) 38%, transparent); }
 .icon-sm { width: 26px; height: 26px; border-radius: 6px; }
 /* 详情页收藏星星点亮态*/
 .ic.is-fav { color: var(--warning); fill: currentColor; }
@@ -64,14 +111,41 @@
   border-radius: 8px; border: 1px solid var(--glass-border);
   background: color-mix(in srgb, var(--card-solid) 74%, transparent);
   color: var(--text); font-size: 12.5px; text-align: left; white-space: nowrap; overflow: hidden;
-  transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+  /* 色彩项同 .btn；transform 时长仍用 --dur-release（按快放慢的两段结构不变），
+     但**曲线从 --ease-spring 换成 --ease-out-soft**（m04188 第 1 项：spring 的过冲
+     在 32px 高的小控件上就是"弹了一下"，用户连着两轮嫌大）。只换下拉框这一族：
+     .btn/.icon-btn/.chip/.switch/.seg-item 的 spring 体系是上一轮用户验收过的
+     PCL2 按压感，一个都不动。
+     本文件后段 .combo-trigger{background:…--combo-alpha} 只补底色不碰 transition，也不冲突。 */
+  transition: border-color var(--dur-hover) var(--ease-out-soft),
+              box-shadow var(--dur-hover) var(--ease-out-soft),
+              background var(--dur-hover) var(--ease-out-soft),
+              transform var(--dur-release) var(--ease-out-soft);
 }
 .combo-trigger:hover { border-color: color-mix(in srgb, var(--text) 20%, transparent); }
-.combo.is-open .combo-trigger { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+/* 点开下拉的按压反馈：快进段（90ms out-soft）同 .btn，但按压深度 m04188 第 1 项
+   从 .96 收到 **.98**——32px 高的小控件上 4% 的收缩已经肉眼可辨，收到 2% 刚好
+   还剩"沉一下"的存在感。只收下拉框族：.btn/.icon-btn/.switch/.chip/.seg-item 的
+   scale(.96) 是用户上一轮明确验收过的 PCL2 按压感，一寸不动。
+   is-open 光圈是 border/box-shadow，与 transform 无关。
+   光圈 m04188 第 1 项从 3px 收到 2px（3px 在 32px 高的小控件上几乎占 1/5 高度，
+   展开瞬间像被"点亮一圈粗边"）；可编辑版焦点圈在文件后段同步收紧成 2px，
+   两边必须一致才像一套控件。 */
+.combo-trigger:active {
+  transform: scale(.98);
+  transition: transform var(--dur-press) var(--ease-out-soft),
+              box-shadow var(--dur-press) var(--ease-out-soft),
+              border-color var(--dur-hover) var(--ease-out-soft),
+              background var(--dur-hover) var(--ease-out-soft);
+}
+.combo.is-open .combo-trigger { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
 .combo.is-disabled .combo-trigger { opacity: .5; pointer-events: none; }
 .combo-label { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* 箭头 180° 翻转保留（去掉就没有"展开/收起"的方向指示了），但时长
+   160→120ms（m04188 第 1 项）；曲线 cubic-bezier(.33,0,.2,1) 本来就是非过冲
+   缓出，控制点 y 全程在 0~1 内，不会"转过头再抖回来"，所以只收时长不换曲线。 */
 .combo-arrow { flex: 0 0 auto; margin-left: 2px; color: var(--text-secondary);
-  transition: transform 160ms cubic-bezier(.33,0,.2,1); }
+  transition: transform 120ms cubic-bezier(.33,0,.2,1); }
 .combo.is-open .combo-arrow { transform: rotate(180deg); }
 .combo-pop {
   /* 宽度：inline 的 minWidth = 触发器宽度；选项文字更长时自动撑开（shrink-to-fit）*/
@@ -82,18 +156,25 @@
   background: color-mix(in srgb, var(--card-solid) 96%, transparent);
   backdrop-filter: blur(22px) saturate(160%); -webkit-backdrop-filter: blur(22px) saturate(160%);
   box-shadow: var(--shadow-float);
-  /* 点击下拉框应该从上往下展开来——以顶边为原点纵向铺开*/
-  animation: comboIn 170ms cubic-bezier(.22,.8,.2,1) both;
+  /* 点击下拉框应该从上往下展开来——以顶边为原点纵向铺开。
+     m04188 第 1 项再收一档：130→100ms（弹层本体比入场更早"就位"），
+     配套关键帧已收到 -2px + scaleY(.99)（见 animations.css comboIn 的注释，
+     scaleY 作用在 300px 弹层上：.96=12px 拉伸 → .99=3px，这才是"大"的主因）。 */
+  animation: comboIn 100ms cubic-bezier(.22,.8,.2,1) both;
   transform-origin: top center;
 }
 .combo-item {
   min-height: 32px; padding: 0 10px; position: relative;
   display: flex; align-items: center; gap: 8px; text-align: left;
   border-radius: 7px; font-size: 12.5px; color: var(--text); white-space: nowrap;
-  transition: background 110ms ease, color 110ms ease;
-  /* 逐项轻微下落，形成"从上往下铺开"的层次（--i 由模板给出）*/
-  animation: comboItemIn 160ms cubic-bezier(.22,.8,.2,1) both;
-  animation-delay: calc(var(--i, 0) * 14ms);
+  transition: background 90ms var(--ease-out-soft), color 90ms var(--ease-out-soft);
+  /* 逐项轻微下落，形成"从上往下铺开"的层次（--i 由模板给出）。
+     m04188 第 1 项再收：120→80ms（关键帧位移同步 -2px→-1px，见 animations.css），
+     hover 底色过渡也从 110ms ease 收到 90ms 并统一挂 out-soft 曲线（同一族不混用曲线）。 */
+  animation: comboItemIn 80ms cubic-bezier(.22,.8,.2,1) both;
+  /* 错峰 6ms→4ms（m04188 第 1 项）：31 项最后一项的入场延迟从 180ms 降到 120ms，
+     "列表在往下爬"的观感进一步弱化，但头几项仍有一丝先后。 */
+  animation-delay: calc(var(--i, 0) * 4ms);
 }
 .combo-item:hover, .combo-item.is-highlighted { background: var(--hover-strong); }
 /* ---------- 下拉框选中态统一到所有下拉框 ----------
@@ -143,9 +224,19 @@ textarea.input { height: auto; padding: 8px 10px; resize: vertical; line-height:
 .switch {
   position: relative; width: 40px; height: 22px; flex: 0 0 auto; border-radius: 11px;
   background: transparent; border: 1px solid color-mix(in srgb, var(--text) 34%, transparent);
-  transition: background 180ms ease, border-color 180ms ease;
+  /* 开关整体按压缩小/松手回弹（transform 走两段曲线）；
+     小球自己的 left/尺寸过渡在 .switch-knob 里、逐项列了五个属性，保持不动。 */
+  transition: background var(--dur-hover) var(--ease-out-soft),
+              border-color var(--dur-hover) var(--ease-out-soft),
+              transform var(--dur-release) var(--ease-spring);
 }
 .switch:hover { border-color: color-mix(in srgb, var(--text) 55%, transparent); }
+.switch:active {
+  transform: scale(.96);
+  transition: transform var(--dur-press) var(--ease-out-soft),
+              background var(--dur-hover) var(--ease-out-soft),
+              border-color var(--dur-hover) var(--ease-out-soft);
+}
 /* ⚠️ 滑块**不能**写 `transition: all`（原来是这么写的）：
    `all` 让浏览器对**每一个**会变的属性都挂上过渡——包括将来谁给滑块加个
    border / box-shadow / opacity，都会莫名其妙地跟着动；而且 `all` 会让
@@ -190,9 +281,22 @@ textarea.input { height: auto; padding: 8px 10px; resize: vertical; line-height:
   position: relative; z-index: 1;
   flex: 1 1 auto; min-width: 30px; height: 100%; display: inline-flex; align-items: center; justify-content: center;
   border-radius: 6px; color: var(--text-secondary); font-size: 12px;
-  transition: background 140ms ease, color 140ms ease;
+  /* 两段曲线同 .chip：基础 = 松手回弹 spring，快进写在 :active。
+     只挂 transform 进过渡，不碰背景/box-shadow 语义——.is-on 实底和 :has(.seg-thumb)
+     的交叠规则都不受影响；缩放以自身为中心，height:100% 的兄弟项不会被挤动。 */
+  transition: background var(--dur-hover) var(--ease-out-soft),
+              color var(--dur-hover) var(--ease-out-soft),
+              transform var(--dur-release) var(--ease-spring);
 }
 .seg-item:hover { color: var(--text); background: var(--hover); }
+/* 按压缩小：分段项和 .chip 一样是"点一下就切换"的按钮，给同样的物理反馈；
+   不加 translateY——否则整条 segmented 会跟着视觉抖动（lead 明确要求）。 */
+.seg-item:active {
+  transform: scale(.96);
+  transition: transform var(--dur-press) var(--ease-out-soft),
+              background var(--dur-hover) var(--ease-out-soft),
+              color var(--dur-hover) var(--ease-out-soft);
+}
 .seg-item.is-on { background: var(--accent-soft); color: var(--accent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 26%, transparent); }
 /* 有滑动指示块时，选中项的底色交给 thumb，避免"两个蓝块"*/
 .segmented:has(.seg-thumb) .seg-item.is-on { background: transparent; box-shadow: none; }
@@ -204,9 +308,20 @@ textarea.input { height: auto; padding: 8px 10px; resize: vertical; line-height:
   border-radius: 13px; border: 1px solid color-mix(in srgb, var(--text) 13%, transparent);
   background: color-mix(in srgb, var(--text) 5%, transparent);
   color: var(--text); font-size: 12px; white-space: nowrap;
-  transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
+  /* 两段曲线同 .btn；is-on 实底由后面更高特异性规则管，transform 不碰外观。 */
+  transition: background var(--dur-hover) var(--ease-out-soft),
+              color var(--dur-hover) var(--ease-out-soft),
+              border-color var(--dur-hover) var(--ease-out-soft),
+              transform var(--dur-release) var(--ease-spring);
 }
 .chip:hover { background: color-mix(in srgb, var(--text) 10%, transparent); border-color: color-mix(in srgb, var(--accent) 55%, transparent); }
+.chip:active {
+  transform: scale(.96);
+  transition: transform var(--dur-press) var(--ease-out-soft),
+              background var(--dur-hover) var(--ease-out-soft),
+              color var(--dur-hover) var(--ease-out-soft),
+              border-color var(--dur-hover) var(--ease-out-soft);
+}
 .chip.is-on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
 .chip-flow { display: flex; flex-wrap: wrap; gap: 8px; }
 
@@ -331,15 +446,24 @@ textarea.input { height: auto; padding: 8px 10px; resize: vertical; line-height:
 .card-btn {
   width: 26px; height: 26px; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center;
   border-radius: 8px; color: var(--text-secondary);
-  transition: background 130ms ease, color 130ms ease;
+  transition: background var(--dur-hover) var(--ease-out-soft),
+              color var(--dur-hover) var(--ease-out-soft),
+              transform var(--dur-release) var(--ease-spring);
 }
 .card-btn:hover { background: var(--hover-strong); color: var(--text); }
+/* 卡片行内操作按钮与 .icon-btn 同一按压手感（transform 不影响虚拟列表定位） */
+.card-btn:active {
+  transform: scale(.96);
+  transition: transform var(--dur-press) var(--ease-out-soft),
+              background var(--dur-hover) var(--ease-out-soft),
+              color var(--dur-hover) var(--ease-out-soft);
+}
 .card-btn.is-on { color: var(--accent); }
 /* 已收藏：星星实心 + 强调色（原版未收藏是空心星，收藏后实心）*/
 .card-btn.is-fav { color: var(--warning); }
 .card-btn.is-fav .ic { fill: currentColor; stroke: currentColor; }
 .card-desc {
-  margin-top: 10px; flex: 1 1 auto; min-height: 0; font-size: 12px; line-height: 1.45;
+  margin-top: 10px; flex: 1 1 auto; min-width: 0; min-height: 0; font-size: 12px; line-height: 1.45;
   color: var(--text-secondary); overflow: hidden;
   display: -webkit-box; -webkit-line-clamp: var(--lines, 2); -webkit-box-orient: vertical;
   max-height: calc(1.45em * var(--lines, 2) + 2px);
@@ -368,12 +492,48 @@ textarea.input { height: auto; padding: 8px 10px; resize: vertical; line-height:
      `:root[data-theme="light"] .tag`，不依赖 CSS 加载顺序）。
    ⚠️ 浅色底上原来的 #d4af37（暗金）对比度不够，看不清 → 浅色主题换成更深的金
    #8a6100，底色也用更实的暖黄，保证白/浅灰卡片上清晰可读。
-   深色主题保持 #d4af37 不变（深色主题显示本来就正常，不能被改坏）。*/
-:root .tag.is-official { background: rgba(255, 215, 0, 0.15); color: #d4af37; }
-:root[data-theme="light"] .tag.is-official {
+   深色主题保持 #d4af37 不变（深色主题显示本来就正常，不能被改坏）。
+   「知名」标签（用户需求：和「官方」同类型的金色标签）走**逗号分支**共用这两条规则，
+   特异度论证与上面完全一致 —— ⚠️ 不要图省事把它单写成 `.tag.is-famous`（0,2,0），
+   浅色主题下一样会被 `:root[data-theme="light"] .tag` 洗成灰胶囊。*/
+:root .tag.is-official,
+:root .tag.is-famous { background: rgba(255, 215, 0, 0.15); color: #d4af37; }
+:root[data-theme="light"] .tag.is-official,
+:root[data-theme="light"] .tag.is-famous {
   background: rgba(255, 200, 40, 0.22);
   color: #8a6100;
 }
+/* ---------- 详情页正文允许鼠标框选（task-5 需求 2）----------
+   全局是 base.css 的 body / .page user-select:none（防点 UI 糊出蓝色选区），
+   白名单里只放了 .detail-desc（简介）——所以名称 / 编码行 / 应用介绍 / 详细信息
+   这几处此前都选不中。按需求**只针对详情页容器 .detail-wrap 内部**逐类放行，
+   不动全局、也不影响卡片 / 侧栏 / 虚拟列表正文。
+   ⚠️ 三条边界：
+   ① 选择器一律带 .detail-wrap 前缀（(0,2,0) 直接声明在目标元素上，
+      覆盖从 .page 继承来的 none —— 继承永远让位于元素自身的任何直接声明）；
+   ② 值行里的按钮（.copy-btn）**显式按回 none**：它们是控件，
+      放开会出现"拖选把复制/测 Ping 图标一起框住"的怪现象（与 ai-fixes.css 按钮不可选同一口径）；
+      ⚠️ task-12 需求 6：链接文字 .detail-link 从 none 改回 text（用户要"连接部分文字也要可框选"），
+      只有按钮维持不可选。
+   ③ 标签药丸 .tag 保持 base.css 白名单里的 none（故意设计，不顺手改）。*/
+.detail-wrap .detail-name,
+.detail-wrap .detail-code .cap,
+.detail-wrap .para,
+.detail-wrap .detail-key,
+.detail-wrap .detail-val { user-select: text; -webkit-user-select: text; }
+/* task-12 需求 6：链接文字可框选；复制 / 测 Ping 按钮仍不可选 */
+.detail-wrap .detail-link { user-select: text; -webkit-user-select: text; }
+.detail-wrap .copy-btn { user-select: none; -webkit-user-select: none; }
+
+/* 编号行（task-5 需求 3）：复制按钮沿用详细信息那排的 28×28 观感，但它比
+   12px 的 .cap 文本行（line-height 1.6 ≈ 19.2px）高近 9px，直接放进 .detail-hero-text
+   的 8px 列间隙里会把「编码行 + 简介」之间撑开。按钮四周本来就是透明留白，
+   所以上下各 -4.5px 负 margin 把**视觉**间距缩回原样（可见元素相对位置不变）；
+   左右不缩 —— .row 无 gap，图标自带 ~7px 留白，观感正好对齐下方标签行 6px 间距。*/
+/* task-12 需求 6：编号文字和复制按钮之间加 6px 呼吸间距（只加水平 gap，
+   不改行高 —— 纵向负 margin 仍只负责抵消按钮 28px 的占位）。 */
+.detail-code { gap: 6px; margin: -4.5px 0; }
+
 /* 标签放不下时的+X胶囊（X = 被隐藏的标签数量）*/
 .tag-more {
   background: color-mix(in srgb, var(--accent) 18%, transparent);
@@ -517,7 +677,49 @@ textarea.input { height: auto; padding: 8px 10px; resize: vertical; line-height:
 .ball-g { position: relative; font-size: 22px; font-weight: 800; color: #fff;
   text-shadow: 0 1px 2px rgba(0, 0, 0, .35), 0 0 14px rgba(255, 255, 255, .35); }
 
+/* ── 右下角「回到顶部」悬浮球（第七轮需求）──────────────────────────
+   需求原话：圆球 + 里面一个朝上箭头，"只有页面不在最顶端时出现，出现动画为下往上
+   快速渐变出现，消失则是上往下"。⇒ 静止位 translateY(0)，隐藏位 translateY(14px)：
+   进场 = 从下往上滑 + 淡入，退场 = 从上往下滑 + 淡出，同一个 transition 双向复用。
+   ⚠️ 不用 <transition>/v-show 做进出场：display 被立刻切成 none 会吞掉退场动画，
+      所以节点常驻、只切 .is-on；visibility 带 transition-delay 让它在动画结束后
+      才真正退出可聚焦集合（否则 Tab 键能聚焦到一个看不见的按钮）。
+   ⚠️ z-index 86 刻意**低于** .ai-drawer(88) / .float-ball(90)：AI 抽屉展开时从右侧
+      盖过来，这颗球应该被压住而不是浮在它上面。
+   ⚠️ .above-ball 只给"AI 悬浮球也在场"时用：两球同为 right:24px，不抬高就叠在一起。 */
+.back-top {
+  position: fixed; right: 24px; bottom: 24px; width: 40px; height: 40px; z-index: 86;
+  display: flex; align-items: center; justify-content: center; padding: 0;
+  border-radius: 50%; cursor: pointer; color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--card-border));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--card-solid) 88%, transparent), var(--card-solid));
+  box-shadow: 0 8px 22px rgba(0, 0, 0, .26), inset 0 1px 0 rgba(255, 255, 255, .10);
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transform: translateY(14px) scale(.94);
+  transition: opacity 180ms ease-out, transform 180ms ease-out,
+              box-shadow 160ms ease, color 160ms ease, visibility 0s linear 180ms;
+}
+.back-top.is-on {
+  opacity: 1; visibility: visible; pointer-events: auto; transform: none;
+  /* 进场"快速"：150ms 且带一点减速；visibility 这一路必须 0s 立刻生效 */
+  transition: opacity 150ms ease-out, transform 150ms cubic-bezier(.22, .9, .3, 1),
+              box-shadow 160ms ease, color 160ms ease, visibility 0s;
+}
+.back-top.is-on:hover {
+  transform: translateY(-2px);
+  color: color-mix(in srgb, var(--accent) 78%, #fff);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, .32), inset 0 1px 0 rgba(255, 255, 255, .14);
+}
+.back-top.is-on:active { transform: translateY(0) scale(.96); }
+.back-top:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+/* AI 悬浮球在场：让位到它正上方（24 底距 + 64 球径 + 12 间隙） */
+.back-top.above-ball { bottom: 100px; }
+.back-top .ic { pointer-events: none; }   /* 否则 svg 会吃掉 :active 的落点 */
+
 .ai-drawer {
+  --ai-gutter: 14px;                       /* 抽屉是 420 窄栏，左右各留 14px */
   position: fixed; top: var(--tb-height); right: 0; bottom: 0; width: 420px; z-index: 88;
   display: flex; flex-direction: column;
   border-left: 1px solid color-mix(in srgb, var(--accent) 30%, var(--card-border));
@@ -526,19 +728,25 @@ textarea.input { height: auto; padding: 8px 10px; resize: vertical; line-height:
 }
 :root[data-theme="light"] .ai-drawer { background: linear-gradient(180deg, #f8faff, #ffffff); }
 .ai-embedded { position: absolute; inset: 0; display: flex; flex-direction: column; }
-/* 独立 AI 页：聊天内容居中成一列（抽屉本身就是 420 窄栏，不受影响）。
-   不做这一步输入框会被拉成整窗宽（1280 下实测 1134px），正是"输入框有严重问题"的观感来源。*/
-.ai-embedded { --ai-col: 860px; }
+/* ★ 本轮（用户原话：「GCP-AI单独界面的这些各种ui元素不要聚拢在一起 应该分散开
+   左右两边各留一点点间距就行」「全屏模式下或反正就窗口模式都一样要自动适应」）：
+   独立页**不再**收成一条 860 / 1200 / 1240px 的居中窄列 —— 那正是"元素全挤在中间"
+   的来源。改成整幅铺开、左右各留一条随窗口宽度微调的 gutter：
+     · --ai-gutter 只由这里和全屏那条（ai-fixes.css 末尾）定义；
+     · head / messages / input / 历史侧栏全部 width:100%、不再 max-width + margin:auto；
+     · 气泡、输入框、标题三者的左边缘仍然严格对齐（都用同一条 gutter）。
+   ⚠️ 抽屉（420 窄栏）不在此列：它的 --ai-gutter 固定 14px，见 .ai-drawer。 */
+.ai-embedded { --ai-gutter: clamp(16px, 2.2vw, 34px); }
 .ai-embedded > .ai-head,
 .ai-embedded > .ai-messages,
 .ai-embedded > .ai-input-row,
 .ai-embedded > .ai-history > .ai-history-head,
 .ai-embedded > .ai-history > .ai-history-body {
-  width: 100%; max-width: var(--ai-col); margin-left: auto; margin-right: auto;
+  width: 100%; max-width: none; margin-left: 0; margin-right: 0;
 }
-/* 头部 / 消息 / 输入区三块左右内边距统一成 14px：
-   标题、气泡、输入框三者的左边缘因此严格对齐（实测都在 x=248），右侧图标与发送按钮也齐。*/
-.ai-head { height: 48px; flex: 0 0 auto; display: flex; align-items: center; gap: 6px; padding: 0 14px; }
+/* 头部 / 消息 / 输入区三块左右内边距统一成 --ai-gutter：
+   标题、气泡、输入框三者的左边缘因此严格对齐，右侧图标与发送按钮也齐。*/
+.ai-head { height: 48px; flex: 0 0 auto; display: flex; align-items: center; gap: 6px; padding: 0 var(--ai-gutter); }
 .ai-brand { font-size: 15px; font-weight: 700; }
 /* ⚠️ 上方一大片空白占行的根因：base.css 的 .hairline 是 flex:1 1 auto，
    AI 容器是竖排 flex + 只有一个弹性区(.ai-messages)，这条 1px 线会一起抢剩余空间，
@@ -547,8 +755,50 @@ textarea.input { height: auto; padding: 8px 10px; resize: vertical; line-height:
 .ai-drawer > .hairline,
 .ai-embedded > .hairline,
 .ai-history > .hairline { flex: none; height: 1px; min-height: 1px; width: 100%; }
-.ai-messages { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 12px 14px;
-  display: flex; flex-direction: column; gap: 16px; }
+/* =====================================================================
+   AI 聊天消息区（用户本轮点名要求）
+   =====================================================================
+   用户原话：
+     「GCP-AI聊天区域的右侧那个滚动页面的条要放在最右侧，而且它的出现不可以改变
+      聊天气泡ui大小不然字体会上下行切换适配和难受所以这个页面滚动条位置一定要放好」
+
+   两个要求拆开看：
+     ① **滚动条贴最右**：默认就在容器右缘；但 .ai-messages 有 padding: 12px 14px，
+        滚动条会被这条 padding 推进来 14px，看起来"没贴边"。
+        → 解法：把左右 padding 移到内层（.ai-messages 自己只管滚动），
+          滚动条就落在外框最右侧。
+     ② **出现/消失不能改变气泡宽度**（否则文字重新折行，"上下行切换"很难受）：
+        → `scrollbar-gutter: stable`：滚动条槽**常驻预留**，有没有滚动条
+          内容区宽度都一样，气泡不会跳。
+          （收藏页 .fav-main .page-scroll 早就用了这一招，这里保持一致。）
+     ③ 顺手：滚动条窄一点、颜色淡一点，聊天气泡旁边不会那么抢眼。
+
+   ⚠️ 别用 padding-right 去"补偿"滚动条宽度：那会让有/无滚动条时内容宽度差 8px，
+      正是"气泡忽大忽小、字重新折行"的来源。scrollbar-gutter 才是正解。
+   ⚠️ 两处 AI 界面（独立页 / 悬浮抽屉）共用 .ai-messages，改这一处即可。 */
+.ai-messages {
+  flex: 1 1 auto; min-height: 0; overflow-y: auto;
+  /* ⚠️ 左右 padding 归 0：滚动条才能贴到容器最右缘 */
+  padding: 12px 0;
+  display: flex; flex-direction: column; gap: 16px;
+  /* 滚动条槽常驻：有无滚动条都不改变内容宽度（气泡不会因滚动条出现而变窄） */
+  scrollbar-gutter: stable;
+}
+/* 内容的内边距改由内层承担（气泡依然离边 --ai-gutter，但滚动条在外框贴右） */
+.ai-messages > * { margin-left: var(--ai-gutter); margin-right: var(--ai-gutter); }
+/* ⚠️ margin 会破坏 .bubble-row 的 flex 对齐（用户气泡靠右时要留出滚动条空间），
+   所以气泡行用 padding 而不是 margin，且 box-sizing 已全局 border-box。 */
+.ai-messages > .bubble-row { margin-left: 0; margin-right: 0;
+  padding-left: var(--ai-gutter); padding-right: var(--ai-gutter); }
+/* 聊天的滚动条：比全局更窄更淡（就贴在气泡右侧，不挡视线） */
+.ai-messages::-webkit-scrollbar { width: 6px; }
+.ai-messages::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--text) 16%, transparent);
+  border-radius: 3px;
+}
+.ai-messages::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--text) 30%, transparent);
+}
 .ai-welcome { font-size: 12.5px; color: var(--text-secondary); line-height: 1.7; }
 .bubble-row { display: flex; }
 .bubble-row.is-user { justify-content: flex-end; }
@@ -570,10 +820,11 @@ textarea.input { height: auto; padding: 8px 10px; resize: vertical; line-height:
   border-bottom-right-radius: 6px; }
 /* 输入区：输入框圆角 10 / 最小高 38 / 最多 110 自适应；发送按钮 66×38（对齐 py 版）。
    align-items:flex-end + 两个 38px 的高度 → 单行时输入框与按钮底/顶完全对齐（实测 dh=0）。*/
-.ai-input-row { flex: 0 0 auto; display: flex; align-items: flex-end; gap: 8px; padding: 10px 14px 12px;
+.ai-input-row { flex: 0 0 auto; display: flex; align-items: flex-end; gap: 8px;
+  padding: 10px var(--ai-gutter) 12px;
   position: relative; }
 .ai-input {
-  flex: 1 1 auto; min-height: 38px; max-height: 110px; padding: 8px 10px; border-radius: 10px;
+  flex: 1 1 auto; min-width: 0; min-height: 38px; max-height: 110px; padding: 8px 10px; border-radius: 10px;
   border: 1px solid var(--card-border); background: var(--card-solid); color: var(--text);
   font-size: 13px; line-height: 1.5; outline: none; resize: none;
   transition: border-color 140ms ease, box-shadow 140ms ease;
@@ -593,10 +844,19 @@ textarea.input { height: auto; padding: 8px 10px; resize: vertical; line-height:
 .ai-send {
   width: 66px; height: 38px; flex: 0 0 auto; border-radius: 10px; font-size: 12px; font-weight: 700;
   color: #fff; background: linear-gradient(135deg, var(--ball-a), var(--ball-b));
-  transition: filter 140ms ease, background 140ms ease;
+  transition: filter var(--dur-hover) var(--ease-out-soft),
+              background var(--dur-hover) var(--ease-out-soft),
+              transform var(--dur-release) var(--ease-spring);
 }
 .ai-send:hover { filter: brightness(1.1); }
-.ai-send:active { filter: brightness(.94); }
+/* 发送按钮统一"按下去"手感：保留原有压暗语义（filter），叠加全站一致的 scale(.96)；
+   快进段里 filter 也用 --dur-press，压暗要跟缩放同拍完成，不能一个快一个慢 */
+.ai-send:active {
+  filter: brightness(.94); transform: scale(.96);
+  transition: transform var(--dur-press) var(--ease-out-soft),
+              filter var(--dur-press) var(--ease-out-soft),
+              background var(--dur-hover) var(--ease-out-soft);
+}
 .ai-send:disabled { opacity: .5; }
 .ai-send.is-stop { background: color-mix(in srgb, var(--danger) 20%, transparent); color: var(--danger); }
 
@@ -606,7 +866,8 @@ textarea.input { height: auto; padding: 8px 10px; resize: vertical; line-height:
    容器不吃点击（pointer-events:none），只有胶囊本身可点；
    半透明 + 模糊，跟随主题效果（云母/毛玻璃/亚克力）与深浅色。*/
 .ai-slash-hint {
-  position: absolute; left: 14px; right: 14px; bottom: calc(100% + 3px);
+  /* ★ 本轮：左右跟着 --ai-gutter（全屏 gutter 会涨到 44px），浮层才和输入框等宽 */
+  position: absolute; left: var(--ai-gutter); right: var(--ai-gutter); bottom: calc(100% + 3px);
   display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
   padding: 4px; border-radius: 10px; z-index: 4;
   border: 1px solid color-mix(in srgb, var(--accent) 26%, var(--glass-border));
@@ -645,7 +906,7 @@ textarea.input { height: auto; padding: 8px 10px; resize: vertical; line-height:
 }
 :root[data-theme="light"] .ai-history { background: linear-gradient(180deg, #f8faff, #ffffff); }
 .ai-history-head { height: 48px; flex: 0 0 auto; display: flex; align-items: center; gap: 10px; padding: 0 14px 0 10px; }
-.ai-history-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 12px 14px;
+.ai-history-body { flex: 1 1 auto; min-width: 0; min-height: 0; overflow-y: auto; padding: 12px 14px;
   display: flex; flex-direction: column; gap: 10px; }
 /* 空状态：图标压暗 + 文案限宽，窄抽屉里也不会顶到两边*/
 .ai-history-empty { flex: 1 1 auto; display: flex; flex-direction: column; align-items: center;
@@ -679,10 +940,19 @@ textarea.input { height: auto; padding: 8px 10px; resize: vertical; line-height:
   display: inline-flex; align-items: center; justify-content: center;
   background: transparent;                       /* 常驻可见，不做 hover 才出现*/
   color: var(--text-secondary);
-  transition: color 130ms ease, background 130ms ease;
+  transition: color var(--dur-hover) var(--ease-out-soft),
+              background var(--dur-hover) var(--ease-out-soft),
+              transform var(--dur-release) var(--ease-spring);
 }
 .eye-btn .ic { flex: 0 0 auto; }
 .eye-btn:hover, .eye-btn.is-on { color: var(--accent); }
+/* 本按钮靠 translateY(-50%) 垂直居中，按压缩放必须"叠加"写，直接写 scale 会丢了居中跳位 */
+.eye-btn:active:not(:disabled) {
+  transform: translateY(-50%) scale(.96);
+  transition: transform var(--dur-press) var(--ease-out-soft),
+              color var(--dur-hover) var(--ease-out-soft),
+              background var(--dur-hover) var(--ease-out-soft);
+}
 .eye-btn:disabled { opacity: .45; pointer-events: none; }
 
 /* ===========================================================================
@@ -725,7 +995,12 @@ textarea.input { height: auto; padding: 8px 10px; resize: vertical; line-height:
   background: color-mix(in srgb, var(--card-solid) 55%, transparent);
   box-shadow: inset 0 1px 1px color-mix(in srgb, #000 8%, transparent);
   vertical-align: middle;
-  transition: background 130ms ease, border-color 130ms ease, box-shadow 130ms ease;
+  /* 底色/描边/阴影统一 200ms 平滑过渡（禁止线性），transform 走"两段曲线"：
+     基础 = 松手回弹（spring），快进写在下面的 :active。 */
+  transition: background var(--dur-hover) var(--ease-out-soft),
+              border-color var(--dur-hover) var(--ease-out-soft),
+              box-shadow var(--dur-hover) var(--ease-out-soft),
+              transform var(--dur-release) var(--ease-spring);
 }
 :root input[type="checkbox"]::before {
   content: ""; position: absolute; left: 50%; top: 50%;
@@ -735,7 +1010,23 @@ textarea.input { height: auto; padding: 8px 10px; resize: vertical; line-height:
   transform: scale(.3); opacity: 0;
   transition: transform 130ms cubic-bezier(.22, 1.2, .4, 1), opacity 110ms ease;
 }
-:root input[type="checkbox"]:hover { border-color: color-mix(in srgb, var(--accent) 60%, transparent); }
+/* hover：描边提亮 + 极轻的外辉光（保留 inset 以免"内凹感"消失）。
+   勾选态的 box-shadow 由后面 :checked/:indeterminate 规则接管（同特异性、更靠后必赢），
+   所以 hover 一个已勾选框不会盖掉强调色投影。 */
+:root input[type="checkbox"]:hover {
+  border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+  box-shadow: inset 0 1px 1px color-mix(in srgb, #000 8%, transparent),
+              0 1px 6px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+/* 裸 input 的按压：整框缩小 0.96（快进 90ms，松手回弹见基础规则）。
+   这是"没有 .cbox 包裹时"的路径；包裹后由容器负责缩小，见下方适配区。 */
+:root input[type="checkbox"]:active {
+  transform: scale(.96);
+  transition: transform var(--dur-press) var(--ease-out-soft),
+              background var(--dur-hover) var(--ease-out-soft),
+              border-color var(--dur-hover) var(--ease-out-soft),
+              box-shadow var(--dur-hover) var(--ease-out-soft);
+}
 :root input[type="checkbox"]:checked,
 :root input[type="checkbox"]:indeterminate {
   border-color: transparent;
@@ -752,18 +1043,131 @@ textarea.input { height: auto; padding: 8px 10px; resize: vertical; line-height:
 :root input[type="checkbox"]:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--accent) 88%, transparent); outline-offset: 2px;
 }
+/* ════════════════════════════════════════════════════════════════
+ * 关于 · 法律文件卡片（本轮新增，需求原话见 index.html 同一处注释）
+ * ════════════════════════════════════════════════════════════════
+ * ⚠️ 热区是**整行**（.about-legal-row），图标只是行尾视觉提示：用户点名
+ *    「对应最右侧放图标……不要搞按钮」，所以这里刻意**不给图标任何按钮壳**
+ *    （无边框、无底色、无圆角盒），也绝不在 svg 上再挂 click —— 两套热区会让
+ *    光标在同一行里变两次，看起来像坏了。
+ * ⚠️ hover 反馈只做三件事，全部走项目动效令牌（禁止 linear / 禁止
+ *    transition: all）：背景淡入 + 文字变正文色（静置态是次要灰）+ 图标转强调色。
+ *    刻意不做"图标右移"这种装饰位移：这一行是**可点条**不是列表项，位移会让人
+ *    误以为会展开别的东西。
+ * ⚠️ 不写死宽高（AGENTS.md 第 5 节第 5 条）：行高靠 padding + gap，宽度交给
+ *    上层 .settings-card 与 flex。 */
+/* ════════════════════════════════════════════════════════════════
+ * 关于 · 法律文件卡片（本轮 m03830 改版：Google 设置式列表）
+ * ════════════════════════════════════════════════════════════════
+ * 用户原话：「设置中的关于那里第二个卡片ui中的"法律文件"文本删除，还有悬浮提示
+ * 字体删除，还有我说的是他们俩这个不是按钮但是互动和点击都和按钮差不多，
+ * 就例如google中设置的那种中间一个分割线……ui边距记得调整好。」
+ * → 三个视觉决定：
+ *   ① 没有卡片标题（模板里已删 h3）；
+ *   ② 两行之间**一条**分割线，不是两个各带边框/底色的圆角盒子
+ *      （上一版每行都有 border + background，看起来像两个按钮，正是他要改掉的）；
+ *   ③ 行要"像按钮一样响应"（hover 变色 + 手型光标 + 键盘焦点环），但没有按钮的壳。
+ * 边距算法：.settings-card 自身 padding 是 4px 20px（layout.css:573），
+ *   这里行用 margin: 0 -12px、padding: 11px 12px —— 负边距把行撑到"卡片内边距 - 12"，
+ *   hover 底色才像 Google 那样铺满整行且两侧留一点圆角；文字仍与卡片内其它内容对齐。
+ * 分割线用相邻兄弟选择器画在**行自身**的伪元素上，不额外加 DOM：
+ *   多一个元素就多一处能对不齐的地方，而 .settings-card 有 overflow:hidden，
+ *   伪元素不会顶出圆角。
+ * ⚠️ 不写死宽高（AGENTS.md 第 5 节第 5 条）；颜色全走主题变量（暗色基础 + 亮色覆盖）。 */
+.about-legal-card {
+  display: flex; flex-direction: column; gap: 0;
+  /* 卡片自带 4px 上下内衬，这里压掉一半，让两行整体在卡里视觉居中 */
+  padding-top: 6px; padding-bottom: 6px;
+}
+.about-legal-row {
+  position: relative;
+  display: flex; align-items: center; gap: 10px;
+  margin: 0 -12px; padding: 11px 12px;
+  border-radius: 8px; cursor: pointer;
+  color: var(--text); font-size: 13px;
+  transition: background var(--dur-hover) var(--ease-out-soft);
+}
+/* 行间分割线：只画在"后面那行"的上边，所以两行之间恰好一条（末行下方没有） */
+.about-legal-row + .about-legal-row::before {
+  content: ""; position: absolute; left: 12px; right: 12px; top: 0; height: 1px;
+  background: var(--divider);
+}
+.about-legal-row:hover { background: var(--hover-strong); }
+/* hover 时图标转强调色：作为"这一整行可点"的第二重反馈（第一重是底色） */
+.about-legal-row:hover .about-legal-ic { color: var(--accent); }
+.about-legal-ic {
+  color: var(--text-secondary); flex: 0 0 auto;
+  transition: color var(--dur-hover) var(--ease-out-soft);
+}
+/* 键盘焦点必须看得见：整行 role=button + tabindex=0，Enter 走同一个动作 */
+.about-legal-row:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 88%, transparent);
+  outline-offset: -2px;
+}
+.about-legal-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* 按下时轻微内缩：和全站按钮的按压反馈同一套令牌，让它"像按钮一样响应"
+   但又不给它按钮的边框/底色壳 */
+.about-legal-row:active { transform: scale(.995); }
+
 /* 卡片勾选框/全选框的容器尺寸是既有的 15px，这里统一回 16px 的自绘尺寸*/
 .card-select input, .sel-check input { width: 16px; height: 16px; }
 
+/* ---------- SVG 对勾描线 · 与 index.html 的 .cbox 包装对接（过渡期安全） ----------
+ * 结构契约（lead 正在改 markup，CSS 按此写）：
+ *   <span class="cbox"><input type="checkbox"><svg class="cbox-tick" viewBox="0 0 16 16">
+ *   <path pathLength="1" d="M3.6 8.3 6.4 11.2 12.4 4.9"/></svg></span>
+ * 为什么必须双轨：markup 一轮改 9 处，改一处漏一处都会出"双对勾"或"没对勾"；
+ * 所以旧的 ::before clip-path 兜底整体保留，只对 .cbox 内的 :checked 关掉它，
+ * 半选(:indeterminate)的横线永远走 ::before（SVG 只画对勾，不画半选）。 */
+.cbox {
+  position: relative; display: inline-flex; align-items: center; justify-content: center;
+  flex: 0 0 auto; vertical-align: middle;
+  /* 基础 = 松手回弹段（按压容器整体缩，对勾 SVG 是子元素跟着缩，视觉一体） */
+  transition: transform var(--dur-release) var(--ease-spring);
+}
+.cbox:active {
+  transform: scale(.96);
+  /* :active = 按下快进段（90ms 跟手）；与 .btn 的两段曲线手法同源 */
+  transition: transform var(--dur-press) var(--ease-out-soft);
+}
+/* 容器已经缩了，input 自己不能再缩——0.96×0.96≈0.92 会明显"缩过头"。
+   (0,4,1) 压过上面通用 :active 的 (0,3,1)。 */
+:root .cbox input[type="checkbox"]:active { transform: none; }
+.cbox-tick {
+  position: absolute; inset: 0; width: 16px; height: 16px;
+  pointer-events: none; overflow: visible;   /* 回弹放大 1.1 时不许被 16×16 裁边 */
+}
+.cbox-tick path {
+  fill: none; stroke: var(--accent-ink); stroke-width: 2;
+  stroke-linecap: round; stroke-linejoin: round;
+  /* pathLength="1" 归一化整条路径 = 1 个单位：
+     dasharray=1（一段虚线覆盖全长）+ dashoffset=1（整段挪走=看不见）→
+     :checked 时 offset 到 0，线从起点"生长"出来。生长 200ms ease-out。 */
+  stroke-dasharray: 1; stroke-dashoffset: 1;
+  transition: stroke-dashoffset var(--dur-tick) var(--ease-out-soft);
+}
+:root .cbox input[type="checkbox"]:checked + .cbox-tick path { stroke-dashoffset: 0; }
+/* 勾选完成瞬间的回弹：动画与描线在 :checked 命中的同一时刻挂上，
+   总时长 = 描线 200ms + 回弹段 100ms（关键帧节奏见 animations.css cboxTickPop）。
+   取消勾选时规则失配、动画自动解除 → 未勾选/半选态完全不受影响。 */
+:root .cbox input[type="checkbox"]:checked + .cbox-tick {
+  animation: cboxTickPop calc(var(--dur-tick) + 100ms) var(--ease-out-soft) both;
+}
+/* .cbox 内关掉 ::before 兜底对勾（只关 :checked 这一态）。
+   必须连 transform 一起钉回 scale(.3)：否则 :checked::before 的"弹出"过渡仍会播放，
+   兜底对勾会在描线动画底下若隐若现地"长"出来，形成重影。 */
+:root .cbox input[type="checkbox"]:checked::before { opacity: 0; transform: scale(.3); }
+
 /* ===========================================================================
- * 修复区 -C8 · GCP-AI 独立页太居中、两侧空太多
- * 
- * append 前：components.css:448 `.ai-embedded { --ai-col: 860px }`
- *   → 1280 宽窗口下内容区 1232，两侧各空 186px（用户："太居中、两侧空太多"）。
- * 修法：把列宽上限提到 1200（并留 16px 呼吸），小窗口仍按 100%-32px 自适应。
- * 只影响 .ai-embedded（独立页）；AI 抽屉是 420 窄栏、里面没有 .ai-embedded，不受影响。
+ * 修复区 -C8 · GCP-AI 独立页列宽（★ 本轮已作废，保留说明免得再被加回来）
+ *
+ * 历史：先用 860px、后提到 1200px 的居中窄列（--ai-col），都是为了"别太居中"；
+ * 用户本轮给了新口径 ——「各种 ui 元素不要聚拢在一起 应该分散开 左右两边各留一点点
+ * 间距就行」+「全屏/窗口都要自动适应」。
+ * ⇒ --ai-col 整条删除，改由 components.css 顶部 `.ai-embedded { --ai-gutter }`
+ *   + 整宽布局承担（全屏那条旧 --ai-col 也一起删了，见 ai-fixes.css 末尾）。
+ * 不要再把 --ai-col / max-width 居中列加回来。
  * =========================================================================*/
-.ai-embedded { --ai-col: min(1200px, 100% - 32px); }
 
 /* ===========================================================================
  * 修复区 -C11 · 卡片图标不再被放大插值（位图糊的一个直接来源）
@@ -790,7 +1194,11 @@ textarea.input { height: auto; padding: 8px 10px; resize: vertical; line-height:
       会把 wrap 压到 ~40px，正文就变成每行一两个字的“竖着排”。上限放到 wrap 上之后，
       .bubble 在 wrap 内 max-width:100%，短文本随内容、长文本按整行宽度换行。*/
 .bubble-wrap { display: flex; flex-direction: column; gap: 4px; align-items: flex-start;
-  min-width: 0; max-width: 78%; }
+  /* ★ 本轮：独立页改成整宽铺开后，78% 在 2K 全屏上会变成 ~1400px 的长行；
+     再压一条 1200px 的绝对上限，宽屏下正文一行的可读长度与窗口态一致。
+     ⚠️ 编辑态 textarea 的 max-width 必须是 100%（相对 wrap），不能再写 78%，
+        否则两层百分比互相收敛 → 编辑框变窄、文本折行（本轮的编辑态尺寸 bug）。 */
+  min-width: 0; max-width: min(78%, 1200px); }
 .bubble-wrap.is-user { align-items: flex-end; }
 
 /* ② 气泡下方那排小按钮：平时 72% 透明度，父级 hover / 自身 hover / 键盘聚焦时点亮*/
@@ -811,11 +1219,20 @@ textarea.input { height: auto; padding: 8px 10px; resize: vertical; line-height:
   width: 26px; height: 26px; flex: 0 0 auto; border-radius: 7px;
   display: inline-flex; align-items: center; justify-content: center;
   background: transparent; color: var(--text-secondary);
-  transition: color 120ms ease, background 120ms ease;
+  transition: color var(--dur-hover) var(--ease-out-soft),
+              background var(--dur-hover) var(--ease-out-soft),
+              transform var(--dur-release) var(--ease-spring);
 }
 .bubble-btn .ic { flex: 0 0 auto; }
 .bubble-btn:hover { color: var(--accent); background: var(--hover); }
-.bubble-btn:active { transform: scale(.94); }
+/* 原来 .94 且基础 transition 不含 transform → 按压缩小是"瞬跳"，没有快进/回弹曲线；
+   统一到 .96 并补齐两段曲线 */
+.bubble-btn:active {
+  transform: scale(.96);
+  transition: transform var(--dur-press) var(--ease-out-soft),
+              color var(--dur-hover) var(--ease-out-soft),
+              background var(--dur-hover) var(--ease-out-soft);
+}
 .bubble-btn.is-done { color: var(--success); }
 
 /* ④ 包裹层内的气泡：撑满可用宽度（上限已由 .bubble-wrap 的 max-width 控制） */
@@ -1002,8 +1419,8 @@ textarea.input { height: auto; padding: 8px 10px; resize: vertical; line-height:
   backdrop-filter: none;                          /* 不产生全屏模糊*/
   -webkit-backdrop-filter: none;
 }
-/* 独立页的内容居中列规则会把 head/body 收成 100%-32px 并居中（--ai-col），
-   放进 392px 的侧栏里会再少 32px、两边还多出空白；侧栏内改回整宽。*/
+/* 历史侧栏放进 392px 的固定栏里，不能再吃 --ai-gutter（两边会多出空白）；
+   侧栏内改回整宽。*/
 .ai-history.is-page-panel > .ai-history-head,
 .ai-history.is-page-panel > .ai-history-body {
   width: 100%; max-width: none; margin-left: 0; margin-right: 0;
@@ -1148,11 +1565,12 @@ textarea.input { height: auto; padding: 8px 10px; resize: vertical; line-height:
 :root[data-fx="acrylic"] .combo:not(.is-open) > .combo-trigger:hover {
   border-color: color-mix(in srgb, var(--text) 26%, transparent);
 }
-/* 展开态：保留强调色描边 + 3px 光圈，再把材质高光拼回去*/
+/* 展开态：保留强调色描边 + 2px 光圈（m04188 第 1 项：跟基础档 .combo.is-open
+   的 3px→2px 同步，玻璃档不许比默认档更抢眼），再把材质高光拼回去*/
 :root[data-fx="glass"] .combo.is-open > .combo-trigger,
 :root[data-fx="acrylic"] .combo.is-open > .combo-trigger {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-soft), var(--fx-extra);
+  box-shadow: 0 0 0 2px var(--accent-soft), var(--fx-extra);
   backdrop-filter: blur(var(--combo-blur)) saturate(var(--combo-sat));
   -webkit-backdrop-filter: blur(var(--combo-blur)) saturate(var(--combo-sat));
 }
@@ -1483,11 +1901,24 @@ textarea.input { height: auto; padding: 8px 10px; resize: vertical; line-height:
   background: var(--accent-soft);
   color: var(--accent);
   font-size: 11.5px; line-height: 1;
-  transition: background 130ms ease, color 130ms ease, border-color 130ms ease, opacity 130ms ease;
+  transition: background var(--dur-hover) var(--ease-out-soft),
+              color var(--dur-hover) var(--ease-out-soft),
+              border-color var(--dur-hover) var(--ease-out-soft),
+              opacity var(--dur-hover) var(--ease-out-soft),
+              transform var(--dur-release) var(--ease-spring);
 }
 .notice-read-btn:hover {
   background: color-mix(in srgb, var(--accent) 22%, transparent);
   border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+}
+/* 已读/禁用后是"死按钮"，不给按压反馈（点了也没反应，缩一下反而误导） */
+.notice-read-btn:not(.is-read):not(:disabled):active {
+  transform: scale(.96);
+  transition: transform var(--dur-press) var(--ease-out-soft),
+              background var(--dur-hover) var(--ease-out-soft),
+              border-color var(--dur-hover) var(--ease-out-soft),
+              color var(--dur-hover) var(--ease-out-soft),
+              opacity var(--dur-hover) var(--ease-out-soft);
 }
 .notice-read-btn.is-read,
 .notice-read-btn:disabled {
@@ -1547,10 +1978,13 @@ textarea.input { height: auto; padding: 8px 10px; resize: vertical; line-height:
    和开源仓库平台等下拉框并排时明显不是一套控件。
    里面的 input 完全隐形（无边框/背景/内边距），视觉上就是普通触发器。*/
 .combo-trigger-editable { cursor: text; padding: 0 10px; gap: 8px; }
-/* 触发器自己画焦点圈（input 的焦点环被下面关掉了）*/
+/* 触发器自己画焦点圈（input 的焦点环被下面关掉了）。
+   m04188 第 1 项：3px→2px，与前面 .combo.is-open .combo-trigger 的展开光圈同步收紧
+   —— 普通下拉看"展开"、可编辑下拉看"打字光标"，两边其实是同一套控件的
+   "已激活"指示，粗细不一致就会被认成两种控件。 */
 .combo-trigger-editable:focus-within {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-soft);
+  box-shadow: 0 0 0 2px var(--accent-soft);
 }
 .combo-edit {
   flex: 1 1 auto; min-width: 0; width: 100%; height: 100%;
@@ -1567,14 +2001,15 @@ textarea.input { height: auto; padding: 8px 10px; resize: vertical; line-height:
    同格里的普通 input 都是整格宽（默认窗口下约 475px），而 .combo 默认是 inline-flex
    按内容/写死宽度收缩 ⇒ 类别框只有 240px、右边空一大截，看起来像另一个控件。
    只命中"表单字段里的可编辑下拉"，其它 combo（工具栏 110/140/160…）的宽度一律不动。*/
-.field > .combo.is-editable { flex: 1 1 auto; width: 100%; align-self: stretch; }
+.field > .combo.is-editable { flex: 1 1 auto; min-width: 0; width: 100%; align-self: stretch; }
 .combo.is-editable { display: flex; }
 .combo.is-editable > .combo-trigger { width: 100%; }
-/* 玻璃两档：焦点态要把材质高光一起拼回来（的材质规则会覆盖 box-shadow）*/
+/* 玻璃两档：焦点态要把材质高光一起拼回来（的材质规则会覆盖 box-shadow）；
+   光圈 2px 同 m04188 第 1 项，与其它三处 combo 光圈一致 */
 :root[data-fx="glass"] .combo-trigger-editable:focus-within,
 :root[data-fx="acrylic"] .combo-trigger-editable:focus-within {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-soft), var(--fx-extra);
+  box-shadow: 0 0 0 2px var(--accent-soft), var(--fx-extra);
 }
 /* 分段控制器兜底：裁掉越界内容（含 JS 注入的滑块），自身永不参与父容器横向溢出。
    ⚠️ `overflow: clip` 是关键的那一行：它**不建立滚动容器**，所以
@@ -1593,7 +2028,7 @@ textarea.input { height: auto; padding: 8px 10px; resize: vertical; line-height:
  *   · 按钮和发送按钮同高（38px），单行时三者底/顶对齐。*/
 .ai-input-wrap { position: relative; flex: 1 1 auto; min-width: 0; display: flex; }
 .ai-input-wrap .ai-input {
-  flex: 1 1 auto; width: 100%;
+  flex: 1 1 auto; min-width: 0; width: 100%;
 }
 /* 润色按钮挪回**输入框外**、发送按钮左边（GCP-AI的润色按钮还是放在输入框外与发送按钮之间的位置吧）。
    撤掉 的"贴输入框内部右下角"absolute 方案：按钮作为 .ai-input-row 的
@@ -1605,14 +2040,24 @@ textarea.input { height: auto; padding: 8px 10px; resize: vertical; line-height:
   color: var(--text-secondary);
   background: color-mix(in srgb, var(--card-solid) 86%, transparent);
   border: 1px solid var(--card-border);
-  transition: color 140ms ease, border-color 140ms ease, background 140ms ease;
+  transition: color var(--dur-hover) var(--ease-out-soft),
+              border-color var(--dur-hover) var(--ease-out-soft),
+              background var(--dur-hover) var(--ease-out-soft),
+              transform var(--dur-release) var(--ease-spring);
 }
 .ai-polish:hover:not(:disabled) {
   color: var(--accent);
   border-color: color-mix(in srgb, var(--accent) 42%, transparent);
   background: var(--accent-soft);
 }
-.ai-polish:active:not(:disabled) { transform: scale(.94); }
+/* .94→.96 统一按压深度；原来基础规则不 transition transform（瞬跳），现补两段曲线 */
+.ai-polish:active:not(:disabled) {
+  transform: scale(.96);
+  transition: transform var(--dur-press) var(--ease-out-soft),
+              color var(--dur-hover) var(--ease-out-soft),
+              border-color var(--dur-hover) var(--ease-out-soft),
+              background var(--dur-hover) var(--ease-out-soft);
+}
 .ai-polish:disabled { opacity: .45; pointer-events: none; }
 .ai-polish:disabled .ic { animation: ai-polish-pulse 1.1s ease-in-out infinite; }
 .ai-polish .ic { width: 14px; height: 14px; }
@@ -1688,3 +2133,118 @@ textarea.input { height: auto; padding: 8px 10px; resize: vertical; line-height:
 .cloud-status-note .icon-btn { width: 26px; height: 26px; flex: 0 0 auto; }
 .cloud-status-note .icon-btn.is-busy .ic { animation: cloud-sync-spin 1s linear infinite; }
 @keyframes cloud-sync-spin { to { transform: rotate(360deg); } }
+
+
+/* ══════════════════════════════════════════════════════════════════════
+   Markdown 渲染容器（.md-body）—— 公告页正文 / 新公告弹窗 / 发现新版本更新说明
+   ══════════════════════════════════════════════════════════════════════
+   类名由 webui/js/markdown.js 产出（md-h/md-h1..h6、md-p、md-list/md-ul/md-ol、
+   md-li、md-task、md-quote、md-pre、md-code、md-hr、md-link、md-img、
+   md-strong/md-em/md-del/md-u/md-kbd/md-sub/md-sup、md-li.is-task、
+   md-table-wrap/md-table/md-td）。
+   ⚠️ 为什么必须写这一整块：渲染器只出**语义标签 + class**，样式全在这里。
+      少了这一块，v-html 出来的东西会和周围正文一样大小、列表没有缩进、
+      代码块没有底 —— 用户视觉上仍像"没渲染"，很容易误判成引擎没跑起来。
+   ⚠️ 全部颜色走主题变量（--text / --text-secondary / --accent / --card-border…），
+      深浅两档自动跟随，绝不写死色值（AGENTS.md 第 4 节配色那条）。
+   ⚠️ 字号一律用 rem/相对值与既有 .body-1/.cap 对齐，不要给容器写死宽高。 */
+
+.md-body { color: var(--text); font-size: 13px; line-height: 1.7;
+  word-break: break-word; overflow-wrap: anywhere; }
+.md-body > :first-child { margin-top: 0; }
+.md-body > :last-child { margin-bottom: 0; }
+/* ⚠️⚠️ 公告页正文的 class 是 `.notice-body.md-body` 两个一起挂：`.notice-body`
+   （layout.css:237）带着 `white-space: pre-wrap` —— 那是"纯文本 + 换行"时代的样式。
+   而渲染器输出的 HTML 在块级标签之间是**带换行符**的，pre-wrap 会把这些换行符当成
+   正文内容，于是每两个块（段落/标题/列表）之间都多出一个"无故空行"，整页被拉得很散。
+   这里必须显式覆盖；用双类提高特异性，免得被其它样式文件里的单类规则压回去。 */
+.md-body, .md-body.notice-body, .md-body.dlg-item-body { white-space: normal; }
+
+/* ---------- 段落 / 间距 ---------- */
+.md-body .md-p { margin: 0 0 8px; }
+
+/* ---------- 标题：公告里常见 ## 新增 / ### 修复 ----------
+   压在正文与容器标题之间，所以比页面 h2 小一档，避免出现"三层大标题"。 */
+.md-body .md-h { margin: 14px 0 8px; font-weight: 600; line-height: 1.4;
+  color: var(--text); }
+.md-body .md-h1 { font-size: 16px; }
+.md-body .md-h2 { font-size: 15px; }
+.md-body .md-h3 { font-size: 14px; }
+.md-body .md-h4, .md-body .md-h5, .md-body .md-h6 { font-size: 13px; }
+.md-body .md-h1:first-child, .md-body .md-h2:first-child,
+.md-body .md-h3:first-child { margin-top: 0; }
+
+/* ---------- 列表：markdown.js 输出 <ul class="md-list md-ul"><li class="md-li"> ---------- */
+.md-body .md-list { margin: 0 0 8px; padding-left: 22px; }
+.md-body .md-ul { list-style: disc; }
+.md-body .md-ol { list-style: decimal; }
+.md-body .md-li { margin: 2px 0; }
+.md-body .md-li > .md-list { margin: 2px 0; }        /* 嵌套列表收紧间距 */
+.md-body .md-li::marker { color: var(--text-secondary); }
+/* 任务清单 - [ ] / - [x]：GitHub Release 正文很常见。
+   ⚠️ list-style 必须写在 <li>（.md-li.is-task）上：写在内层 <span class="md-task"> 上
+   是无效的（span 不是 list-item），结果浏览器照旧画一个圆点 → "• ☐ 文本" 双标记。 */
+.md-body .md-li.is-task { list-style: none; }
+.md-body .md-task { display: inline-block; margin-right: 2px; color: var(--text-secondary);
+  font-size: 12.5px; }
+.md-body .md-task.is-done { color: var(--accent); }
+.md-body .md-task input { margin-right: 6px; accent-color: var(--accent);
+  vertical-align: -1px; }
+
+/* ---------- 表格（GFM）：markdown.js 产出 .md-table-wrap > table.md-table ---------- */
+.md-body .md-table-wrap { margin: 0 0 10px; overflow-x: auto; }
+.md-body .md-table { border-collapse: collapse; width: 100%; font-size: 12.5px;
+  line-height: 1.6; }
+.md-body .md-table .md-td { padding: 5px 10px; border: 1px solid var(--card-border);
+  vertical-align: top; }
+.md-body .md-table thead .md-td { background: var(--page-2); font-weight: 600;
+  color: var(--text); white-space: nowrap; }
+
+/* ---------- 强调 / 行内 ---------- */
+.md-body .md-strong { font-weight: 600; color: var(--text); }
+.md-body .md-em { font-style: italic; }
+.md-body .md-del { text-decoration: line-through; color: var(--text-secondary); }
+.md-body .md-u { text-decoration: underline; }
+.md-body .md-sub { font-size: .8em; vertical-align: sub; }
+.md-body .md-sup { font-size: .8em; vertical-align: super; }
+.md-body .md-kbd { display: inline-block; padding: 0 5px; border-radius: 4px;
+  border: 1px solid var(--card-border); background: var(--card);
+  font-family: Consolas, monospace; font-size: 11.5px; line-height: 1.6;
+  color: var(--text-secondary); }
+
+/* ---------- 代码：行内 + 代码块 ---------- */
+.md-body .md-code { padding: 1px 5px; border-radius: 4px;
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  font-family: Consolas, monospace; font-size: 12px; color: var(--accent); }
+.md-body .md-pre { margin: 0 0 10px; padding: 10px 12px; border-radius: 8px;
+  border: 1px solid var(--card-border); background: var(--page-2);
+  overflow-x: auto; }
+.md-body .md-pre code { display: block; background: none; padding: 0;
+  color: var(--text); font-family: Consolas, monospace;
+  font-size: 12px; line-height: 1.6; white-space: pre; }
+
+/* ---------- 引用块 ---------- */
+.md-body .md-quote { margin: 0 0 10px; padding: 4px 0 4px 12px;
+  border-left: 3px solid var(--card-border); color: var(--text-secondary); }
+.md-body .md-quote > :last-child { margin-bottom: 0; }
+
+/* ---------- 分隔线 ---------- */
+.md-body .md-hr { height: 1px; margin: 12px 0; border: 0;
+  background: var(--divider); }
+
+/* ---------- 链接：渲染器产出的是 **无 href** 的 <a data-mdlink>，
+   点击由 app.js 的事件委托接 openLink（外链走系统浏览器）。
+   所以这里只管外观；真正的"可点"不依赖 href。 ---------- */
+/* ⚠️ 颜色用 --link-blue 而不是 --accent：需求是「蓝色带下划线」（公告页/公告弹窗），
+   而 --accent 会跟着"外观强调色"变紫/变橙，那时链接就不再是蓝的了。
+   下划线常驻（用户明确要"带下划线字体"），hover 只提亮。 */
+.md-body .md-link { color: var(--link-blue); text-decoration: underline;
+  text-underline-offset: 2px; cursor: pointer; }
+.md-body .md-link:hover { color: var(--link-blue-strong); }
+
+/* ---------- 图片：GitHub Release 正文里的徽章/截图
+   max-width:100% 而不是写死宽度（AGENTS.md 禁止写死尺寸）。 ---------- */
+.md-body .md-img { max-width: 100%; height: auto; border-radius: 6px;
+  margin: 2px 0; display: inline-block; vertical-align: middle; }
+/* 徽章连排时不要撑破容器 */
+.md-body p:has(> img) { line-height: 1.9; }

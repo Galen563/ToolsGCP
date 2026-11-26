@@ -20,6 +20,10 @@
 
 输出：`_tmp-ai-test/probe_autostart_taskbar.json`（报告里直接引用）
 ⚠️ 沙箱：临时文件只用固定名目录 `_tmp-ai-test/`。
+
+⚠️ 第 31 轮起：**默认什么都不做**（--live 会真起整个程序、--selftest 会建窗 Show，
+   都占用户屏幕）。必须显式加 `--show` 才真的跑；不加时只打印用法提示，
+   不建窗、不起程序、不截屏，你的屏幕完全不被占用。
 """
 import argparse
 import ctypes
@@ -354,9 +358,19 @@ def live():
 def main():
     ap = argparse.ArgumentParser()
     g = ap.add_mutually_exclusive_group(required=True)
+    ap.add_argument("--show", action="store_true",
+                    help="允许真的建窗/起程序（不加就什么都不做）")
     g.add_argument("--selftest", action="store_true")
     g.add_argument("--live", action="store_true")
     args = ap.parse_args()
+
+    # 第 31 轮：不加 --show 就不许碰用户屏幕（--live 会真起整个程序）
+    if not args.show:
+        print("默认不跑：--live 会真起 ToolsGCP 占用你的屏幕。")
+        print("要真跑请显式加 --show，例如：")
+        print("  python probe_autostart_taskbar.py --selftest --show")
+        print("  python probe_autostart_taskbar.py --live --show")
+        return 0
 
     os.makedirs(OUT_DIR, exist_ok=True)
     data = {"mode": "selftest" if args.selftest else "live",

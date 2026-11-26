@@ -1,7 +1,7 @@
 # 资源库 schema（ToolsGCP-Resources.json）
 
 > 唯一事实来源：`.ToolsGCP/modules/pymodels/core/resource_schema.py`
-> 版本：`schema_version = 2.1.0`（2.0.0 → 2.1.0：`category` 变数组、`tags` 不再重复类别）
+> 版本：`schema_version = 2.1.0`（2.0.0 → 2.1.0：`category` 变数组；2.1.0 起 `tags` 不再剔除与类别同名的值，m07514）
 
 这份文档存在的理由：以前 `category` 是逗号拼接的字符串、`tags` 里又抄一份类别、
 `description` / `intro` / `supplement` 三个文本字段的差别只写在代码注释里 ——
@@ -39,7 +39,7 @@
 | `code` | str | ✅ | 系统编码 `TG-000001`：收藏夹、部署清单、AI 工具拿它当主键 |
 | `name` | str / i18n | ✅ | 名称：卡片标题、详情页标题 |
 | `category` | **list[str]** | | 类别：搜索页分组与类别筛选、定制页喜好来源 |
-| `tags` | list[str] | | 补充标签（**不含** `category` 里已有的值）：详情页胶囊、标签筛选、AI 检索词 |
+| `tags` | list[str] | | 补充标签：详情页胶囊、标签筛选、AI 检索词（**可以与 `category` 同名**，同名项两边都会保留，m07514） |
 | `description` | str / i18n | | **简介**：卡片上那一行、详情页标题下的小字，≤100 字 |
 | `intro` | str / i18n | | **应用介绍**：详情页「应用介绍」正文，可写几段；留空时退回 `description` |
 | `supplement` | str / i18n | | **补充说明**：接在应用介绍后面的一段（注意事项、平台差异） |
@@ -118,7 +118,7 @@ ARCHITECTURES = ("x64", "x86", "arm64", "arm", "Apple Silicon", "其他")
 "category": "工具,游戏" / "工具，游戏" / "工具、游戏"   // -> ["工具", "游戏"]
 "category": ["工具", "游戏"]                          // 原样
 "category": {"简体中文": "工具", "English": "Tools"}  // -> ["工具"]
-"tags": ["工具", {"简体中文": "官方"}]                 // -> ["官方"]（工具与类别重复，去掉）
+"tags": ["工具", {"简体中文": "官方"}]                 // -> ["工具", "官方"]（同名不再剔除，m07514）
 "systems": "Windows"                                 // -> ["Windows"]
 ```
 
@@ -128,7 +128,7 @@ ARCHITECTURES = ("x64", "x86", "arm64", "arm", "Apple Silicon", "其他")
 规范化只改三件事，「轻量」指的是**概念少**、不是字段名短：
 
 1. `category` 一律是 `list[str]`；
-2. `tags` 去掉所有与 `category` 重复的值（本次迁移删掉了 51 个）；
+2. `tags` 原样保留（不再剔除与 `category` 重复的值，**m07514**：用户主动填的同名标签被静默丢掉就是吞数据）；
 3. 多语言字典按当前语言解析成字符串，枚举统一大小写，字段按固定顺序落盘。
 
 字段名一个都不改（`category` / `description` / `url` / `icon` …）—— 改名要动上百处
@@ -141,7 +141,7 @@ ARCHITECTURES = ("x64", "x86", "arm64", "arm", "Apple Silicon", "其他")
 - 缺必填字段（`id` / `code` / `name`）；
 - `id` 与 `code` 相同（两种标识分不开）；
 - `systems` / `architectures` 里出现不在枚举里的值；
-- `tags` 里重复了 `category` 的值；
+- `tags` 里重复了 `category` 的值（仅作**提示**，不阻断写入，m07514）；
 - 链接字段不是完整的 `http(s)://` 地址。
 
 ## 访问器（别再自己拆 / 自己 `or`）
@@ -162,6 +162,8 @@ rs.normalize(item, lang) / rs.validate(item)
 **为什么筛选一律用 `keywords_of`**：以前类别是抄一份进 `tags` 的，所以"只看 tags"
 恰好等于"类别 + 标签"；`tags` 去重之后只看 tags 会凭空少掉「工具 / 游戏 / AI」这些
 最常见的筛选项。取并集后，搜索页标签筛选的选项集合（36 个）与重构前完全一致。
+另说（m07514）：现在 `tags` 里与 `category` 同名的值不再被剔除，但**取并集的口径不变**，
+并集里的重复项不会让筛选选项重复出现。
 
 ---
 

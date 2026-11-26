@@ -6,7 +6,7 @@
   · **必须装在 worker 线程**：Qt 的 QApplication 有线程亲和性，主线程一旦 import 过
     PyQt5，进程退出就 100% 崩 0xC0000005（见旧版长注释，实测 8/8）；顺带还逼出了
     "退出时必须在创建线程里销毁、还要轮询 stop 请求"那一整套绕法。
-现在改成 Win32 分层窗口（`UpdateLayeredWindow` 画**没有底板的圆角 logo**）：
+现在改成 Win32 分层窗口（`UpdateLayeredWindow` 画**圆角半透明底板 + 居中 logo**）：
   · 零第三方依赖：只用 ctypes + 本仓库已有的 `desktop/native/win32.py`；
   · 在**自己的线程**里建窗口，和 `traymenu.py`（自绘托盘菜单）是同一个成熟路子；
   · logo 解码用 `Pillow`（requirements.txt 里本来就有，`native/appicon.py` 在用）。
@@ -17,27 +17,75 @@
     `.wait(timeout)`     等到结束
     `.stop(timeout)`     退出流程用：让窗口线程收尾并 join
 shell.py 只依赖这几个方法，所以换实现不动外壳逻辑（双条件 ready 照旧）。
-========= 视觉规格（本轮按需求去掉"底板"） =========
-旧版对齐原版 `pymodels/splash_screen.py`：logo 夹到 300px、窗口 = logo + 80px 边距、
-画一块圆角半透明底（rgba(43,43,43,240) / 圆角 20）再把 logo 居中贴上去。
-**本轮用户要求：底板去除，只留 logo 本身，并给加载图片自己的四个角加圆润效果。**
-所以现在：
+⚠️⚠️ 本轮需求变更：**显示多久不再由 duration 决定**（用户原话：「设置中的启动动画时长
+删除，这个从此就不要了……显示时长相关代码改为程序什么时候出现这个悬浮启动画面就什么
+时候消失；启动完成后再让悬浮启动动画消失」）。于是：
+  · 窗口一直显示，**直到主流程叫它消失**（shell 在主窗口显示之后 stop()）；
+  · 形参 `duration_ms` 只为兼容既有调用点/取证脚本而保留，**不再参与任何计时**；
+  · `SPLASH_HARD_TIMEOUT_MS` 退化成的安全网含义也变了：从"最多播这么久"变成
+    "万一主流程永远没叫我关（异常/死锁），最多赖屏这么久也必须自毁"，所以调大了。
+
+⚠️⚠️ 本轮需求变更 2：**等待循环必须是真消息泵**（用户报"鼠标一碰启动画面就显示未
+响应，再点一下直接被关闭"）。旧写法只有 `time.sleep(0.03)` 轮询，这条窗口线程
+从不取消息；分层窗口被鼠标碰到时系统要跨线程调用本窗口的 WndProc，没人泵消息
+调用方就阻塞 → 窗口被标记未响应 → 用户下一次点击被引导走到关闭路径。现在
+_run_native 的等待段用 PeekMessageW/TranslateMessage/DispatchMessageW +
+MsgWaitForMultipleObjects(30ms, QS_ALLINPUT)：消息被正常派发（不忙等、不重建位图），
+三条退出条件（stop_requested / 窗口已销毁 / 硬超时安全网）保持不变。
+WM_CLOSE 仍然只置标志，销毁只发生在建窗这条线程上（老规矩）。
+
+============ 位置/尺寸：DPI 那一段是本轮修的 bug ============
+⚠️⚠️ 用户反馈"启动画面先出现在屏幕正中央，然后突然跳到非中央的位置"（只有网友报，
+   开发者本机不复现）。真因**不是居中算错**，而是**进程 DPI awareness 在启动画面
+   显示期间被翻转**：pywebview 直到 webview.start() 里才 SetProcessDPIAware，
+   而我们在那之前就用裸 Win32 建好了窗 —— 建窗时坐标被系统按" unaware + 缩放比"
+   虚拟化，翻转之后同一组坐标按物理像素解释，窗口就"跳"了；100% 缩放的机器上
+   这个翻转是恒等操作，所以只有 125%/150% 缩放的用户看得见。
+   修法与完整推导写在 native/win32.py 的 `ensure_dpi_awareness()` 里，改之前先读它。
+   另外整条链路只允许**一次定位**：建窗即按最终坐标建、UpdateLayeredWindow 用同一个
+   (x,y)、ShowWindow 之后只做"校验"（偏了才纠正并记日志），绝不主动再搬第二次。
+========= 视觉规格（底板 + 居中 logo；只学老版本的规格，不复制它的实现） =========
+参考目录 `老版本临时参考文件/v1.0.0-beta.2/.ToolsGCP/desktop/splash.py`（**只读参考，
+一个字节都不许改**）的视觉规格是：logo 最长边夹到 300px、窗口比 logo 每边多一圈边距、
+画一块**圆角半透明底**，再把 logo **居中**贴上去。本轮用户要求"学习老版本的 UI 和动画
+和大小，包括窗口动画的主体背景"，所以**底板加回来** —— 但实现全部自己写
+（老版那份有不少已知 bug。老版底色同样写死深色，本轮需求也固定深色，但取值
+   与 webui 的深色 --page 对齐，且实现全部自己写）。
+现在的规格：
   · logo 最长边仍然夹到 300px（`_SPLASH_LOGO_MAX`，LANCZOS 平滑缩放）；
-  · **窗口尺寸 == logo 尺寸**（不再有 80px 边距 ⇒ 不再有那块底板）；
-  · 圆角打在 **logo 位图自己的 alpha 通道**上（`_SPLASH_CORNER_RATIO`，半径随图片尺寸等比走，
-    180px 的 logo → 半径 29px，视觉上和原来底板的 20px 圆角接近但不死板）；
-    圆角外 alpha **必须为 0**，否则分层窗口会留一圈脏边（黑边/白边）；
-  · 底板没了 ⇒ 底色常量 `_SPLASH_BG_*` 只剩一个用途：**图片缺失/损坏时的兜底圆角块**
-    （仍跟随主题二选一、仍 alpha 240，保证"永远有东西显示、且不崩"）。
-    兜底块尺寸 = 原来的 220×220，圆角半径同样按比例算。
+  · **窗口尺寸 = logo 尺寸 + 2 × 边距**，边距 `_SPLASH_MARGIN = 32`（每边 32px），
+    底板圆角半径 `_SPLASH_RADIUS = 20`；
+    ⚠️ 老版自己写的是"总共 +80"（`setFixedSize(w + 80, h + 80)`，即每边 40）；
+       本项目一开始按用户口径"边距 80"取成**每边 80**，实测底板太空、logo 像浮在
+       一张大纸上，用户明确要求"把底层边距距离 logo 缩短" ⇒ 现取**每边 32**
+       （比老版每边 40 还紧一点，窗口 244×244，比老版 260×260 更小一圈）；
+  · 边距 / 圆角半径 / logo 上限 / 兜底块尺寸**全部随 DPI 缩放比放大**
+    （分层窗口的尺寸单位是物理像素，不放大在 150%/200% 屏上会缩水一半）；
+  · **底板**：圆角矩形 + **固定深色**底（`_SPLASH_BG_DARK` = (28,28,28,240)，alpha 240）；
+    ⚠️⚠️ 本轮需求变更（用户原话）：「浅色主题的悬浮启动动画底板要和深色一致。不是
+       单纯改个颜色，而是把之前判断主题的那套逻辑删掉——底板固定一种颜色，不需要
+       专门一套检测逻辑服务它」。原"读配置文件里的 theme → 判深浅 → 二选一底色"那一
+       整套函数与常量（含取证日志）已**整体删除**，`_prepare_bitmap` 不再有 `dark`
+       参数，显示路径对配置**零读取**。
+       （历史备注：上一轮"底色必须跟随主题"是为了修"浅色主题下启动画面是一块黑"；
+        本轮需求相反 —— 两种主题共用同一块深色底板，跟随逻辑整体作废，别加回来。）
+       `_theme_is_light` 仍留在文件里：`desktop/shell.py` 的主窗口/boot-screen 配色
+       还在 import 它 —— 那是"窗口内启动动画"的另一条链路，与本浮窗无关。
+    底板圆角沿用 `_rounded_mask`（2x 超采样 + 1x 硬边取 min）⇒ **圆角外 alpha 严格为 0**，
+    不会留下 LANCZOS 振铃造成的黑边/白边（脏边）；
+  · logo **居中**贴在底板上（`alpha_composite` 到 (win_w-w)//2, (win_h-h)//2）；
+  · logo **自身**的四角圆润处理**保留**（`_apply_corner_radius`，比例制半径）——
+    它只乘在 logo 位图自己的 alpha 通道上，不影响底板；
+  · 兜底路径（图片缺失/损坏）：与主路径**同构**——同样是一块圆角底板
+    （中心是固定深色底、角外 alpha==0），绝不白屏/崩溃；
   · 无边框 + 置顶 + 不抢焦点（WS_POPUP + WS_EX_TOOLWINDOW|TOPMOST|LAYERED，
     ShowWindow(SW_SHOWNOACTIVATE)）。
-本项目 logo 是 180×180 → 窗口 180×180（以前是 260×260）。
+本项目 logo 是 180×180 → 窗口 244×244（180 + 2×32；上一版每边 80 是 340×340，
+去底板那版是 180×180，老版是 260×260）。
 ⚠️ 它**永远是独立小窗口**，绝不许拿主窗口冒充（那是"启动时闪一个等大空窗"的来源）。
 """
 
 import ctypes
-import json
 import os
 import sys
 import threading
@@ -45,31 +93,35 @@ import time
 import traceback
 from ctypes import wintypes
 
-# 启动画面最长等待（毫秒）：超过就当作"已经结束"，避免异常让窗口永远不出现
-SPLASH_HARD_TIMEOUT_MS = 12000
+# 启动画面的**赖屏上限**（毫秒）：本轮起它不再是"播放时长"，而只是安全网 ——
+# 正常路径是"主流程完成后由 shell 调 stop() 关掉"，这一条只防"主流程出了意外、
+# 永远没人叫它关"（异常、死锁、显示逻辑被跳过），那种情况下也绝不能让一块
+# 置顶的透明窗永远压在用户桌面上。
+# ⚠️ 为什么从 12 秒调到 90 秒：慢机器/杀软首启、云端资源库第一次拉取时，
+#    "主界面就绪"本身就可能要十几二十秒；安全网必须**明显大于**真实启动耗时，
+#    否则又变回用户报的另一个问题"启动动画一瞬间就消失了"。
+SPLASH_HARD_TIMEOUT_MS = 90000
 
 # ---- 视觉常量（见模块 docstring 的"视觉规格"） ----
-# 底色按用户主题二选一：与 webui/css/variables.css 的 `--page` 对齐 ——
-# 浅色 #F3F4F7、深色 #1C1C1C，不另造一套色；alpha 240 沿用原视觉规格。
-# ⚠️ 本轮去掉底板之后，这两个色**只用于图片缺失/损坏时的兜底圆角块**；
-#    正常情况下启动画面就是 logo 本身（不再有背景矩形），所以"浅色主题看到深色底"
-#    不可能再由这两个常量造成 —— 取证时别把它们当第一嫌疑。
-#    旧值 (43,43,43,240) 是原 Qt 版写死的深色，浅色主题下和主窗口底对不上。
-_SPLASH_BG_DARK = (28, 28, 28, 240)      # #1C1C1C = webui 深色 --page
-_SPLASH_BG_LIGHT = (243, 244, 247, 240)  # #F3F4F7 = webui 浅色 --page
+# 底板底色**固定深色**，本轮起不再跟随用户主题（需求与推导见 docstring：用户要求
+# 把整套主题判定逻辑删掉，而不是只换个颜色）。取值仍与 webui/css/variables.css 的
+# 深色 --page 对齐（#1C1C1C），alpha 240 沿用原视觉规格。
+# ⚠️ 浅色底板色值常量已随之删除；谁再"跟随主题"就是把本轮需求改回去。
+_SPLASH_BG_DARK = (28, 28, 28, 240)      # #1C1C1C = webui 深色 --page（唯一底板色）
 _SPLASH_LOGO_MAX = 300                  # 原版 max_size = 300（logo 最长边上限）
-# 圆角半径按**图片短边的比例**算，而不是写死像素：图片被缩放后圆润程度保持一致。
-# 0.16 → 180px 的 logo ≈ 29px 半径（原来"底板圆角 20 / 底板 260"的视觉比例是 0.077，
-# 但那是整块大底板的角；现在是 logo 自己的角，同样的绝对半径看着更小，所以比例放大一些）。
+# 底板圆角半径（老版 drawRoundedRect(..., 20, 20) 的规格）
+_SPLASH_RADIUS = 20.0
+# 底板边距：窗口 = logo + 2 × 边距（老版 setFixedSize(w+80, h+80) 是"总共 80"，
+# 即每边 40；本项目先按"每边 80"做了一版，底板太空、logo 像浮在大纸上，
+# 用户要求"把底层边距距离 logo 缩短" ⇒ 每边收到 32，窗口 244×244，比老版还小一圈）
+_SPLASH_MARGIN = 32
+# logo **自身**的四角半径：按图片短边的比例算，而不是写死像素（图片被缩放后圆润程度
+# 保持一致）。0.16 → 180px 的 logo ≈ 29px 半径；只乘在 logo 位图自己的 alpha 上，
+# 不影响底板的圆角。
 _SPLASH_CORNER_RATIO = 0.16
 _SPLASH_CORNER_MAX = 48                 # 半径上限：大图标别圆成圆形贴纸
-# 图片缺失/损坏时的兜底方块尺寸（保留旧版数字，改小会显得"启动画面消失了"）
+# 图片缺失/损坏时的兜底方块尺寸（沿用旧版数字，改小会显得"启动画面消失了"）
 _SPLASH_FALLBACK_SIZE = 220
-# 兼容旧引用（回归脚本 test_splash_theme.py 里有名字检查）：
-# _SPLASH_MARGIN 已经废弃（去底板 = 不再有 80px 边距），保留为 0 只作占位；
-# _SPLASH_RADIUS 保留 = 原底板圆角规格，仅作文档/测试参照，不再参与绘制。
-_SPLASH_MARGIN = 0
-_SPLASH_RADIUS = 20.0
 
 # ---- Win32 常量（本地定义，避免动 win32.py 的公开面） ----
 _WS_POPUP = 0x80000000
@@ -80,9 +132,17 @@ _SW_SHOWNOACTIVATE = 0x0004
 _ULW_ALPHA = 0x00000002
 _AC_SRC_OVER = 0x00
 _AC_SRC_ALPHA = 0x01
+_WM_QUIT = 0x0012
 _WM_DESTROY = 0x0002
 _WM_CLOSE = 0x0010
 _WM_ERASEBKGND = 0x0014
+# 消息泵（等待循环）用：PeekMessageW 的"取出即移除"模式，以及
+# MsgWaitForMultipleObjects 的"任何输入消息都醒"过滤位（数值同 winuser.h）
+_PM_REMOVE = 0x0001
+_QS_ALLINPUT = 0x04FF
+_WAIT_TIMEOUT = 258             # MsgWaitForMultipleObjects 返回值：正常超时
+_WAIT_FAILED = 0xFFFFFFFF       # 同上：调用失败（ctypes 按有符号读回 -1）
+_PUMP_WAIT_MS = 30              # 空闲等待粒度：stop() 标志最迟 30ms 被看到
 
 
 # ======================================================================
@@ -109,36 +169,24 @@ def _log_err(message: str):
 
 
 # ======================================================================
-# 主题：决定启动画面用深色还是浅色底
+# 主题字符串判定表：**只服务 shell 的主窗口 / boot-screen 配色**
 # ======================================================================
-def _read_theme_setting() -> str:
-    """只读一次用户配置里的 `theme`（**不实例化 SettingsManager**）
-
-    ⚠️ 为什么不用 SettingsManager：它构造时会跑一次性迁移、并可能**落盘** ——
-       启动画面这条路径要求"极早 + 只读 + 无副作用"（为了配色去写用户配置不值当）。
-       这里直接读同一个配置文件（`DATA_DIR/toolsgcp_config.json`，和 SettingsManager
-       用的是同一个路径），读不到/JSON 坏了/键缺失都返回空串，由调用方回退深色。
-    """
-    from pymodels.constants import DATA_DIR
-    path = os.path.join(DATA_DIR, "toolsgcp_config.json")
-    with open(path, "r", encoding="utf-8") as fh:
-        data = json.load(fh)
-    if not isinstance(data, dict):
-        return ""
-    return str(data.get("theme") or "")
-
-
+# ⚠️ 本文件自己的浮窗底板已改成**固定深色**（见模块 docstring 的需求变更说明）：
+#    显示路径不再读配置、也不再调用下面这个函数。它留在这里的唯一原因是
+#    `desktop/shell.py` 还写着 `from .splash import _theme_is_light` —— 那条链路
+#    判断的是"窗口**里面**的启动动画"该用哪套配色，与本浮窗无关，不属于本轮改动。
+#    删掉它 = 把主窗口配色弄崩。
 def _theme_is_light(text: str):
     """把一个 theme 配置值判成 浅色(True) / 深色(False) / 认不出来(None)
 
-    ⚠️️ 这是"浅色主题下启动画面仍是深色"的**真正修复点**：
-       旧代码只认死字符串 `== "浅色主题"`，可配置里的 theme 值远不止这一种写法：
-         · 设置页下拉框存的是规范简体（浅色主题 / 深色主题 / 跟随系统）—— 这一种以前能认；
-         · GCP-AI 的 set_theme 工具（core/ai/agent_tools.py）写的是**短形式** "浅色"/"深色"；
-         · 老版本 / 繁体 / 英文界面下用户存过 "浅色主題" / "Light Theme" / "dark" 等；
-       上面这些以前全部走到"认不出来 → 回退深色"，于是**用户明明选了浅色，启动画面还是黑的**。
-       这里把能认出的浅/深写法都收进来（大小写、全半角、繁简、中英文、短形式），
-       认不出来才返回 None（交给调用方按"跟随系统 / 兜底深色"处理）。
+    历史：旧代码只认死字符串 `== "浅色主题"`，可配置里的 theme 值远不止这一种写法：
+      · 设置页下拉框存的是规范简体（浅色主题 / 深色主题 / 跟随系统）—— 这一种以前能认；
+      · GCP-AI 的 set_theme 工具（core/ai/agent_tools.py）写的是**短形式** "浅色"/"深色"；
+      · 老版本 / 繁体 / 英文界面下用户存过 "浅色主題" / "Light Theme" / "dark" 等；
+    上面这些以前全部走到"认不出来 → 回退深色"，于是**用户明明选了浅色，界面还是黑的**
+    （当年 splash 底板跟随主题时踩的是同一个坑）。这里把能认出的浅/深写法都收进来
+    （大小写、全半角、繁简、中英文、短形式），认不出来才返回 None（交给调用方按
+    "跟随系统 / 兜底深色"处理）。
     """
     t = str(text or "").strip().lower()
     if not t:
@@ -156,70 +204,26 @@ def _theme_is_light(text: str):
     return None
 
 
-def _theme_diagnostics() -> dict:
-    """取证用：把"到底读到了什么"原样吐出来（**只读、绝不抛异常**）
-
-    ⚠️ 为什么需要它：上一轮把 `resolve_splash_dark()` 改成兼容各种 theme 写法后，
-       离屏采样证明浅色分支算出来的背景字节确实是 (243,244,247,240)，但用户**仍然**看到深色。
-       这说明真因不在算色，而在"有没有走到浅色分支"或者"看到的东西根本不是 splash"。
-       没有现场数据就只能猜，所以这里把关键事实记进日志：
-         · `DATA_DIR` 是哪个目录（data_root 指针是否已迁移 / 是不是 import 期算的旧值）；
-         · 配置文件在不在、能不能读；
-         · **theme 的原值**（repr，能看出全半角/繁简/空串/前后空格）；
-         · `_theme_is_light` 的判定结果 + 最终 dark。
-    """
-    info = {"data_dir": "", "cfg_path": "", "cfg_exists": False,
-            "theme_raw": None, "light": None, "dark": None, "error": ""}
-    try:
-        from pymodels.constants import DATA_DIR
-        info["data_dir"] = str(DATA_DIR)
-        path = os.path.join(DATA_DIR, "toolsgcp_config.json")
-        info["cfg_path"] = path
-        info["cfg_exists"] = os.path.isfile(path)
-        raw = _read_theme_setting()
-        info["theme_raw"] = repr(raw)
-        info["light"] = _theme_is_light(raw)
-        info["dark"] = resolve_splash_dark(raw)
-    except Exception as exc:                            # noqa: BLE001
-        info["error"] = repr(exc)
-    return info
-
-
-def resolve_splash_dark(theme=None) -> bool:
-    """启动画面用深色底吗？**绝不抛异常**：任何异常/认不出来的值都回退深色
-
-    规则（顺序固定）：
-      · `theme` 显式传入就用它（测试与其它调用方可以绕过读文件）；
-      · 认得出浅/深（含 浅色主题 / 浅色 / 淺色主題 / Light Theme / dark …）→ 直接用；
-      · "跟随系统"（或认不出但属于跟随族）→ 按 Windows 的浅色/深色判定 —— 复用项目里现成的
-        `pymodels.utils.system_utils.detect_system_theme()`，**不新写一套注册表读取**
-        （那个模块是纯 Python、顶层不 import PyQt5，可以安全地跑在启动路径上）；
-      · 其它情况（含读设置失败 / 设置文件损坏 / 键缺失 / 完全认不出的值）→ **回退深色**：
-        宁可启动画面是深色，也不能因为设置有问题就崩或者白屏。
-    """
-    try:
-        if theme is None:
-            theme = _read_theme_setting()
-        verdict = _theme_is_light(theme)
-        if verdict is True:
-            return False        # 浅色 → 不深色
-        if verdict is False:
-            return True         # 深色
-        # 跟随系统 / 认不出：跟随系统按注册表判定；完全认不出（空/坏值）回退深色
-        text = str(theme or "").strip().lower()
-        follows = ("跟随" in text or "跟隨" in text or "follow" in text
-                   or "system" in text or "auto" in text)
-        if follows:
-            from pymodels.utils.system_utils import detect_system_theme
-            return detect_system_theme() == "深色主题"
-        return True
-    except Exception:                                   # noqa: BLE001
-        return True
-
-
 # ======================================================================
 # 位图准备（Pillow）
 # ======================================================================
+def _scaled(value: float, scale: float = 1.0) -> int:
+    """把"视觉尺寸"按 DPI 缩放比换算成**物理像素**（缩放比非法时按 1.0 兜底）
+
+    ⚠️ 分层窗口（UpdateLayeredWindow）用的是物理像素，而边距/圆角/logo 上限这些数字
+       是在 100% 缩放下定的"视觉尺寸"；进程一旦是 DPI-aware（见
+       native/win32.py::ensure_dpi_awareness），高 DPI 屏上就必须乘上缩放比，
+       否则整个启动画面会缩水一半。
+    """
+    try:
+        ratio = float(scale or 1.0)
+    except Exception:                                   # noqa: BLE001
+        ratio = 1.0
+    if ratio <= 0:
+        ratio = 1.0
+    return max(0, int(round(float(value) * ratio)))
+
+
 def _corner_radius(w: int, h: int) -> int:
     """按图片尺寸算圆角半径（比例制，别写死像素）；夹到短边一半，防止圆成圆形贴纸"""
     try:
@@ -278,17 +282,36 @@ def _apply_corner_radius(img, radius: int):
     return img
 
 
-def _prepare_bitmap(icon_path: str, dark: bool = True):
-    """把 logo 解码成"**没有底板**、四角圆角、圆角外真透明"的 ARGB 像素
+def _prepare_bitmap(icon_path: str, scale: float = 1.0):
+    """把 logo 画成"**圆角半透明底板 + 居中 logo**"的 ARGB 像素，返回 (w, h, bytes)
 
-    返回 (w, h, bytes)，且 **w/h 就是窗口尺寸**（去底板后窗口 == 图片本身，
-    不再有旧版那 80px 边距）。
-    · 最长边超过 300 → LANCZOS 平滑缩到 300（原规格）；
-    · 圆角半径按图片短边比例算（见 `_corner_radius`）；
-    · 图片缺失/损坏 → 退回**同样带圆角的纯色块**（`dark` 决定深浅，alpha 240），
-      保证启动画面永远有东西显示、且这条路径不抛异常。
+    返回 (w, h, bytes)，且 **w/h 就是窗口尺寸**（= logo 尺寸 + 2 × 边距）。
+    · 最长边超过 300 → LANCZOS 平滑缩到 300（原规格，随 DPI 放大）；
+    · 底板 = 圆角矩形（`_rounded_mask`：2x 超采样 + 1x 硬边取 min ⇒ 圆角外 alpha 严格 0），
+      底色**固定深色** `_SPLASH_BG_DARK`（alpha 240；本轮需求：不再跟随主题）；
+    · logo **居中**贴在底板上；logo 自身四角另做圆润处理（`_apply_corner_radius`）；
+    · 图片缺失/损坏 → 退回**同构**的圆角底板（中心是固定深色底、角外 alpha==0），
+      保证启动画面永远有东西显示、且这条路径不抛异常；
+    · `scale` = 目标显示器的 DPI 缩放比（1.0/1.25/1.5/2.0）。分层窗口的尺寸单位是
+      **物理像素**，而 `_SPLASH_LOGO_MAX`/边距/圆角/兜底块这些数字是当年在 100%
+      缩放下定的**视觉**尺寸；进程一旦是 DPI-aware（见 win32.ensure_dpi_awareness），
+      150% 屏上就得把它们乘上缩放比，否则 180px 的 logo 在 2K/4K 屏上会小得像一颗图钉。
+      默认 1.0 保持"不传参数 = 100% 缩放"的历史行为。
+      ⚠️ 本轮已删掉原来的第二个位置参数 `dark`：按旧签名传参的老取证脚本
+      （_devtest/ 下那几个）会失效，属预期（不在本任务写作用域，交 lead 处理）。
     """
     from PIL import Image
+
+    try:
+        ratio_in = float(scale or 1.0)
+    except Exception:                                   # noqa: BLE001
+        ratio_in = 1.0
+    if ratio_in <= 0:
+        ratio_in = 1.0
+    logo_max = max(1, int(round(_SPLASH_LOGO_MAX * ratio_in)))
+    margin = _scaled(_SPLASH_MARGIN, ratio_in)           # 每边的边距（物理像素）
+    board_radius = _scaled(_SPLASH_RADIUS, ratio_in)     # 底板圆角半径（物理像素）
+    bg_color = _SPLASH_BG_DARK           # 固定深色底板（本轮需求，见模块 docstring）
 
     logo = None
     if icon_path and os.path.exists(icon_path):
@@ -302,18 +325,41 @@ def _prepare_bitmap(icon_path: str, dark: bool = True):
 
     if logo is not None:
         w, h = logo.size
-        if w > _SPLASH_LOGO_MAX or h > _SPLASH_LOGO_MAX:
-            ratio = min(_SPLASH_LOGO_MAX / float(w), _SPLASH_LOGO_MAX / float(h))
+        if w > logo_max or h > logo_max:
+            ratio = min(logo_max / float(w), logo_max / float(h))
             w, h = max(1, int(w * ratio)), max(1, int(h * ratio))
             logo = logo.resize((w, h), Image.LANCZOS)
+        elif ratio_in > 1.0:
+            # 原图比"缩放后的上限"还小（本项目 logo 就是 180×180）：高 DPI 屏上
+            # 放大到它该有的物理尺寸，否则窗口只有逻辑尺寸的一半、看着像缩水了。
+            target = min(logo_max, int(round(max(w, h) * ratio_in)))
+            if target > max(w, h):
+                grow = target / float(max(w, h))
+                w, h = max(1, int(w * grow)), max(1, int(h * grow))
+                logo = logo.resize((w, h), Image.LANCZOS)
     else:
-        # 兜底：没有图片也照样出一个"圆角纯色块"（尺寸沿用旧版 220）
-        w = h = _SPLASH_FALLBACK_SIZE
-        logo = Image.new("RGBA", (w, h),
-                         _SPLASH_BG_DARK if dark else _SPLASH_BG_LIGHT)
+        # 兜底：没有图片也照样出一块**圆角底板**（尺寸沿用旧版 220，按 DPI 放大）。
+        # 中间不画 logo ⇒ 中心就是固定深色底板，结构与主路径同构（都是"底板 + 圆角"）。
+        w = h = max(1, int(round(_SPLASH_FALLBACK_SIZE * ratio_in)))
 
-    logo = _apply_corner_radius(logo, _corner_radius(w, h))
-    return w, h, logo.tobytes()
+    win_w, win_h = w + 2 * margin, h + 2 * margin
+
+    # ---- 底板：圆角矩形 + 主题底色 ----
+    # ⚠️ 圆角外的 alpha 必须**严格为 0**，否则分层窗口会留一圈黑边/白边（脏边）——
+    #    `_rounded_mask` 的"2x 超采样 + 1x 硬边取 min"就是干这个的，别简化成直接画圆角。
+    canvas = Image.new("RGBA", (win_w, win_h), (0, 0, 0, 0))
+    board = Image.new("RGBA", (win_w, win_h), bg_color)
+    mask = _rounded_mask(win_w, win_h, board_radius)
+    if mask is None:
+        canvas.paste(board, (0, 0))
+    else:
+        canvas.paste(board, (0, 0), mask)
+
+    # ---- logo 居中贴上去（logo 自己的四角另做圆润处理） ----
+    if logo is not None:
+        logo = _apply_corner_radius(logo, _corner_radius(w, h))
+        canvas.alpha_composite(logo, ((win_w - w) // 2, (win_h - h) // 2))
+    return win_w, win_h, canvas.tobytes()
 
 
 # ======================================================================
@@ -448,14 +494,49 @@ def _update_layered(hwnd: int, width: int, height: int, raw_argb: bytes,
 
 
 # ======================================================================
+# 居中：只在"主屏工作区"里算一次，整个生命周期都用同一组物理坐标
+# ======================================================================
+def _splash_target_xy(win32, width: int, height: int, hwnd=None):
+    """返回 ((x, y), (left, top, right, bottom))：窗口该摆的物理像素左上角 + 所用工作区。
+
+    ⚠️ 为什么坚持用"窗口所在显示器"的工作区（hwnd 一传就用 MonitorFromWindow +
+       GetMonitorInfoW），而不是老写法那句 SPI_GETWORKAREA：
+         · SPI_GETWORKAREA 只给**主屏**，多屏（尤其副屏在左边、坐标是负数）时
+           算出来的"中央"根本不在用户看的那块屏上；
+         · GetMonitorInfoW 给的是该显示器真实的 rcWork（已扣掉任务栏），
+           而且和 CreateWindowExW / UpdateLayeredWindow 用的是**同一个物理像素空间**
+           （前提：调用前已经 ensure_dpi_awareness，见 _run_native 开头）。
+       hwnd 还没建出来时（第一次算）退回 SPI_GETWORKAREA，也是主屏物理坐标，一致。
+    ⚠️ 任何一步失败都退回 (0, 0, 宽, 高) 的"至少能看见"策略，绝不抛异常 ——
+       启动画面不能因为它自己把程序卡住。
+    """
+    try:
+        left, top, right, bottom = win32.work_area(hwnd) if hwnd else win32.work_area()
+        if right <= left or bottom <= top:
+            raise ValueError("work_area 返回了空矩形")
+        x = int(left + ((right - left) - width) / 2)
+        y = int(top + ((bottom - top) - height) / 2)
+        # 窗口比工作区还大（极小屏 + 高缩放）时按左上贴住，别让居中算出负偏移
+        return (max(int(left), x), max(int(top), y)), (int(left), int(top),
+                                                       int(right), int(bottom))
+    except Exception as exc:                            # noqa: BLE001
+        _log_warn(f"启动画面居中计算失败（退回 0,0）: {exc}")
+        return (0, 0), (0, 0, 0, 0)
+
+
+# ======================================================================
 # 控制器（对外契约与 PyQt5 版一致）
 # ======================================================================
 class SplashController:
     """启动画面控制器（内部 Win32 分层窗口；对外接口与旧 Qt 版逐字相同）"""
 
-    def __init__(self, icon_path: str, duration_ms: int, enabled: bool = True,
+    def __init__(self, icon_path: str, duration_ms: int = 0, enabled: bool = True,
                  on_finished=None):
         self.icon_path = icon_path
+        # ⚠️ `duration_ms` 本轮起**不再参与任何计时**（需求：显示时长改由主流程决定）。
+        #    留着这个位置参数只是为了不改坏既有调用点与 _devtest 下的取证脚本
+        #    （它们都按 `SplashController(icon, 1200, enabled=True)` 位置传参）。
+        #    看到有人想把它接回 deadline 请先读模块 docstring 那段需求变更说明。
         self.duration_ms = max(0, int(duration_ms or 0))
         self.enabled = bool(enabled)
         self._on_finished = on_finished
@@ -466,6 +547,29 @@ class SplashController:
         self._fallback = False
         self._hwnd = 0
         self._class_registered = False
+        # 真正 start() 的时刻（外壳只拿它写"画面顶了多久"的日志，不参与任何判定）
+        self.started_at = 0.0
+
+    # ---------- 回调挂载（本轮为"入口提前启动"新增） ----------
+    def attach_finished(self, on_finished):
+        """把"画面结束"回调补挂上（控制器可能在入口就 start() 了，那时还没有外壳）。
+
+        ⚠️ 必须处理"已经结束了才来挂"的情况：启动画面被关掉/降级/秒失败时
+           `_finish()` 在 `start()` 里就地跑完了，回调若只是覆盖字段就永远不会触发，
+           外壳那边等着它做的事情（例如解除显示闸门）就会挂死。
+           所以这里判定已结束时**立刻补发一次**（同样另起线程，和 _finish 的规矩一致）。
+        """
+        with self._lock:
+            self._on_finished = on_finished
+            already = self._finished.is_set()
+        if already and callable(on_finished):
+            def _call():
+                try:
+                    on_finished()
+                except Exception as exc:                # noqa: BLE001
+                    _log_warn(f"启动画面结束回调异常: {exc}")
+            threading.Thread(target=_call, name="ToolsGCP-splash-done",
+                             daemon=True).start()
 
     # ---------- 状态 ----------
     @property
@@ -484,7 +588,9 @@ class SplashController:
 
         ⚠️ 这里**只置位标志**，不跨线程 DestroyWindow：窗口只能在创建它的线程里销毁
            （旧 Qt 版踩的正是这个坑，只是换了个实现，规则没变）。
-           等线程自己发现标志后收尾（它在 30ms 一轮的等待循环里检查）。
+           窗口线程在等待循环的消息泵里检查该标志（MsgWaitForMultipleObjects 粒度
+           _PUMP_WAIT_MS = 30ms），最迟 30ms 后自行收尾。用户用鼠标点这块分层窗口
+           产生的消息现在能被正常派发（以前不泵消息，一点就被系统判"未响应"）。
         """
         self._stop_requested.set()
         thread = self._thread
@@ -514,6 +620,7 @@ class SplashController:
 
         self._thread = threading.Thread(target=self._run, name="ToolsGCP-splash",
                                         daemon=True)
+        self.started_at = time.time()
         self._thread.start()
         return True
 
@@ -526,34 +633,33 @@ class SplashController:
 
     # ---------- 真正的实现 ----------
     def _run_native(self):
-        """在工作线程里：建分层窗口 → 贴图 → 等时长/被要求退出 → 本线程销毁"""
+        """在工作线程里：定 DPI → 建分层窗口 → 贴图 → 等主流程叫停 → 本线程销毁"""
         from .native import win32
 
-        # ⚠️ 贴图前读一次用户主题（需求 A）：纯外观，失败一律回退深色、绝不抛异常。
-        #    放在这条窗口线程里（而不是 __init__/主线程）：只有真的要画了才去读文件，
-        #    启动画面关掉时一次 I/O 都不做。
-        dark = resolve_splash_dark()
-        width, height, raw = _prepare_bitmap(self.icon_path, dark)
-        # 取证日志（需求 ①）：上一轮"算色对了但用户仍看到深色"，说明必须留下现场数据。
-        #   半径/尺寸/读到的 theme 原值全部记进日志，用户复现时能直接看出走没走浅色分支。
-        diag = _theme_diagnostics()
-        _log_info(
-            f"启动画面底色: {'深色' if dark else '浅色'}（跟随设置里的 theme）"
-            f" theme={diag['theme_raw']} light={diag['light']}"
-            f" DATA_DIR={diag['data_dir']} cfg_exists={diag['cfg_exists']}"
-            f" 圆角半径={_corner_radius(width, height)}"
-            + (f" 读取异常={diag['error']}" if diag["error"] else ""))
+        # ⚠️⚠️ 第一件事必须是"把进程 DPI awareness 定下来"，而且必须**早于任何建窗**：
+        #    pywebview 要等到 webview.start() 才 SetProcessDPIAware，而这条线程在那之前
+        #    就要建窗 —— 中间那次翻转就是"画面先在中央、随后跳走"的真因
+        #    （完整推导见 native/win32.py::ensure_dpi_awareness）。
+        #    它和 pywebview 用的是同一个 API，所以进程的**最终状态**和以前完全一致，
+        #    只是把"定下来的时刻"提前了，主窗口那套 _ui_scale / ZoomFactor 逻辑不受影响。
+        dpi_note = win32.ensure_dpi_awareness()
+        scale = win32.system_dpi_scale()
+
+        # 底板固定深色（本轮需求）：贴图前**不再读用户主题、不再取证**，
+        # 显示路径对配置文件零 I/O。（历史：这里曾是"读 theme → 判深浅 → 记现场日志"
+        # 一整段，服务于已作废的"底板跟随主题"需求，用户要求整套删掉。）
+        width, height, raw = _prepare_bitmap(self.icon_path, scale)
 
         # 每次用唯一类名，避免和上一次残留的注册冲突（启动画面可能开多次）
         class_name = "ToolsGCP_Splash_%d" % (int(time.time() * 1000) % 1000000)
 
-        # 居中（按主屏工作区，等价原版 availableGeometry）
-        try:
-            left, top, right, bottom = win32.work_area()
-            x = int(left + ((right - left) - width) / 2)
-            y = int(top + ((bottom - top) - height) / 2)
-        except Exception:
-            x = y = 0
+        # 居中：**只在这里算一次**，之后建窗、贴图、显示全都复用这同一组坐标。
+        # ⚠️ 绝不允许出现"已经显示了之后再搬一次"——那正是用户看到的"跳"。
+        #    （唯一例外是下面显示后的**校验**：只有坐标真的不对了才纠正，且会记日志。）
+        (x, y), area = _splash_target_xy(win32, width, height)
+        _log_info(
+            f"启动画面定位: DPI={scale:.2f}（{dpi_note}）"
+            f" 主屏工作区={area} 窗口={width}x{height} → 左上=({x}, {y})")
 
         hinst = win32.kernel32.GetModuleHandleW(None)
 
@@ -625,6 +731,29 @@ class SplashController:
             self._finish("降级")
             return
 
+        # ---- 显示**之前**做一次坐标自校验（这一步是"看得见就不跳"的关键） ----
+        # ⚠️ 顺序很重要：建窗(不可见) → UpdateLayeredWindow 定位并贴图(仍不可见)
+        #    → 这里读实际矩形对一遍 → 有偏差就 SetWindowPos 纠正 → **最后**才 ShowWindow。
+        #    这样即使某个环境（奇怪的显卡驱动/RDP 会话/多屏混合缩放）把坐标改了含义，
+        #    纠正也发生在窗口对用户可见之前，用户永远看不到"先中间再跳走"。
+        #    反过来如果放在 ShowWindow 之后再纠，那就等于亲手制造用户报的那个跳变。
+        try:
+            got = win32.rect_of(hwnd)
+            gx, gy, gr, gb = got
+            gw, gh = gr - gx, gb - gy
+            # 容差 2px：DWM 在个别缩放档上会有 1px 的取整，不值得为它搬一次窗
+            if abs(gx - x) > 2 or abs(gy - y) > 2 or abs(gw - width) > 2 or abs(gh - height) > 2:
+                _log_warn(
+                    f"启动画面坐标被系统改过（期望 左上=({x}, {y}) 尺寸={width}x{height}，"
+                    f"实测={got}）→ 显示前纠正回目标位置")
+                # SWP_NOZORDER|SWP_NOACTIVATE：保持置顶与不抢焦点，不动其它属性
+                win32.user32.SetWindowPos(wintypes.HWND(hwnd), 0, int(x), int(y),
+                                          int(width), int(height), 0x0040 | 0x0010)
+                _log_info(f"启动画面纠正后实际矩形: {win32.rect_of(hwnd)}")
+        except Exception as exc:                          # noqa: BLE001
+            # 校验失败绝不能挡住显示：顶多少一层保险，主流程照常
+            _log_warn(f"启动画面坐标校验跳过（不影响显示）: {exc}")
+
         try:
             # SW_SHOWNOACTIVATE：启动画面不抢焦点（原版 Qt.Tool 的语义）
             win32.user32.ShowWindow(wintypes.HWND(hwnd), _SW_SHOWNOACTIVATE)
@@ -632,20 +761,67 @@ class SplashController:
         except Exception:
             pass
         _log_info(f"启动画面窗口尺寸: {width}x{height}"
-                  f"（独立 splash 窗口，主窗口 1280x880 不参与）")
+                  f"（独立 splash 窗口，主窗口 1280x880 不参与）"
+                  f" 显示后矩形={win32.rect_of(hwnd) if hasattr(win32, 'rect_of') else 'n/a'}")
 
-        # ---- 等"时长到"或"被要求退出" ----
-        # ⚠️ 用短睡轮询而不是阻塞消息循环：stop() 只置标志/发 WM_CLOSE，
-        #    轮询是最简单可靠的接收方式（这条线程本来也不干别的）。
-        # ⚠️ 硬超时是安全网：万一 duration 配得离谱或时钟异常，也不会让窗口赖着不走。
-        deadline = time.monotonic() + min(self.duration_ms / 1000.0,
-                                          SPLASH_HARD_TIMEOUT_MS / 1000.0)
+        # ---- 等"主流程叫我关"或"赖屏上限到"：**消息泵**，不是 sleep 轮询 ----
+        # ⚠️⚠️ 本轮需求核心：显示时长**不再由 duration 决定**，而是"程序什么时候
+        #    把我显示出来，就一直显示到主流程启动完成叫我消失"。所以这里只等三件事：
+        #      ① stop_requested 置位（shell 在主窗口显示之后调 stop()，或 WM_CLOSE
+        #         到达窗口过程）→ 正常收尾；
+        #      ② result["hwnd"] 归零（窗口已被销毁）→ 收尾；
+        #      ③ 安全网超时 SPLASH_HARD_TIMEOUT_MS（主流程出了意外没人叫我关）→
+        #         自毁，绝不死赖在桌面上。三条退出条件与旧写法一一对应、语义不变。
+        # ⚠️⚠️ 为什么必须是消息泵（修"鼠标一碰就未响应、再点直接关闭"）：
+        #    旧写法整段只有 time.sleep(0.03) 轮询，这条线程从不取消息。分层窗口被
+        #    鼠标碰到 / 按下时，系统要**跨线程调用本窗口的 WndProc**（SendMessage
+        #    语义）；本线程不泵消息，调用方就一直阻塞 → 窗口被系统标记"未响应"，
+        #    用户再点一下就被引导走到关闭/销毁路径 —— 这正是用户报的现象。
+        #    PeekMessageW + TranslateMessage + DispatchMessageW 才是 WndProc 被
+        #    正常执行的唯一前提；空闲时用 MsgWaitForMultipleObjects(0, None, FALSE,
+        #    30, QS_ALLINPUT) 等"下一条消息或 30ms"，既不忙等、也不吃 CPU
+        #    （写法与 native/traymenu.py 的托盘菜单泵一致，是仓库内成熟路子）。
+        deadline = time.monotonic() + SPLASH_HARD_TIMEOUT_MS / 1000.0
+        msg = wintypes.MSG()
+        pump_errors = 0
         while time.monotonic() < deadline:
             if self._stop_requested.is_set() or not result["hwnd"]:
                 break
-            time.sleep(0.03)
+            try:
+                # 把队列里已有的消息全部消化干净（含跨线程发来的鼠标/窗口消息）
+                while win32.user32.PeekMessageW(ctypes.byref(msg), None, 0, 0,
+                                                _PM_REMOVE):
+                    if msg.message == _WM_QUIT:
+                        # 队列里出现退出消息：按"窗口即将消失"处理，走统一收尾
+                        result["hwnd"] = 0
+                        break
+                    win32.user32.TranslateMessage(ctypes.byref(msg))
+                    win32.user32.DispatchMessageW(ctypes.byref(msg))
+                if self._stop_requested.is_set() or not result["hwnd"]:
+                    break
+                # 空闲：最多睡 _PUMP_WAIT_MS，期间**任何**消息立即唤醒（不忙等）。
+                # 0 个句柄 → 正常只会返回 WAIT_TIMEOUT(258) 或 WAIT_OBJECT_0(0，
+                # 表示已有消息)；WAIT_FAILED(-1) 时退回短睡，防止调用失败变空转。
+                r = win32.user32.MsgWaitForMultipleObjects(
+                    0, None, False, _PUMP_WAIT_MS, _QS_ALLINPUT)
+                if r is None or int(r) in (-1, _WAIT_FAILED):
+                    time.sleep(_PUMP_WAIT_MS / 1000.0)
+            except Exception as exc:                    # noqa: BLE001
+                # 泵本身出异常不能带走线程：短睡继续，但连续失败到一定次数就记一条
+                # warn（说明这条线程的消息循环已经废了，窗口会再次变得"无响应"，
+                # 让日志里能看到，而不是永远静默）。
+                pump_errors += 1
+                if pump_errors == 1 or pump_errors % 100 == 0:
+                    _log_warn(f"启动画面消息泵异常（第 {pump_errors} 次，降级短睡）: {exc}")
+                time.sleep(_PUMP_WAIT_MS / 1000.0)
 
-        reason = "被要求退出" if self._stop_requested.is_set() else "播放完成"
+        if self._stop_requested.is_set():
+            reason = "被要求退出（主流程启动完成）"
+        elif not result["hwnd"]:
+            reason = "窗口已被销毁"
+        else:
+            reason = f"赖屏上限 {SPLASH_HARD_TIMEOUT_MS}ms 到（主流程没叫我关，安全兜底）"
+            _log_warn(f"启动画面未被主流程关闭，按上限自毁：{reason}")
         self._finish(reason)
 
         # ⚠️ 销毁必须在**建窗这条线程**上（跨线程 DestroyWindow 是未定义行为）

@@ -21,11 +21,28 @@ from .. import resource_schema
 TOOL_TAG = "[TOOL]"
 RESULT_TAG = "[TOOL_RESULT]"
 
+# ---------- 工具来源（插件域，契约 2.3） ----------
+# 用户原话：「31 个内置 Agent 工具之类的都要释放都要做好」——
+# 这些工具**属于 GCP-AI Agent 这个插件**，不是主程序本体，所以它们的 source
+# 必须是插件 id：插件的开关一关，`unregister_source(AGENT_PLUGIN_SOURCE)` 才能
+# 把它们整组下架（提示词清单与执行同时失效）。
+# ⚠️ 改这个常量要同时改 `agent_runtime.AgentBridge.source_active()` 的判定，
+#    两处必须一致，否则会出现"注册表里下架了、判定还说它 active"。
+AGENT_PLUGIN_SOURCE = "gcp-ai-agent"
+
 # 一次往返里最多跑几轮工具（建目录 → 写文件 → 验证 → 自检 → 回话本来就要好几轮）
-MAX_ROUNDS = 6
-# 单轮最多执行几个工具调用（智能体团推成员最多一次性可调用2个；
-# 和 AGENT_PROMPT_FOOTER 里写的"一轮最多 2 个调用"必须一致，别只改提示词不改这里）
-MAX_CALLS_PER_ROUND = 2
+# ⚠️⚠️ 本轮从 6 提到 16（用户实测的真实需求）：
+#   他让 AI「收藏抠图/IDE/聊天软件/传输文件…都收藏到 GCP」，模型分多轮调用工具
+#   （搜索 ×N → 建夹 → 逐个收藏），6 轮根本不够 → 撞上限后被强制中断，
+#   用户看到的是"AI 反复调用工具但没有给出最终回答"，而且**只做了一半**。
+#   大厂 Agent（Claude/ChatGPT）的工具循环上限都在十几轮以上，6 太保守。
+MAX_ROUNDS = 16
+# 单轮最多执行几个工具调用
+# ⚠️⚠️ 本轮从 2 提到 6：用户那次任务要一次收藏 4~6 个资源，模型一条消息里吐出
+#   4 个 set_favorite 是**正常且高效**的写法，限制成 2 就要多跑一倍轮数，
+#   更容易撞 MAX_ROUNDS 上限。6 仍然能防"模型一次吐出 50 个调用"的失控。
+# （提示词 AGENT_PROMPT_FOOTER 里的"一轮最多 2 个"同步改成 6，两处必须一致）
+MAX_CALLS_PER_ROUND = 6
 # 回给模型的工具结果最多多少字符（超了截断，省 token 第一）
 MAX_RESULT_CHARS = 1200
 # 单个字段的字符上限
@@ -275,36 +292,289 @@ def format_result(name: str, result: dict) -> str:
 _TOOL_LINE_RE = re.compile(r"\[TOOL\]\s*(\{.*?\})\s*(?=\n|\[TOOL\]|$)", re.S)
 
 
+# ======================================================================
+# 工具调用标记的识别（容错版）
+# ======================================================================
+# ⚠️⚠️ 为什么不能只认 "[TOOL]"：用户实测 Agent 模式时，模型吐出来的是它**自己发明的**
+# 变体标记（DeepSeek 的 DSML 风格），原文长这样：
+#     <||DSML|| calls>
+#     <||DSML|| invoke name="TOOL">{"name":"create_favorite_folder","args":{"name":"GCP"}}</||DSML|| parameter>
+#     </||DSML|| invoke>
+#     </||DSML|| calls>
+# 旧解析器只 finditer("\[TOOL\]")，一个字都对不上 → calls 为空 → 后端当成普通回答
+# 原样返回给用户（用户看到一屏看不懂的字符），收藏夹当然没有任何变化。
+# 现在：先按统一协议找，再按"广义调用标记"兜底，最后兜"裸 JSON"。
+# 只要能抠出 {"name":..., "args":...} 就执行 —— 宁可多执行一次用户明确要求的事，
+# 也好过把 DSML 丢给用户看。
+_DECORATION_RE = re.compile(
+    r"<[^<>{}]*?(?:DSML|function_call|tool_call|invoke|tool_use|antml|parameter)[^<>{}]*?>",
+    re.IGNORECASE)
+
+
+def _looks_like_tool_payload(payload) -> bool:
+    """这个 JSON 像不像一个工具调用（有 name/tool，且名字是标识符样子）"""
+    if not isinstance(payload, dict):
+        return False
+    name = payload.get("name") or payload.get("tool") or payload.get("tool_name")
+    if not isinstance(name, str) or not name.strip():
+        return False
+    # ⚠️ name 必须是标识符样子：不然 {"name":"张三"} 这种**业务数据**会被误当成工具调用
+    return bool(re.match(r"^[A-Za-z][A-Za-z0-9_\-]{1,60}$", name.strip()))
+
+
+def _payload_to_call(payload: dict):
+    """把解析出来的 JSON 统一成 {"name":..., "args":{...}}"""
+    name = str(payload.get("name") or payload.get("tool")
+               or payload.get("tool_name") or "").strip()
+    if not name:
+        return None
+    args = payload.get("args")
+    if not isinstance(args, dict):
+        args = payload.get("arguments")
+    if not isinstance(args, dict):
+        # 有的模型把参数平铺在顶层（{name, query}）—— 兜住
+        args = {k: v for k, v in payload.items()
+                if k not in ("name", "tool", "tool_name", "args", "arguments")}
+    return {"name": name, "args": args}
+
+
+def _json_object_end(text: str) -> int:
+    """返回第一个配平 JSON 对象的结束下标（含最后一个 }），失败返回 -1"""
+    start = text.find("{")
+    if start < 0:
+        return -1
+    depth = 0
+    in_string = False
+    escaped = False
+    for index in range(start, len(text)):
+        ch = text[index]
+        if in_string:
+            if escaped:
+                escaped = False
+            elif ch == "\\":
+                escaped = True
+            elif ch == '"':
+                in_string = False
+            continue
+        if ch == '"':
+            in_string = True
+        elif ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                return index + 1
+    return -1
+
+
+# ---------- XML 属性式调用标记（DeepSeek DSML / anthropic 风格） ----------
+# ⚠️ 为什么要单独一条 pass：这类标记整段一个 JSON 大括号都没有 —— 工具名和参数名写在
+#    标签属性里、参数值写在标签体里。下面三条 JSON pass 全都要求「标记后紧跟花括号」，
+#    一条都匹配不上 -> calls 为空 -> 既不执行也不清洗。用户面前就是一屏
+#    <｜｜DSML｜｜ invoke name=...>，而收藏夹一个字没变。
+#    这才是用户报「Agent 完全不能用、还吐乱码」的真正根因（不是轮数上限，
+#    也不是前端没画卡片 —— 那两个问题确实存在，但都不是一屏乱码的来源）。
+# 闭合标签故意不用反向引用：模型自己都对不齐（实测同一篇回答里
+# </｜｜DSML｜｜ parameter> 和 </｜｜DSML｜｜｜｜ parameter> 混用），
+# 所以只认「以 invoke / parameter 收尾的闭合标签」。
+_XML_INVOKE_RE = re.compile(
+    r"<[^<>{}]*?\binvoke\b([^<>]*)>(.*?)</[^<>{}]*?\binvoke\b\s*>",
+    re.IGNORECASE | re.DOTALL)
+_XML_PARAM_RE = re.compile(
+    r"<[^<>{}]*?\bparameter\b([^<>]*?)(?:/>|>(.*?)</[^<>{}]*?\bparameter\b\s*>)",
+    re.IGNORECASE | re.DOTALL)
+_ATTR_RE = re.compile(r'([A-Za-z_][A-Za-z0-9_-]*)\s*=\s*"([^"]*)"')
+_TOOL_NAME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_-]{1,60}$")
+
+# 外层 invoke 标签上的占位名（模型把模板原样回显）：这些不是真工具名
+_PLACEHOLDER_INVOKE_NAMES = ("TOOL", "TOOLS", "FUNCTION", "NAME", "CALL",
+                               "INVOKE", "ACTION", "METHOD", "XXX", "TODO")
+
+
+def _tag_attrs(attr_text):
+    '''把标签里的 name=xxx 这类属性抠成 dict。'''
+    # 只认双引号：模型偶尔用单引号，先把单引号归一化成双引号再抠，省一条分支。
+    text = str(attr_text or "").replace("'", "\"")
+    out = {}
+    for match in _ATTR_RE.finditer(text):
+        out[match.group(1).lower()] = match.group(2) or ""
+    return out
+
+
+def _coerce_param(body, attrs):
+    '''标签体文本还原成 Python 值。
+
+    string=true 时一律当字符串（否则 code=123 这种编号被转成 int 反而查不到）；
+    其余尽量按 true/false/null/整数/小数/JSON 解 —— 模型经常把布尔写成文字，
+    全当字符串传下去的话 bool(\"false\") 又是真，越改越错。
+    '''
+    text = str(body or "").strip()
+    if not text:
+        return ""
+    if str(attrs.get("string", "")).lower() in ("true", "1", "yes"):
+        return str(body or "")
+    low = text.lower()
+    if low == "true":
+        return True
+    if low == "false":
+        return False
+    if low == "null":
+        return None
+    if re.fullmatch(r"-?\d+", text):
+        return int(text)
+    if re.fullmatch(r"-?\d+\.\d+", text):
+        return float(text)
+    if text[0] in "{[":
+        try:
+            return json.loads(text)
+        except Exception:
+            return text
+    return text
+
+
+def _xml_payload_to_call(name, params):
+    '''XML 抠出来的工具名 + 参数表归一化成 {name, args}。
+
+    模型有时把整个参数对象塞进一个 args / arguments / input / parameters 标签里，
+    那种情况要摊平出来当参数表用。name 必须是标识符样子：宁可漏一次，
+    也别把正文里出现的词当成指令去执行。
+    '''
+    tool = str(name or "").strip()
+    if not tool or not _TOOL_NAME_RE.match(tool):
+        return None
+    args = {}
+    for key, value in (params or {}).items():
+        if key in ("args", "arguments", "input", "parameters") and isinstance(value, dict):
+            args.update(value)
+        else:
+            args[key] = value
+    return {"name": tool, "args": args}
+
+
 def parse_tool_calls(text: str):
     """从模型回答里抠出工具调用；返回 (calls, cleaned)
+
     ⚠️ 不做严格的 JSON 一票否决：模型常多写逗号或多套一层 args，逐个 {...} 块尝试、
-    解析失败只跳过那一块。
+       解析失败只跳过那一块。
+    ⚠️ cleaned 必须把**所有**被识别成调用的标记与 JSON 都抠掉 —— 用户明确说
+       「这些字符输出我也看不懂」：哪怕只漏一小截，界面上就是一屏乱码。
     """
     raw = str(text or "")
-    if TOOL_TAG not in raw:
+    if not raw.strip():
         return [], raw
 
     calls = []
-    for match in re.finditer(r"\[TOOL\]\s*", raw):
-        start = match.end()
-        chunk = raw[start:start + 800]
-        payload = _first_json_object(chunk)
-        if not payload:
-            continue
-        name = str(payload.get("name") or payload.get("tool") or "").strip()
-        if not name:
-            continue
-        args = payload.get("args")
-        if not isinstance(args, dict):
-            args = payload.get("arguments")
-        if not isinstance(args, dict):
-            args = {k: v for k, v in payload.items()
-                    if k not in ("name", "tool", "args", "arguments")}
-        calls.append({"name": name, "args": args})
-        if len(calls) >= MAX_CALLS_PER_ROUND:
-            break
+    spans = []                  # 要抠掉的 (start, end) 区间
 
-    cleaned = _TOOL_LINE_RE.sub("", raw)
+    # ⓪ XML 属性式（DSML invoke / parameter）—— 最先跑：它和下面三条 JSON pass 互斥，
+    #    先吃掉就不会让兜底逻辑留下半截残渣（用户实测那一屏乱码就是这里漏的）。
+    for match in _XML_INVOKE_RE.finditer(raw):
+        # 达到上限后不 break：仍然把标签整段登记进 spans（清理残渣），只是不再收集执行
+        capped = len(calls) >= MAX_CALLS_PER_ROUND
+        invoke_attrs = _tag_attrs(match.group(1))
+        tool_name = (invoke_attrs.get("name") or invoke_attrs.get("tool_name")
+                     or invoke_attrs.get("tool") or "").strip()
+        # ⚠️ 占位名必须跳过：模型经常把模板里的 name="TOOL" 原样吐出来（用户实测那串就是
+        #    `<｜｜DSML｜｜ invoke name="TOOL">{...}</...>`）。这种外层标签一旦当成调用，
+        #    程序会多跑一次「注册表里没有名为 TOOL 的工具」，白烧一轮还吓用户。
+        if tool_name.upper() in _PLACEHOLDER_INVOKE_NAMES:
+            continue
+        params = {}
+        for pm in _XML_PARAM_RE.finditer(match.group(2) or ""):
+            pattrs = _tag_attrs(pm.group(1))
+            pname = (pattrs.get("name") or pattrs.get("key") or "").strip()
+            if not pname:
+                continue
+            params[pname] = _coerce_param(pm.group(2) or "", pattrs)
+        # 体内一个参数都没抠到、却带着 { → 这是「JSON 正文式」调用，交给下面的 pass ②
+        if not params and "{" in (match.group(2) or ""):
+            continue
+        call = _xml_payload_to_call(tool_name, params)
+        if call:
+            spans.append((match.start(), match.end()))
+            if not capped:
+                calls.append(call)
+
+    def _collect(mark_start: int, chunk_start: int, chunk: str,
+                 collect: bool = True) -> bool:
+        """mark_start = 标记在原文里的起点；chunk_start = chunk 在原文里的起点
+
+        ⚠️⚠️ 这两个偏移**不是同一个数**（第一版就是在这里错的）：
+           [TOOL] / <||DSML|| ...> 这种标记，我们是把**标记本身**也一起抠掉的，
+           所以删除区间 = [标记起点, JSON 结束位置]；
+           而 chunk 是从**标记结束之后**才开始切的，JSON 在 chunk 里的下标
+           必须加上 chunk_start 才能换算回原文位置。
+           第一版把 mark_start 当成 chunk_start 用 → 区间整体左移，
+           于是 JSON 的尾巴留在正文里（用户会看到 older","args":{"name":"GCP"}} 这种残渣）。
+        """
+        brace = chunk.find("{")
+        if brace < 0:
+            return False
+        payload = _first_json_object(chunk)
+        if not _looks_like_tool_payload(payload):
+            return False
+        call = _payload_to_call(payload)
+        if not call:
+            return False
+        end_rel = _json_object_end(chunk)
+        if end_rel < 0:
+            end_rel = len(chunk)
+        spans.append((mark_start, chunk_start + end_rel))
+        # ⚠️ 本轮修复（用户报「无效内容/一屏乱码」的根因之一）：超过单轮上限的调用
+        #   **不执行**，但它的标记 + JSON 必须照样从正文里抠掉。旧写法在达到上限时
+        #   直接 break，后面那些 [TOOL] 行只剩标签壳被清掉、JSON 正文整段留在
+        #   cleaned 里 → 用户看到 `{"name":"...","args":{...}}` 这种看不懂的残渣。
+        if collect:
+            calls.append(call)
+            return True
+        return False
+
+    # ① 统一协议
+    # ① 统一协议：[TOOL] {"name":...}
+    for match in re.finditer(r"\[TOOL\]\s*", raw):
+        # 达到上限后**不再 break**：继续把剩下的调用抠出 span（只清不执行）
+        _collect(match.start(), match.end(), raw[match.end():match.end() + 800],
+                 collect=len(calls) < MAX_CALLS_PER_ROUND)
+
+    # ② 兜底：任何"装饰标记"（DSML / invoke / function_call / tool_call …）后紧跟 JSON
+    for match in _DECORATION_RE.finditer(raw):
+        chunk = raw[match.end():match.end() + 800]
+        # 装饰后面必须（允许空白）紧跟 JSON 对象，否则是别的标签（如 <parameter .../>）
+        if not chunk.lstrip().startswith("{"):
+            continue
+        # 同 pass ①：上限之后只抠 span 不收集
+        _collect(match.start(), match.end(), chunk,
+                 collect=len(calls) < MAX_CALLS_PER_ROUND)
+
+    # ③ 最后兜底：完全没带标记的裸 {"name":"x","args":{...}}
+    if not calls:
+        for match in re.finditer(r"\{", raw):
+            if len(calls) >= MAX_CALLS_PER_ROUND:
+                break
+            payload = _first_json_object(raw[match.start():match.start() + 800])
+            if not _looks_like_tool_payload(payload):
+                continue
+            call = _payload_to_call(payload)
+            if call:
+                calls.append(call)
+                end = _json_object_end(raw[match.start():match.start() + 800])
+                if end > 0:
+                    spans.append((match.start(), match.start() + end))
+
+    if not calls:
+        return [], raw
+
+    # 先抠"标记 + 紧随的 JSON"（倒序替换，避免下标错位）
+    cleaned = raw
+    for start, end in sorted(spans, key=lambda s: s[0], reverse=True):
+        cleaned = cleaned[:start] + " " + cleaned[end:]
+    # 再清残留的装饰标记与孤立空壳（模型常把调用拆成好几段）
+    cleaned = _XML_INVOKE_RE.sub(" ", cleaned)
+    cleaned = _DECORATION_RE.sub("", cleaned)
+    cleaned = re.sub(r"</?\|*\s*/?(?:DSML|parameter|invoke|calls)\s*\|*>?", "",
+                     cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r"\[TOOL\]\s*", "", cleaned)
+    cleaned = re.sub(r"[ \t]{2,}", " ", cleaned)
     cleaned = re.sub(r"\n{3,}", "\n\n", cleaned).strip()
     return calls, cleaned
 
@@ -373,7 +643,10 @@ AGENT_PROMPT_HEADER = {
 AGENT_PROMPT_FOOTER = {
     "zh_CN": (
         "\n调用规则（都是为了省 token 和**别说假话**，请严格遵守）：\n"
-        "· 一轮最多 2 个调用；能在一次调用里问清的就不要分几次。\n"
+        "· 一轮最多 6 个调用：**同一件事的多个对象可以一次性全做**（例如一次收藏 5 个资源，\n"
+        "  就在一条消息里输出 5 个 [TOOL] 行），别一次只做一个、白跑十几轮。\n"
+        "· 多步任务（先搜索→再建夹→再逐个收藏）必须**连续调用直到全部做完**，\n"
+        "  不要做一半就停下来说已完成。\n"
         "· 只有确实需要读取或改动 ToolsGCP 状态时才调用；纯聊天、纯推荐不要调用。\n"
         "· ⚠️ **绝对不要在没有真的调用工具的情况下声称「已经帮你做了」**。"
         "你想做的每一件事都必须先输出 [TOOL] 行；没调用就说没调用。\n"
@@ -383,19 +656,33 @@ AGENT_PROMPT_FOOTER = {
         "别因为名字不完全一样就说做不到（例如收藏夹相关的有 "
         "list_favorites / set_favorite / create_favorite_folder / move_favorite）。\n"
         "· 拿到结果后用一两句话给用户结论，不要复述原始 JSON、不要贴字段名。\n"
+        "· ⚠️ **同一个调用（同名同参数）不要重复发**：做过的结果已经在 "
+        "[TOOL_RESULT] 里给你了；重复发只会得到「已执行过」并浪费轮次。\n"
+        "· 排版：**每段正文之间、每个步骤的说明之前都空一行**（至少一个空行）；"
+        "列举多项时每项单独成行，不要把整段挤在一起。\n"
     ),
     "zh_TW": (
         "\n呼叫規則（都是為了節省 token 和**別說假話**，請嚴格遵守）：\n"
-        "· 一輪最多 2 個呼叫；能在一次呼叫裡問清的就不要分幾次。\n"
+        "· 一輪最多 6 個呼叫：**同一件事的多個物件可以一次性全做**（例如一次收藏 5 個資源，\n"
+        "  就在一条訊息裡輸出 5 行 [TOOL]），別一次只做一個、白跑十幾輪。\n"
+        "· 多步任務（先搜尋→再建夾→再逐個收藏）必須**連續呼叫直到全部做完**，\n"
+        "  不要做一半就停下來說已完成。\n"
         "· 只有確實需要讀取或改動 ToolsGCP 狀態時才呼叫；純聊天、純推薦不要呼叫。\n"
         "· ⚠️ **絕對不要在沒有真的呼叫工具的情況下聲稱「已經幫你做了」**。\n"
         "· 工具報錯時，把**工具給的錯誤原文**轉述給使用者，並說明下一步。\n"
         "· 說「沒有這個能力」之前先看一遍上面的工具清單，清單裡有就去做。\n"
         "· 拿到結果後用一兩句話給使用者結論，不要複述原始 JSON。\n"
+        "· ⚠️ **同一個呼叫（同名同參數）不要重複發**：做過的結果已在 [TOOL_RESULT] 裡，\n"
+        "  重複發只會得到「已執行過」並浪費輪次。\n"
+        "· 排版：**每段正文之間、每個步驟的說明之前都空一行**（至少一個空行）；"
+        "列舉多項時每項單獨成行。\n"
     ),
     "en_US": (
         "\nRules (all to save tokens and to **never lie** — follow strictly):\n"
-        "· At most 2 calls per turn; if one call can answer it, do not split it.\n"
+        "· Up to 6 calls per turn: **batch same-kind work in one message** (e.g. 5 "
+        "favorites = 5 [TOOL] lines at once), never one-per-turn marathon.\n"
+        "· Multi-step tasks (search → create folder → add items) must **keep calling "
+        "until fully done**; do not stop halfway claiming success.\n"
         "· Only call tools when you actually need to read or change ToolsGCP state.\n"
         "· ⚠️ **Never claim you did something without actually emitting the "
         "[TOOL] call.** If you did not call a tool, say so.\n"
@@ -404,6 +691,10 @@ AGENT_PROMPT_FOOTER = {
         "· Before saying \"I can't do that\", re-read the tool list above — if a "
         "tool covers it, use it.\n"
         "· After results, answer in one or two sentences; never echo raw JSON.\n"
+        "· ⚠️ **Never re-issue an identical call (same name + same args) you already "
+        "made** — its [TOOL_RESULT] is already in the history; repeating it wastes turns.\n"
+        "· Formatting: **put a blank line between paragraphs and before each step's "
+        "description** (at least one); put each list item on its own line.\n"
     ),
 }
 
@@ -481,6 +772,113 @@ def agent_off_reply(locale: str = DEFAULT_LOCALE) -> str:
     return (f"我现在只能陪你聊天，还没法操作 ToolsGCP。"
             f"想让我帮你动手（搜索、打开页面、改设置、装插件……），"
             f"请先开启内置插件 <a href=\"{AGENT_OFF_LINK}\">GCP-AI Agent</a>。")
+
+
+# ======================================================================
+# 当前对话模式（Chat / Agent）—— 让模型**知道自己现在是什么模式**
+# ======================================================================
+# ⚠️⚠️ 修 bug（用户原话）：「AI我问他他不知道自己是chat还是agent模式，中途切换还坚持
+# 之前的答案的bug」。
+# 根因：system 提示词里从来没有一行告诉模型"你现在是 Chat 还是 Agent"。
+#   · Chat 模式：工具清单不注入 → 模型只能看到"没有工具"，问它是什么模式它只能瞎猜；
+#   · Agent 模式：只给了工具清单，没有一句"你现在是 Agent 模式"；
+#   · 中途切换：下一轮 system 换了，但模型会顺着**上下文里自己上一轮的回答**
+#     （"我是 Chat 模式"）继续坚持 —— 这是 LLM 的行为特性，光改 system 不够，
+#     必须在**最近一条 user 消息前**再复述一次当前模式，把陈旧记忆压过去。
+# 修法：① 这里给三段固定文本；② ai.py 把它拼进 system（见 _mode_section）；
+#      ③ 检测到用户"在问模式/刚切换过模式"时，在 user 消息前插一条极短的系统提醒。
+CHAT_MODE_PROMPT = {
+    "chat": {
+        "zh_CN": (
+            "\n【当前对话模式：Chat（只聊天）】\n"
+            "你现在**只能聊天**：没有调用任何工具的能力，也无法操作 ToolsGCP 的任何功能。\n"
+            "· 用户让你动手（收藏、打开页面、改设置、装插件…）时，**如实说明**你现在是 Chat 模式，\n"
+            "  并告诉他：在输入框左边的胶囊里切换到「Agent」模式，你就能替他做。\n"
+            "· ⚠️ 绝对不要假装已经做了，也不要输出任何工具调用标记。\n"
+        ),
+        "zh_TW": (
+            "\n【目前對話模式：Chat（只聊天）】\n"
+            "你現在**只能聊天**：沒有呼叫任何工具的能力，也無法操作 ToolsGCP 的任何功能。\n"
+            "· 使用者要你動手時，**如實說明**你現在是 Chat 模式，並請他切換到「Agent」模式。\n"
+            "· ⚠️ 絕對不要假裝已經做了，也不要輸出任何工具呼叫標記。\n"
+        ),
+        "en_US": (
+            "\n[Current conversation mode: Chat (talk only)]\n"
+            "You can **only chat**: you cannot call any tools or operate ToolsGCP.\n"
+            "· If the user asks you to act, say plainly that you are in Chat mode and tell them "
+            "to switch to \"Agent\" in the chip left of the input box.\n"
+            "· Never pretend you did something, and never emit tool-call markup.\n"
+        ),
+    },
+    "agent": {
+        "zh_CN": (
+            "\n【当前对话模式：Agent（可以动手）】\n"
+            "你现在**可以操作 ToolsGCP**：需要动手时按下面的协议输出工具调用。\n"
+            "· 用户让你收藏 / 查找 / 切换页面 / 改设置时，**直接去做**，不要只给建议。\n"
+            "· 一次没做完就继续调用，直到把用户交代的事都办完再回答。\n"
+            "· 完成后用**人话**总结你做了什么（例如：已经把 3 个工具收藏到「GCP」），"
+            "不要复述 JSON 或工具名。\n"
+        ),
+        "zh_TW": (
+            "\n【目前對話模式：Agent（可以動手）】\n"
+            "你現在**可以操作 ToolsGCP**：需要動手時按下面的協定輸出工具呼叫。\n"
+            "· 使用者要你收藏 / 尋找 / 切換頁面 / 改設定時，**直接去做**，不要只給建議。\n"
+            "· 完成後用**人話**總結你做了什麼，不要複述 JSON 或工具名。\n"
+        ),
+        "en_US": (
+            "\n[Current conversation mode: Agent (can act)]\n"
+            "You **can operate ToolsGCP**: emit tool calls when you need to act.\n"
+            "· When the user asks you to save / find / switch pages / change settings, "
+            "**just do it** instead of only giving advice.\n"
+            "· When done, summarise in plain language what you did — never echo JSON or tool names.\n"
+        ),
+    },
+}
+
+
+def build_mode_prompt(mode: str = "chat", locale: str = DEFAULT_LOCALE) -> str:
+    """当前对话模式那一段（Chat / Agent 各一段；认不出的 mode 按 chat）"""
+    key = "agent" if str(mode or "").strip().lower() == "agent" else "chat"
+    table = CHAT_MODE_PROMPT.get(key) or CHAT_MODE_PROMPT["chat"]
+    return table.get(locale) or table[DEFAULT_LOCALE]
+
+
+# 用户"在问模式"的意图词（命中就在 user 消息前再提醒一次当前模式）
+_MODE_ASK_RES = (
+    re.compile(r"(?:你是|你现在是|你是哪种|哪个模式|什么模式|chat模式|agent模式|"
+               r"只能聊天|能不能动手|可以操作|会不会用工具|能用工具吗)", re.I),
+    re.compile(r"(?:are you|which mode|chat mode|agent mode|can you (?:use tools|act))", re.I),
+)
+
+
+def asks_about_mode(text: str) -> bool:
+    """用户在问"你是什么模式 / 能不能动手"吗"""
+    raw = str(text or "")
+    if not raw.strip():
+        return False
+    return any(rx.search(raw) for rx in _MODE_ASK_RES)
+
+
+def mode_reminder(mode: str = "chat", locale: str = DEFAULT_LOCALE) -> str:
+    """插在**最近一条 user 消息前**的极短提醒
+
+    ⚠️ 为什么光有 system 不够：用户中途把模式从 Chat 切到 Agent，模型的上下文里
+       还留着自己上一轮说的"我是 Chat 模式"。LLM 会顺着自己的历史回答继续坚持
+       （用户实测「中途切换还坚持之前的答案」）。在 user 消息前再压一句，
+       离得最近、权重最高，能有效覆盖陈旧记忆。
+    """
+    key = "agent" if str(mode or "").strip().lower() == "agent" else "chat"
+    if locale == "zh_TW":
+        return ("[系統提醒] 目前對話模式是 **%s**（已按最新切換）。回答「你是什麼模式」時"
+                "一律以此為準，不要沿用更早的對話內容。" %
+                ("Agent：可以操作 ToolsGCP" if key == "agent" else "Chat：只能聊天"))
+    if locale == "en_US":
+        return ("[System note] The current conversation mode is **%s** (latest switch). "
+                "Answer any question about your mode from this, not from earlier turns." %
+                ("Agent: can operate ToolsGCP" if key == "agent" else "Chat: talk only"))
+    return ("[系统提醒] 当前对话模式是 **%s**（已按最新切换）。回答“你是什么模式”时"
+            "一律以此为准，不要沿用更早的对话内容。" %
+            ("Agent：可以操作 ToolsGCP" if key == "agent" else "Chat：只能聊天"))
 
 
 # ---------- 内置工具（真正"动手"的那部分） ----------
@@ -598,10 +996,50 @@ def _describe_resource(item: dict, full: bool = False) -> dict:
     return {k: v for k, v in out.items() if v}
 
 
-def register_builtin_tools(registry: ToolRegistry):
-    """装入 ToolsGCP 自带的那组工具
-    ⚠️ 数量刻意压在 20 个以内：每多一个工具，每次请求都要多花十几个 token，模型也更容易选错。
+
+class _PluginSourceSink:
+    """把 `register_tool` 的 source **强制**钉成插件 id 的薄包装
+
+    为什么包一层而不是给 31 个调用逐个补 `source=AGENT_PLUGIN_SOURCE`：
+      · 31 处字面量，漏一个就是"某个工具关不掉也不下架"的隐蔽 bug；
+      · `ToolRegistry.register_tool()` 的签名默认值 `source="builtin"` **不能改**
+        —— 主程序本体工具（read_file 之外那些真·内置）和第三方插件都还在用那个默认值；
+      · 包装只影响本次调用的 sink，注册表本身、别的调用方都不受影响。
+    只代理 `register_tool`，其它属性（get/all/...）一律转发回真注册表，
+    这样注册体里就算以后顺手用到别的注册表方法也不会坏。
     """
+
+    __slots__ = ("_registry", "_source")
+
+    def __init__(self, registry, source: str):
+        self._registry = registry
+        self._source = str(source or AGENT_PLUGIN_SOURCE)
+
+    def register_tool(self, name, description, handler, parameters: str = "",
+                      source: str = "", danger: bool = False) -> bool:
+        # 调用点自己显式写了 source 就尊重它（以后真有"本体工具"混进来也不会被误标）
+        return self._registry.register_tool(name, description, handler,
+                                           parameters=parameters,
+                                           source=(source or self._source),
+                                           danger=danger)
+
+    def __getattr__(self, item):
+        return getattr(self._registry, item)
+
+
+def register_builtin_tools(registry: ToolRegistry):
+    """装入 GCP-AI Agent 插件域的那组工具（source = AGENT_PLUGIN_SOURCE）
+
+    ⚠️ 数量刻意压着：每多一个工具，每次请求都要多花十几个 token，模型也更容易选错。
+    ⚠️⚠️ source 是插件 id（不是 "builtin"）：这样插件开关一关，
+       `ToolRegistry.unregister_source("gcp-ai-agent")` 就能把它们整组下架。
+    ⚠️ 末尾会尝试挂 Web 版实现（`agent_web.register_web_tools`）：同名覆盖，
+       把 PyQt 版那套 "window.switchTo / InfoBar / QWidget" 换成 Web 能真正执行的实现。
+       **必须用 try 包住**：agent_web 是本轮新增文件，缺了/写坏了都不能让
+       "装内置工具"这件事整体失败（那会让 AI 连一个工具都没有）。
+    """
+    # 所有注册都走 sink：它的 source 就是插件 id（签名默认值不许动，见类说明）
+    sink = _PluginSourceSink(registry, AGENT_PLUGIN_SOURCE)
 
     # ---------- 资源库 ----------
     def tool_search(agent, args):
@@ -621,13 +1059,15 @@ def register_builtin_tools(registry: ToolRegistry):
             haystack = " ".join((
                 str(item.get("name") or ""),
                 # 关键词 = 类别 ∪ 标签（理由同 prompt._haystack）
-                " ".join(resource_schema.keywords_of(item)),
+                # ⚠️ 用**并集**（keywords_all_of）：各语言池里的词都要能被搜到。
+                " ".join(resource_schema.keywords_all_of(item)),
                 str(item.get("description") or ""),
                 str(item.get("code") or ""), str(item.get("id") or ""),
             )).lower()
             # category 参数按"落在任意一个类别里"匹配（一条资源可有多个类别）
+            # ⚠️ 用**并集**比对：筛选词可能只出现在别的语言池里。
             if category and not any(category in c.lower()
-                                    for c in resource_schema.categories_of(item)):
+                                    for c in resource_schema.categories_all_of(item)):
                 continue
             if query and query not in haystack:
                 continue
@@ -664,7 +1104,9 @@ def register_builtin_tools(registry: ToolRegistry):
         for item in resources:
             if isinstance(item, dict):
                 # 一条资源可能属于多个类别：每个类别各记一次
-                for name in resource_schema.categories_of(item):
+                # ⚠️ 用**并集**（categories_all_of）：统计要回答"库里一共出现过多少类别"，
+                #    只看当前界面语言那一份会把别的语言池里独有的类别漏掉。
+                for name in resource_schema.categories_all_of(item):
                     categories[name] = categories.get(name, 0) + 1
         top = sorted(categories.items(), key=lambda kv: (-kv[1], kv[0]))[:8]
         return {"ok": True, "data": {
@@ -1017,13 +1459,13 @@ def register_builtin_tools(registry: ToolRegistry):
         """换主题：浅色 / 深色 / 跟随系统
 
         ⚠️ 必须写**规范简体全名**（浅色主题 / 深色主题 / 跟随系统），和设置页下拉框
-           （app.js optionsFor 的 value）、splash.resolve_splash_dark、前端 isDark
-           完全同一套字符串。以前这里写的是短形式 "浅色"/"深色"：
-           前端 isDark 只认 `=== '浅色主题'`，旧 splash 也只认全名，
-           于是"用 AI 说'切到浅色'之后界面/启动画面根本没跟着变浅"，
-           而且落进配置后连 splash 都读不出来（回退深色）——
-           正是用户报的"浅色主题下启动画面仍是深色"的一条真实来源。
-           （splash.resolve_splash_dark 现在也兼容短形式，作为双保险。）
+           （app.js optionsFor 的 value）、前端 isDark 完全同一套字符串。
+           以前这里写的是短形式 "浅色"/"深色"：前端 isDark 只认 `=== '浅色主题'`，
+           于是"用 AI 说'切到浅色'之后界面根本没跟着变浅"—— 那条 bug 的真实来源之一。
+           （启动画面那一半已经不归这里管了：本轮起**悬浮启动动画的底板固定深色**、
+            不再读主题配置，见 desktop/splash.py 的模块 docstring；
+            shell._is_dark() 仍然走 splash._theme_is_light 那张兼容表判主窗口配色，
+            所以"必须写全名"这条要求照旧有效。）
         """
         window = _window(agent)
         settings = getattr(window, "settings_manager", None) if window else None
@@ -1436,31 +1878,31 @@ def register_builtin_tools(registry: ToolRegistry):
         return {"ok": True, "data": report}
 
     # ---------- 注册 ----------
-    registry.register_tool(
+    sink.register_tool(
         "search_resources",
         {"zh_CN": "在 ToolsGCP 资源库里搜索程序/网站（返回编码、名称、简介、链接）",
          "zh_TW": "在 ToolsGCP 資源庫裡搜尋程式/網站（回傳編碼、名稱、簡介、連結）",
          "en_US": "Search ToolsGCP's resource library (code, name, summary, links)"},
         tool_search, "query,category,limit")
-    registry.register_tool(
+    sink.register_tool(
         "get_resource",
         {"zh_CN": "按编码取一条资源的完整信息（含版本、平台、下载直链）",
          "zh_TW": "依編碼取一筆資源的完整資訊（含版本、平台、下載直鏈）",
          "en_US": "Get full info of one resource by code (version, platform, direct link)"},
         tool_get, "code")
-    registry.register_tool(
+    sink.register_tool(
         "open_resource",
         {"zh_CN": "在界面上打开某条资源的详情页（用户能直接看到）",
          "zh_TW": "在介面上開啟某筆資源的詳細頁（使用者能直接看到）",
          "en_US": "Open a resource's detail page in the UI"},
         tool_open, "code")
-    registry.register_tool(
+    sink.register_tool(
         "resource_stats",
         {"zh_CN": "资源库统计：总数、类别数、各类别条数",
          "zh_TW": "資源庫統計：總數、類別數、各類別筆數",
          "en_US": "Resource library stats: total, categories, top categories"},
         tool_stats)
-    registry.register_tool(
+    sink.register_tool(
         "list_all_resources",
         {"zh_CN": "列出资源库**全部**条目（total=N；默认一页 10 条，返回 complete=false 时"
                   "必须用 offset 继续翻页直到取满 N 条）。回答「有哪些/列举所有/多少个」类"
@@ -1473,74 +1915,74 @@ def register_builtin_tools(registry: ToolRegistry):
                   "what resources' question you MUST call it and answer with the complete "
                   "list — never examples, never memory."},
         tool_list_all, "offset,page_size")
-    registry.register_tool(
+    sink.register_tool(
         "list_favorites",
         {"zh_CN": "列出收藏夹（含每个夹里的资源）",
          "zh_TW": "列出收藏夾（含每個夾裡的資源）",
          "en_US": "List favorite folders and the resources inside them"},
         tool_favorites)
-    registry.register_tool(
+    sink.register_tool(
         "set_favorite",
         {"zh_CN": "收藏/取消收藏一条资源；folder 可以指定放进哪个收藏夹（不存在会自动新建）",
          "zh_TW": "收藏/取消收藏一筆資源；folder 可指定放進哪個收藏夾（不存在會自動新建）",
          "en_US": "Add/remove a resource to favorites; folder picks the folder"},
         tool_favorite_set, "code,folder,on")
-    registry.register_tool(
+    sink.register_tool(
         "create_favorite_folder",
         {"zh_CN": "新建一个收藏夹；带上 code 可以顺便把资源放进去",
          "zh_TW": "新增一個收藏夾；帶上 code 可以順便把資源放進去",
          "en_US": "Create a favorite folder; pass code to also put a resource in it"},
         tool_favorite_folder, "name,code")
-    registry.register_tool(
+    sink.register_tool(
         "move_favorite",
         {"zh_CN": "把一条资源移动到另一个收藏夹（夹不存在会自动新建）",
          "zh_TW": "把一筆資源移動到另一個收藏夾（夾不存在會自動新建）",
          "en_US": "Move a resource to another favorite folder (created if missing)"},
         tool_favorite_move, "code,folder")
-    registry.register_tool(
+    sink.register_tool(
         "goto_page",
         {"zh_CN": "切换到主界面的某个页面",
          "zh_TW": "切換到主介面的某個頁面",
          "en_US": "Switch the main window to a page"},
         tool_goto, "page")
-    registry.register_tool(
+    sink.register_tool(
         "notify_user",
         {"zh_CN": "在界面上给用户弹一条提示",
          "zh_TW": "在介面上給使用者彈一則提示",
          "en_US": "Show a short toast to the user"},
         tool_notify, "text")
-    registry.register_tool(
+    sink.register_tool(
         "get_setting",
         {"zh_CN": "读取一项 ToolsGCP 设置（如 model_name、splash_screen_enabled）",
          "zh_TW": "讀取一項 ToolsGCP 設定（如 model_name、splash_screen_enabled）",
          "en_US": "Read one ToolsGCP setting (e.g. model_name)"},
         tool_get_setting, "key")
-    registry.register_tool(
+    sink.register_tool(
         "set_setting",
         {"zh_CN": "修改一项 ToolsGCP 设置（会立即生效并保存）",
          "zh_TW": "修改一項 ToolsGCP 設定（會立即生效並儲存）",
          "en_US": "Change one ToolsGCP setting (applies and saves immediately)"},
         tool_set_setting, "key,value", danger=True)
-    registry.register_tool(
+    sink.register_tool(
         "list_plugins",
         {"zh_CN": "列出已安装的插件及启用状态（用 goto_page 打开插件中心看界面）",
          "zh_TW": "列出已安裝的外掛及啟用狀態（用 goto_page 開啟外掛中心看介面）",
          "en_US": "List installed plugins and whether they are on"},
         tool_plugins)
     # ---------- 扩展：查全部设置 / 按名字拨开关 / 主题 / 语言 / 插件 ----------
-    registry.register_tool(
+    sink.register_tool(
         "list_settings",
         {"zh_CN": "列出 ToolsGCP 的全部设置项和当前值（可带 keyword 过滤）；不知道 key 就先调它",
          "zh_TW": "列出 ToolsGCP 的全部設定項和目前值（可帶 keyword 過濾）",
          "en_US": "List all ToolsGCP settings and their current values (optional keyword filter)"},
         tool_list_settings, "keyword")
-    registry.register_tool(
+    sink.register_tool(
         "update_settings",
         {"zh_CN": "一次修改多项设置，settings 是对象如 {\"theme\":\"深色\",\"auto_search\":true}",
          "zh_TW": "一次修改多項設定，settings 是物件如 {\"theme\":\"深色\"}",
          "en_US": "Change several settings at once; settings is an object like {\"theme\":\"dark\"}"},
         tool_update_settings, "settings", danger=True)
-    registry.register_tool(
+    sink.register_tool(
         "ui_switch",
         {"zh_CN": "打开/关闭界面开关：floating_ball 悬浮球、sidebar_ai 侧边栏AI、ai_enabled、"
                    "auto_search、github_button、view_switch、autostart 开机自启、"
@@ -1551,74 +1993,74 @@ def register_builtin_tools(registry: ToolRegistry):
                   "auto_search, github_button, view_switch, autostart, minimize_to_tray, "
                   "hotkey_enabled, splash_screen, dev_mode, deploy_mode, notify"},
         tool_ui_switch, "name,on")
-    registry.register_tool(
+    sink.register_tool(
         "set_theme",
         {"zh_CN": "切换主题（浅色 / 深色 / 跟随系统）",
          "zh_TW": "切換主題（淺色 / 深色 / 跟隨系統）",
          "en_US": "Switch the theme (light / dark / system)"},
         tool_set_theme, "mode")
-    registry.register_tool(
+    sink.register_tool(
         "set_language",
         {"zh_CN": "切换界面语言（简体中文 / 繁體中文 / English / 跟随系统）；要重启程序才完全生效",
          "zh_TW": "切換介面語言（简体中文 / 繁體中文 / English / 跟隨系統）；要重啟才完全生效",
          "en_US": "Switch the UI language (zh_CN / zh_TW / en_US); needs a restart to fully apply"},
         tool_set_language, "language")
-    registry.register_tool(
+    sink.register_tool(
         "set_plugin_enabled",
         {"zh_CN": "启用或停用某个插件（按 id 或名字），会同步插件配置界面里的总开关",
          "zh_TW": "啟用或停用某個外掛（依 id 或名稱），會同步外掛設定介面裡的總開關",
          "en_US": "Enable or disable a plugin by id or name (syncs its master switch)"},
         tool_set_plugin_enabled, "id,on")
-    registry.register_tool(
+    sink.register_tool(
         "open_plugin_config",
         {"zh_CN": "打开某个插件的配置界面（插件开着或关着都能打开）",
          "zh_TW": "開啟某個外掛的設定介面（外掛開著或關著都能開啟）",
          "en_US": "Open a plugin's configuration screen (works whether it is on or off)"},
         tool_open_plugin_config, "id")
-    registry.register_tool(
+    sink.register_tool(
         "search_view",
         {"zh_CN": "调整搜索页外观：card_size 卡片大小(small/medium/large)、view 视图(tile 磁贴 / grid 网格)",
          "zh_TW": "調整搜尋頁外觀：card_size(small/medium/large)、view(tile/grid)",
          "en_US": "Adjust the search page: card_size (small/medium/large), view (tile/grid)"},
         tool_search_view, "card_size,view")
-    registry.register_tool(
+    sink.register_tool(
         "deploy_list",
         {"zh_CN": "看部署/导出列表里现在有哪些资源编码",
          "zh_TW": "看部署/匯出清單裡現在有哪些資源編碼",
          "en_US": "Show which resource codes are in the deploy/export list"},
         tool_deploy_list)
-    registry.register_tool(
+    sink.register_tool(
         "read_logs",
         {"zh_CN": "读最近的运行日志（排查报错时用），limit 默认 30 行",
          "zh_TW": "讀最近的執行日誌（排查錯誤時用），limit 預設 30 行",
          "en_US": "Read the most recent log lines (for troubleshooting); limit defaults to 30"},
         tool_read_logs, "limit")
-    registry.register_tool(
+    sink.register_tool(
         "open_url",
         {"zh_CN": "用系统默认浏览器打开一个网址（http/https）",
          "zh_TW": "用系統預設瀏覽器開啟一個網址（http/https）",
          "en_US": "Open a URL in the system browser (http/https)"},
         tool_open_url, "url")
-    registry.register_tool(
+    sink.register_tool(
         "new_chat",
         {"zh_CN": "开一段新的 AI 对话（清空当前上下文）",
          "zh_TW": "開一段新的 AI 對話（清空目前上下文）",
          "en_US": "Start a new AI conversation (clears the current context)"},
         tool_new_chat)
     # ---------- 正常 agent 的"手脚"：文件 / 代码 / 自检 ----------
-    registry.register_tool(
+    sink.register_tool(
         "list_dir",
         {"zh_CN": "列出某个目录里的文件（像 ls/dir）；path 省略时用程序目录",
          "zh_TW": "列出某個目錄裡的檔案（像 ls/dir）",
          "en_US": "List the files in a directory (like ls/dir)"},
         tool_list_dir, "path")
-    registry.register_tool(
+    sink.register_tool(
         "read_file",
         {"zh_CN": "读一个文本文件的内容（会截断，最多 2 万字）",
          "zh_TW": "讀一個文字檔的內容（會截斷，最多 2 萬字）",
          "en_US": "Read a text file (truncated to 20k characters)"},
         tool_read_file, "path")
-    registry.register_tool(
+    sink.register_tool(
         "write_file",
         {"zh_CN": "写一个文本文件（不存在就新建；append=true 表示追加）。只能写程序目录、"
                    "主目录和桌面/下载/文档",
@@ -1626,7 +2068,7 @@ def register_builtin_tools(registry: ToolRegistry):
          "en_US": "Write a text file (append=true to append). Only inside the app dir, "
                   "home, Desktop, Downloads or Documents"},
         tool_write_file, "path,content,append", danger=True)
-    registry.register_tool(
+    sink.register_tool(
         "run_python",
         {"zh_CN": "在独立子进程里跑一小段 Python 代码并把输出拿回来（最多 60 秒）；"
                    "适合算数、验证想法、处理文本",
@@ -1634,7 +2076,7 @@ def register_builtin_tools(registry: ToolRegistry):
          "en_US": "Run a short Python snippet in a separate process and return its output "
                   "(60s max)"},
         tool_run_python, "code,timeout", danger=True)
-    registry.register_tool(
+    sink.register_tool(
         "self_check",
         {"zh_CN": "自检：汇总收藏夹 / 插件开关 / 资源库 / 关键设置 / 最近调用过的工具。"
                    "动手之后**先调它核对**，再决定怎么说，别凭印象回答",
@@ -1642,6 +2084,33 @@ def register_builtin_tools(registry: ToolRegistry):
          "en_US": "Self-check: summarize favorites, plugins, library, key settings and "
                   "recent tool calls before you answer"},
         tool_self_check)
+
+    # ---------- 挂 Web 版实现（本轮新增；同名覆盖 Qt 版） ----------
+    # 为什么放在**最后**：agent_web.register_web_tools 是"同名覆盖"语义，
+    # 必须跑在 31 个 Qt 版实现都注册完之后，否则会被后面的 Qt 版覆盖回去。
+    # 为什么整段 try 住：agent_web.py 是新增文件，缺了/写坏了都不能让
+    # "装内置工具"整体失败 —— 最差退回 Qt 版实现（Web 上点了报错），
+    # 也比 AI 一个工具都没有强。
+    try:
+        from .agent_web import register_web_tools
+        # ctx 传 None：这里只是"注册"，真正执行时由调用方（desktop/api/ai.py）
+        # 传入带 shell 的 WebAgentContext（见契约 4.2 的 register_web_tools(registry, ctx)）
+        added = register_web_tools(sink, ctx=None)
+        if added:
+            # ⚠️ 不打 stderr：那是控制台输出，会被当成"程序报错"吓到用户，
+            #    也会污染 exe 的 stdout（日志应该在日志文件里）。
+            try:
+                from ...utils.logger import log
+                log.info("AI", "agent_tools", f"Web 版工具实现已挂载: {added} 个")
+            except Exception:
+                pass
+    except Exception:
+        # 静默降级：写 stderr 会污染正常输出，这里只留 traceback 到日志（如果有日志器）
+        try:
+            from ...utils.logger import log
+            log.warn("AI", "agent_tools", "agent_web 未就绪：本轮沿用 Qt 版实现")
+        except Exception:
+            pass
 
 
 def _favorites(agent):
@@ -1825,4 +2294,6 @@ __all__ = [
     "parse_tool_calls", "format_result", "build_agent_prompt",
     "build_agent_off_prompt", "agent_off_reply", "AGENT_OFF_LINK",
     "register_builtin_tools", "locale_of",
+    # 插件域来源（契约 2.3）：31 个工具都属插件，要能随开关整组下架
+    "AGENT_PLUGIN_SOURCE",
 ]

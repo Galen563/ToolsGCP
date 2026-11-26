@@ -152,14 +152,77 @@ def translate_term(value: str, manager=None) -> str:
         manager = _current_manager
     if manager is None:
         return text
+    got = _lookup_term(text, manager)
+    if got:
+        return got
+    # 术语表里一个概念只登记**规范简体中文写法**一个键（同一概念在历史数据里可能有
+    # 多种写法：游戏平台 / "遊戲平台" / "Game platform"）。直接键没命中时先还原成规范值再查一次，
+    # 否则别名写法在三种界面语言下都会原样显示 —— 就是「更多筛选里很多只有简体中文」的正身。
+    canon = canonical_term(text, manager)
+    if canon and canon != text:
+        got = _lookup_term(canon, manager)
+        if got:
+            return got
+    return text
+
+
+def _lookup_term(text: str, manager) -> str:
+    """查 term_<text>，查不到返回空串（兜底策略交给调用方，别在这儿拼返回值）"""
     key = f"term_{text}"
     try:
         translated = manager.get_text("common", key)
     except Exception:
+        return ""
+    return str(translated) if translated and translated != key else ""
+
+
+def canonical_term(value: str, manager=None) -> str:
+    """类别 / 标签的**任意语言写法**还原成规范简体中文值；还原不了就原样返回。
+    为什么需要它：筛选候选要"一个概念只出现一项"、比对要两侧同一口径，而术语表
+    只为规范值建键（给别名也建键会让前端 canonicalIn 反查把别名当规范值，
+    候选反而合不成一项），所以合并方向必须是「别名 → 规范」，不是「规范 → 别名」。
+    ⚠️ manager 为空（或语言表没加载）时原样返回：resource_query 的单元测试要求
+    「不依赖语言文件也能跑」（见该模块 docstring 的红线）。
+    """
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    if manager is None:
+        manager = _current_manager
+    if manager is None:
         return text
-    if translated and translated != key:
-        return str(translated)
-    return text
+    return _term_reverse(manager).get(text) or text
+
+
+def _term_reverse(manager) -> dict:
+    """反查表 {任意写法: 规范值}，按 zh_CN → zh_TW → en_US 顺序 setdefault 建：
+    规范值先入为主，别名写法指回规范值；某个语言的译名恰好等于另一个概念的规范值时
+    （目前术语表里没有这种撞车，探针会硬断言）先建的那条生效，行为可预期。
+    缓存随 translations 一起作废（load_all_languages 末尾置 None），热重载语言文件后
+    不用重启也能生效。
+    """
+    cache = getattr(manager, "_term_reverse_cache", None)
+    if isinstance(cache, dict) and cache:
+        return cache
+    rev = {}
+    translations = getattr(manager, "translations", None) or {}
+    for locale in LOCALES:
+        table = (translations.get(locale) or {}).get("common") or {}
+        for key, value in table.items():
+            if not str(key).startswith("term_"):
+                continue
+            raw = str(key)[len("term_"):]
+            if not raw:
+                continue
+            rev.setdefault(raw, raw)
+            text = str(value or "").strip()
+            if text:
+                rev.setdefault(text, raw)
+    try:
+        manager._term_reverse_cache = rev
+    except Exception:
+        pass
+    return rev
 
 
 class LanguageManager:
@@ -218,6 +281,8 @@ class LanguageManager:
                 # 一个语言目录缺好几个文件时只报一条，别刷屏（正常发布不会缺）
                 self._log_warn(f"{locale} 缺 {len(missing)} 个语言文件: {', '.join(missing)}")
         self.translations = translations
+        # 术语反查表依赖 translations，换表必须一起作废（见 _term_reverse）
+        self._term_reverse_cache = None
 
     # ---------- 取词 ----------
     def get_text(self, module, key, language=None):
@@ -253,6 +318,10 @@ class LanguageManager:
     def term(self, value: str) -> str:
         """资源库里的"类别 / 标签 / 适用系统 / CPU 架构"显示译名（存盘值不变）"""
         return translate_term(value, self)
+
+    def canonical_term(self, value: str) -> str:
+        """任意语言写法 → 规范简体中文值（口径见模块级 canonical_term）"""
+        return canonical_term(value, self)
 
     # ---------- 切换 ----------
     def set_language(self, language):

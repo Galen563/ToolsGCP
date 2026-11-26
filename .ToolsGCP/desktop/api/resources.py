@@ -11,6 +11,7 @@
    `pymodels/core/resource_query.py`（那份实现已通过与原版 Qt UI 代码的差分自检）。
 """
 
+import json
 import os
 import threading
 
@@ -205,6 +206,28 @@ class SettingsDomain:
                 manager.set_api_base(value, pid)
             manager.update_setting(key, value)
             new = manager.settings.get(key)
+            # ⚠️⚠️ 插件开关的**资源生命周期**挂在这里（契约 2.1 挂载点 1）：
+            #    设置只是"用户意图"，真正的资源（模块缓存 / 工具注册表 / 动作流水）
+            #    在进程里 —— 没人释放就一直占着，那就是用户说的"关了还在"。
+            #    为什么必须**在落盘之后、广播之前**：先让值成为事实，再同步资源，
+            #    最后才通知前端（否则另一端先收到"已关闭"、资源却还没释放）。
+            #    ⚠️ 用 try 全包：同步插件资源失败绝不能让"保存设置"变失败。
+            try:
+                from .plugins import sync_plugin_resources
+                sync_plugin_resources(key, new, settings_manager=manager)
+                # ⚠️⚠️ 同步**可能把值纠正回来**（强制开启的插件不允许被关：
+                #    sync 内部会把它写回 True）。这里必须重新读一次，
+                #    否则下面广播出去的还是"纠正之前"的 False，
+                #    前端据此把卡片画成"已关闭"、后端却是 True —— 两边永远对不上，
+                #    用户看到的就是"我关了、刷新一下又变回来了"这种鬼打墙。
+                corrected = manager.settings.get(key)
+                if corrected != new:
+                    _log("op", "设置", "settings",
+                         f"设置值被插件锁定规则纠正: key={key} {new!r} → {corrected!r}")
+                    new = corrected
+            except Exception as exc:                  # noqa: BLE001
+                _log("warn", "设置", "settings",
+                     f"同步插件资源失败（设置已保存）key={key}: {exc}")
             if notify or old != new:
                 # ⚠️⚠️ 敏感项**不广播**：push_event 会经 HTTP 长轮询投给浏览器端，
                 #    把明文 Key / 令牌推过去等于泄密（和 settings.snapshot 里
@@ -597,28 +620,170 @@ class FavoritesDomain:
 
 
 # 提交软件（制作器）需要的三语言字段。
-# ⚠️ 这四个字段在磁盘上是 {简体中文, 繁體中文, English} 字典，
-#    但 normalize()（唯一读数入口）会把它们压成"当前语言"的字符串。
-#    制作器要把三种语言都灌进表单，就必须拿回**原始字典** —— 见 _merge_raw_i18n。
-# ⚠️ 字段清单直接取自 resource_schema.I18N_FIELDS（由 FIELDS 里 kind=="i18n" 推导），
-#    别在这里再硬编码一份 —— 加字段时只改 schema 一处。
-DETAIL_I18N_FIELDS = tuple(resource_schema.I18N_FIELDS)
+# ⚠️ 这些字段在磁盘上是 {简体中文, 繁體中文, English} 字典，
+#    但 normalize()（唯一读数入口）会把它们压成单语言值：
+#      · name/description/intro/supplement（kind=="i18n"）压成**当前语言**的字符串；
+#      · category/tags（kind=="categories"/"tags"）压成**当前界面语言**那份 list[str]
+#        （值一律规范中文口径，筛选/索引靠它，见 resource_schema._normalize_value）。
+#    制作器要把三种语言都灌进表单，确实必须拿回**原始字典**，
+#    但**不能**把它盖回原字段上 —— 那是 TG-000052 详情页标签变成一串 JSON 的根因，
+#    原始形态改走 *_i18n 这两个新键（见 _merge_raw_i18n）。
+# ⚠️ 字段清单直接取自 resource_schema（I18N_FIELDS + LANG_LIST_FIELDS，都由 FIELDS
+#    的 kind 推导），别在这里再硬编码一份 —— 加字段时只改 schema 一处。
+DETAIL_I18N_FIELDS = tuple(resource_schema.I18N_FIELDS) + \
+    tuple(getattr(resource_schema, "LANG_LIST_FIELDS", ()))
+# 语言池字段（列表型多语言字段）：category / tags
+DETAIL_LANG_LIST_FIELDS = tuple(getattr(resource_schema, "LANG_LIST_FIELDS", ()))
+# 「磁盘原始形态」那组键的后缀：tags_i18n / category_i18n
+# ⚠️ 这两个名字是**前后端共同的契约**（前端队友按同样的名字写），不许改。
+DETAIL_RAW_SUFFIX = "_i18n"
 
 
-def _merge_raw_i18n(item: dict, raw: dict) -> dict:
-    """把规范形态条目里的多语言字段换回**原始三语言字典**（详情接口专用）
-    ⚠️ 返回的是**新字典**（浅拷贝 + 替换几个字段），绝不改内存索引里的那份 ——
-       其它消费方（get_all / get_summaries / resource_query）拿到的仍然是字符串。
-    ⚠️ 磁盘上本来就写成纯字符串的字段保持字符串不动（raw 里没有它），
-       前端据此回退到"只灌简体中文"的老行为。
+def _copy_pool_shape(value):
+    """三语言字典送出去之前复制一层：语言下面那一级可能是 list，
+    不复制的话调用方（制作器表单）一改就污染了内存索引里的原始条目。"""
+    if not isinstance(value, dict):
+        return list(value) if isinstance(value, list) else value
+    out = {}
+    for key, sub in value.items():
+        out[key] = list(sub) if isinstance(sub, list) else sub
+    return out
+
+
+def _display_str_list(value, language: str) -> list:
+    """category / tags 的**类型闸门**：任何磁盘形态 → 该界面语言那一份 list[str]。
+
+    ⚠️ 为什么需要这道闸门（需求3 根因）：详情页曾把**原始三语言字典**直接盖回
+       tags / category，而前端一直把它们当 list[str] 用（index.html 的 v-for、
+       app.js 的 detailTags / detailRows），于是标签渲染成
+       {"简体中文": [...]} 这串 JSON 文本。字典形态没错（制作器要用），
+       错在"放错了键"：原始形态只能走 *_i18n，正身字段恒为字符串列表。
+    ⚠️ 取值口径（契约）：请求语言 → 简体中文 → 繁體中文 → English
+       （回退链由 resource_schema._collect_text 统一保证，和列表页/筛选同源，
+       所以详情页与卡片显示的永远是同一份值）；老数据本来就是 list[str] 时直接用。
+    ⚠️ 元素必须是**纯字符串**：老库里混进数字、嵌套容器、甚至"整段是个 JSON 字符串"
+       （别的写入方把字典序列化成一个字符串塞进标签）都要安全展开、绝不抛 ——
+       一个坏元素只该被跳过，不该把整页拖崩。
+    """
+    # 先兜"整段是 JSON 字符串"的残迹：看着像对象/数组的字符串试着解析一次；
+    # 解析失败（正常标签里也可能出现方括号，例如 "[Beta]"）就原样当文本继续走。
+    if isinstance(value, str):
+        stripped = value.strip()
+        if stripped[:1] in ("{", "["):
+            try:
+                parsed = json.loads(stripped)
+            except Exception:                           # noqa: BLE001
+                parsed = None
+            if isinstance(parsed, (dict, list)):
+                value = parsed
+    try:
+        # split_multi 已经做完：按语言回退取值、按 CATEGORY_SPLIT_CHARS 拆格、去空白、去重
+        parts = resource_schema.split_multi(value, language)
+    except Exception:                                   # noqa: BLE001
+        # 兜底：极端脏数据（自定义对象 / 自引用结构）也不许把详情接口拖崩
+        try:
+            parts = [resource_schema.first_text(value, language)]
+        except Exception:                               # noqa: BLE001
+            parts = []
+    out: list = []
+
+    def push(text: str) -> None:
+        if text and text not in out:
+            out.append(text)
+
+    for part in parts:
+        if isinstance(part, str):
+            text = part.strip()
+            # 元素自己就是一段 JSON 文本（别的写入方把字典/数组序列化后塞进标签列表，
+            # 或者整段被双重编码）：再解一层继续过同一个闸门。
+            # 解不开就原样收 —— 正常标签里也可能有方括号（例如 "[Beta]"），
+            # 不能因为长得像 JSON 就把用户的合法标签丢掉。
+            if text[:1] in ("{", "["):
+                try:
+                    nested = json.loads(text)
+                except Exception:                       # noqa: BLE001
+                    nested = None
+                if isinstance(nested, (dict, list)):
+                    for extra in _display_str_list(nested, language):
+                        push(extra)
+                    continue
+            push(text)
+        elif isinstance(part, bool):
+            continue                                    # true/false 不是标签
+        elif isinstance(part, (int, float)):
+            push(str(part))                             # 数字标签原样收（不算脏数据）
+        elif part is None or isinstance(part, (dict, list, tuple, set)):
+            continue                                    # 嵌套容器不是标签，丢掉
+        else:
+            push(str(part).strip())
+    return out
+
+
+def _merge_raw_i18n(item: dict, raw: dict, language: str = "") -> dict:
+    """详情接口的多语言字段装配（**契约**，前端队友按同样的名字写）
+
+    · name / description / intro / supplement：形状**保持不动** —— 磁盘上是三语言
+      字典就返回字典，磁盘上是纯字符串就返回字符串（前端 mapItem / pickI18n 两种都吃）。
+    · tags / category：**恒为 list[str]**，按界面语言取自己那一份（_display_str_list）。
+    · tags_i18n / category_i18n：**新增**，原样携带磁盘上的形态
+      （{简体中文|繁體中文|English: list[str]} 三语言字典，或 list[str]），
+      给制作器编辑三个语言池用；前端 poolsFromRaw 那套形态判断照旧适用。
+      磁盘上是 "工具,系统" 这种逗号串老写法时，这里给的是拆好的 list[str]
+      —— 对编辑而言等价且更好用（当前 54 条里没有这种写法）。
+    ⚠️ 返回的是**新字典**（浅拷贝 + 改几个字段），绝不改内存索引里的那份 ——
+       其它消费方（get_all / get_summaries / resource_query）拿到的仍是原来的值。
+    ⚠️ language 传**请求语言**（界面语言）；不传按 DEFAULT_LANGUAGE。
+       loader 是按语言重建的（_LibraryCache），所以这里和 canonical 那份必然同语言，
+       不会出现"卡片显示一份、详情页显示另一份"。
     """
     if not isinstance(item, dict):
         return {}
+    lang = str(language or "") or resource_schema.DEFAULT_LANGUAGE
     out = dict(item)
+    raw_map = raw or {}
     for field in DETAIL_I18N_FIELDS:
-        value = (raw or {}).get(field)
-        if isinstance(value, dict) and value:
-            out[field] = value
+        if field not in DETAIL_LANG_LIST_FIELDS:
+            value = raw_map.get(field)
+            if isinstance(value, dict) and value:
+                out[field] = value
+            continue
+        # 语言池字段：磁盘形态优先取 raw（里面只有"确实是三语言字典"的字段），
+        # 没有就说明磁盘上本来就是 list[str]，直接用规范形态那份（同一条回退链算出来的）。
+        disk = raw_map.get(field)
+        if isinstance(disk, dict) and disk:
+            out[field + DETAIL_RAW_SUFFIX] = _copy_pool_shape(disk)
+        else:
+            out[field + DETAIL_RAW_SUFFIX] = _display_str_list(item.get(field), lang)
+        # 正身字段过闸门：dict / JSON 串 / 非字符串元素一律出不去
+        out[field] = _display_str_list(disk if disk is not None else item.get(field), lang)
+    return out
+
+
+def _detail_repos(item: dict) -> list:
+    """详情出口的 repos 保证：恒为 list[dict]，每行 platform/url 都是**纯字符串**；
+    没有仓库就返回空列表（绝不返回 None / 字典 / 混合形态）。
+
+    ⚠️ 为什么要在出口再兜一次（task-26）：loader 内存里那份是 normalize 过的，
+       正常已经是干净形态；但 detail 会先经 _merge_raw_i18n 合并原始副本，
+       而**云端镜像 / 手改 JSON** 送来的 repos 可能是脏的（行不是 dict、
+       url 写成三语字典）。前端「多组仓库」那一栏按 platform/url 两个字符串渲染，
+       露出一个 dict 就会画成 [object Object]。这里用 schema 的 repos_of 统一口径，
+       顺带把「只有 github 的老数据」补成一行 repos（与 normalize 同一不变量，
+       消费方不必各自再写一遍）。
+    """
+    out = []
+    try:
+        for row in resource_schema.repos_of(item or {}):
+            platform = str(row.get("platform") or "")
+            url = str(row.get("url") or "")
+            if not platform or not url:
+                continue
+            line = dict(row)
+            line["platform"] = platform
+            line["url"] = url
+            out.append(line)
+    except Exception:                       # 兜底：仓库形态再离谱也不能把详情接口带崩
+        return []
     return out
 
 
@@ -1012,6 +1177,11 @@ class ResourcesDomain:
              · 而前端的 mapItem()/pickI18n() 本来就能处理字典（按当前语言取，
                取不到回退简中），所以详情页返回字典对搜索页/详情页都安全。
            其余接口（all / query / search / stats …）**仍返回字符串**，零风险。
+        ⚠️ category / tags 是**另一套**（需求3 收紧后的契约）：这两个字段恒为
+           list[str]（按请求语言取自己那份，回退链 请求语言→简中→繁中→英文），
+           原始三语言字典改由新增的 category_i18n / tags_i18n 携带 —— 前端把它们
+           当列表 v-for 用，盖回字典就渲染成一串 JSON 文本（TG-000052 事故）。
+           详见 _merge_raw_i18n 的契约说明。
         """
         try:
             key = str(key or "").strip()
@@ -1032,7 +1202,14 @@ class ResourcesDomain:
             raw = loader.get_raw_i18n_by_id(item.get("id") or "")
             if not raw:
                 raw = loader.get_raw_i18n_by_code(item.get("code") or "")
-            detail_item = _merge_raw_i18n(item, raw)
+            # 请求语言取 loader 自己的那一份：canonical 条目就是按它的 language 压平的，
+            # 传别的值会让「详情里的类别/标签」和「卡片上的类别/标签」按不同语言取值。
+            detail_item = _merge_raw_i18n(item, raw, getattr(loader, "language", ""))
+            # task-26：repos 出口统一成 list[dict]（platform/url 都是字符串，没有则 []）。
+            # 写在 _merge_raw_i18n **之后**：那份合并只碰多语言字段，仓库形态与它无关，
+            # 顺序反过来会被合并逻辑里的浅拷贝盖掉。detail_item 是新字典（不是内存索引
+            # 那份），就地赋值安全。
+            detail_item["repos"] = _detail_repos(detail_item)
             return _ok(item=detail_item, key=key,
                        variants=detail_item.get("variants") or [],
                        default_variant=detail_item.get("default_variant") or "")
@@ -1108,7 +1285,8 @@ class ResourcesDomain:
             matched, used = resource_query.query(
                 items, keyword, filters or {},
                 favorites=self._shell.favorites_manager,
-                latest=latest)
+                latest=latest,
+                canonical=self._canonical_term)
 
             result = {
                 "items": matched,
@@ -1150,7 +1328,7 @@ class ResourcesDomain:
         与原版 `_setup_search_page` 里逐行 add_row 的内容一一对应：
             category（固定顺序）/ tag（运行时算）/ source / favorite /
             updated / system / arch
-        ⚠️ 值与显示名分开：**值是规范中文**（筛选按它匹配），显示名按语言翻译。
+        ⚠️ 值与显示名分开：**值是规范中文**（筛选按它匹配，多种语言写法先合并成规范值），显示名按语言翻译。
         """
         try:
             lang = language or self._shell.current_language()
@@ -1162,7 +1340,7 @@ class ResourcesDomain:
             ]
             tag_options = [
                 {"value": t, "label": translate(t)}
-                for t in resource_query.tag_filter_options(items)
+                for t in resource_query.tag_filter_options(items, self._canonical_term)
             ]
             system_options = [
                 {"value": s, "label": translate(s)}
@@ -1184,8 +1362,21 @@ class ResourcesDomain:
         except Exception as exc:                    # noqa: BLE001
             return _fail(exc)
 
+    def _canonical_term(self, value: str) -> str:
+        """任意语言写法 -> 规范简体中文值（筛选候选合并 + 比对同一口径用）。
+        ⚠️ 术语表一个概念只登记规范值一个键（给别名也建键会让前端 canonicalIn 反查把别名
+           当规范值，候选反而合不成一项），所以合并方向是「别名 -> 规范」；语言表没加载或
+           还原不了时 canonical_term 原样返回，筛选退回改动前的口径。
+        """
+        try:
+            from pymodels.core.language_manager import canonical_term
+            return canonical_term(value, self._shell.language_manager)
+        except Exception:
+            return str(value)
+
     def _translate_term(self, value: str) -> str:
-        """术语显示名（类别/标签/系统/架构）—— 只改显示，不改匹配用的值"""
+        """术语显示名（类别/标签/系统/架构）—— 只改显示，不改匹配用的值
+        （别名写法由 translate_term 内部先还原规范值再查，显示也不会漏翻译）"""
         try:
             from pymodels.core.language_manager import translate_term
             manager = self._shell.language_manager
@@ -1232,6 +1423,8 @@ class ResourcesDomain:
                     by_system[system] = by_system.get(system, 0) + 1
             return _ok(total=len(items),
                        categories=by_category, tags=by_tag, systems=by_system,
+                       # task-26 口径**保持不变**：normalize 保证 github 恒等于主仓库，
+                       # 老数据（只有 github）与新数据（repos 多行）都会被这一条数进来。
                        with_github=sum(1 for i in items if i.get("github")),
                        with_url=sum(1 for i in items if i.get("url")),
                        with_download=sum(1 for i in items if i.get("download_url")),

@@ -213,7 +213,7 @@ py版本-已弃用仅作为参考项目，主体转为web版本/
 ### 制作器的写盘与备份
 
 所有写操作都走 `maker.*`：条目先过 `resource_schema.normalize()`，写盘用「临时文件 + `os.replace`」
-原子替换；替换前把旧资源库复制成 `ToolsGCP-Resources.backup-<时间戳>.json`，只保留最近 20 份。
+原子替换；替换前把旧资源库**滚动备份成固定名的 1 份**：`<用户数据目录>\backups\ToolsGCP-Resources.prev.json`（每次覆盖，不再产出一堆带时间戳的备份文件）。
 「保存到原列表」强制按载入时的 id / 编码写回，避免用户改了 id 之后被当成新条目追加；
 「另存为独立资源库」会把图标一起复制到目标目录并改写 `icon`，不会写出一个图标悬空的 JSON。
 
@@ -645,10 +645,10 @@ Web 版请以本节为准。
 
 ### 备份
 
-每次写盘前，当前资源库会复制到同目录下的
-`ToolsGCP-Resources.backup-<时间戳>.json`，只保留最近 20 份。
+每次写盘前，当前资源库会滚动备份成固定名的 1 份：
+`<用户数据目录>\.ToolsGCP\backups\ToolsGCP-Resources.prev.json`（每次覆盖；备份失败就中止写盘，原文件不动）。
 写盘是原子操作（先写临时文件再替换），中途被打断也不会把资源库写坏。
-资源库永远只有 `.ToolsGCP/ToolsGCP-Resources.json` 这一个文件，制作器不会另外生成一份。
+资源库永远只有 `.ToolsGCP/ToolsGCP-Resources.json` 这一个文件，制作器不会在程序目录旁边生成 `ToolsGCP-Resources.backup-*.json`；资源来源=云端时**读**的是用户数据目录下的只读镜像，但**写**的始终是程序目录这份。
 
 ## 日志
 

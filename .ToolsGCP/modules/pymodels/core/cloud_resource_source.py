@@ -44,6 +44,29 @@ from datetime import datetime
 from ..constants import (APP_REPO, CONFIG_DIR, GITHUB_MIRRORS,
                          RESOURCES_REPO, RESOURCES_REPO_CHAIN)
 
+# 当前生效的「资源来源」（cloud / local）。
+# 为什么需要这份状态：图标是**路由线程**里按文件解析的（webhost._send_icon →
+# cloud_icon_source.icon_file），而路由拿不到 SettingsManager（它只 import 常量），
+# 于是用户切了设置里的「资源来源」，图标却永远按同一套顺序解析 ——
+# 「切云端/本地不切换图标」就是这么来的（m05379 第③项）。
+# 做法：解析资源索引时（那是全程序**唯一**读设置的地方）顺手把来源记在这里，
+# 图标解析读这份记忆。它是进程内的最后已知值：设置变更 → 前端重载资源列表 →
+# resolve_resource_file 被调用 → 记忆刷新，链路天然闭合，不需要额外通知。
+_SOURCE_MODE = {"value": ""}
+
+
+def note_source_mode(mode) -> None:
+    """记录现用来源（只认 cloud / local 两个值，其余一律忽略以免污染）。"""
+    key = str(mode or "").strip().lower()
+    if key in ("cloud", "local"):
+        _SOURCE_MODE["value"] = key
+
+
+def source_mode() -> str:
+    """现用来源；没记到就按发布默认（cloud）。"""
+    return _SOURCE_MODE["value"] or "cloud"
+
+
 # 资源索引的文件名（云端附件名 / 本地文件名都用它，大小写不敏感比较）
 RESOURCE_FILE_NAME = "ToolsGCP-Resources.json"
 ASSET_NAME = RESOURCE_FILE_NAME
@@ -196,7 +219,12 @@ def local_bundled_file() -> str:
 
 def resolve_resource_file(settings_manager=None, trigger_refresh: bool = False) -> str:
     """按当前设置算出该读哪个资源索引文件
-    这是全程序唯一的判断点，搜索页 / 资源详情 / 制作器都走它，保证行为一致。
+    这是「按设置里的资源来源选索引文件」的唯一判断点：搜索页 / 资源详情 / 收藏 /
+    统计都走它，保证行为一致，并且顺手把来源记进 `_SOURCE_MODE`（图标解析要用它
+    决定 ②③ 先后，见 cloud_icon_source.official_layers）。
+    ⚠️ 制作器「资源浏览」那张表**故意不走这里**：它按界面上下拉选的「本地 / 云端」
+       现读文件（`MakerDomain.browse`），与设置里的来源彼此独立
+       （m05525 第④项：这两个开关互不影响，别再把它们合并）。
     `trigger_refresh=True` 时（只由资源库 API 传）如果云端还没缓存，
     顺手起一条**后台**线程去拉 —— 绝不在调用方线程里联网。
     """
@@ -206,6 +234,9 @@ def resolve_resource_file(settings_manager=None, trigger_refresh: bool = False) 
             source = str(settings_manager.settings.get("resource_source") or "cloud")
         except Exception:
             source = "cloud"
+    # 把来源透给图标解析层（见 _SOURCE_MODE 的说明）：路由线程没有 manager，
+    # 只能靠这条「谁真正在用哪个来源」的记录。放在分流之前，异常路径也要记。
+    note_source_mode(source)
 
     if source == "local":
         user_file = os.path.join(local_dir_from_settings(settings_manager),

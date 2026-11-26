@@ -152,7 +152,14 @@
   backdrop-filter: blur(var(--pop-blur)) saturate(var(--pop-sat));
   -webkit-backdrop-filter: blur(var(--pop-blur)) saturate(var(--pop-sat));
   box-shadow: var(--pop-shadow);
-  animation: popIn 140ms cubic-bezier(.22,.8,.2,1) both;
+  /* m04188 第 1 项顺带（lead 批准）：下载页清空 ▾ 与自绘 <combo> 是同类控件，
+     原来借 popIn（translateY(6px)+scale(.96)、140ms）比 combo 本轮收小后的档位
+     还大一截；换成与 combo 同档的 comboIn（-2px+scaleY(.99) 顶边铺开、100ms）。
+     ⚠️ 绝不动 @keyframes popIn 本体——它在 base.css:248 / layout.css:73 /
+     overlays.css:11,44 还有 5 个消费者（卡片右键菜单、浮层），改它会波及
+     本轮需求之外的弹层。 */
+  animation: comboIn 100ms cubic-bezier(.22,.8,.2,1) both;
+  transform-origin: top center;
 }
 /* 缩进与 .combo-item 保持一致：文字左边缘对齐触发器。
    选中态已不再用对勾，因此不预留 26px —— 否则选项文字会比触发器文字右移一截。 */

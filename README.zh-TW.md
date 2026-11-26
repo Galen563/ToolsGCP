@@ -208,7 +208,7 @@ py版本-已弃用仅作为参考项目，主体转为web版本/
 ### 製作器的寫盤與備份
 
 所有寫入操作都走 `maker.*`：條目先過 `resource_schema.normalize()`，寫盤用「暫存檔 + `os.replace`」
-原子替換；替換前把舊資源庫複製成 `ToolsGCP-Resources.backup-<時間戳>.json`，只保留最近 20 份。
+原子替換；替換前把舊資源庫**滾動備份成固定名的 1 份**：`<使用者資料目錄>\backups\ToolsGCP-Resources.prev.json`（每次覆蓋，不再產出一堆帶時間戳的備份檔案）。
 「儲存回原清單」強制按載入時的 id / 編碼寫回，避免使用者改了 id 之後被當成新條目追加；
 「另存為獨立資源庫」會把圖示一起複製到目標目錄並改寫 `icon`，不會寫出一個圖示懸空的 JSON。
 
@@ -637,10 +637,10 @@ Web 版請以本節為準。
 
 ### 備份
 
-每次寫入前，目前資源庫會複製到同目錄下的
-`ToolsGCP-Resources.backup-<時間戳>.json`，只保留最近 20 份。
+每次寫入前，目前資源庫會滾動備份成固定名的 1 份：
+`<使用者資料目錄>\.ToolsGCP\backups\ToolsGCP-Resources.prev.json`（每次覆蓋；備份失敗就中止寫入，原檔案不動）。
 寫入是原子操作（先寫暫存檔再置換），中途被打斷也不會把資源庫寫壞。
-資源庫永遠只有 `.ToolsGCP/ToolsGCP-Resources.json` 這一個檔案，製作器不會另外產生一份。
+資源庫永遠只有 `.ToolsGCP/ToolsGCP-Resources.json` 這一個檔案，製作器不會在程式目錄旁邊產生 `ToolsGCP-Resources.backup-*.json`；資源來源=雲端時**讀**的是使用者資料目錄下的唯讀鏡像，但**寫**的始终是程式目錄這份。
 
 ## 日誌
 

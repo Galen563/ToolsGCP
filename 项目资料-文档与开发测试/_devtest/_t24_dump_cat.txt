@@ -1,0 +1,116 @@
+schema_version=2.1.0 count=57
+reverse table size=0
+TG-000001 category (list) ["工具"]
+TG-000001 tags (list) ["传输"]
+TG-000002 category (list) ["游戏"]
+TG-000002 tags (list) ["MC启动器", "知名"]
+TG-000003 category (list) ["游戏"]
+TG-000003 tags (dict) {"简体中文": ["游戏平台", "官方"], "繁體中文": ["遊戲平台", "官方"], "English": ["Game platform", "官方"]}
+TG-000004 category (list) ["工具"]
+TG-000004 tags (list) ["游戏", "网络"]
+TG-000005 category (list) ["游戏"]
+TG-000005 tags (list) ["MC启动器", "知名"]
+TG-000006 category (list) ["平台"]
+TG-000006 tags (list) ["创作", "赞助"]
+TG-000007 category (list) ["游戏"]
+TG-000007 tags (dict) {"简体中文": ["游戏平台"], "繁體中文": ["遊戲平台"], "English": ["Game platform"]}
+TG-000008 category (list) ["游戏"]
+TG-000008 tags (dict) {"简体中文": ["游戏平台"], "繁體中文": ["遊戲平台"], "English": ["Game platform"]}
+TG-000009 category (list) ["编程"]
+TG-000009 tags (list) ["编程语言"]
+TG-000010 category (list) ["视频平台"]
+TG-000010 tags (list) ["官方"]
+TG-000011 category (list) ["视频平台"]
+TG-000011 tags (list) ["官方"]
+TG-000012 category (list) ["建筑/设计"]
+TG-000012 tags (list) ["官方"]
+TG-000013 category (list) ["游戏引擎"]
+TG-000013 tags (list) ["知名"]
+TG-000014 category (list) ["游戏引擎"]
+TG-000014 tags (dict) {"简体中文": ["轻量"], "繁體中文": ["輕量"], "English": ["Lightweight"]}
+TG-000015 category (list) ["编程"]
+TG-000015 tags (list) ["IDE编辑器"]
+TG-000016 category (list) ["游戏"]
+TG-000016 tags (dict) {"简体中文": ["MC启动器", "知名"], "繁體中文": ["MC启动器"], "English": ["MC启动器"]}
+TG-000017 category (list) ["游戏"]
+TG-000017 tags (list) ["MC启动器"]
+TG-000018 category (list) ["游戏"]
+TG-000018 tags (list) ["MC启动器"]
+TG-000019 category (list) ["游戏"]
+TG-000019 tags (list) ["MC启动器"]
+TG-000020 category (list) ["工具"]
+TG-000020 tags (list) ["系统", "工具"]
+TG-000021 category (list) ["工具"]
+TG-000021 tags (list) ["卸载"]
+TG-000022 category (list) ["工具"]
+TG-000022 tags (dict) {"简体中文": ["实用", "系统", "粘贴板"], "繁體中文": ["实用", "系统", "粘貼板"], "English": ["实用", "系统", "Clipboard"]}
+TG-000023 category (list) ["工具"]
+TG-000023 tags (list) ["系统", "优化"]
+TG-000024 category (list) ["工具"]
+TG-000024 tags (list) ["视频", "直播", "录屏"]
+TG-000025 category (list) ["工具"]
+TG-000025 tags (list) ["测试"]
+TG-000026 category (list) ["工具"]
+TG-000026 tags (list) ["安全", "官方"]
+TG-000027 category (list) ["工具"]
+TG-000027 tags (list) ["工具", "网络"]
+TG-000028 category (list) ["个性化"]
+TG-000028 tags (list) ["壁纸"]
+TG-000029 category (list) ["工具"]
+TG-000029 tags (list) ["实用"]
+TG-000030 category (list) ["工具"]
+TG-000030 tags (list) ["驱动", "官方"]
+TG-000031 category (list) ["工具"]
+TG-000031 tags (list) ["音乐"]
+TG-000032 category (list) ["AI"]
+TG-000032 tags (list) ["聊天"]
+TG-000033 category (list) ["AI"]
+TG-000033 tags (list) ["聊天"]
+TG-000034 category (list) ["AI"]
+TG-000034 tags (list) ["聊天"]
+TG-000035 category (list) ["AI"]
+TG-000035 tags (list) ["聊天"]
+TG-000036 category (list) ["AI"]
+TG-000036 tags (list) ["聊天"]
+TG-000037 category (list) ["AI"]
+TG-000037 tags (list) ["聊天"]
+TG-000038 category (list) ["AI"]
+TG-000038 tags (list) ["聊天"]
+TG-000039 category (list) ["AI"]
+TG-000039 tags (list) ["聊天"]
+TG-000040 category (list) ["AI"]
+TG-000040 tags (list) ["聊天"]
+TG-000041 category (list) ["工具"]
+TG-000041 tags (dict) {"简体中文": ["系统", "粘贴板"], "繁體中文": ["系统", "粘貼板"], "English": ["系统", "Clipboard"]}
+TG-000042 category (list) ["工具"]
+TG-000042 tags (list) ["清理"]
+TG-000043 category (list) ["工具"]
+TG-000043 tags (list) ["工具"]
+TG-000044 category (list) ["工具"]
+TG-000044 tags (dict) {"简体中文": ["学习", "教学辅助"], "繁體中文": ["学习", "教學輔助"], "English": ["学习", "Teaching aid"]}
+TG-000045 category (list) ["剪辑"]
+TG-000045 tags (list) ["工具"]
+TG-000046 category (list) ["工具"]
+TG-000046 tags (list) ["游戏", "MC"]
+TG-000047 category (list) ["工具"]
+TG-000047 tags (list) ["工具集"]
+TG-000048 category (list) ["工具"]
+TG-000048 tags (dict) {"简体中文": ["系统", "文件转换"], "繁體中文": ["系统", "文件轉換"], "English": ["系统", "FileConverter"]}
+TG-000049 category (list) ["工具"]
+TG-000049 tags (dict) {"简体中文": ["AI原生浏览器"], "繁體中文": ["AI原生瀏覽器"], "English": ["AI-native browser"]}
+TG-000050 category (list) ["工具"]
+TG-000050 tags (dict) {"简体中文": ["抠图", "去背景", "AI图像"], "繁體中文": ["摳圖", "去背", "AI圖像"], "English": ["Background Removal", "AI Cutout", "Photo Tool"]}
+TG-000051 category (list) ["工具"]
+TG-000051 tags (dict) {"简体中文": ["图标生成", "多平台"], "繁體中文": ["圖標生成", "多平台"], "English": ["Icon Maker", "Multi-Platform"]}
+TG-000052 category (list) ["工具"]
+TG-000052 tags (dict) {"简体中文": ["服务器部署", "管理"], "繁體中文": ["伺服器部署", "管理"], "English": ["Server deployment", "Management"]}
+TG-000053 category (list) ["工具"]
+TG-000053 tags (dict) {"简体中文": ["管理器"], "繁體中文": ["管理器"], "English": ["Manager"]}
+TG-000054 category (list) ["编程"]
+TG-000054 tags (list) ["IDE编辑器", "官方"]
+TG-000055 category (dict) {"简体中文": ["编程"], "繁體中文": ["工具"], "English": ["工具"]}
+TG-000055 tags (dict) {"简体中文": ["版本控制", "知名"], "繁體中文": ["版本控制", "知名"], "English": ["Version Control", "知名"]}
+TG-000056 category (dict) {"简体中文": ["社交"], "繁體中文": ["社交"], "English": ["Social"]}
+TG-000056 tags (dict) {"简体中文": ["社交"], "繁體中文": ["社交"], "English": ["Social"]}
+TG-000057 category (dict) {"简体中文": ["社交"], "繁體中文": ["社交"], "English": ["Social"]}
+TG-000057 tags (dict) {"简体中文": ["社交"], "繁體中文": ["社交"], "English": ["Social"]}

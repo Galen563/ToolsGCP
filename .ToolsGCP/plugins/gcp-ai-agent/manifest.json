@@ -16,6 +16,6 @@
   "icon": "assets/icon.png",
   "config_page": "config.html",
   "builtin": true,
-  "default_disabled": true,
-  "enabled_setting": "gcp_ai_agent_enabled"
+  "enabled_setting": "gcp_ai_agent_enabled",
+  "locked": true
 }

@@ -1,0 +1,10 @@
+CONFIG_DIR='C:\\Users\\Administrator\\Desktop\\ToolsGCP开发\\v1.1.4 - 12\\项目资料-文档与开发测试\\_devtest\\.ToolsGCP'
+USER_DATA_ROOT='C:\\Users\\Administrator\\.ToolsGCP'
+LANGUAGES_DIR='C:\\Users\\Administrator\\Desktop\\ToolsGCP开发\\v1.1.4 - 12\\项目资料-文档与开发测试\\_devtest\\.ToolsGCP\\modules\\languages' exists=False
+languages_dir='C:\\Users\\Administrator\\Desktop\\ToolsGCP开发\\v1.1.4 - 12\\项目资料-文档与开发测试\\_devtest\\.ToolsGCP\\modules\\languages' isdir=False
+locale zh_CN modules=0 common_keys=0
+locale zh_TW modules=0 common_keys=0
+locale en_US modules=0 common_keys=0
+rev size=0
+canonical('Clipboard')='Clipboard'
+canonical('粘贴板')='粘贴板'

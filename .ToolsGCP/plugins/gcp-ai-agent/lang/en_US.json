@@ -1,8 +1,8 @@
 {
   "title": "AI Agent",
-  "intro": "Once enabled, just talk in either GCP-AI chat interface and it can operate ToolsGCP for you. This page is only its configuration screen.",
+  "intro": "This built-in plugin is always on: just talk in either GCP-AI chat interface and it can operate ToolsGCP for you. Each of the AI's \"hands\" can still be toggled here.",
   "sec_switch": "Master switch",
-  "sec_switch_desc": "When on, GCP-AI can operate ToolsGCP for you. When off, it only chats normally. This is the same switch as the one in Settings.",
+  "sec_switch_desc": "This plugin is built in and always on, so it cannot be disabled. Each \"hand\" below can still be turned on or off individually.",
   "switch_on": "On",
   "switch_off": "Off",
   "switch_hint_on": "GCP-AI can operate ToolsGCP for you right now.",
@@ -38,5 +38,21 @@
   "sec_stats": "Statistics",
   "stats_line": "{tools} modules · {total} calls in total",
   "stats_calls": "Calls per module: {calls}",
-  "refresh_failed": "Failed to read Agent state: {error}"
+  "refresh_failed": "Failed to read Agent state: {error}",
+  "status_locked": "Always on",
+  "switch_locked": "This is a built-in plugin that is always on and cannot be turned off.",
+  "switch_locked_hint": "Built-in and always on: GCP-AI can always operate ToolsGCP for you.",
+  "switch_locked_desc": "This built-in plugin is always on and cannot be disabled. Each individual \"hand\" below can still be toggled.",
+  "group_library": "Library",
+  "group_favorites": "Favorites",
+  "group_ui": "Interface & navigation",
+  "group_settings": "Settings & appearance",
+  "group_plugins": "Plugins",
+  "group_files": "Files & system",
+  "group_system": "Diagnostics & logs",
+  "group_other": "Other",
+  "modules_search_placeholder": "Search modules (name / description / params)…",
+  "modules_no_match": "No module matches \"{q}\". Try another keyword.",
+  "modules_badge_all_on": "All on",
+  "modules_badge_partial": "{off} off"
 }

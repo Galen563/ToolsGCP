@@ -78,6 +78,43 @@ if _run_update_mode_if_needed():
     sys.exit(0)
 
 
+# ========== 1.5 清理 %TEMP% 里 ToolsGCP 的残留 ==========
+def _start_temp_cleanup(delay_s: float = None, allow_full: bool = True) -> None:
+    """启动早期顺手清掉 `%TEMP%\` 里 ToolsGCP 的更新残留
+    ⚠️⚠️ 为什么放在**这个位置**（单实例检测之前）：
+       更新流程是"旧进程退出 → 替换脚本换掉 exe → 新版进程启动"。新版进程启动时，
+       旧进程的互斥锁已经没了，所以正常情况下这里就是唯一实例；但万一旧进程
+       没退干净，新版会被单实例检测拦下来直接 `sys.exit(0)` —— 那时**这一行代码
+       还没机会跑**，替换残留就永远留在 temp 里。所以清理必须放在**退出之前**。
+    ⚠️⚠️ 为什么用 daemon 线程 + 延迟，而不是当场同步删：
+       · 替换脚本 `apply_update.cmd` 可能**正在自删**，文件句柄还没释放
+         （表现就是"temp 里东西还在"）→ 延迟几秒成功率最高；
+       · 清理要读磁盘（可能几十 MB 的更新包），同步做会拖慢启动；
+       · 线程是 daemon 的：主线程退出时它直接被丢掉，不会吊住进程。
+    ⚠️ 判据在**线程里**做（tempclean.cleanup_on_startup 内部负责）：
+       有 `.replace-pending` 标记 = 上次替换流程已经走过（无论成不成功）
+       → 允许连根删 `<temp>\ToolsGCP\`；没有标记 = 从没触发过更新
+       → **只清残留，绝不删掉用户还没应用的更新包**。
+    ⚠️ allow_full=False：“已有实例、我即将退出”那条路径用。那时别的实例
+       可能正在下更新包（或刚写过替换标记、替换正在进行中）
+       ——这时候绝不能连根删整个目录，只能清残留。
+    ⚠️ 这个函数**绝不能抛**：清理失败最多是 temp 里多点文件，不该让程序起不来。
+    """
+    try:
+        from desktop import tempclean
+
+        if delay_s is None:
+            delay_s = tempclean.DEFAULT_CLEANUP_DELAY_S
+        tempclean.cleanup_on_startup(reason="startup", delay_s=delay_s,
+                                      allow_full=allow_full)
+    except Exception as exc:                    # noqa: BLE001
+        # 清理模块自己出问题也不影响启动（这里只能 print：logger 那会儿还没初始化）
+        print(f"[ToolsGCP] 临时目录清理未执行（不影响启动）: {exc}")
+
+
+_start_temp_cleanup()
+
+
 # ========== 2. 单实例检测（必须在任何窗口创建之前） ==========
 class SingleInstanceChecker:
     """单实例运行检查器 - 使用 Windows Mutex（与原版同名同实现，便于对照）"""
@@ -218,6 +255,16 @@ if not instance_checker.check():
     except Exception as e:                        # noqa: BLE001
         print(f"[警告] 激活已有窗口失败: {e}")
 
+    # ⚠️⚠️ 重要：这里即将 sys.exit(0)，而启动时启的那个
+    #    daemon 清理线程还在 sleep 延迟期里 → 进程一退它就被丢掉了，
+    #    清理根本不会执行。所以在退出前**同步清一次**（不延迟）：
+    #    清不掉的部分（文件被占用）tempclean 会登记成"重启后删除"，
+    #    不会因为退出快而永久残留。
+    # ⚠️ allow_full=False：已有实例正在跑，它自己可能正在下更新包
+    #    （或刚写过替换标记、替换正在进行中）——这时候绝不能连根删
+    #    `<temp>\ToolsGCP\`，只能清残留。
+    _start_temp_cleanup(delay_s=0.0, allow_full=False)
+
     print("[ToolsGCP] 检测到已有实例在运行，正在激活...")
     sys.exit(0)
 
@@ -237,10 +284,43 @@ install_crash_guard()
 
 settings_manager = SettingsManager()
 splash_enabled = settings_manager.settings.get("splash_screen_enabled", True)
-splash_duration_ms = settings_manager.get_splash_screen_duration_ms() if splash_enabled else 0
 
 # 启动画面用的图标（与原版同一个路径：.ToolsGCP/logo.png）
 APP_ICON_PATH = os.path.join(CURRENT_DIR, ".ToolsGCP", "logo.png")
+
+# ========== 3.5 立刻顶起启动画面（本轮需求："先出画面，再开始正常启动流程"） =====
+# ⚠️⚠️ 为什么必须在**这个位置**、而不是挪到 desktop/shell.py 的 run() 里：
+#    需求原话是「启动动画开启后应该启动程序后立马先显示这个ui然后才开始正常流程
+#    启动ToolsGCP」。而 `import desktop.shell` 会连带拉起 pywebview / pythonnet
+#    (clr) / bottle / WebView2 那一大坨，慢机器上光 import 就要几百毫秒到数秒 ——
+#    画面如果在那之后才建，用户看到的就是"双击图标 → 什么都没发生 → 画面闪一下
+#    → 还没界面"。所以这里只依赖 pymodels 的常量和设置（已经 import 完了），
+#    用纯 Win32 分层窗口先把画面顶起来，再把控制器对象交给外壳管生命周期。
+#    `desktop.splash` 实测 import 43ms、不会拉进 pywebview，也不会拉进 PyQt5。
+# ⚠️ 「开机自启 + 启动时最小化到托盘」这次不顶画面：主窗口都不出现，
+#    弹个独立小窗等于自启还是在打扰用户（外壳里那层判断继续保留，两边口径一致）。
+#    法律协议还没同意时外壳会把窗口放出来要用户同意 —— 那种情况下画面最多白顶一会儿，
+#    由外壳在"主窗口显示"后统一收掉，不会留在桌面上。
+splash_controller = None
+if splash_enabled:
+    try:
+        from pymodels.constants import IS_AUTOSTART
+
+        quiet_start = bool(IS_AUTOSTART and settings_manager.settings.get(
+            "minimize_to_tray", True))
+        if quiet_start:
+            _splash_skip_reason = "本次是开机自启的静默启动"
+        else:
+            from desktop.splash import SplashController
+
+            splash_controller = SplashController(APP_ICON_PATH, enabled=True)
+            splash_controller.start()
+    except Exception as _splash_exc:                  # noqa: BLE001
+        # 启动画面起不来绝不能挡住程序本体：吞掉异常，外壳那边按"没有画面"继续跑
+        splash_controller = None
+        _splash_skip_reason = f"启动画面创建失败（不影响启动）: {_splash_exc!r}"
+else:
+    _splash_skip_reason = "设置里关闭了启动动画"
 
 # ========== 4. AppUserModelID（必须在创建任何窗口之前） ==========
 if sys.platform == "win32":
@@ -278,7 +358,9 @@ def _write_startup_log():
     log.info("启动", "startup",
              f"界面外壳: pywebview {_webview_version()}（WebView2，无边框窗口）")
     log.info("启动", "startup",
-             f"启动动画: {'开' if splash_enabled else '关'}，时长 {splash_duration_ms} ms")
+             f"启动动画: {'开' if splash_enabled else '关'}"
+             f"（显示到主窗口出现为止，不再有固定时长）"
+             + ("" if splash_controller else f"，本次未显示：{_splash_skip_reason}"))
     log.info("启动", "startup", "启动参数准备完成，开始创建主窗口")
 
 
@@ -383,9 +465,19 @@ def main():
 
     shell = AppShell(settings_manager,
                      splash_enabled=splash_enabled,
-                     splash_duration_ms=splash_duration_ms)
+                     splash=splash_controller)
     try:
         return shell.run()
+    except Exception:
+        # 外壳没跑起来（导入失败/建窗异常…）：画面必须当场收掉，
+        # 否则桌面上会留一块永远点不动的置顶小窗（它活到"主窗口显示"为止，
+        # 而主窗口根本不会显示）。
+        try:
+            if splash_controller is not None:
+                splash_controller.stop(timeout=2.0)
+        except Exception:                              # noqa: BLE001
+            pass
+        raise
     finally:
         # ⚠️ 只有真正走到"退出"才释放互斥锁（关闭到托盘时 close 事件被取消，不会到这）
         instance_checker.release()

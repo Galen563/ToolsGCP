@@ -260,7 +260,15 @@
         和刚才那颗气泡**逐像素同尺寸**，天然满足更早那轮"点编辑不要突然缩小/跳位"，
         不用 JS 去量任何东西。 */
   width: auto;
-  max-width: 78%;
+  /* ★ 本轮修「编辑态一进去气泡就变小/折行」（用户原话：气泡 高1宽10 →
+     编辑态变成 高2宽5，大小不一致）。
+     根因：编辑框在 .bubble-wrap 里，而 wrap 的宽度**由内容撑**（shrink-to-fit，
+     上限 78% 的相对容器是 .bubble-row）。旧写法编辑框再写 max-width: 78%
+     → 百分比相对 wrap 计算，两者互相收敛成一个**比原文窄得多**的宽度，
+     文本被迫折行，所以"变高变窄"。
+     ⇒ 上限只保留在 .bubble-wrap（components.css 的 max-width: min(78%, 1200px)），
+       编辑框自己用 100%（= 撑满 wrap），短文本仍然随内容收缩。 */
+  max-width: 100%;
   min-width: 2em;                        /* 空内容时也是个看得见的框，不会塌成一条线 */
   field-sizing: content;                 /* 宽高都按内容自适应（input/textarea 原生能力） */
   min-height: 0;
@@ -437,7 +445,18 @@
   transition: border-color 140ms ease, box-shadow 140ms ease;
 }
 .ai-box:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-.ai-box-text { display: flex; min-width: 0; }
+/* 用户实测「输入框上面左右两个角会变成直角，触发更新的时候比较明显」：
+   .ai-box 自己画圆角，但输入区那一行是它的满宽子元素，WebView2 重绘合成层时
+   子层会盖在父层的圆角外沿上 → 两个上角瞬间变直角。
+   ⚠️ 不能图省事给 .ai-box 加 overflow:hidden —— 模型/模式弹层是 .ai-box-bar 里的
+      absolute 元素，靠 bottom:calc(100% + 6px) 长到框**外面**，一 clip 就整个看不见。
+   所以只给首行自己带上圆角并裁剪它自己：它的背景再怎么重绘也超不出这两个角。 */
+.ai-box-text {
+  display: flex; min-width: 0;
+  border-top-left-radius: 11px; border-top-right-radius: 11px;
+  overflow: clip;
+}
+/* 关动效档：不做合成层裁剪差异，保持原样即可（不额外写动画） */
 /* 输入区：边框交给外框，自己只留内边距；
    需求"默认内容可以输入2行，超过2行才会改变输入框大小高度"
    → min-height = **2 行**（13px × 1.5 = 19.5 × 2 ≈ 39）+ 上下内边距 = 55，
@@ -487,6 +506,125 @@
 }
 .ai-box .ai-send.is-stop { width: 26px; }
 .ai-box .ai-send .ic { width: 14px; height: 14px; }
+
+
+/* =====================================================================
+   Agent 执行过程（Q3=c：折叠成**一行小字**挂在最终回答气泡的头部）
+   =====================================================================
+   用户要求（原话）：「执行了几步有好几个一模一样的ui而且凭空出现太突兀了」
+     「我总感觉凭空出现里面东西很难受」
+     「c，折叠成一行小字挂在最终回答气泡的头部（不占额外高度）」
+
+   设计取舍：
+     · **只有一行**（默认折叠）—— 不占额外高度、不把回答往下顶；
+     · 用极轻的左边框 + 小字号，读起来像"附注"而不是一张卡片；
+     · 展开才显示每步明细（点标题栏），展开时也是紧凑行，不是大卡片；
+     · 执行中才显示呼吸点，完成后连呼吸点都没有，只剩一行静态归纳。
+   ⚠️ 这个块**必须**在 v-for 外面（见 index.html 的注释）：放里面就会
+      "每渲染一条消息画一个"，正是上一版的 bug。 */
+.ai-agent-steps-inline {
+  margin: 2px 0 3px;
+  padding-left: 8px;
+  border-left: 2px solid color-mix(in srgb, var(--accent) 32%, transparent);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-dim);
+  max-width: min(78%, 620px);
+}
+.ai-agent-steps-inline.is-done {
+  border-left-color: color-mix(in srgb, var(--text) 16%, transparent);
+  opacity: .82;
+}
+.ai-agent-steps-head:hover { color: var(--text); }
+.ai-agent-steps-head:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px;
+}
+.ai-agent-steps-caret {
+  flex: 0 0 auto; opacity: .6; transform-origin: center center;
+  transition: transform 160ms cubic-bezier(.2,.8,.3,1);
+}
+.ai-agent-steps-caret.is-open { transform: rotate(180deg); }
+.ai-agent-steps-title {
+  flex: 0 1 auto; min-width: 0; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap;
+}
+/* 执行中的呼吸点：告诉用户"还在动"，完成后立即消失 */
+.ai-agent-steps-pulse {
+  flex: 0 0 auto; width: 5px; height: 5px; border-radius: 50%;
+  background: var(--accent);
+  animation: ai-agent-pulse 1.1s ease-in-out infinite;
+}
+@keyframes ai-agent-pulse {
+  0%, 100% { opacity: .25; transform: scale(.8); }
+  50%      { opacity: 1;   transform: scale(1.15); }
+}
+:root[data-motion="off"] .ai-agent-steps-pulse { animation: none; opacity: .8; }
+
+/* 展开后的明细：紧凑行，不是卡片 */
+.ai-agent-step {
+  display: flex; align-items: flex-start; gap: 5px;
+  font-size: 10.5px; line-height: 1.5; color: var(--text-dim);
+}
+.ai-agent-step.is-running { color: var(--text); }
+.ai-agent-step.is-fail { color: var(--warn, #c42b1c); }
+.ai-agent-step-icon {
+  flex: 0 0 auto; width: 11px; height: 11px; margin-top: 1px;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.ai-agent-step-icon .ic { color: var(--ok, #0b6b0b); }
+.ai-agent-step.is-fail .ai-agent-step-icon .ic { color: var(--warn, #c42b1c); }
+.ai-agent-step-spin {
+  width: 9px; height: 9px; border-radius: 50%;
+  border: 1.4px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  border-top-color: var(--accent);
+  animation: ai-agent-spin .8s linear infinite;
+}
+@keyframes ai-agent-spin { to { transform: rotate(360deg); } }
+:root[data-motion="off"] .ai-agent-step-spin { animation: none; opacity: .7; }
+.ai-agent-step-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.ai-agent-step-summary { word-break: break-word; }
+.ai-agent-step-args {
+  font-size: 9.5px; opacity: .55; word-break: break-all; line-height: 1.4;
+}
+.ai-agent-step-detail {
+  font-size: 9.5px; opacity: .68; word-break: break-word;
+}
+
+/* =====================================================================
+   对话模式胶囊（Chat / Agent）—— 本轮新增，放在模型胶囊左边
+   =====================================================================
+   用户要求"新增一个一样的ui"：所以它**完全复用** .ai-model-chip / .ai-model-pop
+   的形态（同样的高度 24、圆角 999、同样的 caret 翻转动画），只有内容不同。
+   ⚠️ 这里只补"不一样"的那几处，别把 .ai-model-chip 整套再抄一份 ——
+      两份样式一改就得改两次，迟早走样。 */
+.ai-mode-wrap { position: relative; display: inline-flex; min-width: 0; flex: 0 0 auto; }
+/* ⚠️⚠️ 这里**必须**用双类选择器（.ai-model-chip.ai-mode-chip），单类会死：
+   两处 HTML 都是 class="ai-model-chip ai-mode-chip" + class="ai-model-pop ai-mode-pop"，
+   而 .ai-model-chip / .ai-model-pop 的规则写在**本文件更靠后**的位置（约 +20 行），
+   同为 (0,1,0) 特异性 → 后写的赢。也就是说旧写法 .ai-mode-chip{max-width:92px} /
+   .ai-mode-pop{min-width:132px} **从来就是死规则**，真正生效的是模型胶囊那套
+   max-width:220px / min-width:240px。这正是用户看到"胶囊/弹层太长、右边空一大块"
+   的根因 —— 不是值写大了，是**那条规则压根没生效**。
+   双类 = (0,2,0)，一眼压过单类，且不依赖书写顺序（以后谁挪动这段也不会再坏）。 */
+/* 不给 min-width：胶囊宽度 = 图标 + 文字 + 箭头，纯内容驱动；
+   max-width 只当"别把模型名挤没"的保险（实测内容约 85px，104px 留一点字体回退余量）。 */
+.ai-model-chip.ai-mode-chip { width: auto; min-width: 0; max-width: 104px; }
+.ai-model-chip.ai-mode-chip .ai-model-name {
+  flex: 0 0 auto;                /* 名字不吸剩余空间：胶囊宽度只由内容决定 */
+  font-weight: 600; letter-spacing: .1px;
+}
+/* 弹层：只有两项、每项就是 "Chat"/"Agent" 两个词 —— 收到贴合内容即可。
+   图标列(.ai-model-mark 18px) + 文字(最长 "Agent" 约 40px) + 内边距 ≈ 88px，
+   min-width 取 108px 留一点余量；max-width 132px 只作兜底
+   （将来加一项更长的模式不会被裁字）。 */
+.ai-model-pop.ai-mode-pop {
+  min-width: 108px; width: max-content; max-width: 132px; max-height: none;
+  padding: 6px; display: flex; flex-direction: column; gap: 2px;
+}
+/* 弹层里的文字不要 flex:1 撑满整条（那会把 width:max-content 顶成"内容 + 剩余"） */
+.ai-model-pop.ai-mode-pop .ai-model-item .ai-model-item-name { flex: 0 1 auto; }
+/* Agent 档给一点"能动手"的提示色，Chat 保持中性 —— 让人一眼看出当前不是纯聊天 */
+.ai-mode-chip.is-agent { border-color: color-mix(in srgb, var(--accent) 55%, transparent); color: var(--text); }
 
 /* 模型切换胶囊（图标本轮换成 #i-model 立方体，见 icons.js） */
 .ai-model-wrap { position: relative; display: inline-flex; min-width: 0; }
@@ -799,7 +937,7 @@
 }
 .ai-model-item:hover { background: var(--hover); color: var(--text); }
 .ai-model-item.is-on { color: var(--accent); }
-.ai-model-item .ai-model-item-name { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ai-model-item .ai-model-item-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ai-model-badge {
   flex: 0 0 auto; padding: 0 5px; border-radius: 999px; font-size: 10px;
   color: var(--accent); background: var(--accent-soft);
@@ -819,7 +957,8 @@
 
 /* @ 资源候选浮层：和 .ai-slash-hint 同一套语言，但**可滚动**（需求"可以滚动这个ui选择"） */
 .ai-at-pop {
-  position: absolute; left: 14px; right: 14px; bottom: calc(100% + 4px); z-index: 6;
+  /* ★ 本轮：左右跟着 --ai-gutter（全屏 gutter 会涨到 44px），浮层才和输入框等宽 */
+  position: absolute; left: var(--ai-gutter); right: var(--ai-gutter); bottom: calc(100% + 4px); z-index: 6;
   max-height: 240px; display: flex; flex-direction: column;
   border-radius: 10px; padding: 4px;
   border: 1px solid color-mix(in srgb, var(--accent) 26%, var(--glass-border));
@@ -839,7 +978,7 @@
 .ai-at-item:hover, .ai-at-item.is-on { background: var(--hover); color: var(--text); }
 .ai-at-item.is-on { outline: 1px solid var(--accent); }
 .ai-at-code { flex: 0 0 auto; font-size: 10.5px; color: var(--text-disabled); }
-.ai-at-name { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ai-at-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* 气泡里的 @token / 蓝链：和输入框里的 .mention-token 同一套视觉（蓝字 + 下划线 + 可点）。
    ⚠️ 用户报的"@ 内容发送后变为不可点击、无下划线"就是气泡侧只做了纯文本插值，
@@ -894,7 +1033,7 @@
   color: var(--text-dim); font-size: 11.5px; text-align: left;
 }
 .ai-think-head:hover { color: var(--text); background: var(--hover); }
-.ai-think-head .ai-think-text { flex: 1 1 auto; }
+.ai-think-head .ai-think-text { flex: 1 1 auto; min-width: 0; }
 .ai-think-head .ai-think-caret { flex: 0 0 auto; opacity: .7; }
 .ai-think-body {
   padding: 6px 10px 8px; font-size: 11.5px; line-height: 1.65; color: var(--text-dim);
@@ -945,7 +1084,12 @@
  *      只改颜色/描边/圆角这类不影响盒尺寸的东西（padding 也保持原值）。
  * ========================================================================*/
 .bubble.ai-bubble-edit {
-  border: 1px solid var(--accent);
+  /* ★ 本轮修正：这里原来写 border: 1px solid var(--accent) —— border 参与布局，
+     border-box 下内容宽比展示态气泡少 2px，边界文本会被多折一行（"高1宽10 → 高2宽5"
+     的第二个来源）。改成 outline：画在边框盒外，0 布局影响，观感一致。 */
+  border: 0;
+  outline: 1px solid var(--accent);
+  outline-offset: 0;
   box-shadow: 0 0 0 3px var(--accent-soft);
   background: var(--card-solid);
   border-radius: 10px;
@@ -955,7 +1099,7 @@
   /* textarea 自己的 resize 关掉（尺寸由 JS 实测保持，用户拖拽会破坏"尺寸保持"） */
   resize: none;
 }
-.bubble.ai-bubble-edit:focus { outline: none; border-color: var(--accent-strong); }
+.bubble.ai-bubble-edit:focus { outline: 1px solid var(--accent-strong); border: 0; }
 /* 编辑态不再画气泡的小尾巴圆角（那是气泡的方向性特征，输入框不该有） */
 .bubble.ai-bubble-edit.is-user { border-bottom-right-radius: 10px; }
 
@@ -1012,6 +1156,10 @@
    （旧 .ai-think-range 48px 一条随思考 UI 搬进弹层而删除；弹层宽度由 .ai-model-pop 自管） */
 .ai-drawer .ai-box-left { flex-wrap: wrap; }
 .ai-drawer .ai-model-chip { max-width: 150px; }
+/* ⚠️ 抽屉这条 max-width:150px（0,2,0）和上面模式胶囊的双类规则同特异性、
+   而且写得更靠后 → 会把它顶回 150px。抽屉里模式胶囊同样只需贴合内容，
+   这里用 (0,3,0) 显式钉回来（两处 UI 共用同一套胶囊尺寸，不各写一份）。 */
+.ai-drawer .ai-model-chip.ai-mode-chip { max-width: 104px; }
 
 /* ===========================================================================
  * · 本轮需求：「GCP-AI右侧边悬浮窗不要是半透明的」
@@ -1073,7 +1221,8 @@
  * ========================================================================*/
 .ai-back-bottom {
   position: absolute;
-  right: 16px;
+  /* ★ 本轮：右缘对齐输入框（原来写死 16px，输入行改成 gutter 内边距后就对不齐了） */
+  right: var(--ai-gutter);
   bottom: calc(100% + 8px);      /* 抬到输入行**上方**，视觉上压在聊天区右下角 */
   width: 34px;
   height: 34px;
@@ -1229,3 +1378,197 @@
   background: color-mix(in srgb, var(--accent) 44%, transparent);
   color: var(--text);
 }
+/* ===========================================================================
+ * · 本轮修复（用户原话）：「插件界面的AI Agent不是灰色不可点击状态的ui样式」
+ * -------------------------------------------------------------------------
+ * 场景：插件中心卡片上的插件开关（.switch + .switch-knob）。强制开启（manifest.locked）
+ *   的插件开关是 :disabled 的，但 components.css 里 :disabled **没有任何专属样式**，
+ *   于是它仍然按 .is-on 画成一颗蓝色开关、圆点在右 —— 功能上点不动，视觉上完全
+ *   看不出"被锁住"，用户自然会去点、点了没反应。
+ * ⚠️⚠️ 用户明确要求（原话）：「我说了插件界面我让你把AI Agent变为不可点击状态灰色那种状态，
+ *   **和配置界面里面那个总开关一样的ui**而不是让你自己做一个全新的ui开关」
+ *   → 所以这里**不许再自创一套**（灰轨道 + 灰圆点 + 塞一把小锁那种"新控件"），
+ *     必须和 gcp-ai-agent/config.html 里的总开关**完全同一套视觉语言**：
+ *       · 背景保留强调色（= 开）
+ *       · 圆点在右侧（= 开）
+ *       · 只用 opacity 轻微降低 + cursor:not-allowed 表达"动不了"
+ *     两者的差别只在"锁定"的说明文字上，不在开关本体。
+ * ========================================================================*/
+.switch.is-locked,
+.switch.is-locked:hover,
+.switch.is-locked:active {
+  cursor: not-allowed;
+  transform: none;                       /* 禁用态不跟着按压缩放（缩放像"有反馈=能点"） */
+  filter: none;                          /* 不要 hover 提亮 */
+}
+/* 锁定且是"开"：保留强调色与右侧圆点，只降一点不透明度（与配置页总开关一致） */
+.switch.is-locked.is-on,
+.switch.is-locked.is-wide.is-on {
+  background: var(--accent);
+  opacity: .72;
+}
+.switch.is-locked.is-on .switch-knob,
+.switch.is-locked.is-wide.is-on .switch-knob {
+  background: #fff;
+}
+/* 锁定项不做按压回弹 */
+.switch.is-locked:active { transition: none; }
+
+/* =====================================================================
+   用量统计面板（入口位置与图标保持原样：「新对话」左边那颗统计图标）
+   =====================================================================
+   · 悬浮/点击打开、离开按钮+面板这块区域自动收（grace 300ms 在 app.js aiStatsHover）；
+   · 面板挂在顶部 ai-head 下方 → **向下展开**（旧版向上弹是给输入框行用的）；
+   · 面板内三块：① 缓存命中 ② 上下文（实测输入 tokens + 三段构成条）③ 会话统计；
+   · 总量是服务端实测真值，三段 tokens 按字符占比折算并标 ≈；缺了实测值就写
+     「暂未可用」，绝不画估数（用户点名）。 */
+.ai-stats-wrap {
+  position: relative; display: inline-flex; align-items: center;
+  min-width: 0; flex: 0 0 auto;
+}
+/* 三段配色（系统提示词 / 工具定义 / 对话消息）：构成条与图例共用，
+   深浅主题都分得开、也不抢正文注意力。 */
+.ai-ctx-bar,
+.ai-stats-pop {
+  --seg-system: color-mix(in srgb, var(--accent) 88%, var(--text));
+  --seg-tools: color-mix(in srgb, var(--accent) 45%, var(--text) 55%);
+  --seg-messages: color-mix(in srgb, var(--text) 28%, transparent);
+}
+
+.ai-stats-pop {
+  /* ★ 本轮重排（用户：「用量统计 ui 布局大部分都没问题可是看起来很杂，优化一下整体排版」）：
+     旧版是 216~300px 的窄竖列、三块用 border-top 硬切、字号 10.5/11.5/22 三种混排，
+     信息挤在一起但没有层级。现在：
+       · 固定 336px（够放下四格并排），right:0 仍锚在入口按钮右缘向左展开；
+       · 只有两处字号落差：区块小标题 11 + 关键数字 19/13，其余统一 11.5；
+       · 三块用 .ai-stats-sec 包起来、块间只留一条 divider，段落间距一致。 */
+  position: absolute; top: calc(100% + 8px); right: 0; z-index: 30;
+  width: 336px; max-width: min(336px, calc(100vw - 24px));
+  display: flex; flex-direction: column; gap: 12px;
+  padding: 13px 15px 14px;
+  border: 1px solid color-mix(in srgb, var(--accent) 26%, var(--glass-border));
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--card-solid) 94%, transparent);
+  backdrop-filter: blur(14px) saturate(125%); -webkit-backdrop-filter: blur(14px) saturate(125%);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, .36);
+  color: var(--text); user-select: none;
+  --seg-system: color-mix(in srgb, var(--accent) 88%, var(--text));
+  --seg-tools: color-mix(in srgb, var(--accent) 45%, var(--text) 55%);
+  --seg-messages: color-mix(in srgb, var(--text) 28%, transparent);
+}
+.ai-stats-head {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11.5px; font-weight: 700; letter-spacing: .3px; color: var(--text-secondary);
+}
+.ai-stats-head .ai-stats-copy {
+  margin-left: auto; display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; border-radius: 6px; border: none; background: transparent;
+  color: var(--text-secondary); cursor: pointer;
+  transition: background var(--dur-hover) var(--ease-out-soft), color var(--dur-hover) var(--ease-out-soft);
+}
+.ai-stats-head .ai-stats-copy:hover { background: var(--hover); color: var(--text); }
+/* 每一块 = 小标题行 + 主体；块与块之间只留一条竖线，不再各自加 padding */
+.ai-stats-sec { display: flex; flex-direction: column; gap: 6px; }
+.ai-stats-sec + .ai-stats-sec { padding-top: 10px; border-top: 1px solid var(--divider); }
+.ai-stats-sec-top {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+}
+/* ★ 本轮再收敛一次（用户："看着还是很杂"）：整块只有三级字号 ——
+   区块标题 11、图例/正文 11.5、关键数字 19；原来 10 / 10.5 / 11.5 / 13 / 18 / 22
+   六种混排是"杂"的主因。 */
+.ai-stats-label { font-size: 11px; font-weight: 600; color: var(--text-secondary); letter-spacing: .2px; }
+.ai-stats-hero-num {
+  font-size: 19px; font-weight: 750; line-height: 1.2; color: var(--text);
+  font-variant-numeric: tabular-nums; letter-spacing: -.2px;
+}
+/* 还没拿到实测值（新对话 / 服务商没回 usage）：大数字显示 "—"，压成次要色，
+   不假装是个 0 */
+.ai-stats-hero-num.is-na { color: var(--text-dim); font-weight: 650; }
+.ai-stats-hero-num em {
+  font-style: normal; font-size: 10.5px; font-weight: 600;
+  color: var(--text-secondary); margin-left: 3px; letter-spacing: 0;
+}
+.ai-stats-inline-val { font-size: 13px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+/* 上下文分段条：系统提示词 / 工具定义 / 对话消息（照 DeepSeekHarness 的 ContextMeter：
+   段与段之间 1px 缝、两端圆角、轨道半透明；这里没有 context window 字段，所以只画
+   构成占比、不画"占窗口百分之多少"） */
+.ai-ctx-bar {
+  display: flex; gap: 1px; height: 8px;
+  border-radius: 999px; overflow: hidden;
+  background: color-mix(in srgb, var(--text) 9%, transparent);
+}
+.ai-ctx-seg { flex: 0 1 0; min-width: 2px; height: 100%; }
+/* ⚠️ 三段的**颜色**必须写在这里（.ai-ctx-dot 那三条只管图例小方块）：
+   旧版漏了这一组，v-for 出来的 .ai-ctx-seg 是透明色 —— 进度条看着就是一条空轨道。 */
+.ai-ctx-seg.is-system { background: var(--seg-system); }
+.ai-ctx-seg.is-tools { background: var(--seg-tools); }
+.ai-ctx-seg.is-messages { background: var(--seg-messages); }
+.ai-ctx-seg.is-empty { flex: 1 1 auto; background: color-mix(in srgb, var(--text) 16%, transparent); }
+/* 整条都没有数据（新对话）：只留轨道本身，不画任何彩色段 */
+.ai-ctx-bar.is-empty { background: color-mix(in srgb, var(--text) 7%, transparent); }
+.ai-ctx-legend { display: flex; flex-direction: column; gap: 4px; }
+.ai-ctx-row {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 11.5px; line-height: 1.4; color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.ai-ctx-dot { width: 8px; height: 8px; border-radius: 2px; flex: 0 0 auto; }
+.ai-ctx-dot.is-system { background: var(--seg-system); }
+.ai-ctx-dot.is-tools { background: var(--seg-tools); }
+.ai-ctx-dot.is-messages { background: var(--seg-messages); }
+.ai-ctx-row .ai-ctx-name { flex: 1 1 auto; color: var(--text-secondary); }
+.ai-ctx-val { font-weight: 600; color: var(--text); }
+.ai-ctx-val em {
+  font-style: normal; font-size: 10.5px; font-weight: 500;
+  color: var(--text-dim); margin-left: 6px;
+}
+/* 该段暂无数据（新对话）：显示 "—"，不要写成 0 */
+.ai-ctx-val.is-na { color: var(--text-dim); font-weight: 500; }
+.ai-stats-bar {
+  height: 4px; border-radius: 999px; overflow: hidden;
+  background: color-mix(in srgb, var(--text) 12%, transparent); margin: 2px 0 3px;
+}
+.ai-stats-bar::after {
+  content: ''; display: block; height: 100%; width: var(--v, 0%);
+  border-radius: inherit; background: var(--accent);
+  transition: width .3s var(--ease-out-soft);
+}
+.ai-stats-line { font-size: 11.5px; color: var(--text); font-variant-numeric: tabular-nums; }
+.ai-stats-line.is-empty { color: var(--text-dim); }
+.ai-stats-sub { font-size: 10.5px; line-height: 1.5; color: var(--text-dim); }
+/* 会话统计：四格并排（旧版是两列 k/v 竖着排 4 行，占高又不齐） */
+.ai-stats-cells { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px 6px; }
+.ai-stats-cell { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.ai-stats-cell .k {
+  font-size: 10px; color: var(--text-dim);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ai-stats-cell .v {
+  font-size: 13px; font-weight: 700; color: var(--text);
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+
+/* =====================================================================
+   ★ 本轮重写（用户：「GCP-AI 中 F11 完全全屏模式下整体 ui 偏左的 bug」
+     +「全屏模式下…自动适应…各种 ui 元素不要聚拢在一起 应该分散开
+     左右两边各留一点点间距就行」）
+   =====================================================================
+   旧版这里刻意让 messages/input 「左留 1/3、右留 2/3」做呼吸区
+   （margin-left: max(24px, calc((100% - var(--ai-col)) * 0.32))），
+   在 2K 全屏上等于整体左移了近 300px —— 就是本轮的"F11 全屏偏左" bug。
+   现在全屏与窗口态用**同一套整宽规则**（components.css 顶部定义），
+   这里只做两件事：
+     · 全屏视野更宽，gutter 略微放大（clamp 20~44px），内容铺满整幅；
+     · 历史侧栏贴到真正的顶边（标题栏在全屏被隐藏后，再按 --tb-height
+       让出 48px 就是凭空多出的空档）。
+   ⚠️ 必须显式写回 margin，否则上面那条旧规则（特异性 0,2,1 高于
+      components.css 的 .ai-embedded > .x）会继续把内容推左。 */
+.is-fullscreen .ai-embedded { --ai-gutter: clamp(20px, 1.6vw, 44px); }
+.is-fullscreen .ai-embedded > .ai-head {
+  max-width: none; margin-left: 0; margin-right: 0; padding: 0 var(--ai-gutter);
+}
+.is-fullscreen .ai-embedded > .ai-messages,
+.is-fullscreen .ai-embedded > .ai-input-row {
+  max-width: none; margin-left: 0; margin-right: 0;
+}
+.is-fullscreen .ai-history.is-page-panel { top: 0; }

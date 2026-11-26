@@ -2,12 +2,69 @@
  * ToolsGCP · 动画与过渡
  * ============================================================================*/
 
+/* ============================================================================
+ * 微交互动效令牌 · 按钮/开关/胶囊/复选框的按压-回弹统一手感（PCL2 风）
+ *
+ * 为什么放本文件而不是 variables.css：variables.css 管"配色/毛玻璃"，是颜色层，
+ * 多个同事在避开它；这些是"动效层"令牌，和本文件既有的缓动字面量（comboIn/popIn
+ * 用的 cubic-bezier(.22,.8,.2,1)）同源，集中在这里改一处全站生效。
+ * 两档时长是核心手法：按下要"快、跟手"（--dur-press 90ms），松开要"有弹性地
+ * 回到原位"（--dur-release 250ms + spring 过冲）。纯 CSS 不需要 JS 切曲线——
+ * transition 永远读"当前生效规则"上的声明：:active 期间命中 :active 里写的快进
+ * 曲线，松手瞬间回到基础规则，命中基础里写的回弹曲线。两段曲线各写各的。
+ * 禁止 linear：按钮/复选框的一切过渡必须走这里的曲线或 ease-out 同族曲线；
+ * 文件里仅有的 linear 属于"无限旋转的加载装饰"（.is-spin 等），不在本需求范围。
+ * 本套动画都落在下方 data-motion reduced/off 档的"body * 全局压制"管辖内，
+ * 不是循环装饰，不需要例外恢复。
+ * =========================================================================*/
+:root {
+  --ease-spring: cubic-bezier(.34, 1.56, .64, 1);   /* 松开回弹：末端过冲 1.56 → 轻微弹一下再停 */
+  --ease-out-soft: cubic-bezier(.22, .8, .2, 1);    /* 按下/悬停/描线：平滑减速（与 comboIn 同源） */
+  --dur-press: 90ms;    /* :active 段（快进，模拟真实按压的"沉下去"） */
+  --dur-release: 250ms; /* 基础段（慢放回弹，绝不"闪回"） */
+  --dur-hover: 200ms;   /* 悬停背景/亮度 0.2s（用户需求点名） */
+  --dur-tick: 200ms;    /* 复选框对勾描线生长（需求允许 180~220ms） */
+}
+
+/* 复选框对勾"勾选完成瞬间"的回弹：总时长 = 描线时长 + 100ms 回弹段。
+   0%~66%（≈前 200ms）保持 scale(1)——这段是描线生长，本体不许跟着缩放；
+   66%→83%（≈50ms）冲到 scale(1.1)；83%→100%（≈50ms）收回 scale(1)。
+   动画只声明在 :checked 命中的规则里：取消勾选时规则失配、动画自然解除，
+   未勾选/半选态完全不受影响。非循环装饰动画 → reduced/off 档全局压制即可。 */
+@keyframes cboxTickPop {
+  0%, 66% { transform: scale(1); }
+  83%     { transform: scale(1.1); }
+  100%    { transform: scale(1); }
+}
+
 @keyframes spin { to { transform: rotate(360deg); } }
+/* ---- 启动画面（第 30 轮按参考版规格重做，这两条是**自己写的**关键帧） ----
+   bootBreathe：logo 的轻微上浮+放大（"呼吸"感），幅度很小 —— 启动画面
+     长时间挂着，幅度大就晃得人烦。
+   bootSweep：进度槽里那段高光从左到右循环跑（不确定态）。
+   ⚠️ 这两条是**无限循环**动画，受 data-motion 的全局压制管辖；
+      下面 off 档那一段把它们单独恢复（启动画面是程序第一眼，
+      用户关了动效也不该看到一块"死"在那儿的画面）。 */
+@keyframes bootBreathe {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50%      { transform: translateY(-3px) scale(1.03); }
+}
+@keyframes bootSweep {
+  0%   { transform: translateX(-120%); }
+  100% { transform: translateX(320%); }
+}
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes popIn { from { opacity: 0; transform: translateY(6px) scale(.96); } to { opacity: 1; transform: none; } }
 /* 下拉框：从顶部纵向铺开（展开动画是自上而下，不是淡入）*/
-@keyframes comboIn { from { opacity: 0; transform: translateY(-7px) scaleY(.86); } to { opacity: 1; transform: none; } }
-@keyframes comboItemIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+/* ⚠️ 下拉动效**连续第二轮再收**（需求 m04188 第 1 项：「下拉框ui和可编辑下拉框ui
+   互动动效太大了改小点。」——上一轮从 -7px/.86 收到 -3px/.96 后用户仍说大）。
+   幅度沿革：-7px + scaleY(.86) → -3px + scaleY(.96) → **现在 -2px + scaleY(.99)**。
+   为什么 scaleY 是关键项：弹层 .combo-pop 是 position:fixed + max-height:300px，
+   .96 作用在 300px 上＝12px 纵向拉伸，这才是"动效大"的主要来源；.99 只剩 3px，
+   方向感（自上而下铺开）靠 opacity + 2px 位移 + transform-origin:top 就足够，
+   肉眼几乎只剩"淡入"。条目 comboItemIn 同理再收：-2px → -1px，只剩一丝下落层次。 */
+@keyframes comboIn { from { opacity: 0; transform: translateY(-2px) scaleY(.99); } to { opacity: 1; transform: none; } }
+@keyframes comboItemIn { from { opacity: 0; transform: translateY(-1px); } to { opacity: 1; transform: none; } }
 /* 卡片入场上浮（虚拟列表滚出来时的轻微上浮）。
    ⚠️ 全站**只有这一处**定义 cardIn。原来下面第 76 行附近还抄了一份同名 @keyframes
       （数值 4px vs 6px 不一致）：同文件同名 keyframes 后写的赢，所以实际生效的是 6px，
@@ -22,6 +79,26 @@
 .vlist.cards-anim .card { animation: cardIn 220ms ease both; }
 .vlist.switch-anim { animation: listSwap 260ms cubic-bezier(.22,.8,.2,1) both; }
 @keyframes flashRow { 0%, 100% { background: transparent; } 30% { background: var(--accent-soft); } }
+/* ⚠️⚠️ 本轮新增（用户原话：「点击设置中的左侧栏选项会滚动页面到对应位置时应该在停止
+   滚动页面时这个对应区域应该有那种闪两下的那种」）：
+   板块级闪光 = 整块背景比行级淡一档（面积大，深了刺眼），**两下**。
+   周期 650ms × 2 = 1300ms，JS 侧 1400ms 摘掉 is-flash（app.js stopThenFlash；
+   改这里记得同步那里）。
+   ⚠️ 为什么旧的"闪两下"一直没闪成两下（本轮顺手查清的真相）：
+     · 通用 `.is-flash`（layout.css）确实写着 `900ms ease 2`，但它唯一的消费者
+       flashPlugin 是个**从没被赋值**的死 ref（grep：只有声明和导出两处），
+       插件卡片的 is-flash 永远不会挂上 ⇒ 那条 ×2 是纸面规则；
+     · 真正会亮的 `.setting-row.is-flash`（特异性更高，压过通用）只有 `900ms ease`
+       **一次**，而且 JS 在 900ms 就摘掉 ⇒ 搜索命中一直是闪一下。
+     → 本轮不动这两条既有行为（搜索命中闪一次是合理的），只给**板块**新增两下。 */
+@keyframes flashSection { 0%, 100% { background: transparent; }
+  30% { background: color-mix(in srgb, var(--accent) 9%, transparent); } }
+/* 应用点：点设置左栏、滚动停稳后，app.js 给对应 .settings-section 挂 is-flash
+   （index.html 里 :class="{ 'is-flash': flashSection === section.key }"）。
+   板块本身没有底色（透明），动画就是"背景被淡染一下再退回透明"，不会留下脏底。
+   ⚠️ 只在**滚动停稳后**才开始（stopThenFlash 轮询 scrollTop 判稳），不在滚动途中闪。 */
+.settings-section.is-flash { animation: flashSection 650ms ease 2;
+  border-radius: 12px; }
 /* ⚠️ 本轮 .boot-screen 整层删除（用户需求），配套的死动画一并清掉：
    breathe / bootSlide 全仓库只有启动画面在用（grep 核实），留着就是纯死代码。 */
 /* 悬浮球液态动效：整体慢速自转 + 高光呼吸（两个周期错开，避免机械感）
@@ -123,6 +200,11 @@
 
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  /* 系统级"减弱动效"优先于应用内的动效档（设置 → 动画）：
+     下面 reduced/off 的例外规则特异度更高，只写在应用档里 —— 但系统里
+     用户已经表达过一次"我要少动画"，这里让启动画面也别动。
+     画面本身还在（静态的 logo + 标题 + 进度槽 + 小字），不会变空白。 */
+  .boot-logo, .boot-bar span { animation: none !important; }
 }
 
 /* ===========================================================================
@@ -153,6 +235,9 @@
 :root[data-motion="reduced"] .ball-liquid::after { animation-duration: 5.5s !important; }
 :root[data-motion="reduced"] .hotkey-input.is-recording { animation-duration: 1.4s !important; }
 :root[data-motion="reduced"] .hotkey-rec-dot { animation-duration: 1s !important; }
+/* --- reduced：启动画面的呼吸/扫光**保持原速**（同上，装饰性循环动画加速会变成高频闪烁） --- */
+:root[data-motion="reduced"] .boot-logo { animation-duration: 1.9s !important; }
+:root[data-motion="reduced"] .boot-bar span { animation-duration: 1.1s !important; }
 /* 本轮删除 .boot-screen 后，这两条 reduced 档的启动画面规则也跟着删（纯死代码）。 */
 
 /* --- off：全部关掉（启动画面那层 UI 已按用户需求删除，不再需要例外） ---*/
@@ -162,5 +247,18 @@
   animation: none !important;
   transition: none !important;
 }
-/* 启动画面淡入淡出的 data-motion 例外规则随 .boot-screen 一起删除（本轮需求），
-   上面那条"全局关动画"的规则对剩下的 UI 依旧生效。 */
+/* off 档的例外：启动画面是程序的第一眼，用户关了动效也不该看到一块"死"在那儿的
+   画面 —— 所以这里把它的呼吸/扫光单独恢复（只是慢一点，不影响"关动效"的语义：
+   界面里其它 UI 依然全静止）。
+   ⚠️ 淡入淡出（<transition name="fade">）在 off 档也保留 180ms，
+   否则撤掉启动画面的瞬间会"啪"地一下闪。 */
+:root[data-motion="off"] .boot-screen.fade-enter-active,
+:root[data-motion="off"] .boot-screen.fade-leave-active {
+  transition: opacity 180ms ease !important;
+}
+:root[data-motion="off"] .boot-screen .boot-logo {
+  animation: bootBreathe 1.9s ease-in-out infinite !important;
+}
+:root[data-motion="off"] .boot-screen .boot-bar span {
+  animation: bootSweep 1.1s ease-in-out infinite !important;
+}

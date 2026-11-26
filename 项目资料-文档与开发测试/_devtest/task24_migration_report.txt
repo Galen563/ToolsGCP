@@ -1,0 +1,83 @@
+==============================================================================
+task-24 迁移报告 · ToolsGCP-Resources.json 的 category/tags 显示文本 → 规范中文
+==============================================================================
+资源库        = C:\Users\Administrator\Desktop\ToolsGCP开发\v1.1.4 - 12\.ToolsGCP\ToolsGCP-Resources.json
+条目数        = 57
+滚动备份      = C:\Users\Administrator\.ToolsGCP\backups\ToolsGCP-Resources.prev.json
+任务前快照    = C:\Users\Administrator\Desktop\ToolsGCP开发\v1.1.4 - 12\项目资料-文档与开发测试\_devtest\_bak\ToolsGCP-Resources.before_task24.json
+落盘前 sha256 = 10d29a765dc20aded93a6a72fac7dd1bd8af2b6c3072d97922b5ef66998f107b
+落盘后 sha256 = 7b71b9f03af46cdcbd3c5ef9ec370a4b1f1473dd0f7006d2f624fc111cca4c69
+
+── 一、本次改动的条目与值（共 2 处；before→after）──
+
+task-24 迁移 dry-run 全表（code / 字段 / 语言池 / before→after）
+资源库 = C:\Users\Administrator\Desktop\ToolsGCP开发\v1.1.4 - 12\.ToolsGCP\ToolsGCP-Resources.json
+条目数 = 57，schema = 2.1.0
+
+── 将自动修正：2 处 ──
+
+[塌缩+反查] TG-000022.tags  (反查后三池同值)
+    语言池 简体中文       before=["实用", "系统", "粘贴板"]
+                           after =["实用", "系统", "粘贴板"]
+    语言池 繁體中文       before=["实用", "系统", "粘貼板"]
+                           after =["实用", "系统", "粘贴板"]
+    语言池 English    before=["实用", "系统", "Clipboard"]
+                           after =["实用", "系统", "粘贴板"]
+    => 落盘值 ["实用", "系统", "粘贴板"]
+
+[逐池反查（内容仍不一致⇒不塌缩）] TG-000050.tags  (只统一语言写法，不合并内容；三池差异原样保留)
+    语言池 简体中文       before=["抠图", "去背景", "AI图像"]
+                           after =["抠图", "去背景", "AI图像"]
+    语言池 繁體中文       before=["摳圖", "去背", "AI圖像"]
+                           after =["抠图", "去背景", "AI图像"]
+    语言池 English    before=["Background Removal", "AI Cutout", "Photo Tool"]
+                           after =["去背景", "AI图像", "Photo Tool"]
+    => 落盘值 {"简体中文": ["抠图", "去背景", "AI图像"], "繁體中文": ["抠图", "去背景", "AI图像"], "English": ["去背景", "AI图像", "Photo Tool"]}
+
+── 三池不一致（待用户自决，不改盘）：2 处 ──
+
+[三池不一致] TG-000016.tags
+    现值   = {"简体中文": ["MC启动器", "知名"], "繁體中文": ["MC启动器"], "English": ["MC启动器"]}
+    原因   = 各语言池内容不相等（反查回规范中文后仍不相等）⇒ 属于「内容本来就不同」，按口径不自动合并；本字段没有可还原的写法，值原样未动
+    建议   = {"简体中文": ["MC启动器", "知名"], "繁體中文": ["MC启动器"], "English": ["MC启动器"]}
+
+[三池不一致] TG-000050.tags
+    现值   = {"简体中文": ["抠图", "去背景", "AI图像"], "繁體中文": ["摳圖", "去背", "AI圖像"], "English": ["Background Removal", "AI Cutout", "Photo Tool"]}
+    原因   = 各语言池内容不相等（反查回规范中文后仍不相等）⇒ 属于「内容本来就不同」，按口径不自动合并；同一项的语言写法已还原成规范中文
+    建议   = {"简体中文": ["抠图", "去背景", "AI图像"], "繁體中文": ["抠图", "去背景", "AI图像"], "English": ["去背景", "AI图像", "Photo Tool"]}
+      繁體中文 残留显示文本: 摳圖→抠图; 去背→去背景; AI圖像→AI图像
+      English 残留显示文本: Background Removal→去背景; AI Cutout→AI图像
+
+── 二、幂等复跑结果 ──
+
+落盘后重新规划：二次变更 = 0 处（必须 0，否则不幂等）；
+              二次待自决 = 2 处（应与落盘前一致，同一批内容）
+
+── 三、三池不一致（待用户自决，未改动）──
+
+[三池不一致] TG-000016.tags
+    现值 = {"简体中文": ["MC启动器", "知名"], "繁體中文": ["MC启动器"], "English": ["MC启动器"]}
+    原因 = 各语言池内容不相等（反查回规范中文后仍不相等）⇒ 属于「内容本来就不同」，按口径不自动合并；本字段没有可还原的写法，值原样未动
+    建议 = {"简体中文": ["MC启动器", "知名"], "繁體中文": ["MC启动器"], "English": ["MC启动器"]}
+    处置 = 未写盘；要统一的话由用户改前端表单或手工编辑这一条
+
+[三池不一致] TG-000050.tags
+    现值 = {"简体中文": ["抠图", "去背景", "AI图像"], "繁體中文": ["摳圖", "去背", "AI圖像"], "English": ["Background Removal", "AI Cutout", "Photo Tool"]}
+    原因 = 各语言池内容不相等（反查回规范中文后仍不相等）⇒ 属于「内容本来就不同」，按口径不自动合并；同一项的语言写法已还原成规范中文
+    建议 = {"简体中文": ["抠图", "去背景", "AI图像"], "繁體中文": ["抠图", "去背景", "AI图像"], "English": ["去背景", "AI图像", "Photo Tool"]}
+      繁體中文 池残留显示文本：摳圖→抠图、去背→去背景、AI圖像→AI图像
+      English 池残留显示文本：Background Removal→去背景、AI Cutout→AI图像
+    处置 = 未写盘；要统一的话由用户改前端表单或手工编辑这一条
+
+── 四、剩余脏值命中数 ──
+
+可自动修桶（应 = 0）           ：0 处
+待用户自决桶（不修，见第三节）：0 处
+
+── 五、写侧兜底（防新增脏数据）──
+
+.ToolsGCP/desktop/api/maker.py：_term_manager / canonicalize_term / _canonicalize_pool /
+canonicalize_lang_list 四个模块级函数 + _merge_i18n 里对 LANG_LIST_FIELDS 的兜底循环。
+三条写盘路径（append_entry / save_standalone / append_entries）都过 _normalize ⇒ 全覆盖；
+反查不到的一律原样保留，只动 category/tags，links 与其它 i18n 字段行为不变。
+验证：项目资料-文档与开发测试/_devtest/probe_task24_canonical.py → RESULT: PASS

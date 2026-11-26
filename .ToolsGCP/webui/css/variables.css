@@ -81,6 +81,12 @@
   --danger: #f16a6e;
   --success: #4cc46a;
   --warning: #e0a33a;
+  /* 正文里的**超链接**专用蓝色（公告 / 更新说明的 markdown 链接）。
+     ⚠️ 为什么不直接用 var(--accent)：强调色是**可换**的（蓝 / 紫 / 橙），
+        用户明确要求链接是"蓝色带下划线"——换成橙色主题时链接也该还是蓝的，
+        所以单独开一个不随强调色变的语义变量。下划线在 .md-link 上。 */
+  --link-blue: #6e93ff;
+  --link-blue-strong: #9db8ff;
 
   --hover: rgba(255, 255, 255, 0.06);
   --hover-strong: rgba(255, 255, 255, 0.10);
@@ -146,6 +152,9 @@
   --danger: #e5484d;
   --success: #2fa36b;
   --warning: #d98e04;
+  /* 浅色主题：链接蓝要压深一档（#6e93ff 在白底上对比度不足） */
+  --link-blue: #2563eb;
+  --link-blue-strong: #1d4ed8;
 
   --hover: rgba(0, 0, 0, 0.04);
   --hover-strong: rgba(0, 0, 0, 0.07);

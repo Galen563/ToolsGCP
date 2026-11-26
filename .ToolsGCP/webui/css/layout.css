@@ -125,6 +125,17 @@
   justify-content: center; border-radius: 6px; color: var(--text-secondary); }
 .copy-btn:hover { background: var(--hover-strong); color: var(--text); }
 .copy-btn.is-done { color: var(--success); }
+/* 第五轮需求④：测 Ping 进行中。⚠️ 这一族规则里**不许出现 width / height / padding / gap /
+   min-width** —— 用户明确说按钮大小跳动是他最担心的 bug，盒子尺寸必须完全由上面的 .copy-btn
+   固定 28×28 + flex:0 0 auto 决定，这里只改颜色和透明度。disabled 的 cursor 已由 base.css:37
+   统一按 default；:disabled:hover 那条是为了把 .copy-btn:hover 的底色/文字色压回去，
+   免得"不可点的按钮"还有悬停高亮骗人可以再点。 */
+.copy-btn:disabled { cursor: default; }
+.copy-btn.is-busy, .copy-btn.is-busy:hover { color: var(--accent); background: transparent; opacity: .78; }
+/* 点阵容器：字号/行高与图标同级观感，tabular-nums 让 1/2/3 个点等宽（跳动只可能来自
+   数字宽度变化，这里连这个都掐掉），nowrap 保证永远单行。 */
+.copy-btn .ping-dots { font-size: 12px; line-height: 1; letter-spacing: .6px;
+  font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 /* ===================== 定制页 =====================*/
 .onboard-center { min-height: 100%; display: flex; align-items: center; justify-content: center; padding: 20px 24px; }
@@ -193,7 +204,7 @@
   backdrop-filter: blur(var(--blur)); -webkit-backdrop-filter: blur(var(--blur));
 }
 .fav-side .sub-title { padding: 0 4px 2px; }
-.fav-side .list-widget { flex: 1 1 auto; min-height: 120px; }
+.fav-side .list-widget { flex: 1 1 auto; min-width: 0; min-height: 120px; }
 .fav-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
 .fav-main .grid-static { gap: 14px; }
 /* ⚠️ 这条原来写 `flex: 1 1 272px`（允许拉伸），会把下面 components.css 里刚修好的
@@ -213,8 +224,42 @@
   background: var(--card-glass); border: 1px solid var(--card-border); box-shadow: var(--shadow-card);
   display: flex; flex-direction: column; gap: 8px; }
 .notice-card.is-unread { border-color: color-mix(in srgb, var(--danger) 24%, var(--card-border)); }
-.notice-title { flex: 1 1 auto; min-width: 0; font-size: 14px; font-weight: 600; line-height: 1.5; }
+.notice-title { flex: 1 1 auto; min-width: 0; font-size: 14px; font-weight: 600; line-height: 1.5;
+  /* 需求：「公告中的标题部分要用框框框起来不然用户会以为这个时正文内容」
+     → 标题加边框 + 极浅强调底色，和下面无边框的正文一眼分开（弹窗里的标题同款式，见 overlays.css）。 */
+  padding: 7px 11px; border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--card-border));
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+  /* ⚠️ 本轮需求（用户：「公告页面的标题和正文之间要有间隔」）：
+     .notice-card 的 flex gap 只有 8px，标题框加了内衬后框底缘和正文几乎贴在一起。
+     只给标题加下外边距（卡片 gap 不动 ⇒ 正文与底部按钮行那 8px 保持不变）。 */
+  margin-bottom: 4px; }
 .notice-body { font-size: 12.5px; color: var(--text-secondary); line-height: 1.7; white-space: pre-wrap; }
+/* 卡片右上角的纯图标跳转（需求：「公告弹窗和在GitHub阅读按钮都放在右上角位置
+   记住只有一个图标 不需要文本信息在按钮中，鼠标悬浮按钮会有相关提示」）。
+   与弹窗的 .modal-corner 同一套手感/配色，只是尺寸按卡片的信息密度收到 28。
+   flex:0 0 auto = 虚拟列表按行算高度时不许被标题挤压（标题自己有 flex:1 1 auto）。 */
+.notice-github-btn {
+  flex: 0 0 auto; width: 28px; height: 28px; margin: -3px -4px 0 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 7px; border: 1px solid var(--card-border);
+  background: color-mix(in srgb, var(--text) 5%, transparent); color: var(--text-secondary);
+  cursor: pointer;
+  transition: background var(--dur-hover) var(--ease-out-soft),
+              color var(--dur-hover) var(--ease-out-soft),
+              border-color var(--dur-hover) var(--ease-out-soft),
+              box-shadow var(--dur-hover) var(--ease-out-soft),
+              transform var(--dur-release) var(--ease-spring);
+}
+.notice-github-btn:hover {
+  color: var(--accent); border-color: color-mix(in srgb, var(--accent) 38%, transparent);
+  background: var(--accent-soft);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+.notice-github-btn:active {
+  transform: scale(.96);
+  transition-duration: var(--dur-press); transition-timing-function: var(--ease-out-soft);
+}
 /* 红点再缩一档（红点再小一点点）—— 纯点 6→5px；
    数字徽章与 .nav-badge 一致：11px 高、字号 8px。*/
 .red-dot { width: 5px; height: 5px; border-radius: 3px; background: #fa5151; flex: 0 0 auto; }
@@ -408,11 +453,46 @@
 .note-btn .note-text { overflow: hidden; text-overflow: ellipsis; }
 .note-btn:hover { color: var(--accent); background: var(--hover); }
 .note-input { height: 26px; max-width: 170px; font-size: 11.5px; padding: 0 8px; }
-.plugin-rows { display: flex; flex-direction: column; gap: 10px; }
-.plugin-row { height: 96px; padding: 8px 16px; display: flex; align-items: center; gap: 14px;
+/* =====================================================================
+   列表排版（用户原话：「列表排版ui太大了所以高长缩短写里面的元素相应缩短些」）
+   =====================================================================
+   旧值 height: 96px / gap: 10px —— 一屏最多放 5~6 条，滚动条动不动就出现。
+   现在压到 64px：图标、文字、按钮**同步缩小**（整行等比，不是只砍容器高度，
+   否则里面的元素会被挤出来互相遮挡）。
+   ⚠️ 用 min-height 而不是死 height：内容换行时（超长名字）允许它自己长一点，
+      死高度会把文字裁掉 —— 这正是"被挤压压缩和遮挡"的一个来源。 */
+.plugin-rows { display: flex; flex-direction: column; gap: 6px; }
+.plugin-row {
+  min-height: 64px; padding: 6px 12px; display: flex; align-items: center; gap: 10px;
   border-radius: var(--card-radius); background: var(--card-glass); border: 1px solid var(--card-border);
-  box-shadow: var(--shadow-card); }
-.plugin-row .plugin-names { flex: 1 1 auto; }
+  box-shadow: var(--shadow-card);
+  /* ⚠️ min-width: 0 必须写：flex 子项的默认 min-width 是 auto，
+     里面的长文字会把整行撑破、把右侧按钮挤出可视区（遮挡的根因之一）。 */
+  min-width: 0;
+}
+.plugin-row .plugin-names {
+  flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 1px;
+}
+/* 行内文字整体降一档：名字 12.5（原 13）、说明 11（原 11.5/12）、副信息 10 */
+.plugin-row .plugin-names .strong { font-size: 12.5px; line-height: 1.35; }
+.plugin-row .plugin-names .cap { font-size: 10.5px; line-height: 1.35; }
+/* 行内图标同步缩小：48 → 34（原来那个大图标是行高的主要来源） */
+.plugin-row .plugin-icon.big { width: 34px; height: 34px; flex: 0 0 auto; border-radius: 9px; }
+.plugin-row .plugin-icon.big img { width: 100%; height: 100%; object-fit: contain; }
+.plugin-row .plugin-icon.big span { font-size: 15px; }
+/* 行内按钮/开关收紧，避免在 64px 高度里"顶到边"或互相压 */
+.plugin-row .switch.is-wide { flex: 0 0 auto; }
+.plugin-row .icon-btn { flex: 0 0 auto; width: 26px; height: 26px; }
+.plugin-row .badge { flex: 0 0 auto; }
+.is-flash { animation: flashRow 900ms ease 2; }
+
+/* 窄屏（窗口被拉窄 / 浏览器模式小窗）：进一步压缩，保证按钮不被挤出 */
+@media (max-width: 720px) {
+  .plugin-row { min-height: 58px; gap: 8px; padding: 5px 10px; }
+  .plugin-row .plugin-icon.big { width: 28px; height: 28px; }
+  .plugin-row .plugin-names .cap { font-size: 10px; }
+}
+.plugin-row .plugin-names { flex: 1 1 auto; min-width: 0; }
 .is-flash { animation: flashRow 900ms ease 2; }
 
 /* ===================== 提交软件（制作器） =====================*/
@@ -435,7 +515,7 @@
   flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: 1fr 280px; gap: 24px; padding: 0 32px 24px; overflow: hidden;
 }
 .maker-left { min-width: 0; display: flex; flex-direction: column; }
-.maker-form-scroll { flex: 1 1 auto; overflow-y: auto; padding-right: 8px; }
+.maker-form-scroll { flex: 1 1 auto; min-width: 0; overflow-y: auto; padding-right: 8px; }
 .maker-right { flex: 0 0 280px; display: flex; flex-direction: column; gap: 16px; }
 
 .maker-card {
@@ -471,12 +551,22 @@
 .tags-row { display: flex; gap: 8px; align-items: center; }
 .tags-row .input { flex: 1 1 auto; min-width: 0; }
 
+/* 开源仓库：**每一组一行**（用户原话：可以同时有多个，加号新增一组、
+   垃圾桶删除对应组）。
+   ⚠️ 上一轮删掉的 .repo-prefix（"https://github.com/" 那块前缀提示）与
+      .repo-preview（下面那行"→ 完整地址"）**别再补回来** —— 用户明确不要这个提示 UI，
+      前端模板与 app.js 里的 repoPrefix/repoPreviewText 已一并删除。
+   字段仍是 field-full 独占整行，输入框因此比原来长（少了一格前缀标签、
+   且不再和别的字段挤在半格里）。 */
 .repo-row { display: flex; align-items: center; gap: 8px; }
 .repo-row combo { flex: 0 0 110px; }
-.repo-prefix { font-size: 12px; color: var(--text-secondary); background: color-mix(in srgb, var(--text) 5%, transparent); padding: 0 8px; border-radius: 6px; height: 32px; display: flex; align-items: center; }
 .repo-row .input { flex: 1 1 auto; min-width: 0; }
-.repo-placeholder { font-size: 11px; color: var(--text-disabled); }
-.repo-preview { font-size: 12px; color: var(--accent); font-family: Consolas, monospace; margin-top: 4px; display: block; }
+.repo-paste-btn { flex: 0 0 auto; }
+/* 垃圾桶删除按钮：只放图标，宽度固定，别把输入框挤短。 */
+.repo-del-btn { flex: 0 0 auto; width: 30px; padding: 0; display: inline-flex;
+  align-items: center; justify-content: center; }
+/* 加号那行：紧跟在各组仓库下面。 */
+.repo-add-row { margin-top: 6px; }
 
 .i18n-body { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--divider); }
 .i18n-seg { width: 100%; justify-content: space-between; margin-bottom: 16px; }
@@ -546,7 +636,12 @@
 }
 .settings-card > .setting-row:first-child { border-top: 0; }
 .setting-row.has-desc { min-height: var(--row-height-desc); align-items: flex-start; padding: 10px 0; }
-.setting-row.is-indent { padding-left: 20px; }
+/* ⚠️ 父子行之间**不画分割线**（用户原话：「设置中的有子父关系的ui之间的分割线去除，
+   例如下载限速和限速之间要删除下划线」）。
+   子行 = app.js 里 sections 标了 indent: true 的那些（下载限速的"限速"、托盘的最小化、
+   快捷键 4 行、本地资源目录……），它们视觉上属于上一行，中间那条 border-top
+   会让人误以为"又是另一组设置"。父行自己的上边线保留（组与组之间仍然有分隔）。 */
+.setting-row.is-indent { padding-left: 20px; border-top: 0; }
 .setting-row.is-disabled { opacity: .45; pointer-events: none; }
 .setting-row.is-flash { animation: flashRow 900ms ease; }
 .setting-text { flex: 1 1 auto; min-width: 0; }
@@ -620,7 +715,7 @@
 
 /* 四页共用一个滚动容器*/
 .maker-section-scroll {
-  flex: 1 1 auto; min-height: 0; overflow-y: auto;
+  flex: 1 1 auto; min-width: 0; min-height: 0; overflow-y: auto;
   padding: 16px 32px 24px; display: flex; flex-direction: column; gap: 16px;
 }
 .maker-body { align-items: stretch; }
@@ -649,6 +744,14 @@
 .preview-status.is-danger { color: var(--danger); }
 .preview-status.is-warning { color: var(--warning); }
 .preview-status.is-success { color: var(--success); }
+/* 实时预览头部的「未保存」（m06170 第 5 项）：沿用已有的 --warning 配色口径，
+   不新开色值；卡片头是 flex space-between，这个 span 靠 margin-left:auto 贴右。 */
+.preview-dirty {
+  margin-left: auto;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--warning);
+}
 
 /* 产出卡：一行一个控件（沿用卡片 spacing 12）*/
 .action-card .btn-block { justify-content: center; }
@@ -934,7 +1037,9 @@
  * ⚠️ 一个字都不写死在 .col-* 上（原来 `.col-icon{width:52px}` 这类会反过来干扰网格），
  *    统一改成 `width:auto; min-width:0`，宽度只由 ① 的模板决定。
  * =========================================================================*/
-.deploy-table { --deploy-cols: 40px 44px 100px minmax(180px, 2.2fr) 78px minmax(150px, 1.4fr) 88px 104px; }
+/* ★ 本轮：操作列从 104 → 120px —— 部署模式每行要放 GitHub / 官网 / 删除三颗 26px 按钮
+   （26×3 + 2×2 = 82，加上 120 定宽的余量不会挤到状态列）。 */
+.deploy-table { --deploy-cols: 40px 44px 100px minmax(180px, 2.2fr) 78px minmax(150px, 1.4fr) 88px 120px; }
 .deploy-table .table-head,
 .deploy-table .table-row {
   display: grid;
@@ -970,8 +1075,10 @@
 .deploy-table .table-head .col-name,
 .deploy-table .table-row .col-name { display: block; }
 .deploy-table .col-op { justify-content: flex-end; gap: 2px; }
-/* 操作列里的图标按钮不许换行/撑高行（3 个 26px 按钮 + 间隙 ≈ 84 < 104 定宽）*/
+/* 操作列里的图标按钮不许换行/撑高行（3 个 26px 按钮 + 间隙 ≈ 84 < 120 定宽）*/
 .deploy-table .col-op .icon-btn.icon-sm { width: 26px; height: 26px; flex: 0 0 26px; }
+/* 没官网地址的「官网」按钮：仍可悬停看 title，只是压暗提示点不开 */
+.deploy-table .col-op .icon-btn.icon-sm.is-off { opacity: .4; }
 
 /* ===========================================================================
  * 修复区 · 收藏页 / 设置侧栏列表 / 搜索页工具栏的材质跟档位联动

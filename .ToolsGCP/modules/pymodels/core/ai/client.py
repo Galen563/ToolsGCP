@@ -51,7 +51,7 @@ class ChatResult:
 
     def __init__(self, ok: bool, content: str = "", kind: str = KIND_OK,
                  message: str = "", status: int = 0, raw: str = "",
-                 reasoning: str = ""):
+                 reasoning: str = "", usage: dict = None):
         self.ok = ok
         self.content = content
         self.kind = kind
@@ -59,6 +59,11 @@ class ChatResult:
         self.status = status        # HTTP 状态码（0 = 没走到 HTTP 层）
         self.raw = raw              # 原始响应片段（排查用，只取前若干字符）
         self.reasoning = reasoning  # 思考过程（与正文分开，绝不并进 content）
+        # ★ 本轮新增（需求：缓存命中/上下文/会话统计 UI）：OpenAI 兼容网关的 usage 字段，
+        #   统一压成 {prompt, completion, total, cached, cache_src}；各家写法不同
+        #   （DeepSeek: prompt_cache_hit_tokens；OpenAI: prompt_tokens_details.cached_tokens），
+        #   归一化只在这一个地方做，上层与前端只认这一份形状。拿不到 = None（老网关/错误响应）。
+        self.usage = usage if isinstance(usage, dict) else None
 
     def __repr__(self):
         return f"<ChatResult ok={self.ok} kind={self.kind} status={self.status}>"
@@ -253,18 +258,185 @@ def _thinking_on(thinking, provider_id: str = "", model: str = "") -> bool:
     return level in ("low", "medium", "high", "minimal", "max", "on")
 
 
+# ---------- 「这个模型不吃 temperature」的口径（静态表 + 进程内现学） ----------
+# 键 = (模型名, 接口地址)。带上地址是因为同名模型经不同网关跑，限制可能不一样
+# （官方只允许 1，中转可能照收 0.7）。**只在进程内记，绝不写设置**：
+# 那是一次网络观测的结果，不是用户的偏好，写盘等于把设置区当垃圾场。
+_OMIT_TEMPERATURE_SEEN = set()
+
+# 服务端拒绝 temperature 的措辞。分两段判，比枚举整句稳：
+#   ① 明确只允许某个固定值（Moonshot 的原话，它连 temperature 这个词都没出现）
+_MOONSHOT_TEMPERATURE_HINT = "only 1 is allowed"
+#   ② 「提到了 temperature」+ 任意否定词。各家写法差别很大，实测见过的有
+#      `invalid temperature: only 1 is allowed`（京东/Moonshot 同款）、
+#      "Unsupported parameter: 'temperature' is not supported by this model."（OpenAI）、
+#      "This model does not support temperature."、"The parameter `temperature` is not
+#      supported for o3 models." —— 后两种光靠整句枚举根本覆盖不全。
+_TEMPERATURE_NEGATIVE_HINTS = (
+    "invalid", "unsupported", "not support", "does not support", "not allowed",
+    "not accepted", "does not accept", "must be",
+)
+
+
+def _log(level: str, message: str):
+    """客户端层的日志（本模块以前一声不吭，重试这种"改变请求体"的动作必须留痕）"""
+    try:
+        from ..utils.logger import log
+        getattr(log, level, log.info)("AI", "ai", message)
+    except Exception:                          # noqa: BLE001
+        pass
+
+
+def server_message_of(detail: str) -> str:
+    """从错误响应体里抠出服务端那句话（只给日志用，抠不到就截原文前 120 字）"""
+    try:
+        data = json.loads(detail) if detail else {}
+        error = data.get("error") if isinstance(data, dict) else None
+        if isinstance(error, dict):
+            return str(error.get("message") or "")[:200]
+        if isinstance(error, str):
+            return error[:200]
+    except Exception:                          # noqa: BLE001
+        pass
+    return str(detail or "").strip()[:120]
+
+
+def mentions_temperature(detail: str) -> bool:
+    """服务端的 400 是否在说「temperature 这个参数我不接受」。
+    ⚠️ 只用于**决定要不要摘掉 temperature 重试一次**，判断偏保守：认不出就当不是
+    （宁可让用户看到原始 400，也不要为一个别的错误白重试一次请求）。
+    """
+    text = str(detail or "").lower()
+    if _MOONSHOT_TEMPERATURE_HINT in text:
+        return True
+    if "temperature" not in text:
+        return False
+    return any(hint in text for hint in _TEMPERATURE_NEGATIVE_HINTS)
+
+
+_NO_STREAM_USAGE = set()
+
+
+def _learned_no_stream_usage(api_base: str) -> bool:
+    """这家接口地址有没有被证实"不认 stream_options.include_usage"（400 过就记住，
+    下次不再带这个字段 —— 功能降级只影响统计信息，绝不因统计把发送搞失败）。"""
+    return str(api_base or "") in _NO_STREAM_USAGE
+
+
+def remember_no_stream_usage(api_base: str) -> None:
+    key = str(api_base or "")
+    if key:
+        _NO_STREAM_USAGE.add(key)
+
+
+def _learned_omit(model: str, api_base: str) -> bool:
+    """静态口径表（providers.temperature_mode）+ 本进程学到的口径，合起来定夺"""
+    try:
+        from . import providers as _p
+        if _p.temperature_mode("", model) == "omit":
+            return True
+    except Exception:                          # noqa: BLE001
+        pass
+    try:
+        return (str(model or "").strip(), normalize_api_base(api_base)) in _OMIT_TEMPERATURE_SEEN
+    except Exception:                          # noqa: BLE001
+        return False
+
+
+def remember_omit_temperature(model: str, api_base: str) -> None:
+    try:
+        _OMIT_TEMPERATURE_SEEN.add((str(model or "").strip(),
+                                    normalize_api_base(api_base)))
+    except Exception:                          # noqa: BLE001
+        pass
+
+
+def _retry_worthwhile(result, detail: str, already_dropped: bool) -> bool:
+    """只有「400 + 服务端点了 temperature + 这一次我们确实发了 temperature」才重试"""
+    return (result is not None and not getattr(result, "ok", False)
+            and getattr(result, "kind", "") == KIND_BAD_REQUEST
+            and not already_dropped
+            and mentions_temperature(detail))
+
+
+# ---------- usage 归一化（缓存命中统计的数据源；永不抛） ----------
+def extract_usage(data) -> dict:
+    """把响应/流式尾包里的 usage 归一成 {prompt, completion, total, cached}
+
+    各家写法（尽量都认，认不出的键直接忽略）：
+      · OpenAI / Kimi / 智谱等：usage.prompt_tokens / completion_tokens
+        + usage.prompt_tokens_details.cached_tokens
+      · DeepSeek：usage.prompt_cache_hit_tokens / prompt_cache_miss_tokens
+    拿不到任何数字返回 None（调用方据此隐藏统计，而不是显示 0 骗人）。
+    """
+    try:
+        if not isinstance(data, dict):
+            return None
+        usage = data.get("usage")
+        if not isinstance(usage, dict):
+            return None
+
+        def _i(v):
+            try:
+                return int(v)
+            except Exception:
+                return None
+
+        prompt = _i(usage.get("prompt_tokens"))
+        completion = _i(usage.get("completion_tokens"))
+        total = _i(usage.get("total_tokens"))
+        cached = None
+        details = usage.get("prompt_tokens_details")
+        if isinstance(details, dict):
+            cached = _i(details.get("cached_tokens"))
+        if cached is None:
+            cached = _i(usage.get("prompt_cache_hit_tokens"))
+        if cached is None and prompt is not None:
+            miss = _i(usage.get("prompt_cache_miss_tokens"))
+            if miss is not None:
+                cached = max(0, prompt - miss)
+        out = {}
+        if prompt is not None:
+            out["prompt"] = prompt
+        if completion is not None:
+            out["completion"] = completion
+        if total is None and prompt is not None and completion is not None:
+            total = prompt + completion
+        if total is not None:
+            out["total"] = total
+        if cached is not None:
+            out["cached"] = max(0, min(cached, prompt if prompt is not None else cached))
+        return out or None
+    except Exception:
+        return None
+
+
 def _build_request(messages: list, model: str, api_base: str,
                    max_tokens: int, temperature: float, stream: bool,
-                   thinking=None, provider_id: str = ""):
+                   thinking=None, provider_id: str = "",
+                   drop_temperature: bool = False,
+                   include_stream_usage: bool = False):
     url = f"{normalize_api_base(api_base)}/chat/completions"
     payload = {
         "model": model,
         "messages": messages,
-        "temperature": temperature,
         "stream": bool(stream),
     }
+    # ⚠️ 本轮修复（用户日志：kimi-k3 → 400 invalid temperature: only 1 is allowed
+    #    for this model）：以前这个字段无条件写，聊天发 0.7、测试连接发 0，
+    #    对"只接受固定 temperature"的推理模型两个值都是 400 —— Key 是对的却发不出去。
+    #    口径见 providers.temperature_mode()；`drop_temperature` 是表里没预见到、
+    #    由服务端 400 现学之后调用方强制摘掉的那一路（见 chat / chat_stream 的重试）。
+    if not drop_temperature and not _learned_omit(model, api_base):
+        payload["temperature"] = temperature
     if max_tokens and max_tokens > 0:
         payload["max_tokens"] = int(max_tokens)
+    # ★ 本轮新增：流式请求带 stream_options.include_usage → 网关会在**最后一个 SSE 包**
+    #   里把 usage（含缓存命中数）带回来，"缓存命中"统计才有真数据。
+    #   ⚠️ 只在我们**主动要求**时才加（include_stream_usage）：个别老网关不认识这个字段
+    #   会 400，chat_stream 里对这条专门有一次"去掉重发"的降级（见 _learned_no_stream_usage）。
+    if stream and include_stream_usage:
+        payload["stream_options"] = {"include_usage": True}
     payload.update(_thinking_params(thinking, provider_id, model))
     body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
     return url, body
@@ -295,8 +467,10 @@ def chat(messages: list, api_key: str, model: str, api_base: str = "",
     if not is_valid_api_base(api_base):
         return ChatResult(False, kind=KIND_CONFIG, message="接口地址不是有效的网址")
 
+    sent_without_temperature = _learned_omit(model, api_base)
     url, body = _build_request(messages, model, api_base, max_tokens, temperature,
-                              stream=False, thinking=thinking, provider_id=provider_id)
+                              stream=False, thinking=thinking, provider_id=provider_id,
+                              drop_temperature=sent_without_temperature)
     request = urllib.request.Request(
         url, data=body, method="POST",
         headers={
@@ -318,7 +492,18 @@ def chat(messages: list, api_key: str, model: str, api_base: str = "",
             detail = exc.read().decode("utf-8", "replace")[:400]
         except Exception:
             pass
-        return _from_http_error(exc.code, detail)
+        result = _from_http_error(exc.code, detail)
+        # 表里没预见的模型：服务端在 400 里点名了 temperature ⇒ 记下口径重试一次。
+        # 递归安全：第二次进来 _learned_omit 已经为真，_retry_worthwhile 必然为假，
+        # 所以最多只重试一次，绝不会出现来回重试的循环。
+        if _retry_worthwhile(result, detail, sent_without_temperature):
+            remember_omit_temperature(model, api_base)
+            _log("warn", f"{provider_id or '未知服务商'}/{model} 拒绝 temperature 参数，"
+                         f"已去掉该字段重试一次（{server_message_of(detail)}）")
+            return chat(messages, api_key, model, api_base, max_tokens=max_tokens,
+                        temperature=temperature, timeout=timeout, thinking=thinking,
+                        provider_id=provider_id)
+        return result
     except (socket.timeout, TimeoutError):
         return ChatResult(False, kind=KIND_TIMEOUT,
                           message=f"请求超时（{timeout} 秒），可能是网络慢或服务端繁忙")
@@ -376,7 +561,10 @@ def _sse_data_lines(buffer: str):
 
 
 def _sse_delta(payload: str) -> tuple:
-    """一条 data: 载荷 → (正文增量, 思考增量, 是否结束)
+    """一条 data: 载荷 → (正文增量, 思考增量, 是否结束, usage)
+
+    ★ 本轮第 4 项：OpenAI 兼容网关在**最后一个 SSE 包**里给 usage（流式要
+    stream_options.include_usage 才发），归一化后随元组带出；没有就是 None。
 
     ⚠️⚠️ 正文与思考**各回各的**，绝不互相顶替（用户报的"没开思考按钮却输出思考内容"）：
       · `choices[0].delta.content`          → 正文增量
@@ -386,20 +574,23 @@ def _sse_delta(payload: str) -> tuple:
     **不**兜底 reasoning（没有正文就让它走"模型没有返回内容"的分支，别把思考当回答）。
     """
     if payload == "[DONE]":
-        return "", "", True
+        return "", "", True, None
     try:
         data = json.loads(payload)
     except Exception:
-        return "", "", False
+        return "", "", False, None
     if not isinstance(data, dict):
-        return "", "", False
+        return "", "", False, None
     error = data.get("error")
     if isinstance(error, (dict, str)):
         detail = error.get("message") if isinstance(error, dict) else error
         raise _StreamError(str(detail or "服务端返回错误"))
     choices = data.get("choices")
     if not isinstance(choices, list) or not choices:
-        return "", "", False
+        # ⚠️ 本轮：OpenAI 规范的 usage 收尾包**就是**这条分支的形状
+        #   （choices 为空数组、只带 usage）。这里必须把 usage 抠出来带回去，
+        #   否则缓存命中统计永远为空（上一版补丁漏了这条早退分支，解包还会炸）。
+        return "", "", False, extract_usage(data)
     first = choices[0] if isinstance(choices[0], dict) else {}
     delta = first.get("delta") if isinstance(first.get("delta"), dict) else {}
     text = str(delta.get("content") or "")
@@ -409,7 +600,8 @@ def _sse_delta(payload: str) -> tuple:
         message = first.get("message") if isinstance(first.get("message"), dict) else {}
         text = str(message.get("content") or "")
     finished = str(first.get("finish_reason") or "") in ("stop", "length", "content_filter")
-    return text, reasoning, finished
+    # ★ usage 一般在"正文已空、usage 非空"的收尾包里来（include_usage 时网关才给）
+    return text, reasoning, finished, extract_usage(data)
 
 
 class _StreamError(Exception):
@@ -443,8 +635,12 @@ def chat_stream(messages: list, api_key: str, model: str, api_base: str = "",
     if not is_valid_api_base(api_base):
         return ChatResult(False, kind=KIND_CONFIG, message="接口地址不是有效的网址")
 
+    sent_without_temperature = _learned_omit(model, api_base)
+    want_stream_usage = not _learned_no_stream_usage(api_base)
     url, body = _build_request(messages, model, api_base, max_tokens, temperature,
-                              stream=True, thinking=thinking, provider_id=provider_id)
+                              stream=True, thinking=thinking, provider_id=provider_id,
+                              drop_temperature=sent_without_temperature,
+                              include_stream_usage=want_stream_usage)
     request = urllib.request.Request(
         url, data=body, method="POST",
         headers={
@@ -457,6 +653,10 @@ def chat_stream(messages: list, api_key: str, model: str, api_base: str = "",
         })
 
     parts = []                     # 收到的**正文**增量（最后 join 成全文）
+    usage_box = {}                 # ★ 本轮：SSE 尾包里的 usage（含缓存命中），见 extract_usage
+    pending_finish = False         # ★ 本轮：正文已收尾，正在等那个"只有 usage"的尾包
+    break_out = False              # ★ 本轮：跳出双层循环（payload 级判据）
+    finish_deadline = 0.0          # ★ 本轮：等 usage 尾包的时限（到点就收，绝不吊着线程）
     think_parts = []               # 收到的**思考**增量（与正文完全分开，绝不互替）
     emitted_len = -1               # 上次回调时的长度：没变就不重复回调
     last_emit = 0.0
@@ -570,6 +770,14 @@ def chat_stream(messages: list, api_key: str, model: str, api_base: str = "",
             read1 = getattr(response, "read1", None)
             readline = getattr(response, "readline", None)
             while True:
+                if break_out:
+                    break
+                # ★ 本轮：已经收尾、只是在等"只有 usage"的那个尾包 —— 等够 1.2 秒还没等到
+                #   就走（[DONE]/关连接那条正常收尾路）。有些网关收尾后**保持长连接不关**，
+                #   不设上限的话读流线程会一直挂到 socket 超时（默认 90s）：表现就是
+                #   "回答早就出完了，界面还在转圈 / 程序像没响应"。
+                if pending_finish and not usage_box and time.monotonic() > finish_deadline:
+                    break
                 if should_stop is not None and should_stop():
                     return ChatResult(False, kind="cancelled", message="已停止", status=status)
                 chunk = b""
@@ -592,7 +800,17 @@ def chat_stream(messages: list, api_key: str, model: str, api_base: str = "",
                 payloads, buffer = _sse_data_lines(buffer)
                 for payload in payloads:
                     try:
-                        delta, think_delta, finished = _sse_delta(payload)
+                        delta, think_delta, finished, tail_usage = _sse_delta(payload)
+                        if tail_usage:
+                            usage_box.clear()
+                            usage_box.update(tail_usage)
+                        if payload == "[DONE]":
+                            break_out = True
+                            break
+                        if pending_finish and tail_usage:
+                            # usage 收尾包到齐，立刻收流（正常路径）
+                            break_out = True
+                            break
                     except _StreamError as exc:
                         return ChatResult(False, kind=KIND_UNKNOWN,
                                           message=f"服务端返回错误：{exc}", status=status)
@@ -602,18 +820,29 @@ def chat_stream(messages: list, api_key: str, model: str, api_base: str = "",
                         think_parts.append(think_delta)
                         _flush_reasoning(False)
                     if finished:
-                        _flush(True)
-                        _flush_reasoning(True)
-                        return _stream_result(parts, status, think_parts, thinking, provider_id, model)
+                        # ⚠️⚠️ 本轮（include_usage）踩过的坑：开了 stream_options.include_usage
+                        #   之后，网关会多发一个**只有 usage、没有 choices** 的收尾包，
+                        #   finished 在那**之前**的一个包就为真了。旧写法在 finished 当场返回，
+                        #   usage 包永远读不到 → 统计恒空。现在：finished 先立个"待收尾"标记，
+                        #   再多读几拍（只等这个 usage 包，读到就走 / 读完 [DONE] 或关连接也走）。
+                        if not pending_finish:
+                            pending_finish = True
+                            finish_deadline = time.monotonic() + 1.2
+                            _flush(True)
+                            _flush_reasoning(True)
                     if delta:
                         saw_any_delta = True
                         parts.append(delta)
                         _flush(False)
-            # 循环结束 = 连接自己关了的（正常也这样收尾：[DONE] 之后服务端就断了）
+            # 循环结束 = 连接自己关了的 / usage 尾包读齐的 / [DONE]（正常也这样收尾）
             _flush(True)
             _flush_reasoning(True)
+            if pending_finish and parts:
+                return _stream_result(parts, status, think_parts, thinking, provider_id,
+                                      model, usage=dict(usage_box) or None)
             if parts:
-                return _stream_result(parts, status, think_parts, thinking, provider_id, model)
+                return _stream_result(parts, status, think_parts, thinking, provider_id,
+                                      model, usage=dict(usage_box) or None)
             if not saw_any_delta and not think_parts:
                 return ChatResult(False, kind=KIND_BAD_JSON, status=status,
                                   message="服务端没有按流式格式返回内容")
@@ -625,11 +854,41 @@ def chat_stream(messages: list, api_key: str, model: str, api_base: str = "",
             detail = exc.read().decode("utf-8", "replace")[:400]
         except Exception:
             pass
-        return _from_http_error(exc.code, detail)
+        result = _from_http_error(exc.code, detail)
+        # ⚠️ 流式的重试只允许发生在**一个字节都还没吐给用户**的时候。400 就在这个分支里，
+        #    半路断流走的是别的 except，不会走到这里；再加一层 not parts/not think_parts
+        #    是护栏：以后谁把 400 的判据改宽也不会把已经显示的回答重写一遍。
+        if _retry_worthwhile(result, detail, sent_without_temperature) \
+                and not parts and not think_parts:
+            remember_omit_temperature(model, api_base)
+            _log("warn", f"流式 {provider_id or '未知服务商'}/{model} 拒绝 temperature 参数，"
+                         f"已去掉该字段重发一次（{server_message_of(detail)}）")
+            return chat_stream(messages, api_key, model, api_base,
+                               max_tokens=max_tokens, temperature=temperature,
+                               timeout=timeout, on_chunk=on_chunk,
+                               should_stop=should_stop, on_reasoning=on_reasoning,
+                               thinking=thinking, provider_id=provider_id)
+        # ★ 本轮新增：400 且我们**带了** stream_options.include_usage → 极可能是这家老网关
+        #   不认这个字段。功能上它只关系到"统计信息"，绝不能把发送本身搞失败：
+        #   去掉该字段重发一次并记住这个接口地址（同 api_base 以后都不带）。
+        if (result is not None and not getattr(result, "ok", False)
+                and getattr(result, "kind", "") == KIND_BAD_REQUEST
+                and want_stream_usage and not parts and not think_parts):
+            remember_no_stream_usage(api_base)
+            _log("warn", f"流式 {provider_id or '未知服务商'}/{model} 拒绝 "
+                         f"stream_options.include_usage（{server_message_of(detail)}），"
+                         f"已去掉统计字段重发一次（本次没有 token 统计，不影响回答）")
+            return chat_stream(messages, api_key, model, api_base,
+                               max_tokens=max_tokens, temperature=temperature,
+                               timeout=timeout, on_chunk=on_chunk,
+                               should_stop=should_stop, on_reasoning=on_reasoning,
+                               thinking=thinking, provider_id=provider_id)
+        return result
     except (socket.timeout, TimeoutError):
         if parts:
             # 已经有半段：别当失败丢掉，照实用
-            return _stream_result(parts, 200, think_parts, thinking, provider_id, model)
+            return _stream_result(parts, 200, think_parts, thinking, provider_id,
+                                  model, usage=dict(usage_box) or None)
         return ChatResult(False, kind=KIND_TIMEOUT,
                           message=f"请求超时（{timeout} 秒），可能是网络慢或服务端繁忙")
     except urllib.error.URLError as exc:
@@ -644,7 +903,8 @@ def chat_stream(messages: list, api_key: str, model: str, api_base: str = "",
 
 
 def _stream_result(parts: list, status: int, think_parts: list = None,
-                   thinking=None, provider_id: str = "", model: str = "") -> ChatResult:
+                   thinking=None, provider_id: str = "", model: str = "",
+                   usage: dict = None) -> ChatResult:
     """把收到的分块拼成成功结果（与 _parse_success 一样的 strip 口径）
 
     ⚠️ 思考文本只有在档位**开着**（非 off 的档位行 / 旧的 low/medium/high/max）时才带出去；
@@ -663,7 +923,9 @@ def _stream_result(parts: list, status: int, think_parts: list = None,
                               reasoning=reasoning)
         return ChatResult(False, kind=KIND_BAD_JSON, status=status,
                           message="模型没有返回内容，换个说法再试一次")
-    return ChatResult(True, content=content, status=status, reasoning=reasoning)
+    # ★ 本轮新增：把流式尾包抠到的 usage 带出去（网关没给就是 None，前端据此隐藏）
+    return ChatResult(True, content=content, status=status, reasoning=reasoning,
+                      usage=usage)
 
 
 def _from_http_error(status: int, detail: str) -> ChatResult:
@@ -751,7 +1013,7 @@ def _parse_success(text: str, status: int) -> ChatResult:
             # 但「测试连接」能认出"这是截断、不是连不上"。
             return ChatResult(False, kind=KIND_LENGTH, status=status,
                               message="回答被长度上限截断了，请调大「最大 token 量」",
-                              reasoning=reasoning)
+                              reasoning=reasoning, usage=extract_usage(data))
         if reasoning:
             # 只有思考、没有正文：给明确错误，而不是把思考当回答吐出去
             return ChatResult(False, kind=KIND_BAD_JSON, status=status,
@@ -762,4 +1024,6 @@ def _parse_success(text: str, status: int) -> ChatResult:
                           message=f"模型没有返回内容（finish_reason={finish or '未知'}）",
                           raw=text[:200])
 
-    return ChatResult(True, content=content, status=status, reasoning=reasoning)
+    # ★ 本轮新增：非流式响应同样抓 usage（缓存命中/上下文统计的数据源，见 extract_usage）
+    return ChatResult(True, content=content, status=status, reasoning=reasoning,
+                      usage=extract_usage(data))

@@ -231,8 +231,9 @@ longer stays white in dark mode.
 ### How ResourceMaker writes and backs up
 
 Every write goes through `maker.*`: the entry is first run through `resource_schema.normalize()`, then
-written with an atomic temporary-file + `os.replace` swap; before the swap the old library is copied to
-`ToolsGCP-Resources.backup-<timestamp>.json` and only the newest 20 are kept. **Save back to original entry**
+written with an atomic temporary-file + `os.replace` swap; before the swap the old library is rolled into
+**one fixed-name backup**: `<user data dir>\backups\ToolsGCP-Resources.prev.json` (overwritten each time —
+no more piles of timestamped backup files). **Save back to original entry**
 writes using the id / code it loaded, so changing the id in the form cannot append a duplicate.
 **Save as standalone library** also copies the icon into the target folder and rewrites `icon`, so it never
 writes a JSON whose icon points at nothing.
@@ -688,11 +689,14 @@ folder). Both really write to disk — neither is a "here is a JSON, put it back
 
 ### Backups
 
-Before each write, the current library is copied to
-`ToolsGCP-Resources.backup-<timestamp>.json` next to it, and only the newest 20 files are
-kept. Writes are atomic (a temporary file is written and then renamed), so an interrupted write
-cannot corrupt the library. The library itself is always the single file
-`.ToolsGCP/ToolsGCP-Resources.json` — ResourceMaker never creates a second library file.
+Before each write, the current library is rolled into **one fixed-name backup**:
+`<user data dir>\.ToolsGCP\backups\ToolsGCP-Resources.prev.json` (overwritten every time; if the backup
+fails the write is aborted and the original file is left untouched). Writes are atomic (a temporary file is
+written and then renamed), so an interrupted write cannot corrupt the library. The library itself is always
+the single file `.ToolsGCP/ToolsGCP-Resources.json` — ResourceMaker never creates a second library file and
+never drops `ToolsGCP-Resources.backup-*.json` next to it. With the resource source set to **cloud**, the
+UI *reads* the read-only mirror under the user data dir, but writes always go to this file in the program
+dir.
 
 ## Logs
 

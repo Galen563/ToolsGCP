@@ -1,0 +1,5 @@
+[2026-11-14 22:49:54.704] [INFO ] [启动|startup] 日志会话开始
+[2026-11-14 22:49:54.704] [WARN ] [语言|language] 语言目录不存在: C:\Users\Administrator\Desktop\ToolsGCP开发\v1.1.4 - 12\项目资料-文档与开发测试\_devtest\.ToolsGCP\modules\languages\zh_CN（该语言只能走 en_fallback）
+[2026-11-14 22:49:54.704] [WARN ] [语言|language] 语言目录不存在: C:\Users\Administrator\Desktop\ToolsGCP开发\v1.1.4 - 12\项目资料-文档与开发测试\_devtest\.ToolsGCP\modules\languages\zh_TW（该语言只能走 en_fallback）
+[2026-11-14 22:49:54.704] [WARN ] [语言|language] 语言目录不存在: C:\Users\Administrator\Desktop\ToolsGCP开发\v1.1.4 - 12\项目资料-文档与开发测试\_devtest\.ToolsGCP\modules\languages\en_US（该语言只能走 en_fallback）
+written 116

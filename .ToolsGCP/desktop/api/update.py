@@ -774,11 +774,38 @@ class UpdateDomain:
             if size <= 0:
                 return _fail("更新包是空文件，请重新下载")
             script = self._write_apply_script(directory)
+            # ⚠️⚠️ 必须在**拉起替换脚本之前**写"替换进行中"标记：
+            #    新版进程启动时**无法知道**上一次替换到底成功没有（成功的话旧进程
+            #    已经退出了，没有回执可拿）。所以判据只能是"替换流程启动过没有"——
+            #    标记存在 = 替换动作已经尝试过（无论成不成功），此时那个更新包目录
+            #    已经没有用处了，新版进程才可以把 <temp>\ToolsGCP\ 连根删掉；
+            #    标记不存在 = 从没触发过更新 → 只能清残留，**绝不能**删掉用户
+            #    还没应用的更新包（用户点过"稍后提醒"就靠它）。
+            #    标记由 desktop/tempclean.py 读取并**立刻删除**（否则每次启动都
+            #    当成"替换过"，普通启动就会误删新下载的更新包）。
+            try:
+                from .. import tempclean
+
+                marker = tempclean.mark_replace_pending(target_exe=exe)
+                _log("info", "更新", "update", f"已写替换标记: {marker}")
+            except Exception as exc:            # noqa: BLE001
+                # 标记写失败**不能**阻断更新（顶多下次启动不清那个目录而已）
+                _log("warn", "更新", "update", f"写替换标记失败（不影响更新）: {exc}")
             # ⚠️ 必须走 _cmd_c_line 的"外层再套一对引号"形态：
             #    列表形式会被 cmd 剥掉最外层引号 → 带空格的安装目录把命令行截断 →
             #    更新脚本根本没跑（= 没替换、没重启、还弹一个带报错的 cmd 窗口）。
             command = _cmd_c_line([script, exe, source, str(os.getpid())])
             if not _launch_hidden(command, cwd=directory):
+                # ⚠️ 脚本连启动都没启起来 → 替换**根本没发生过**，
+                #    就不能留下"替换过一次"的标记：下次启动看到标记
+                #    就会连根删掉用户刚下好、还没应用的更新包（几百 MB 白下了）。
+                #    所以启动失败就把标记收回去，下次启动仍然只清残留。
+                try:
+                    from .. import tempclean
+
+                    tempclean.consume_replace_marker()
+                except Exception:
+                    pass
                 return _fail("更新脚本启动失败（cmd.exe 无法拉起）")
             _log("op", "更新", "update",
                  f"已启动更新脚本: {script} 目标={exe} 更新包={source}"

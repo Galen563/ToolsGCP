@@ -51,5 +51,8 @@
   "tools_gcp_title": "收藏",
   "fav_new_folder_tip": "新建收藏夹",
   "fav_move_tip": "批量移动：勾选要移动的收藏，再选目标收藏夹",
-  "fav_menu_tip": "右键收藏夹可以重命名或删除"
+  "fav_menu_tip": "右键收藏夹可以重命名或删除",
+  "delete_plugin": "删除插件",
+  "delete_plugin_confirm": "确定要删除插件「{name}」吗？插件文件夹会被整个删掉。",
+  "select_none": "全不选"
 }

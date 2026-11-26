@@ -32,17 +32,16 @@ class SettingsManager:
                             settings[key] = default_value
                         
                         # 类型修正
-                        if key == "splash_screen_duration":
-                            try:
-                                val = int(settings[key])
-                                if val < 1:
-                                    val = 1
-                                elif val > 5:
-                                    val = 5
-                                settings[key] = val
-                            except (ValueError, TypeError):
-                                settings[key] = 2
-                        elif key in ["startup_with_windows", "minimize_to_tray", "notify_enabled", 
+                        # ⚠️ 本轮删除了"启动动画时长"这个设置项（需求：显示时长改由
+                        #    主流程生命周期决定）。这里原本有一段把它夹到 1~5 秒的校验，
+                        #    连同 `get_splash_screen_duration_ms()` 一起撤掉。
+                        #    ⚠️ 老用户配置文件里**可能仍残留** `splash_screen_duration`
+                        #    这个键：上面的合并循环只遍历 DEFAULT_SETTINGS 的键，
+                        #    所以它既不会被读、也不会被写回，属于完全惰性的残留。
+                        #    刻意**不主动删除**它（删用户配置属于破坏性操作，为一个死键
+                        #    不值得）；但以后**绝不许**再拿这个名字新增设置项 ——
+                        #    否则老用户配置里那个旧值会凭空"复活"成他们没选过的时长。
+                        if key in ["startup_with_windows", "minimize_to_tray", "notify_enabled", 
                                    "open_settings_on_restart", "dev_mode_enabled",
                                    "debug_info_enabled_Galen563", "debug_info_enabled_Cyric373",
                                    "download_speed_limit_enabled", "splash_screen_enabled",
@@ -453,8 +452,7 @@ class SettingsManager:
     def is_download_speed_limited(self):
         """检查是否启用了下载限速"""
         return self.settings.get("download_speed_limit_enabled", False)
-    
-    def get_splash_screen_duration_ms(self):
-        """获取启动动画时长（毫秒）"""
-        seconds = self.settings.get("splash_screen_duration", 2)
-        return seconds * 1000
+
+    # ⚠️ 本轮删除 `get_splash_screen_duration_ms()`：启动动画显示多久不再由设置决定，
+    #    而是"主窗口真的显示出来"那一刻由 desktop/shell.py 的 _dismiss_splash() 收尾。
+    #    默认值 key 也一并从 constants.DEFAULT_SETTINGS 里删了（详见那里的注释）。
