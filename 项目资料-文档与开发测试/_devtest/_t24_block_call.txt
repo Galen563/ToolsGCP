@@ -1,0 +1,10 @@
+        # —— task-24 写侧兜底：值反查（显示文本 → 规范中文）——
+        # 上面只归一了"形状"，值还可能是前端语言框送来的**显示文本**，这里补上反查：
+        #  · 字典池和扁平 list 两种形态都要过（前端可能送 {"English": ["Clipboard"]}，
+        #    也可能直接送 "粘贴板,Clipboard" 这种逗号串被 normalize 压平成 list）；
+        #  · 反查后三池同值 → 塌缩成扁平 list[str]；三池内容本来就不同 → 保持字典原样，
+        #    不自动改（lead 口径：只统一语言写法，不合并不同内容，剩下的写进迁移报告）；
+        #  · 认不出的一律原样保留（用户自定义值），绝不猜、绝不丢；跑第二遍零 diff（幂等）。
+        for field in getattr(resource_schema, "LANG_LIST_FIELDS", ()):
+            if field in out:
+                out[field] = canonicalize_lang_list(out[field])

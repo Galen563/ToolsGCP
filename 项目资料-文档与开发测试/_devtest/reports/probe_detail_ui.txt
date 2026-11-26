@@ -1,0 +1,19 @@
+PASS  A0 13 个样式表已落地（CSS 断言的前置条件）  {"loadedSheets":13}
+PASS  A1 深色主题下 .tag.is-famous 有金色规则（与 is-official 同色）  {"found":true,"css":"background: rgba(255, 215, 0, 0.15); color: #d4af37;"}
+PASS  A2 该规则以 :root 开头（特异度 0,3,0，不被 .tag 灰底盖掉）  {"selector":":root .tag.is-official,\n:root .tag.is-famous"}
+PASS  A3 浅色主题下 .tag.is-famous 有更深的金色规则（0,4,0）  {"css":"background: rgba(255, 200, 40, 0.22); color: #8a6100;"}
+PASS  A4 浅色那条包含 :root[data-theme="light"] .tag.is-famous（0,4,0，压过 .tag 灰底）  {"parts":[":root[data-theme=\"light\"] .tag.is-official",":root[data-theme=\"light\"] .tag.is-famous"]}
+PASS  B0 资源列表已加载  {"count":54}
+PASS  B0b 详情页已渲染（page === detailPage 且 detail 有值）  {"page":"search","detailPage":"search","hasDetail":true}
+PASS  B1 编号右侧有 .detail-code 行 + 同款 copy-btn  {"row":true,"btn":true,"code":"TG-000001"}
+PASS  B2 按钮图标用 #i-copy（与详细信息那排一致）  {"href":"#i-copy"}
+PASS  B3 点击复制的是编号本身（不带「编码：」前缀）  {"clipboard":"TG-000001","code":"TG-000001"}
+PASS  B4 复制后按钮切到已复制态（is-done + #i-accept）  {"cls":"copy-btn is-done"}
+PASS  C 可框选：名称 .detail-name  {"value":"text","found":true}
+PASS  C 可框选：编号行 .detail-code .cap  {"value":"text","found":true}
+PASS  C 可框选：应用介绍 .para  {"value":"text","found":true}
+PASS  C 可框选：详细信息值 .detail-val  {"value":"text","found":true}
+PASS  C 不误伤：按钮 .btn 仍不可选  {"value":"none"}
+PASS  C 不误伤：左侧导航 .nav-item 仍不可选  {"value":"none"}
+PASS  C 不误伤：卡片按钮 .card-btn（DOM 里没这个元素，跳过）  {"skipped":true}
+probe_detail_ui_exit=0

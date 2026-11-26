@@ -1,8 +1,8 @@
 {
   "title": "AI Agent",
-  "intro": "开启后，直接在任意一个 GCP-AI 聊天界面里说话，它就能替你操作 ToolsGCP。这里只是它的配置界面。",
+  "intro": "这是内置的强制开启插件：开启后，直接在任意一个 GCP-AI 聊天界面里说话，它就能替你操作 ToolsGCP。这里可以逐项开关 AI 的每一只「手」。",
   "sec_switch": "总开关",
-  "sec_switch_desc": "开启后 GCP-AI 才能动手操作 ToolsGCP；关闭后它只会正常聊天。这个开关和设置里的是同一个。",
+  "sec_switch_desc": "这个插件是内置强制开启的，无法关闭；下面每一项「手」仍然可以单独开关。",
   "switch_on": "已开启",
   "switch_off": "已关闭",
   "switch_hint_on": "GCP-AI 现在可以替你操作 ToolsGCP。",
@@ -38,5 +38,21 @@
   "sec_stats": "统计",
   "stats_line": "模块 {tools} 个 · 累计调用 {total} 次",
   "stats_calls": "各模块调用次数：{calls}",
-  "refresh_failed": "读取 Agent 状态失败：{error}"
+  "refresh_failed": "读取 Agent 状态失败：{error}",
+  "status_locked": "强制开启",
+  "switch_locked": "这是内置的强制开启插件，无法关闭。",
+  "switch_locked_hint": "内置强制开启：GCP-AI 永远可以替你操作 ToolsGCP。",
+  "switch_locked_desc": "这个插件是内置的、强制开启的，无法关闭；下面每一项「手」仍然可以逐项开关。",
+  "group_library": "资源库",
+  "group_favorites": "收藏夹",
+  "group_ui": "界面与导航",
+  "group_settings": "设置与外观",
+  "group_plugins": "插件",
+  "group_files": "文件与系统",
+  "group_system": "诊断与日志",
+  "group_other": "其它",
+  "modules_search_placeholder": "搜索模块（名字 / 描述 / 参数）…",
+  "modules_no_match": "没有匹配「{q}」的模块，换个关键词试试。",
+  "modules_badge_all_on": "全部开启",
+  "modules_badge_partial": "已关 {off} 项"
 }

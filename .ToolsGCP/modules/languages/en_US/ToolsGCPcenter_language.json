@@ -51,5 +51,8 @@
   "tools_gcp_title": "Favorites",
   "fav_new_folder_tip": "New folder",
   "fav_move_tip": "Batch move: tick the favorites, then pick a target folder",
-  "fav_menu_tip": "Right-click a folder to rename or delete it"
+  "fav_menu_tip": "Right-click a folder to rename or delete it",
+  "delete_plugin": "Delete plugin",
+  "delete_plugin_confirm": "Delete plugin \"{name}\"? Its whole folder will be removed.",
+  "select_none": "Select none"
 }

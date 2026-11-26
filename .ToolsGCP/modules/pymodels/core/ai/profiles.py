@@ -308,38 +308,206 @@ def thinking_key(provider: str, model: str, profile_id: str = "") -> str:
 
 
 def thinking_prefix(profile_id: str) -> str:
-    """某条档案全部思考档位条目的**键前缀**（删除档案时按它清表）"""
+    """某条档案全部思考档位条目的**键前缀**（删除档案时按它清表）
+
+    ⚠️ 没有 profile_id 时返回 None 而不是空串：空串是任何键的前缀，
+       `strip_thinking_store` 以前就因此"什么都不删"（用户报的「删除对应厂商
+       他的思考强度存储也会一并删除」没生效的一条真因）。调用方必须判 None。
+    """
     pid = str(profile_id or "").strip().lower()
-    return "%s|" % pid if pid else ""
+    return "%s|" % pid if pid else None
 
 
-def strip_thinking_store(store, profile_id: str) -> dict:
+def thinking_key_parts(key) -> tuple:
+    """把一个档位表的键拆成 (profile_id, provider)；认不出来返回 ("", "")。
+
+    两种历史格式（见 thinking_key）：
+      · 新：`<profile_id>|<provider>|<model>` —— 档案级，可精确归属
+      · 旧：`<provider>|<model>`             —— 厂商级，同厂商多条档案**共用**（bug 之源）
+    模型名里出现 `|` 的概率极低；万一出现，多段的那条按"新格式"处理，
+    provider 取第二段，只是让这条脏键归属看得略保守，不影响其它键。
+    """
+    text = str(key or "").strip()
+    if "|" not in text:
+        return ("", "")
+    parts = text.split("|", 2)
+    if len(parts) < 3:
+        return ("", parts[0].strip().lower())      # 旧格式：第一段是厂商
+    return (parts[0].strip().lower(), parts[1].strip().lower())
+
+
+def is_scoped_thinking_key(key) -> bool:
+    """这条键是不是"档案级"（新格式，带 profile_id 前缀）"""
+    return bool(thinking_key_parts(key)[0])
+
+
+def strip_thinking_store(store, profile_id: str, provider: str = "") -> dict:
     """从档位表里删掉**这条档案**的所有条目（需求：「删除厂商也跟随删除」）。
 
-    ⚠️ 只删带该 profile_id 前缀的，**不碰**同厂商其它档案 —— 这正是用户要的
+    ⚠️ 带 profile_id 时只删这一条档案的前缀，**不碰**同厂商其它档案 —— 这正是用户要的
        "而不是同厂商的就允许相同"：两条 DeepSeek 档案各自独立，删 A 不影响 B。
+    ⚠️⚠️ 本轮补上 provider（用户原话：「删除对应厂商他的思考强度存储也会一并删除」）：
+       旧格式键 `<provider>|<model>` 是**厂商级**的，光按 profile_id 前缀删永远删不掉，
+       于是：①配置里积累一堆指向已删档案的死条目；
+            ②更糟的是读取端（老写法）会拿这条脏键当"老配置兜底"，
+              让**新建**的同厂商档案莫名其妙带着已删档案的档位 —— 看着就像"没删干净"。
+       所以：只要传了 provider，就把该厂商的**旧格式（厂商级）键**一并清掉。
+       这不违反"不影响同厂商另一条档案"：另一条档案的记忆在**它自己的**
+       `<pid>|<provider>|<model>` 键里，一条都不会被这里删掉（而且一旦两条档案
+       各自拨过档位，旧键就再也不会被读到了，留着只有坏处）。
     """
     if not isinstance(store, dict):
         return {}
     prefix = thinking_prefix(profile_id)
-    if not prefix:
-        return dict(store)
-    return dict((k, v) for k, v in store.items() if not str(k).startswith(prefix))
+    provider = str(provider or "").strip().lower()
+    result = {}
+    for key, value in store.items():
+        pid, prov = thinking_key_parts(key)
+        if prefix and pid and key.startswith(prefix):
+            continue                       # 这条档案自己的档案级条目
+        if not provider and not prefix:
+            result[key] = value
+            continue
+        if provider and not pid and prov == provider:
+            continue                       # 已删厂商留下的厂商级脏键
+        result[key] = value
+    return result
+
+
+def provider_profile_ids(profiles, provider: str) -> list:
+    """某家厂商当前有几条档案（决定"厂商级旧键到底该归谁"）。"""
+    want = str(provider or "").strip().lower()
+    out = []
+    for item in (profiles or []):
+        if not isinstance(item, dict):
+            continue
+        if str(item.get("provider") or "").strip().lower() != want:
+            continue
+        pid = str(item.get("id") or "").strip().lower()
+        if pid:
+            out.append(pid)
+    return out
+
+
+def migrate_thinking_store(store, profiles, active_profile_id: str = "",
+                           legacy_level: str = "") -> dict:
+    """把"厂商级旧键 / 全局旧值"**归位**到档案级键（返回新表；不改动入参、绝不丢数据）。
+
+    ⚠️ 为什么要有这一步（本轮需求"每个思考 ui 都应该是关闭状态"的真根因）：
+      读取端以前在表里查不到时会回退**全局** `ai_thinking`，而全局值每次切模型都被
+      刷新成"上一个模型的档位" → 新加的厂商/档案一进来就继承上一家的 high/max，
+      用户看到的"默认不是关闭"。正确做法不是在读的时候继续猜，而是把历史值
+      **一次性落到它真正归属的那条档案上**，之后读取端以档案级键为主。
+
+    ⚠️⚠️ 本轮自测抓到的**数据丢失**坑（写这版规则前先看明白，别再改回去）：
+      第一版把"认不出归属的厂商级旧键"**直接丢掉**。实测本机配置
+      （`ai_provider_profiles` = 空数组，档位表里却有 4 条厂商级记录）跑一次归位
+      变成 0 条 —— 用户调好的档位凭空全没。这比原来的 bug 严重得多，所以：
+      **该厂商有档案 → 归位给第一条（归属确定、从此不再相通）；
+       该厂商一条档案都没有（档案体系还没建立）→ 原样保留，读取端照旧能读到。**
+    规则（顺序固定）：
+      1. 档案级键原样保留（包括 off：那是用户明确拨过的档位，不许当脏数据丢）；
+      2. 厂商级旧键 `<provider>|<model>`：该厂商**有档案** → 归位到**第一条**
+         （同厂商多条时只能这么猜，且从这一刻起它们不再相通；这条档案本来也在读
+          同一个值，所以它不算丢，其余档案改为"没记录 = off"正是本轮要的修复）；
+         该厂商**没有任何档案** → **原样保留**（没有"另一条档案"可串，
+         拒掉就等于把用户唯一的记录判成没设过 → 静默变 off）；
+      3. 当前生效档案的当前模型仍然没有任何记录时，才接住全局 `ai_thinking` 快照；
+      4. 其余一律不写 = 查不到 = off（需求"默认关闭"）。
+    ⚠️ 第 3 步依赖"调用时机在档案指针被改动**之前**"（全局快照属于上一个选择）：
+       desktop/api/ai.py 的 set_model_choice 已显式先归位再改指针，注释有推导。
+    """
+    result = {}
+    if isinstance(store, dict):
+        for key, value in store.items():
+            if is_scoped_thinking_key(key):
+                result[key] = value
+    items = [p for p in (profiles or []) if isinstance(p, dict)]
+    if isinstance(store, dict):
+        for key, value in store.items():
+            if is_scoped_thinking_key(key):
+                continue
+            _pid, prov = thinking_key_parts(key)
+            ids = provider_profile_ids(items, prov)
+            if ids and "|" in str(key):
+                model = str(key).split("|", 1)[1]
+                result[thinking_key(prov, model, ids[0])] = value
+                continue                    # 已归位给该厂商第一条档案，旧键不再保留
+            result[key] = value             # 该厂商没档案 → 原样留着（见上面的丢数据坑）
+    # 3) 当前生效档案 + 当前模型仍无任何记录 → 接住全局旧值，别让老用户静默变关
+    # ⚠️⚠️ 这一步**只在"整张表还没有任何档案级记录"时**才允许发生（本轮自测抓到的
+    #    串档：给 A 设 high 后切到 B，B 凭空变 high）。推导：
+    #      全局 `ai_thinking` 每次切模型都会被刷新成"上一个模型的档位"，
+    #      所以它**只在"这张表还是空的"那一刻**才等价于"老用户从来没归位过的历史值"。
+    #      表里一旦出现档案级记录，说明归位已经完成、事实源已经换成这张表，
+    #      此后快照只是"上一次用的是哪档"的流水值，拿它喂任何档案都是**编出来的档位**。
+    if legacy_level is True:                 # 老配置的布尔 True（档位那一版之前）
+        legacy_level = "medium"
+    elif legacy_level is False:
+        legacy_level = "off"
+    has_scoped = any(is_scoped_thinking_key(k) for k in result)
+    level = str(legacy_level or "").strip().lower()
+    if level in ("", "off", "false", "0", "none", "关", "关闭"):
+        level = ""              # 全局本来就是关 → 什么都不写（全新安装零条目、零 I/O）
+    aid = str(active_profile_id or "").strip().lower()
+    if level and aid and not has_scoped:
+        target = None
+        for item in items:
+            if str(item.get("id") or "").strip().lower() == aid:
+                target = item
+                break
+        if target is not None:
+            prov = str(target.get("provider") or "").strip().lower()
+            model = str(target.get("model") or "").strip()
+            scoped = thinking_key(prov, model, aid)
+            if prov and model and scoped not in result \
+                    and thinking_key(prov, model) not in result:
+                result[scoped] = level
+    return result
 
 
 def get_thinking_level(store, provider: str, model: str, fallback: str = "off",
-                       profile_id: str = "") -> str:
-    """查某个模型**单独记住**的思考档位；没记录就退回 fallback。
-    `store` 是 settings 里那个 dict（ai_thinking_level），容错：不是 dict 就当作空。
-    ⚠️ 本轮：先查带档案 id 的新键，查不到退回旧格式键（老配置升级不至于全变默认）。"""
+                       profile_id: str = "", profile_ids=None) -> str:
+    """查这条**档案 + 这个模型**记住的档位；查不到 → fallback（默认 off）。
+
+    `store` 是 settings 里那个 dict（ai_thinking_level），容错：不是 dict 就当空。
+    `profile_ids` 是**该厂商目前的档案 id 列表**（profiles.provider_profile_ids 算的）。
+
+    读取顺序与理由：
+      1. 档案级键 `<pid>|<provider>|<model>` —— 唯一事实源，用户明确为这条档案设的；
+      2. 厂商级旧键 `<provider>|<model>` —— **只有归属唯一时才认**：
+         · 没有档案体系（老配置直接跑，profile_id 为空）→ 没有"串档"可言，认；
+         · 该厂商只有一条档案且就是当前这条 → 归属唯一，认（老用户升级不丢档位）；
+         · 该厂商有两条以上档案 → **谁都不许认**：这正是用户报的
+           "同厂商两条档案的思考强度 ui 是相通的"，认了就会互相串改；
+      3. 都没有 → fallback（= off，需求"每个思考 ui 都应该是关闭状态"）。
+    ⚠️ 绝不回退全局 `ai_thinking`：那是"上一个模型档位"的快照，
+       拿它当默认值就是本轮"新厂商默认不是关闭"这个 bug 的本体。
+    """
     if not isinstance(store, dict):
         return fallback
-    if profile_id:
-        text = _thinking_hit(store, thinking_key(provider, model, profile_id))
+    pid = str(profile_id or "").strip().lower()
+    if pid:
+        text = _thinking_hit(store, thinking_key(provider, model, pid))
         if text:
             return text
-    text = _thinking_hit(store, thinking_key(provider, model))
-    return text or fallback
+    ids = [str(x).strip().lower() for x in (profile_ids or []) if str(x).strip()]
+    # ⚠️ "归属唯一"只看**这家厂商目前有几条档案**，不要求 pid 落在 ids 里：
+    #    · 0 条（档案体系还没建立，或 ai_profile_id 是指向已删档案的陈旧值）→
+    #      根本不存在"另一条档案"可以被串，这条厂商级键是用户**唯一**的记录，
+    #      拒掉它 = 把用户调好的档位判成"没设过"→ 静默变 off（本轮自测抓到的
+    #      真实数据丢失就是这个分支：本机 profiles=[] + 4 条厂商级记录）；
+    #    · 1 条 → 唯一归属就是它，读到即正确（哪怕 pid 是个陈旧 id，真正生效的
+    #      档案按 active_profile 也会落回这唯一一条）；
+    #    · ≥2 条 → **谁都不许读**：这正是用户报的"同厂商两条档案 ui 是相通的"。
+    #    正常流程下 ≥2 条这个分支见不到厂商级键（migrate_thinking_store 已把它们
+    #    归位成档案级），这里是给"迁移没跑成/没触发"留的最后一道防线。
+    sole_owner = (not ids) or (len(ids) == 1)
+    if sole_owner:
+        text = _thinking_hit(store, thinking_key(provider, model))
+        if text:
+            return text
+    return fallback
 
 
 def _thinking_hit(store: dict, key: str) -> str:

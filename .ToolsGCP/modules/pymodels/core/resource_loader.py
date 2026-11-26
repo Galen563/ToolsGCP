@@ -1,5 +1,5 @@
 """资源索引加载器：读 ToolsGCP-Resources.json（本地或 URL），构建 id->resource 内存索引。
-⚠️ 读进来的每一条都先过 resource_schema.normalize()（category 一律 list、tags 去重），
+⚠️ 读进来的每一条都先过 resource_schema.normalize()（category 一律 list、tags 原样保留），
 消费方不需要知道磁盘上以前长什么样；tag / category 索引惰性构建，不落盘。
     loader = ResourceLoader(); loader.load_from_local()
     loader.get_summaries()      # 卡片用的轻量数据
@@ -27,7 +27,15 @@ DEFAULT_RESOURCE_FILE = ".ToolsGCP/ToolsGCP-Resources.json"
 # systems / architectures = 适用系统与 CPU 架构（搜索页按这些筛）
 SUMMARY_FIELDS = ("id", "code", "name", "description", "icon",
                   "category", "tags", "url", "github", "listed_at", "supplement",
-                  "intro", "systems", "architectures")
+                  "intro", "systems", "architectures",
+                  # task-26：多组开源仓库。摘要接口必须带上 —— 卡片/列表那一路
+                  # 只读 SUMMARY_FIELDS 挑出来的键，不加就永远拿不到 repos，
+                  # 详情页的「多仓库」只能退回 detail()（而它按 code 查、更贵）。
+                  "repos")
+# ⚠️ category_all / tags_all = **各语言池的并集**（规范值）。
+#    category/tags 是"当前界面语言那一份"（显示用），这两个是"所有语言出现过的值"
+#    （筛选候选、关键词匹配用）—— 前端 mapItem 已按这两个字段名对接。
+#    老数据只有一份 ⇒ 并集 == 显示值 ⇒ 前端看到的与改动前一致（零回归）。
 
 
 # ⚠️ 哪些字段可以写成多语言的定义只有一处：resource_schema.FIELDS 里 kind="i18n"。
@@ -66,6 +74,11 @@ class ResourceLoader:
         #    其余消费方（get_all / get_summaries / resource_query）拿到的仍然是字符串。
         self._raw_by_id: dict[str, dict] = {}
         self._raw_by_code: dict[str, dict] = {}
+        # ⚠️ 索引用的**整条原始条目**（task-6）：类别/标签是三个独立语言池，
+        #    筛选索引要认**全部语言出现过的值**的并集；而 self._resources 里的是
+        #    normalize() 压平后的"当前界面语言那一份"，从它身上算不出并集。
+        #    这里另存一份原始条目专供建索引用（不参与显示、不给前端）。
+        self._raw_items: list[dict] = []
         # 标签/类别索引惰性构建：只有真正调用 by_tag / by_category 时才建立
         self._tag_index: Optional[dict[str, set[str]]] = None
         self._category_index: Optional[dict[str, set[str]]] = None
@@ -162,6 +175,7 @@ class ResourceLoader:
         #    规范形态（字符串）给所有既有消费方；原始副本（多语言字典）只给制作器。
         self._raw_by_id = {}
         self._raw_by_code = {}
+        self._raw_items = []
         self._tag_index = None
         self._category_index = None
 
@@ -175,7 +189,17 @@ class ResourceLoader:
             if not rid or rid in self._id_map:
                 continue
             self._apply_loader_defaults(canonical)
+            # 并集字段（task-6）：各语言池的类别/标签并集（规范值）。
+            # ⚠️⚠️ 必须从**磁盘原条目** item 取，不能从 canonical 取：
+            #    canonical 是 normalize() 的产物 —— 已经被按当前界面语言压成"那一份"，
+            #    从它身上再算并集只能得到同一份（我第一版就这么写错了：
+            #    简体界面下 by_category("网络") 依然查不到 English 池里的「网络」）。
+            #    老数据只有一份 ⇒ 并集 == 显示值 ⇒ 行为与改动前完全一致。
+            canonical["category_all"] = resource_schema.categories_all_of(item)
+            canonical["tags_all"] = resource_schema.tags_all_of(item)
             self._resources.append(canonical)
+            # 原始条目另存一份：建筛选索引时要按"各语言并集"取值
+            self._raw_items.append(item)
             self._id_map[rid] = canonical
             # 原始条目：只保留多语言字段的**原样字典**（磁盘上没写多语言就取不到，
             # 前端会回退到"当前语言字符串"的老行为）。
@@ -234,21 +258,35 @@ class ResourceLoader:
     def _ensure_category_index(self) -> dict[str, set[str]]:
         if self._category_index is None:
             index: dict[str, set[str]] = {}
-            for item in self._resources:
-                # category 是列表：一条资源可以同时属于多个类别，每个都要进索引
-                for category in resource_schema.categories_of(item):
-                    index.setdefault(category, set()).add(item["id"])
+            # ⚠️ 索引建在**并集**上（categories_all_of），不是"当前界面语言那一份"：
+            #    制作器的类别是三个独立语言池，用户定夺「各语言值都能被搜到」——
+            #    只在 English 池里填了「网络」的条目，中文界面下也必须能按「网络」筛到。
+            #    值恒为规范中文（English 池存 ["工具","网络"] 而不是 ["Tools"]），
+            #    所以索引键仍是规范中文，前端 term() 照旧翻成界面语言显示。
+            # ⚠️ 取值来源是**磁盘原始条目**（_raw_items）：self._resources 里的是
+            #    normalize() 压平后的"当前语言那一份"，从它身上算并集只会得到同一份。
+            for item in self._raw_items:
+                rid = str(item.get("id") or "")
+                if not rid:
+                    continue
+                for category in resource_schema.categories_all_of(item):
+                    index.setdefault(category, set()).add(rid)
             self._category_index = index
         return self._category_index
 
     def _ensure_tag_index(self) -> dict[str, set[str]]:
         if self._tag_index is None:
             index: dict[str, set[str]] = {}
-            for item in self._resources:
-                # 和搜索页的标签筛选同一套取值（类别 ∪ 标签）：tags 去重之后
-                # 只索引 tags 会让 by_tag("工具") 查不到东西。
-                for tag in resource_schema.keywords_of(item):
-                    index.setdefault(tag, set()).add(item["id"])
+            # 和搜索页的标签筛选同一套取值（类别 ∪ 标签）：只索引 tags
+            # 会让 by_tag("工具") 查不到东西。
+            # ⚠️ 同上：索引建在**并集**上（keywords_all_of），各语言池里出现过的词都能被搜到；
+            #    取值来源同样是磁盘原始条目（_raw_items）。
+            for item in self._raw_items:
+                rid = str(item.get("id") or "")
+                if not rid:
+                    continue
+                for tag in resource_schema.keywords_all_of(item):
+                    index.setdefault(tag, set()).add(rid)
             self._tag_index = index
         return self._tag_index
 
@@ -258,9 +296,17 @@ class ResourceLoader:
         return list(self._resources)
 
     def get_summaries(self) -> list[dict]:
-        """获取轻量资源列表（仅卡片显示所需字段，不含 details/guide/related_info）"""
+        """获取轻量资源列表（仅卡片显示所需字段，不含 details/guide/related_info）
+        ⚠️ category_all/tags_all 也带上（筛选候选要用），它们不是"摘要"字段，
+           但少了它前端就得自己猜并集 —— 口径必须和后端索引一致。"""
         return [
-            {field: item.get(field) for field in SUMMARY_FIELDS}
+            dict({field: item.get(field) for field in SUMMARY_FIELDS},
+                 category_all=item.get("category_all") or item.get("category") or [],
+                 tags_all=item.get("tags_all") or item.get("tags") or [],
+                 # task-26：repos 恒为数组（没有仓库就是空数组，不是 None）。
+                 # ⚠️ 为什么不能留 None：摘要直接进 JSON 推给前端，消费方写 row.repos.length
+                 #    就会炸在 None 上；「没有仓库」与「仓库字段缺失」在协议里必须是同一个形态。
+                 repos=list(item.get("repos") or []))
             for item in self._resources
         ]
 
@@ -286,12 +332,22 @@ class ResourceLoader:
         `{语言: 文本}` 还是**同一批字典对象**，调用方改一下就污染了内存索引
         （下次再取拿到的就是被改过的内容）。制作器那边会把取到的文本塞进表单、
         随用户编辑写回，深拷贝能保证"内存里的资源库"永远不被表单操作影响。
+        ⚠️ task-4 起 category/tags 的字典形态（`{语言: list[str]}`）也从这里出去：
+        值除了字典还要复制 **list**（语言下面那一层），否则调用方 append/sort
+        就改到了内存索引里的原始列表。两层就够：语言字典 → 语言值（str/list），
+        值再往下没有可变容器（元素是字符串）。
         """
         if not entry:
             return {}
         out = {}
         for key, value in entry.items():
-            out[key] = dict(value) if isinstance(value, dict) else value
+            if isinstance(value, dict):
+                out[key] = {k: (list(v) if isinstance(v, list) else v)
+                            for k, v in value.items()}
+            elif isinstance(value, list):
+                out[key] = list(value)
+            else:
+                out[key] = value
         return out
 
     def get_raw_i18n_by_id(self, rid: str) -> dict:
@@ -314,12 +370,24 @@ class ResourceLoader:
         return self._copy_raw_i18n(entry)
 
     def by_tag(self, tag: str) -> list[dict]:
-        """按关键词查找（类别 ∪ 标签 —— 和搜索页标签筛选的取值一致）"""
-        return [self._id_map[rid] for rid in self._ensure_tag_index().get(tag, ())]
+        """按关键词查找（类别 ∪ 标签 —— 和搜索页标签筛选的取值一致）
+
+        ⚠️ 返回顺序必须是**资源库里的原始顺序**，不能是 set 的遍历顺序：
+        索引内部用 set 存 rid，而 Python 的字符串哈希默认按进程随机化（PYTHONHASHSEED），
+        同一个库两次运行可能给出不同顺序 —— 列表页会"自己跳位"、回归脚本也会随机红。
+        这里按 self._resources 的顺序过滤，顺序就稳定了。"""
+        return self._ordered_by_ids(self._ensure_tag_index().get(tag, ()))
 
     def by_category(self, category: str) -> list[dict]:
-        """按类别查找"""
-        return [self._id_map[rid] for rid in self._ensure_category_index().get(category, ())]
+        """按类别查找（顺序同 by_tag：按资源库原始顺序）"""
+        return self._ordered_by_ids(self._ensure_category_index().get(category, ()))
+
+    def _ordered_by_ids(self, ids) -> list[dict]:
+        """把 rid 集合按资源库原始顺序还原成条目列表"""
+        wanted = set(ids or ())
+        if not wanted:
+            return []
+        return [item for item in self._resources if str(item.get("id") or "") in wanted]
 
     def search(self, keyword: str) -> list[dict]:
         """按关键字搜索名称、简介、关键词（类别 + 标签）、详情"""
@@ -332,9 +400,12 @@ class ResourceLoader:
                     item.get("name", ""),
                     item.get("description", ""),
                     item.get("details", ""),
-                    # ⚠️ 用 keywords_of（类别 ∪ 标签）：以前类别是抄一份进 tags 的，
-                    #    只看 tags 恰好等价；现在 tags 去掉了重复值，必须显式带上类别。
-                    " ".join(resource_schema.keywords_of(item)),
+                    # ⚠️ 用 keywords_all_of（类别 ∪ 标签，**各语言并集**）：
+                    #    类别不再抄进 tags，必须显式带上类别才算搜得到；
+                    #    而"各语言值都能被搜到"要求连只在 English 池里出现过的词
+                    #    （例如简体界面上搜「网络」）也能命中 —— canonical 上带着
+                    #    category_all/tags_all，keywords_all_of 会优先用它们。
+                    " ".join(resource_schema.keywords_all_of(item)),
                 )
             ).lower()
             if keyword in haystack:

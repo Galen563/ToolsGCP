@@ -187,9 +187,15 @@ check("改成 position: fixed（不再被标题栏/导航挤偏 24px）",
       "position: fixed" in block, block[:70])
 check("不再完全透明（防两层字叠字）",
       "background: transparent;" not in block)
-check("底色跟随 --page 且不透明度足够压住底下页面",
-      re.search(r"background:\s*color-mix\(in srgb,\s*var\(--page\)\s*(8[5-9]|9[0-9]|100)%",
-                block) is not None, block[:200])
+# ⚠️ 第 30 轮换过一次写法：主体背景从 "color-mix(--page 85~100%)" 改成
+#    **完全不透明的 var(--page)** —— 启动画面是"程序第一眼"，半透明底会让底下
+#    页面骨架透上来（旧版实测就是"ui 叠加"）。不透明同样满足"压住底下页面"。
+check("底色跟随 --page（用主题变量，不写死颜色）",
+      re.search(r"background:\s*var\(--page\)", block) is not None, block[:200])
+check("底色**完全不透明**（底下页面骨架不会透上来叠加）",
+      re.search(r"background:\s*var\(--page\)\s*;", block) is not None
+      and "color-mix" not in block.split("background:")[1].split(";")[0],
+      block[:200])
 check("pointer-events 已交回（不再透明层穿下去点到底页）",
       "pointer-events: auto" in block or "pointer-events: none" not in block)
 

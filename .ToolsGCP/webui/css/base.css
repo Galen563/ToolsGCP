@@ -205,6 +205,16 @@ code, pre { user-select: text; -webkit-user-select: text; }
 .tb-btn.tb-close:active { background: #a3241a; border-color: #a3241a; color: #fff; }
 .app-root.is-fullscreen .titlebar, #app.is-fullscreen .titlebar,
 .titlebar.is-hidden { display: none; }
+/* ============ 全屏时的拖动落点（透明细条）============
+   需求：全屏下也要能把窗口拖出来（用户报「全屏下无法拖动」）。
+   为什么需要它：全屏时自绘标题栏被整块隐藏，前端就没有任何 mousedown 落点
+   去发拖动请求 —— 这就是"全屏拖不动"的直接原因。
+   ⚠️ 高度只给 5px 且完全透明：看得见的任何东西都会破坏"全屏"这个观感。
+   ⚠️ 层级 130：和四周的缩放热区同级（低于模态 140 / toast 160+）。 */
+.fs-drag-strip {
+  position: fixed; top: 0; left: 0; right: 0; height: 5px;
+  z-index: 130; cursor: default; background: transparent;
+}
 #app.is-maximized .titlebar { border-bottom-color: color-mix(in srgb, var(--glass-border) 70%, transparent); }
 
 /* ============ 浏览器模式（Ctrl+Caps+O 打开的系统浏览器页签）============
@@ -503,9 +513,17 @@ html.is-browser-mode .win-resize { display: none; }
   align-items: center;
   flex: 0 0 auto;
 }
+/* ★ 本轮（用户 m02537：「把三个按钮点击轮廓从圆改为正方形并圆润角，之前圆的轮廓
+   三个按钮的轮廓被压扁为椭圆所以修复这个bug不然会影响到正方形轮廓变为长方形轮廓的bug」）：
+   · 轮廓 = **正方形 + 圆润角**（正方形基准 32×32 + border-radius 8px），不再是圆形。
+     之前写 34×30 + border-radius:50% —— 宽高不等，50% 半径按短边算，
+     视觉上就是一枚**椭圆**；换成等宽等高后，圆角才会是均匀的四分之一圆。
+   · 宽高必须**相等**（32×32）：只要写 34×30 这类不等的值，无论圆角写多少，
+     hover 底色块都会被拉成"长方形/椭圆"，这正是用户报的那个 bug 的根因。
+   · 图标 13px 在 32×32 里居中，四周留白一致。 */
 .tb-btn {
   width: 32px;
-  height: 28px;
+  height: 32px;
   flex: 0 0 auto;
   border: 0;
   border-radius: 8px;
@@ -519,7 +537,7 @@ html.is-browser-mode .win-resize { display: none; }
 .tb-btn.tb-close:active { background: #a3241a; color: #fff; border: 0; }
 .tb-btn:focus,
 .tb-btn:focus-visible { outline: none; }
-.tb-btn .ic { width: 12px; height: 12px; }
+.tb-btn .ic { width: 13px; height: 13px; }
 
 /* ===========================================================================
  * 无边框窗口的缩放热区（配合 index.html 里的 .win-resize 和
@@ -559,6 +577,14 @@ html.is-browser-mode .win-resize { display: none; }
 .win-resize .wr-tr { top: 0; right: 0; width: 8px; height: 8px; cursor: nesw-resize; }
 .win-resize .wr-bl { bottom: 0; left: 0; width: 10px; height: 10px; cursor: nesw-resize; }
 .win-resize .wr-br { bottom: 0; right: 0; width: 10px; height: 10px; cursor: nwse-resize; }
+/* ⚠️ 双保险（用户 m00766：「全屏模式下或 F11 完全全屏模式下鼠标靠近边缘鼠标手势
+   切换为拉伸窗口的 ui，所以我推断窗口并不是真全屏」）。
+   模板里已经用 v-if 把整块热区去掉了，这里再按根节点状态兜一层：
+   win.maximized / win.fullscreen 只要有一个为真，边缘就绝不出现缩放光标。
+   这两个类由 app.js 的 syncWindow()、onEvent("window-state")、applyFullscreenState()
+   三处直接写在 #app 上，不依赖任何组件渲染时序。 */
+#app.is-maximized .win-resize,
+#app.is-fullscreen .win-resize { display: none !important; }
 
 /* ===========================================================================
  * 切页/打开配置页后的静默运动

@@ -1,0 +1,33 @@
+■ 英文界面送来 Clipboard（三池同内容）
+  -> category=null
+  -> tags   =["粘贴板"]
+  幂等=True
+■ 只有 English 池
+  -> category=["游戏平台"]
+  -> tags   =null
+  幂等=True
+■ 扁平 list 形态
+  -> category=["游戏平台"]
+  -> tags   =null
+  幂等=True
+■ 逗号串形态
+  -> category=null
+  -> tags   =["粘贴板"]
+  幂等=True
+■ 自定义值（认不出→原样）
+  -> category=null
+  -> tags   ={"简体中文": ["MC启动器", "知名"], "繁體中文": ["MC启动器"], "English": ["MC启动器"]}
+  幂等=True
+■ 三池内容不一致（不自动改）
+  -> category=null
+  -> tags   ={"简体中文": ["AI图像", "去背景", "抠图"], "繁體中文": ["AI图像", "去背景", "抠图"], "English": ["去背景", "AI图像", "Photo Tool"]}
+  幂等=True
+■ 幂等（规范值再进一次）
+  -> category=["工具"]
+  -> tags   =["粘贴板", "系统"]
+  幂等=True
+■ links 不受影响
+  -> category=["游戏平台"]
+  -> tags   =null
+  幂等=True
+canonicalize_term('FileConverter')='文件转换'  ('档案转换')='档案转换'  ('自定义词')='自定义词'

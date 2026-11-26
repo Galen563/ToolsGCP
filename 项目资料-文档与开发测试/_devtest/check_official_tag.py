@@ -77,6 +77,12 @@ def classify(selector):
         return None
     if any(has_class(c, "is-official") for c in comps):
         return "official"
+    # ⚠️ 「知名」与「官方」是同类型的金色标签（上一轮加的），它同样是"带修饰类的
+    #    .tag 规则"，不能算进 plain：算进去之后，下面那条"有没有压过普通 .tag"
+    #    的校验会拿 `.tag.is-famous`（与 `.tag.is-official` 同特异度、写在后面）
+    #    当对手，于是把一个根本不存在的覆盖问题报成失败。
+    if any(has_class(c, "is-famous") for c in comps):
+        return "famous"
     return "plain"
 
 
@@ -155,7 +161,7 @@ def main():
     rules = collect()
     print("== 按 index.html 真实加载顺序，命中的 .tag 规则 ==")
     for r in rules:
-        tag = "官方" if r["kind"] == "official" else "普通"
+        tag = {"official": "官方", "famous": "知名"}.get(r["kind"], "普通")
         light = " [仅浅色]" if r["light_only"] else ""
         print("  %-22s %-45s %s%s"
               % (r["file"], r["sel"], r["spec"], light))

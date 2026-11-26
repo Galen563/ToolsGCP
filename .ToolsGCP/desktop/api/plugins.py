@@ -52,6 +52,36 @@ RESERVED_DIR_NAMES = (TEMPLATE_DIR_NAME, SHOWCASE_DIR_NAME, "_t", "_archive")
 # 插件制作辅助GCP-AI Agent也不允许被删（删了用户就再也生成不了插件了）。
 PROTECTED_PLUGIN_IDS = ("gcp-ai-agent", "gcp-plugin-maker", "plugin-showcase")
 
+# 强制开启（锁定）插件：用户要求「把 Agent 插件设置为强制开启无法关闭」。
+# 判定口径只有一份 —— `is_locked_plugin()`：目录名/id 命中这里，或 manifest 写了
+# `"locked": true`。**所有"能不能关/能不能删"的地方都必须问它**，
+# 不要再各自写一份 id 字面量（两处分开维护迟早对不上，那正是"关了又弹回来"的来源）。
+LOCKED_PLUGIN_IDS = ("gcp-ai-agent",)
+
+
+def is_locked_plugin(folder: str = "", manifest: dict = None) -> bool:
+    """这个插件是不是「强制开启、不可关闭 / 不可删除」？
+
+    · `folder` 传目录名（插件中心里那一格的名字）；
+    · `manifest` 传已读出的 manifest（可省；省了也能按目录名判）。
+    命中条件（任一）：目录名在 LOCKED_PLUGIN_IDS / manifest.id 在 LOCKED_PLUGIN_IDS /
+    manifest 里 `locked is True`。
+    ⚠️ 契约要求：**返回 bool，永不抛**（它会被插件列表、删除、设置同步、Agent 运行时
+       一起调用，抛一次就等于整个插件中心挂掉）。
+    """
+    try:
+        name = str(folder or "").strip()
+        if name and name in LOCKED_PLUGIN_IDS:
+            return True
+        if isinstance(manifest, dict):
+            if manifest.get("locked") is True:
+                return True
+            if str(manifest.get("id") or "").strip() in LOCKED_PLUGIN_IDS:
+                return True
+        return False
+    except Exception:                                     # noqa: BLE001
+        return False
+
 MANIFEST_NAME = "manifest.json"
 LEGACY_MANIFEST_NAME = "plugin.json"
 
@@ -356,6 +386,205 @@ def _load_maker_core():
         return maker, skill
 
 
+
+# ======================================================================
+# 资源生命周期：开关 = 真正的加载 / 释放
+# ======================================================================
+# 用户原话：「我给插件的定义是只要属于插件里的东西开关都可以控制」。
+# 这句话的硬要求是：**开关拨到关，插件的资源必须真的从进程里消失**，而不是只写一个
+# 设置值、让缓存/模块/注册表继续占着内存继续能被调用（那就是"关了还在"）。
+# 这个模块是所有插件域资源的唯一释放入口（前端插件中心 / 设置页 / 删除插件 三处都走它）。
+#
+# 为什么释放逻辑放在 desktop/api 而不是 core：
+#   · 插件加载本来就是这个域做的（_load_maker_core 把插件 core/ 当合成包装进 sys.modules）；
+#   · 谁加载谁释放 —— 释放点必须能看见 _maker_cache / _lang_cache 这两个模块级缓存，
+#     否则"清了 sys.modules、缓存还攥着模块对象"等于没释放（模块对象不回收，
+#     里面的计数器/单例照样活着）。
+def unload_maker_resources() -> dict:
+    """释放插件制作辅助（gcp-plugin-maker）在**本进程**里的一切资源。
+
+    清三样东西（缺一样就等于没释放）：
+      ① `_maker_cache` —— 攥着 maker / skill 两个模块对象，不清的话 sys.modules 删了
+         它们也还在内存里活着（引用计数不为零），里面的状态继续存在；
+      ② `_lang_cache` —— 每个 lang 文件的 (mtime, dict)，属于这个插件的数据；
+      ③ `sys.modules['_toolsgcp_plugin_maker_core*']` —— 合成包 + 它的子模块
+         （maker / skill / 以后新增的 core 子模块一律按前缀清，别只清两个名字）。
+    ⚠️ 幂等：没加载过时调用什么也不做，照样返回 ok。
+    ⚠️ 只删**本模块造出来的**前缀包，绝不 glob 掉别的插件/宿主模块。
+    """
+    removed = []
+    try:
+        with _maker_lock:
+            _maker_cache.clear()
+            _lang_cache.clear()
+            prefix = MAKER_CORE_PACKAGE
+            for name in list(sys.modules.keys()):
+                if name == prefix or name.startswith(prefix + "."):
+                    sys.modules.pop(name, None)
+                    removed.append(name)
+        if removed:
+            # 只记 info 不记 op：这是"开关联动"的例行释放，不该刷满用户的操作日志
+            _log("info", "插件", "maker",
+                 f"已释放插件制作辅助资源（移除模块 {len(removed)} 个: "
+                 f"{', '.join(sorted(removed))}）")
+        return {"ok": True, "modules": sorted(removed)}
+    except Exception as exc:                              # noqa: BLE001
+        _log("err", "插件", "maker", f"释放插件制作辅助资源失败: {type(exc).__name__}: {exc}")
+        return {"ok": False, "modules": [], "error": str(exc)}
+
+
+def _release_modules_by_prefix(prefix: str) -> list:
+    """按前缀摘掉 sys.modules 里的模块（第三方插件 `toolsgcp_plugin_<id>*` 用）"""
+    removed = []
+    for name in list(sys.modules.keys()):
+        if name == prefix or name.startswith(prefix):
+            sys.modules.pop(name, None)
+            removed.append(name)
+    return sorted(removed)
+
+
+def release_plugin_resources(plugin_id: str = "", reason: str = "") -> dict:
+    """释放某个插件域内的**全部资源**（不删任何文件），返回
+    `{"ok": True, "plugin": id, "released": [...]}`；**永不抛**。
+
+    契约规定的三个分支：
+      · gcp-plugin-maker → `unload_maker_resources()`（缓存 + 合成包）；
+      · gcp-ai-agent     → `agent_runtime.release_agent_resources()`
+                           （31 个工具下架 + 动作流水/计数器清空 + 摘掉窗口上的桥）；
+      · 其它插件         → 目前只清 sys.modules 里的 `toolsgcp_plugin_<id>*` 与本模块缓存。
+    ⚠️ 为什么要"永不抛"：它挂在**删除插件成功之后**和**设置项变更之后**两条主链路上，
+       释放出问题也不能让"删除结果"或"设置保存"变成失败 —— 那会让用户以为操作没成功。
+    ⚠️ 只动内存，**绝不动磁盘**：调用方（delete）自己负责 rmtree，
+       这里多删一个字节都算越权。
+    """
+    pid = str(plugin_id or "").strip()
+    released = []
+    try:
+        if not pid:
+            return {"ok": False, "plugin": "", "released": [],
+                    "error": "没有指定要释放资源的插件"}
+        # ① 插件制作辅助
+        if pid == MAKER_PLUGIN_ID:
+            result = unload_maker_resources()
+            released.append("maker_cache")
+            released.extend(f"module:{n}" for n in (result.get("modules") or []))
+        # ② GCP-AI Agent（强制开启的那个：它的 31 个工具属插件域，必须能下架）
+        elif pid == "gcp-ai-agent":
+            try:
+                from pymodels.core.ai import agent_runtime
+                result = agent_runtime.release_agent_resources()
+                released.append(f"agent_tools:{int((result or {}).get('tools_removed') or 0)}")
+                released.append("agent_actions")
+                released.append("agent_bridge")
+            except Exception as exc:                      # noqa: BLE001
+                _log("warn", "插件", "plugin",
+                     f"释放 Agent 域资源失败（{pid}）: {type(exc).__name__}: {exc}")
+                released.append("agent_tools:error")
+        # ③ 其它（第三方）插件：按合成包前缀清模块，再兜一层本模块的缓存
+        else:
+            removed = _release_modules_by_prefix(f"toolsgcp_plugin_{pid}")
+            released.extend(f"module:{n}" for n in removed)
+            # 万一第三方插件复用了制作辅助的合成包（不该发生，但兜住）
+            if pid == MAKER_PLUGIN_ID:
+                released.extend(f"module:{n}"
+                                for n in (unload_maker_resources().get("modules") or []))
+        if reason:
+            released.append(f"reason:{reason}")
+        _log("op", "插件", "plugin",
+             f"已释放插件资源: id={pid} 原因={reason or '-'} 明细={','.join(released) or '无'}")
+        return {"ok": True, "plugin": pid, "released": released}
+    except Exception as exc:                              # noqa: BLE001
+        _log("err", "插件", "plugin",
+             f"释放插件资源异常 {pid!r}: {type(exc).__name__}: {exc}")
+        return {"ok": False, "plugin": pid, "released": released, "error": str(exc)}
+
+
+def sync_plugin_resources(key: str = "", value=None, settings_manager=None) -> dict:
+    """设置项变化 → 对应插件的资源**真正**加载 / 释放（挂载点见模块说明）。
+
+    `settings_manager`：可选，调用方（`SettingsDomain.set`）手上那一份实例。
+    ⚠️ 为什么要传进来而不是自己 new 一个：见 `_repair_agent_setting` 的说明 ——
+       两个 SettingsManager 实例会互相用自己那份内存覆盖同一个配置文件。
+       不传也能正常跑（只是"纠正脏配置"这一步跳过写盘）。
+
+    映射（契约 2.3）：
+      · `gcp_ai_agent_enabled=True`  → `agent_runtime.load_agent_resources()`
+      · `gcp_ai_agent_enabled=False` → **锁定时忽略**（Agent 强制开启），但仍记日志
+      · `gcp_plugin_maker_enabled=True`  → 什么都不做（真正加载发生在首次使用，懒加载）
+      · `gcp_plugin_maker_enabled=False` → `unload_maker_resources()`
+    ⚠️ 懒加载的理由：制作辅助只是在用户敲 `/plugin` 时才需要 core/skill，
+       启动就 import 等于给每个用户白付一次插件加载成本。
+    ⚠️ 与开关无关的 key 直接 `{"ok": True, "skipped": True}` —— 别让设置页每改一项
+       都去碰插件资源（`SettingsDomain.set` 每一项都会调到这里）。
+    """
+    name = str(key or "").strip()
+    try:
+        if name == "gcp_ai_agent_enabled":
+            on = _strict_on(value)
+            if not on and is_locked_plugin("gcp-ai-agent"):
+                # 强制开启：值可能被老配置写成 False，这里不释放，并把设置**纠正回 True**
+                _log("op", "插件", "plugin",
+                     "Agent 插件为强制开启，忽略关闭请求（设置值纠正为 True）")
+                try:
+                    _repair_agent_setting(settings_manager)
+                except Exception:                         # noqa: BLE001
+                    pass
+                return {"ok": True, "plugin": "gcp-ai-agent", "locked": True,
+                        "ignored": True, "released": []}
+            from pymodels.core.ai import agent_runtime
+            if on:
+                loaded = agent_runtime.load_agent_resources()
+                _log("op", "插件", "plugin", "Agent 插件开启：已重新注册工具与动作容器")
+                return {"ok": True, "plugin": "gcp-ai-agent",
+                        "loaded": list((loaded or {}).keys())}
+            released = agent_runtime.release_agent_resources()
+            _log("op", "插件", "plugin",
+                 f"Agent 插件关闭：已下架工具 "
+                 f"{int((released or {}).get('tools_removed') or 0)} 个")
+            return {"ok": True, "plugin": "gcp-ai-agent", "released": ["agent_tools"]}
+        if name == "gcp_plugin_maker_enabled":
+            if _strict_on(value):
+                # 懒加载：不在开关拨开的那一刻 import 插件 core/，等首次 /plugin 再说
+                return {"ok": True, "plugin": MAKER_PLUGIN_ID, "lazy": True}
+            return {"ok": True, "plugin": MAKER_PLUGIN_ID,
+                    "released": (unload_maker_resources().get("modules") or [])}
+        return {"ok": True, "skipped": True}
+    except Exception as exc:                              # noqa: BLE001
+        _log("err", "插件", "plugin",
+             f"同步插件资源失败 key={name!r}: {type(exc).__name__}: {exc}")
+        return {"ok": False, "error": str(exc)}
+
+
+def _repair_agent_setting(settings_manager=None) -> bool:
+    """把 `gcp_ai_agent_enabled` 纠正回 True（强制开启插件的"脏配置自愈"）
+
+    为什么需要：强制开启是**本轮才加**的语义，老用户配置里这个键已经是 False
+    （上一版默认关闭），光靠"UI 上锁"挡不住 —— 后端代码里到处是
+    `settings.get("gcp_ai_agent_enabled")`，读到 False 就真的当它关着。
+    所以任何"要关它"的路径上都要把值纠正回来，保证读这个键的地方看到的都是 True。
+    ⚠️ 只在值确实不对时才写盘（`update_setting` 每次都记日志 + 写文件），
+       避免每次调用都刷一条无意义的 OP 日志。
+    ⚠️ **绝不自己 new SettingsManager()**：那会绕过外壳手上那一份内存实例，
+       两边各自写同一个配置文件 → 用户看到"改了又变回去"。
+       拿不到 manager 就只记日志，不猜。
+    """
+    manager = settings_manager
+    if manager is None:
+        _log("warn", "插件", "plugin",
+             "要纠正 Agent 强制开启设置，但拿不到 settings_manager（本次跳过写盘）")
+        return False
+    try:
+        if _strict_on(getattr(manager, "settings", {}).get("gcp_ai_agent_enabled")):
+            return False
+        manager.update_setting("gcp_ai_agent_enabled", True)
+        _log("op", "插件", "plugin",
+             "强制开启的 Agent 插件：把设置 gcp_ai_agent_enabled 从 False 纠正为 True")
+        return True
+    except Exception as exc:                              # noqa: BLE001
+        _log("warn", "插件", "plugin", f"纠正 Agent 强制开启设置失败: {exc}")
+        return False
+
+
 # ======================================================================
 # 插件制作辅助：/plugin 悬浮提示
 # ======================================================================
@@ -583,6 +812,10 @@ class PluginsDomain:
                         continue
                     row['source'] = ('user' if root == roots[0] else 'builtin')
                     row['source_dir'] = root
+                    # `lockable` 是 `locked` 的取反：前端照着它决定开关能不能拨。
+                    # 为什么两个都给：前端既有"能拨吗"(lockable) 也有"是不是强制开启"(locked)
+                    # 两种读法（卡片徽章 vs 开关 disabled），少给一个就会有一边判错。
+                    row['lockable'] = not bool(row.get('locked'))
                     seen[name] = row
                     rows.append(row)
             return _ok(plugins=rows,
@@ -597,7 +830,14 @@ class PluginsDomain:
             return _fail(f"枚举插件目录失败: {exc}")
 
     def _describe(self, folder: str, folder_name: str, locale: str):
-        """读一个插件目录的 manifest，压成一行给前端（读不到也给 id，别让它消失）"""
+        """读一个插件目录的 manifest，压成一行给前端（读不到也给 id，别让它消失）
+
+        ⚠️ 每一行都带 `locked`（强制开启）：前端据此把开关置灰 + 显示「强制开启」。
+        判定口径只有一个 —— `is_locked_plugin()`，**不要**在这里再写一份 id 字面量。
+        ⚠️ 读不到 manifest 的分支也要带 `locked`：前端是按字段判的（`p.locked`），
+           缺字段等于 false；但缺 key 会让前端某个 `.locked === true` 的写法漏判，
+           所以三个分支一律显式给值。
+        """
         try:
             manifest_path = os.path.join(folder, MANIFEST_NAME)
             if not os.path.isfile(manifest_path):
@@ -607,25 +847,33 @@ class PluginsDomain:
                 else:
                     return {"id": folder_name, "folder": folder_name,
                             "name": folder_name, "version": "", "builtin": False,
+                            "locked": is_locked_plugin(folder_name),
                             "has_manifest": False, "error": f"缺少 {MANIFEST_NAME}"}
             manifest = _read_json(manifest_path)
             if not manifest:
                 return {"id": folder_name, "folder": folder_name, "name": folder_name,
-                        "version": "", "builtin": False, "has_manifest": True,
+                        "version": "", "builtin": False,
+                        "locked": is_locked_plugin(folder_name),
+                        "has_manifest": True,
                         "error": f"{MANIFEST_NAME} 解析失败或为空"}
+            plugin_id = str(manifest.get("id") or folder_name)
             return {
-                "id": str(manifest.get("id") or folder_name),
+                "id": plugin_id,
                 "folder": folder_name,
-                "name": _pick_locale(manifest.get("name"), locale) or str(manifest.get("id") or folder_name),
+                "name": _pick_locale(manifest.get("name"), locale) or plugin_id,
                 "version": str(manifest.get("version") or ""),
                 "builtin": bool(manifest.get("builtin")),
+                # 强制开启：目录名 / manifest.id / manifest.locked 任一命中即为真
+                "locked": is_locked_plugin(folder_name, manifest),
                 "has_manifest": True,
                 "error": "",
             }
         except Exception as exc:                          # noqa: BLE001
             _log("warn", "插件", "plugin", f"读取插件 {folder_name} 失败: {exc}")
             return {"id": folder_name, "folder": folder_name, "name": folder_name,
-                    "version": "", "builtin": False, "has_manifest": False,
+                    "version": "", "builtin": False,
+                    "locked": is_locked_plugin(folder_name),
+                    "has_manifest": False,
                     "error": str(exc)}
 
     # ---------- 删除 ----------
@@ -686,13 +934,20 @@ class PluginsDomain:
                      f"拒绝删除：插件目录指向别处 {target} → {real_target}")
                 return _fail(f"「{folder_name}」不是 plugins 下的真实目录，拒绝删除")
 
-            # ② 内置 / 受保护
+            # ② 内置 / 受保护 / 强制开启
             manifest = _read_json(os.path.join(target, MANIFEST_NAME))
             if not manifest.get("id"):
                 legacy = _read_json(os.path.join(target, LEGACY_MANIFEST_NAME))
                 if legacy:
                     manifest = legacy
             pid = str(manifest.get("id") or folder_name)
+            # 强制开启的插件**任何根都不许删**（不是"内置那份不许删"）：
+            # 它靠设置里的开关活着，删掉目录 = 用户下次启动再也看不到这个插件，
+            # 而它的资源释放/加载入口全挂在"这个插件存在"上 —— 那是不可恢复的破坏。
+            if is_locked_plugin(folder_name, manifest) or is_locked_plugin(pid):
+                _log("warn", "插件", "plugin",
+                     f"拒绝删除强制开启的插件: id={pid} 目录={target}")
+                return _fail(f"「{pid}」是强制开启的插件，不能删除")
             builtin = bool(manifest.get("builtin") or manifest.get("protected"))
             # ⚠️ 保护只针对**内置目录**里那一份：用户在用户目录放的"同名覆盖版"
             #    （开发者调试内置插件时就是这么干的）必须能删掉 —— 否则他改完
@@ -719,6 +974,14 @@ class PluginsDomain:
             if os.path.isdir(target):
                 return _fail(f"删除失败：目录仍然存在（可能被占用）: {target}")
             _log("op", "插件", "plugin", f"插件已删除: id={pid} 目录={target}")
+            # ⚠️ 删除**成功之后**必须把它的进程内资源也释放掉：目录没了、缓存/
+            #    sys.modules/工具注册表里还攥着它的东西，"删了还在跑"就是这么来的。
+            #    用 try 包住：释放失败不能让"删除结果"变成失败（文件已经真删了）。
+            try:
+                release_plugin_resources(pid, "deleted")
+            except Exception as exc:                      # noqa: BLE001
+                _log("warn", "插件", "plugin",
+                     f"删除后释放插件资源失败（文件已删）: id={pid}: {exc}")
             return _ok(deleted=True, id=pid, path=target)
         except Exception as exc:                          # noqa: BLE001
             _log("err", "插件", "plugin",
@@ -752,6 +1015,90 @@ class PluginsDomain:
         except Exception as exc:                          # noqa: BLE001
             return _fail(f"读取插件目录失败: {exc}")
 
+    # ---------- 开关（唯一写入口） ----------
+    def set_enabled(self, plugin_id: str = "", on: bool = True):
+        """打开 / 关闭一个插件（**唯一**入口：前端插件中心的开关走这里）
+
+        返回 `{ok, id, key, value, locked, released}` / `{ok:false, error}`。
+
+        契约 1.3：
+          · locked 插件且 `on=False` → 直接拒绝（`{ok:false, error}`），
+            并把设置值纠正回 True（老配置可能是 False，见 `_repair_agent_setting`）；
+          · 否则把 `manifest.enabled_setting` 写进设置，再**同步**调
+            `sync_plugin_resources(key, value)` 让资源真的加载/释放。
+        ⚠️ 为什么必须在这里同步资源，而不是只写设置值：设置只是"用户意图"，
+           真正的资源（模块缓存 / 工具注册表 / 动作流水）在进程里，没人释放就一直占着 ——
+           那正是用户说的"关了还在"。
+        ⚠️ 为什么还要**写设置**：插件中心卡片、设置页那一行、`capabilities` 的能力清单
+           都读这个键，只释放不写值会导致"资源没了但界面还显示开"。
+        """
+        try:
+            folder_name = str(plugin_id or "").strip()
+            if not folder_name:
+                return _fail("没有指定要操作的插件")
+            if folder_name in (".", "..") or "/" in folder_name or "\\" in folder_name:
+                return _fail(f"插件 id 不合法: {folder_name}")
+            folder = find_plugin_dir(folder_name)
+            if not folder:
+                return _fail(f"插件不存在: {folder_name}")
+            manifest = _read_json(os.path.join(folder, MANIFEST_NAME))
+            if not manifest.get("id"):
+                legacy = _read_json(os.path.join(folder, LEGACY_MANIFEST_NAME))
+                if legacy:
+                    manifest = legacy
+            pid = str(manifest.get("id") or folder_name)
+            locked = is_locked_plugin(folder_name, manifest) or is_locked_plugin(pid)
+            wanted = bool(on)
+            if locked and not wanted:
+                # 强制开启：拒绝关闭，并把脏配置纠正回 True
+                _log("op", "插件", "plugin",
+                     f"拒绝关闭强制开启的插件: id={pid}（已忽略）")
+                try:
+                    _repair_agent_setting(self._settings_manager())
+                except Exception:                         # noqa: BLE001
+                    pass
+                return _fail(f"「{pid}」是强制开启的插件，无法关闭",
+                             id=pid, locked=True, value=True)
+            key = str(manifest.get("enabled_setting") or "").strip()
+            if not key:
+                return _fail(
+                    f"「{pid}」没有提供开关配置（manifest 里缺少 enabled_setting）",
+                    id=pid, locked=locked)
+            manager = self._settings_manager()
+            if manager is None:
+                return _fail("设置不可用（拿不到 settings_manager）", id=pid)
+            old = manager.settings.get(key)
+            # ⚠️ 强制开启的插件：值恒为 True，哪怕调用方传的是 True 也走这一步，
+            #    保证"任何路径都不会把它写成 False"。
+            manager.update_setting(key, True if locked else wanted)
+            new = manager.settings.get(key)
+            # 写盘→广播（和 SettingsDomain.set 同一口径：值真变了才发，敏感键不涉及）
+            if old != new:
+                try:
+                    self._shell.push_event("settings-changed",
+                                           {"key": key, "old": old, "new": new})
+                except Exception:                         # noqa: BLE001
+                    pass
+            sync = sync_plugin_resources(key, new, settings_manager=manager)
+            if old != new:
+                _log("op", "插件", "plugin",
+                     f"插件开关: id={pid} {key}: {old!r} → {new!r}")
+            return _ok(id=pid, key=key, value=new, locked=locked,
+                       released=(sync or {}).get("released") or [],
+                       loaded=(sync or {}).get("loaded") or [])
+        except Exception as exc:                          # noqa: BLE001
+            _log("err", "插件", "plugin",
+                 f"切换插件开关 {plugin_id!r} 失败: {type(exc).__name__}: {exc}")
+            return _fail(f"切换插件开关失败: {exc}")
+
+    def _settings_manager(self):
+        """外壳手上的设置管理器（拿不到返回 None）
+
+        ⚠️ 绝不自己 `SettingsManager()`：那会新建一个内存实例，两边各自
+           用自己那份覆盖同一个配置文件（用户看到"改了又变回去"）。
+        """
+        return getattr(self._shell, "settings_manager", None)
+
     def open_dir(self, kind: str = "user"):
         """在资源管理器里打开插件目录（kind: user=用户可写目录 / builtin=内置目录）
         ⚠️ 打开**用户目录**时如果它还不存在就先建出来 —— 否则 explorer 打开一个
@@ -779,4 +1126,8 @@ __all__ = [
     "maker_options", "maker_skill", "clean_develop_language", "hint_payload",
     "execute_create_plugin",
     "HINT_ID", "HINT_INSERT", "HINT_PRIORITY", "TOOL_NAME",
+    # ---------- 强制开启（契约 1.3） ----------
+    "LOCKED_PLUGIN_IDS", "PROTECTED_PLUGIN_IDS", "is_locked_plugin",
+    # ---------- 资源生命周期（契约 2.1） ----------
+    "unload_maker_resources", "release_plugin_resources", "sync_plugin_resources",
 ]

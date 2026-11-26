@@ -51,5 +51,8 @@
   "tools_gcp_title": "收藏",
   "fav_new_folder_tip": "新建收藏夾",
   "fav_move_tip": "批次移動：勾選要移動的收藏，再選目標收藏夾",
-  "fav_menu_tip": "右鍵收藏夾可以重新命名或刪除"
+  "fav_menu_tip": "右鍵收藏夾可以重新命名或刪除",
+  "delete_plugin": "刪除外掛",
+  "delete_plugin_confirm": "確定要刪除外掛「{name}」嗎？外掛資料夾會被整個刪除。",
+  "select_none": "全不選"
 }

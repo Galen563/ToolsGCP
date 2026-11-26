@@ -1,0 +1,12 @@
+LANGUAGES_DIR='C:\\Users\\Administrator\\Desktop\\ToolsGCP开发\\v1.1.4 - 12\\.ToolsGCP\\modules\\languages' exists=True
+get_current_manager() -> None
+maker._term_manager() -> <pymodels.core.language_manager.LanguageManager object at 0x000001D5A8BC0980>
+m2 is m1: False
+m2.translations locales=['zh_CN', 'zh_TW', 'en_US']
+  zh_CN type=dict len=14 term_nest=14
+  zh_TW type=dict len=14 term_nest=14
+  en_US type=dict len=14 term_nest=14
+rev size=211  Clipboard->'粘贴板'
+canonicalize_term('Clipboard') = '粘贴板'
+lm.canonical_term('Clipboard') = '粘贴板'
+lm.canonical_term('Clipboard', m2) = '粘贴板'

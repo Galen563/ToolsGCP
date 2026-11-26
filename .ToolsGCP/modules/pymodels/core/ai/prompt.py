@@ -286,6 +286,18 @@ def current_time_text(now=None) -> str:
         return "当前时间：未知（系统时间读取失败）"
 
 
+def runtime_clock(now=None) -> str:
+    """system 末尾的「当前时间」段（本轮从元信息段挪过来，为前缀缓存让路）。
+
+    ⚠️ 摆放位置就是这条函数的存在理由：网关的提示缓存按**从第一条开始的公共前缀**命中，
+    时间文本一变，它之后的所有内容（身份/清单/协议目录/硬性要求…）全都要重新计费。
+    挪到最末尾之后，"每天第一次请求之后的所有请求"前面几万字都能吃缓存。
+    """
+    return ("\n【当前时间】" + current_time_text(now)
+            + "\n  （该时间是**本次会话构建上下文时**的实时值；被问到时间以此为准，"
+              "不要说不确定。用户要更精确的当前时间时，说明以系统时间为准即可。）\n")
+
+
 def build_runtime_meta(provider_label: str = "", display_model: str = "",
                        api_model: str = "", reply_language: str = "auto",
                        thinking_text: str = "", features_text: str = "",
@@ -314,9 +326,11 @@ def build_runtime_meta(provider_label: str = "", display_model: str = "",
                  f"（用户设定，见下方【输出语言】指令）")
     if thinking_text:
         lines.append(f"· 当前思考档位：{thinking_text}")
-    lines.append(current_time_text(now))
-    lines.append("  （该时间是**本次会话构建上下文时**的实时值；被问到时间以此为准，"
-                 "不要说不确定。用户要更精确的当前时间时，说明以系统时间为准即可。）")
+    # ★ 本轮改动（需求 5 缓存命中）：「当前时间」这一行以前就夹在元信息段中间，
+    #   而元信息段是 system 的**开头** —— 一秒一变的文本摆在最前面，等于每次都把
+    #   整段前缀改一遍，DeepSeek/OpenAI 这类网关的**前缀缓存永远命中不了**。
+    #   现在把它整段挪到 system 的**最末尾**（见 runtime_clock / build_system_message），
+    #   前面所有文本保持稳定 → 稳定前缀才谈得上缓存；时间语义一个字没少。
     if models_text:
         lines.append(f"· 可用（已配 API Key）的服务商与模型：{models_text}")
     if features_text:
@@ -555,13 +569,15 @@ def _full_catalog(items: list, language: str) -> str:
 
 def _haystack(item: dict, language: str) -> str:
     """一条资源可用于匹配的文本（名称/关键词/简介 + 编码/id，转小写）
-    关键词 = 类别 ∪ 标签（resource_schema.keywords_of），tags 去重后必须显式带类别。
+    关键词 = 类别 ∪ 标签（resource_schema.keywords_all_of），tags 去重后必须显式带类别。
+    ⚠️ 用**并集**：类别/标签是三个独立语言池，用户定夺「各语言值都能被搜到」——
+       只在 English 池里填过的词，AI 用中文说法也应该能命中这条资源。
     ⚠️ 编码和 id 也要进去：extract_keyword() 对 `@名称(TG-000001)` 返回的就是编码，
     不算进来的话"拆词匹配"也匹配不上，表现为"@ 了某条资源，AI 说库里没有"。
     """
     return " ".join((
         _pick(item.get("name"), language),
-        " ".join(resource_schema.keywords_of(item, language)),
+        " ".join(resource_schema.keywords_all_of(item, language)),
         _pick(item.get("description"), language),
         str(item.get("code") or ""),
         str(item.get("id") or ""),
@@ -625,13 +641,179 @@ def build_legal_section() -> str:
     return LEGAL_RULES + LEGAL_HEADER + index + "\n"
 
 
+# ==========================================================================
+# 软件自身介绍：正文在 .ToolsGCP/about/ToolsGCP_About.txt，system 里只放"去哪查"
+# ==========================================================================
+# ⚠️ 本轮需求（用户原话）：「GCP-AI 他不知道 ToolsGCP 的开发者是谁问题，而且确保不是
+#   强制植入提示词而是用户问这个问题时会知道翻一个文件去找关于我软件的所有介绍
+#   （把我这个问题的内容放进入，但是之前写的内嵌强制每轮的提示词不能变，
+#    只改我现在说的这个）」
+#   → 落地方式完全照 build_legal_section() 那套成熟路子：**介绍正文绝不写进代码**，
+#     system 里只加下面这一小段"有这份文件、在哪、被问到就 read_file 去查"的指引。
+#     BASE_PROMPT / HARD_RULES / MODE_PROMPTS / EXHAUSTIVE_RULE / LEGAL_RULES /
+#     META_RULES 这些**每轮强制植入**的原文一个字都没动（本段是**追加**的新段落）。
+#   → 为什么正文不塞进 system：介绍全文约 2000 字，每轮都塞就是每轮多烧上千 token，
+#     而"谁开发的这软件"一天都问不到一次（和协议全文那次瘦身同一个理由）。
+#   → 为什么文件缺失时直接返回空串而不是留一句提示：没有原文还去引导"翻文件"，
+#     模型只会翻不到然后编一个开发者名字；宁可不给这段（说"没这条信息"也比编造强，
+#     HARD_RULES 里本来就有这条纪律）。
+ABOUT_FILE = "ToolsGCP_About.txt"
+# 正文注入时的字符上限（只在"被问到"那一次进上下文，见 wants_about_info）
+ABOUT_MAX_CHARS = 2600
+
+ABOUT_RULES = """
+【关于 ToolsGCP 本身（开发者 / 仓库 / 定位 / 数据存放）】
+本软件的完整介绍在 `.ToolsGCP/about/ToolsGCP_About.txt`（正文没给你，为的是不撑爆上下文）。
+被问到"谁开发的 / 这软件是什么 / 仓库在哪 / 收费吗 / 数据存哪里 / 怎么反馈"这类
+**关于 ToolsGCP 自己**的问题时：
+· 能用 read_file 就**先读它再据原文回答**，path 填 `.ToolsGCP/about/ToolsGCP_About.txt`；
+· 读不到就如实说明那份文件的位置，**绝对不要凭印象编造**开发者名字或仓库地址。
+"""
+
+# 「关于本软件」的意图词（命中就把正文按需注入，见 wants_about_info）
+# ⚠️ 为什么要做**意图判定**而不是把答案写死进每轮提示词：
+#    内置插件「GCP-AI Agent」默认是**关**的（constants: gcp_ai_agent_enabled=False），
+#    关着的时候模型**没有 read_file 这只手** —— 只给它"去翻文件"的指引，
+#    绝大多数用户问到"开发者是谁"时它依然翻不到、只能回答"你去打开那个文件看看"，
+#    用户报的那个问题一个都没解决。
+#    → 所以这条路径必须两条腿走：指引段（ABOUT_RULES，每轮只 300 字）+
+#      **问到才注入正文**（几百字，一次一问，不是每轮）。
+#    → 这和 wants_all_resources / EXHAUSTIVE_RULE 是同一个成熟套路：
+#      按用户意图条件注入，不做无条件植入，token 花在真正需要的那一次上。
+#    → 词表只收"关于 ToolsGCP 自己"的问法，且必须带主体词（工具名/你/这软件），
+#      不收"开发者"这种单字词（否则"有没有适合前端开发者的工具"会误命中，
+#      那类问题该答资源库，不该塞两份产品介绍）。
+_ABOUT_INTENT_RES = (
+    re.compile(r"(?:toolsGCP|这个?软件|这个?程序|这个?工具|本软件|该工具)", re.I),
+    re.compile(r"(?:谁(?:开发|做|制作|写)|开发者|开发人员|作者|团队|出品|-made|developed)", re.I),
+    re.compile(r"(?:仓库|repo|github|源码|开源|地址|官网|网站|链接)", re.I),
+    re.compile(r"(?:是什么|介绍|干嘛|能干什么|做什么|有什么功能|定位)", re.I),
+    re.compile(r"(?:收费|免费|钱|价格|license|授权)", re.I),
+    re.compile(r"(?:数据.{0,6}(?:存|放)|存储位置|配置.{0,4}目录|日志.{0,4}在哪)", re.I),
+    re.compile(r"(?:怎么(?:反馈|联系|赞助|举报)|反馈|issue|QQ\s*群|赞助)", re.I),
+    re.compile(r"(?:你(?:是谁|叫什么|什么模型|哪个模型|开发的|做的|能做什么)|你是谁)", re.I),
+)
+# ⚠️ 词表只留下面这三组，**不要**再另写一份主体词字面量：两处分开维护迟早对不上，
+#    那正是"某句问开发者就是答不上来"的来源（本轮就踩过一次，两份表并存 + 一处没引用）。
+# ⚠️ 上面那份的**并集**，给 wants_about_info 当"有主体词"的判据（别再复制粘贴一遍
+#    字面量：两处词表分开维护迟早对不上，那正是"某句问开发者答不上来"的来源）。
+_ABOUT_STRONG_SUBJECT_RES = re.compile(
+    r"(?:toolsGCP|这软件|这个软件|这程序|这个程序|这工具|这个工具|本软件|该软件|该工具"
+    r"|你是谁|你叫什么|你是什么|你哪个|你能做什么|你们|你团队|你开发|你做的|谁开发的)",
+    re.I)
+# 资源检索类提问的特征（"有没有适合前端开发者的工具"）：命中它且没有主体词时
+# **不要**当成在问产品本身 —— 那类问题该答资源库，垫一份产品介绍进去就是噪音。
+_ABOUT_SEARCH_RES = re.compile(
+    r"(?:有没有|有没有什么|推荐|求推荐|帮我找|找个|找一个|找一款|哪些|哪个|用什么"
+    r"|想要|我需要|求一个|找.*工具|软件.*推荐)", re.I)
+# 没有主体词时，只认这些"几乎只可能是在问产品本身"的强特征组合。
+# ⚠️ 故意不收录裸"开发者"（会撞资源检索）、也故意不收录裸"仓库"（可能是问 Git 工具）。
+_ABOUT_STRONG_TOPIC_RES = (
+    re.compile(r"(?:谁开发|谁制作|谁做(?:的|呢)?|开发的(?:是谁|人)|作者(?:是谁|是啥)|"
+               r"开发人员|开发团队|独立开发)", re.I),
+    re.compile(r"(?:toolsGCP\s*的?\s*(?:仓库|源码|项目|官网|地址|github))", re.I),
+    re.compile(r"(?:你(?:们|自己)?(?:的)?\s*(?:仓库|源码|官网|开发者|作者|团队))", re.I),
+)
+
+
+def wants_about_info(text: str) -> bool:
+    """这句话是不是在问「ToolsGCP 自己」的情况（开发者/仓库/定位/数据/收费/反馈）。
+
+    ⚠️ 判定要"宽进严出"，但必须排除资源检索：
+      · 用户实测报的就是"ToolsGCP 的开发者是谁他不知道"。这类问法五花八门
+        （"谁做的"/"作者是谁"/"仓库在哪"/"你背后是谁"），一律要求带"ToolsGCP"
+        这个词根本不现实 —— 所以**强特征话题词单独命中就算**（开发者、谁做的、
+        仓库、源码、官网地址、收费、数据存哪、反馈渠道），因为这些词在
+        ToolsGCP 的聊天语境里几乎只可能是在问产品本身。
+      · 但"开发者"这三个字会出现在**资源检索**里（"有没有适合前端开发者的工具"），
+        那种句子一定带检索意图词（有没有/推荐/找/求/哪些工具…）—— 用
+        _ABOUT_SEARCH_RES **反向排除**，否则会把资源问题变成一份产品介绍。
+      · 误命中的代价是"多垫约 2.2K 字符一次"，漏命中的代价是"用户问开发者是谁
+        还是答不上来"（= 本轮他报的原始问题），所以宁可稍宽。
+    """
+    try:
+        raw = str(text or "").strip()
+        if not raw or len(raw) > 400:
+            # 超长的大多是长需求描述，里面的"开发者/仓库"不等于在问产品本身
+            return False
+        # 先排除资源检索类提问（"有没有适合前端开发者的工具"）
+        if _ABOUT_SEARCH_RES.search(raw) and not _ABOUT_STRONG_SUBJECT_RES.search(raw):
+            return False
+        if _ABOUT_STRONG_SUBJECT_RES.search(raw):
+            return any(p.search(raw) for p in _ABOUT_INTENT_RES)
+        # 没有主体词时，只认"明显在问产品本身"的强特征组合
+        return any(p.search(raw) for p in _ABOUT_STRONG_TOPIC_RES)
+    except Exception:                                     # noqa: BLE001
+        return False
+
+
+def about_document() -> str:
+    """读磁盘上的介绍正文（找不到就空串；**绝不抛**，也绝不写进代码）。"""
+    try:
+        import os
+
+        from ... import constants
+        path = os.path.join(getattr(constants, "CONFIG_DIR", "") or "",
+                            "about", ABOUT_FILE)
+        if not path or not os.path.isfile(path):
+            return ""
+        with open(path, "r", encoding="utf-8-sig", errors="replace") as handle:
+            text = handle.read()
+    except Exception:                                     # noqa: BLE001
+        return ""
+    text = text.replace("\r\n", "\n").replace("\r", "\n").strip()
+    # 把文件开头那段"给 AI 看的操作说明"去掉：那是给我们俩看的元信息，
+    # 模型只需要事实本身（第一行分隔用的空行也算在内）。
+    marker = "一、"
+    index = text.find(marker)
+    if index > 0:
+        text = text[index:]
+    if len(text) > ABOUT_MAX_CHARS:
+        # 与公告那套同一纪律：**只在行边界**下刀，免得截出半个语法标记
+        lines = text[:ABOUT_MAX_CHARS].split("\n")
+        if len(lines) > 1:
+            lines.pop()
+        text = "\n".join(lines) + "\n……（介绍原文较长，此处截断，全文见该文件）"
+    return text
+
+
+def build_about_section(want_about: bool = False) -> str:
+    """「关于本软件」那一节：指引段永远给（文件存在时）；正文只在被问到那一次给。
+
+    ⚠️ 文件不存在 → 整段省略（连指引都不给）：一个都没见过路径的模型如果还被
+       鼓励"去翻文件"，翻不到就更容易编一个开发者名字出来。
+    ⚠️ want_about 为真但正文读不到 → 只给指引段，行为和以前一样。
+    """
+    try:
+        import os
+
+        from ... import constants
+        config_dir = str(getattr(constants, "CONFIG_DIR", "") or "")
+        path = os.path.join(config_dir, "about", ABOUT_FILE)
+        if not config_dir or not os.path.isfile(path):
+            return ""
+    except Exception:                                     # noqa: BLE001
+        return ""
+    section = ABOUT_RULES
+    if want_about:
+        body = about_document()
+        if body:
+            # 明确标注"这次已据原文加载"，否则模型会以为还得再调一次 read_file，
+            # 白烧一轮工具调用（Agent 开着时尤其明显）。
+            section += ("\n【本次已按需加载的介绍原文（就照这个答，别编）】\n"
+                        + body + "\n")
+    return section
+
+
 def build_system_message(resources, language: str = "简体中文",
                          keyword: str = "", mode: str = DEFAULT_REPLY_MODE,
                          meta: str = "", want_all: bool = False,
-                         reply_language: str = "auto") -> str:
+                         reply_language: str = "auto",
+                         want_about: bool = False,
+                         clock: str = "") -> str:
     """拼出完整的 system 消息
-    顺序：运行时元信息 → 角色定位 → 资源清单 → 产品边界（协议全文）→ 输出语言
-          → 硬性要求 → 模式要求
+    顺序：运行时元信息 → 角色定位 → 资源清单 → 产品边界（协议全文）→ 本软件介绍指引
+          → 输出语言 → 硬性要求 → 模式要求
     （模型对靠近末尾的指令遵守得最好，所以"怎么回答"放最后；元信息放最前是身份锚点，
       输出语言紧贴硬性要求，保证它压过模型"跟着用户语言走"的默认倾向。）
     meta：build_runtime_meta() 的结果（需求 1/2/6），空串 = 不放这一段。
@@ -645,22 +827,29 @@ def build_system_message(resources, language: str = "简体中文",
     else:
         body = CATALOG_HEADER + catalog
     prefix = meta if meta else ""
+    # ★ clock（当前时间）拼在**最后**：见 runtime_clock 的缓存论证；不传照旧无此行。
     return (prefix + BASE_PROMPT + body
             + "\n" + build_legal_section()
+            # 「关于本软件」指引段（本轮新增）：紧跟产品边界那段 —— 两处都是
+            # "正文不在这里、必要时自己去读文件"的同一套机制，放一起最不容易被忽略。
+            + build_about_section(want_about)
             + language_rule(reply_language)
             + "\n" + HARD_RULES
             # ⚠️ 列举类例外**紧贴模式段之前**：模型对越靠后的指令遵守越好，而模式段
             #    （"最多 4/6/10 行、最多推荐 2~3 个"）正是"列举只给一两条"的直接来源，
             #    例外必须压在它上面、且在它之后出现，才能稳定翻掉那条限制。
             + (EXHAUSTIVE_RULE if want_all else "")
-            + mode_prompt(mode))
+            + mode_prompt(mode)
+            + (clock if clock else ""))
 
 
 def build_messages(session_messages, resources, language: str = "简体中文",
                    context_rounds: int = 0, keyword: str = "",
                    mode: str = DEFAULT_REPLY_MODE, meta: str = "",
                    want_all: bool = False,
-                   reply_language: str = "auto") -> list:
+                   reply_language: str = "auto",
+                   want_about: bool = False,
+                   clock: str = "") -> list:
     """组装最终发给 API 的 messages
     context_rounds：0 = 整个会话全发；10/20/30 = 只发最近 N 轮。
     meta / want_all / reply_language：需求 1/2/3/5/6，见 build_system_message。
@@ -685,7 +874,8 @@ def build_messages(session_messages, resources, language: str = "简体中文",
     messages = [{"role": "system",
                  "content": build_system_message(resources, language, keyword, mode,
                                                  meta=meta, want_all=want_all,
-                                                 reply_language=reply_language)}]
+                                                 reply_language=reply_language,
+                                                 want_about=want_about, clock=clock)}]
     messages.extend({"role": m["role"], "content": str(m["content"])} for m in history)
     return messages
 

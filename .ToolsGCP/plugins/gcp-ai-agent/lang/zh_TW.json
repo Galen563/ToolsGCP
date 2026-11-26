@@ -1,8 +1,8 @@
 {
   "title": "AI Agent",
-  "intro": "開啟後，直接在任何一個 GCP-AI 聊天介面裡說話，它就能替你操作 ToolsGCP。這裡只是它的設定介面。",
+  "intro": "這是內建的強制開啟外掛：開啟後，直接在任何一個 GCP-AI 聊天介面裡說話，它就能替你操作 ToolsGCP。這裡可以逐項開關 AI 的每一隻「手」。",
   "sec_switch": "總開關",
-  "sec_switch_desc": "開啟後 GCP-AI 才能動手操作 ToolsGCP；關閉後它只會正常聊天。這個開關和設定裡的是同一個。",
+  "sec_switch_desc": "這個外掛是內建強制開啟的，無法關閉；下面每一項「手」仍然可以單獨開關。",
   "switch_on": "已開啟",
   "switch_off": "已關閉",
   "switch_hint_on": "GCP-AI 現在可以替你操作 ToolsGCP。",
@@ -38,5 +38,21 @@
   "sec_stats": "統計",
   "stats_line": "模組 {tools} 個 · 累計呼叫 {total} 次",
   "stats_calls": "各模組呼叫次數：{calls}",
-  "refresh_failed": "讀取 Agent 狀態失敗：{error}"
+  "refresh_failed": "讀取 Agent 狀態失敗：{error}",
+  "status_locked": "強制開啟",
+  "switch_locked": "這是內建的強制開啟外掛，無法關閉。",
+  "switch_locked_hint": "內建強制開啟：GCP-AI 永遠可以替你操作 ToolsGCP。",
+  "switch_locked_desc": "這個外掛是內建的、強制開啟的，無法關閉；下面每一項「手」仍然可以逐項開關。",
+  "group_library": "資源庫",
+  "group_favorites": "收藏夾",
+  "group_ui": "介面與導覽",
+  "group_settings": "設定與外觀",
+  "group_plugins": "外掛",
+  "group_files": "檔案與系統",
+  "group_system": "診斷與日誌",
+  "group_other": "其它",
+  "modules_search_placeholder": "搜尋模組（名稱 / 描述 / 參數）…",
+  "modules_no_match": "沒有符合「{q}」的模組，換個關鍵字試試。",
+  "modules_badge_all_on": "全部開啟",
+  "modules_badge_partial": "已關 {off} 項"
 }

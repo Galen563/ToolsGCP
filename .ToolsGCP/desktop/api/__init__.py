@@ -27,6 +27,10 @@ from pymodels.constants import (APP_NAME, APP_VERSION, APP_AUTHOR, CONFIG_DIR,
 # 这一层直接 import，别在这里再维护一份，两份写歪了前端就和后端取不到同一套文案。
 from pymodels.core.language_manager import (DEFAULT_LOCALE, locale_for,
                                             normalize_language)
+# ⚠️ MAX_READ_IDS 必须在这里 import：公告域的 mark_read 里用它裁剪已读列表，
+#   而公告模块本身是**惰性** import 的（见 _fetch 里的局部 import），于是这个常量
+#   在本模块里根本没有名字 → 走到那行就抛 NameError（"已读没存上"的真凶）。
+from pymodels.core.announcements import MAX_READ_IDS
 
 from ..native import frame, win32
 
@@ -63,7 +67,11 @@ class AppDomain:
         try:
             settings = self._shell.settings_manager
             theme = str(settings.settings.get("theme", "跟随系统")) if settings else "跟随系统"
+            # frameless= 告诉前端现在是不是"系统原生标题栏"模式（False 时前端
+            # 不再画自绘标题栏/边缘缩放热区——那些按钮是"模拟的"，原生 caption
+            # 才是用户要的"真实的最小化/全屏/关闭"，见 shell.FRAMELESS_WINDOW）。
             return _ok(app=APP_NAME, version=APP_VERSION, author=APP_AUTHOR,
+                       frameless=bool(getattr(self._shell, "frameless", True)),
                        theme=theme,
                        accent=str(settings.settings.get("accent_color", "blue"))
                        if settings else "blue",
@@ -77,6 +85,44 @@ class AppDomain:
                        startup_ts=self._shell.started_at)
         except Exception as exc:                          # noqa: BLE001
             return _fail(exc)
+
+    def boot_pack(self):
+        """★ 本轮启动优化：把 boot() 开头**串行**的四次调用（app.info /
+        settings.paths / settings.get / app.privacy_state）合成一次。
+
+        为什么要合：每一次 js_api 调用在 pywebview 里都是
+        「起一条 Python 线程 + 执行 + 回 GUI 线程 evaluate_js」的完整往返；
+        冷启动时 WebView2 正在初始化，GUI 线程队列本来就堵，四次串行
+        在慢机器上轻松累计 1~3 秒 —— 全部发生在"窗口还没显示"的阶段，
+        用户体感就是"点了图标半天没反应"。一次带回 = 少三个往返。
+        ⚠️ 内容逐项复用现有方法，任何一项失败不影响其它项（缺字段前端照旧降级）。
+        """
+        out = {"ok": True}
+        try:
+            info = self.info()
+            if info.get("ok"):
+                out["info"] = info
+        except Exception:                               # noqa: BLE001
+            pass
+        try:
+            shell = self._shell
+            settings_domain = getattr(shell.api, "settings", None) if shell.api else None
+            if settings_domain is not None:
+                paths = settings_domain.paths()
+                if isinstance(paths, dict) and paths.get("ok"):
+                    out["paths"] = paths
+                allset = settings_domain.get("")
+                if isinstance(allset, dict) and allset.get("ok"):
+                    out["settings"] = allset
+        except Exception:                               # noqa: BLE001
+            pass
+        try:
+            state = self.privacy_state()
+            if isinstance(state, dict) and state.get("ok"):
+                out["privacy"] = state
+        except Exception:                               # noqa: BLE001
+            pass
+        return out
 
     def ready(self):
         """⚠️ 前端**首屏真的画完了**才调这个（Vue 的 mounted + nextTick 之后）
@@ -174,9 +220,12 @@ class AppDomain:
             return _fail(exc)
 
     def splash_remaining(self):
-        """启动画面还剩多少毫秒（前端据此决定自己的 loading 遮罩什么时候撤）
-        ⚠️ 返回 0 = 没有启动画面或已经播完。前端拿到 >0 的值时要**等够这么久**
-            再显示主界面，否则"设了 5 秒却提前出现"。
+        """启动画面还剩多少毫秒 —— 本轮起**恒为 0**（外壳里已写明原因）。
+
+        ⚠️ 语义变更（需求：启动动画不再有"时长"，改为主窗口出现后自动消失）：
+           返回 0 的含义是"前端**不要**再等原生启动画面"。以前返回一个正数、
+           前端等够才放界面；现在画面的存活期跨过"前端就绪"这个时刻，
+           再等它就等于前端等自己 → 首屏永不 ready → 窗口永不显示。
         """
         try:
             return _ok(remaining=int(getattr(self._shell, "splash_remaining_ms", lambda: 0)()),
@@ -185,7 +234,11 @@ class AppDomain:
             return _fail(exc)
 
     def splash_wait(self, timeout: float = 30.0):
-        """阻塞等启动画面播完（前端 ready 之前调；超时也返回，不会卡死启动）"""
+        """兼容旧接口：**立刻**返回 done=True，绝不阻塞（理由同 splash_remaining）。
+
+        保留方法本身是因为老前端/缓存页面还在调它，删了会拿到 null 走降级、
+        并在日志里留一条噪音；真正要改的等待逻辑在 app.js 那一侧（本轮一并去掉）。
+        """
         try:
             done = self._shell.wait_splash_done(float(timeout or 0))
             return _ok(done=bool(done))
@@ -205,11 +258,10 @@ class WindowDomain:
     def state(self):
         try:
             data = dict(frame.window_state(self._hwnd()))
-            # 全屏状态以 shell 那份为准：非 frameless 模式（系统标题栏）下
-            # pywebview 的原生 toggle_fullscreen 不会回写 frame._state.fullscreen，
-            # 而 F11 现在还有一条"原生 AcceleratorKeyPressed"的到达路径，
-            # 只有 shell._fullscreen_state 是三条路径共同维护的唯一事实来源。
-            data["fullscreen"] = bool(getattr(self._shell, "_fullscreen_state", False))
+            # ★ 本轮（用户原话：「所有窗口状态查询/切换一律以 Win32 的 GWL_STYLE
+            #   中是否含 WS_MAXIMIZE 为准。不要用 Python 变量记录「当前是不是全屏」，
+            #   直接读窗口样式」）→ 不再用 shell._fullscreen_state 覆盖，
+            #   frame.window_state 内部已改成读 GWL_STYLE。
             return _ok(**data)
         except Exception as exc:                          # noqa: BLE001
             return _fail(exc)
@@ -222,58 +274,28 @@ class WindowDomain:
         ⚠️ `token` 现在**必须收下**：前端每次按下都会传一个自增号。
            之前签名是 `start_drag(self)`，而前端已经改成
            `bridge.call('window.start_drag', token)` —— 参数对不上时 pywebview
-           直接抛 TypeError，Promise 走 reject，前端那条 `.catch()` 会以为
-           "原生通道不可用"，于是**每一次拖动都掉进兜底通道**（等于主路径永久失效，
-           还顺手把用户报的抖动换了一种形态）。
+           直接抛 TypeError，Promise 走 reject，前端 fire-and-forget 的
+           .catch() 会丢掉这次拖动请求（窗口不动、但不报错）。
            token 的作用是**让上一次还没送达的排队消息作废**（见 frame.start_drag）。
         """
         try:
-            started = frame.start_drag(self._hwnd(), self._shell.window, token)
+            hwnd = self._hwnd()
+
+            def _after_drag():
+                # 原生拖动结束（用户松手、系统已走完还原/最大化）后回推一次窗口状态：
+                # 前端 win.maximized 必须跟着变，否则标题栏「最大化/还原」按钮图标
+                # 会停在拖动前的旧状态（用户报的"拖动不还原"就含这半边）。
+                # 推 `window-state`：前端 onEvent 里已有监听，只是之前没人推过。
+                try:
+                    self._shell.push_event("window-state", frame.window_state(hwnd))
+                except Exception:                              # noqa: BLE001
+                    pass
+
+            started = frame.start_drag(hwnd, self._shell.window, token, on_done=_after_drag)
             return _ok(started=bool(started))
         except Exception as exc:                          # noqa: BLE001
             return _fail(exc)
 
-    def drag_delta(self, dx: int = 0, dy: int = 0):
-        """【已废弃，保留兼容】按增量移动窗口。
-        ⚠️ 增量式**不能用于拖动**：js_api 异步 + 基线漂移 = 窗口乱跳
-           （用户报的"往几个方向卡顿移动"就是这么来的）。
-           拖动请走 `window.drag_start` / `drag_move` / `drag_end`。
-        """
-        try:
-            return _ok(moved=frame.move_by(self._shell.window, int(dx or 0), int(dy or 0)))
-        except Exception as exc:                          # noqa: BLE001
-            return _fail(exc)
-
-    def drag_start(self):
-        """兜底拖动：记录起始窗口矩形 + 起始光标（都在后端取，物理像素）。
-        ⚠️ 只在**原生拖动通道明确不可用时**才走这一套（见 WindowDomain.start_drag
-           与前端 startDragFallback）。前端一个坐标都不传 ——
-           `screenX/screenY` 是 CSS 像素，受 DPI 和页面 ZoomFactor 影响，
-           拿它算窗口位置就是"越拖越偏"的来源。
-        """
-        try:
-            return _ok(**frame.drag_start(self._shell.window))
-        except Exception as exc:                          # noqa: BLE001
-            return _fail(exc)
-
-    def drag_move(self):
-        """兜底拖动一帧：目标位置 = 起始矩形 + (当前光标 − 起始光标)。
-
-        ⚠️ **幂等**是本方法存在的意义：同一次拖动里第 N 帧重复送达、
-           或者第 3 帧比第 2 帧先到，落点都一样 —— 不会叠加、不会回跳。
-           旧的 `drag_delta` 是"在当前值上累加"，一旦有两条在飞就必然错位。
-        """
-        try:
-            return _ok(**frame.drag_step(self._shell.window))
-        except Exception as exc:                          # noqa: BLE001
-            return _fail(exc)
-
-    def drag_end(self):
-        """兜底拖动结束（前端 mouseup）：清掉会话基准"""
-        try:
-            return _ok(**frame.drag_end())
-        except Exception as exc:                          # noqa: BLE001
-            return _fail(exc)
 
     def minimize(self):
         try:
@@ -311,6 +333,51 @@ class WindowDomain:
         except Exception as exc:                          # noqa: BLE001
             return _fail(exc)
 
+    def resize_begin(self, direction: str = "", css_w: int = 0):
+        """开一次「确定性缩放会话」（前端逐帧调 window.resize_drag 跟进）。
+
+        和 start_resize 的分工：
+          · start_resize = 系统原生模态循环，手感最好（带贴边、最大化拖边还原），
+            但它要求窗口带 WS_THICKFRAME（无边框补丁必须装上）；
+          · 本会话 = 我们自己算矩形再 SetWindowPos，不吃边框样式、不进模态循环。
+        有边界的两种情况直接拒绝，让前端回落到原生那条：
+          · 最大化 —— 原生会先还原再缩放，这个手感我们不复刻；
+          · 全屏 —— 拖边没有意义。
+        `css_w` 是前端此刻的 `window.innerWidth`（CSS 像素），只用来实测
+        「物理宽/CSS 宽」这个换算系数；前端之后只报位移、不报任何绝对坐标。
+        契约：{ok:true, source:"session"} → 走会话；
+              {ok:false, maximized:true} / 其它失败 → 回落 window.start_resize。
+        """
+        try:
+            return _ok(**frame.begin_resize(self._hwnd(), str(direction or ""),
+                                            int(css_w or 0)))
+        except Exception as exc:                          # noqa: BLE001
+            return _fail(exc)
+
+    def resize_drag(self, dx: float = 0, dy: float = 0):
+        """缩放会话一帧：**新前端不传任何参数**（位移由后端 GetCursorPos 量，见 frame.resize_drag）。
+
+        ⚠️ 后端每次都从会话开始时快照的矩形重算，所以这条调用**幂等**：
+           重复送达、乱序到达，落点都一样。那两个数值参数只为老前端兜底保留，
+           语义仍是「相对按下点的总位移」，别改成增量位移。
+        """
+        try:
+            return _ok(**frame.resize_drag(dx, dy))
+        except Exception as exc:                          # noqa: BLE001
+            return _fail(exc)
+
+    def resize_end(self):
+        """结束缩放会话（pointerup / pointercancel 都要调，忘了也只是下次按下重置）"""
+        try:
+            return _ok(**frame.end_resize())
+        except Exception as exc:                          # noqa: BLE001
+            return _fail(exc)
+
+    # ⚠️ 本轮（用户 m02381：「移除所有自定义 JS/Python 拖拽代码」）：
+    #   原来这里有 drag_begin / drag_drag / drag_end 三个接口（后端自己算矩形落位），
+    #   以及配套的 frame.begin_drag/drag_drag/end_drag —— **整段删掉**。
+    #   拖动只剩一条路：window.start_drag → frame.start_drag（系统原生 HTCAPTION 循环；
+    #   F11 真全屏的 popup 窗口走 SC_MOVE，同样是系统原生）。
     def toggle_fullscreen(self):
         """F11 / 全屏按钮：进/出全屏（隐藏自绘标题栏由前端根据事件/返回值切）
         契约（前端 Lead 按这个改 app.js）：
@@ -509,11 +576,68 @@ class I18nDomain:
             data[module] = entry
         return data
 
+    @staticmethod
+    def _term_map(module_data: dict) -> dict:
+        """把一个语言目录里的 common 模块压成「规范值 → 该语言译名」。
+
+        词条命名是 `term_<规范中文>`（`term_工具` → Tools / 工具 / 遊戲），
+        去掉前缀后的键就是资源库里存的规范值。没有 term_ 前缀的键不参与。
+        """
+        out = {}
+        for key, value in (module_data or {}).items():
+            if not key.startswith("term_"):
+                continue
+            canonical = key[len("term_"):]
+            if canonical:
+                out[canonical] = value
+        return out
+
+    @classmethod
+    def _read_common_module(cls, locale: str) -> dict:
+        """只读一个语言目录里的 common_language.json（译名表只在这个模块里）
+
+        ⚠️ 不要图省事改用 `_read_locale(locale)`：那个函数会把该语言目录下
+           **14 个模块文件全读一遍**，而这里只需要 common 一个 —— 三份语言目录
+           就是 42 次文件读取，全花在启动路径上。
+        """
+        path = os.path.join(LANGUAGES_DIR, locale, cls.FILES["common"])
+        if not os.path.isfile(path):
+            return {}
+        try:
+            with open(path, "r", encoding="utf-8") as handle:
+                raw = json.load(handle)
+        except Exception as exc:                        # noqa: BLE001
+            _log("warn", "语言", "language", f"读取译名表失败 {path}: {exc}")
+            return {}
+        if not isinstance(raw, dict):
+            return {}
+        return {str(key): str(value) for key, value in raw.items()
+                if isinstance(value, str) and value}
+
+    def _read_all_terms(self) -> dict:
+        """三个语言目录各读一份译名表：`{locale: {规范值: 译名}}`
+
+        ⚠️ 为什么要单独下发**三语**译名表（bundle 本来只发当前界面语言那一份）：
+           提交软件（制作器）的「多语言字段」卡片里有自己的语言分段
+           （简体中文 / 繁體中文 / English，分段索引由用户点，**不跟随界面语言**），
+           类别与标签现在要跟着**那个分段**显示译名 —— 前端手上只有界面语言那一份
+           `term_*`，拿不到另外两种语言的写法，就只能让后端一次发全三份。
+           体积很小（每份几十个键），且只在启动/切语言时各取一次。
+        """
+        terms = {}
+        for locale in ("zh_CN", "zh_TW", "en_US"):
+            terms[locale] = self._term_map(self._read_common_module(locale))
+        return terms
+
     def bundle(self, language: str = ""):
         """一次把当前语言的**全部模块**下发：避免每渲染一段文案就跨一次进程边界
         ⚠️ 取值优先级与 `LanguageManager.get_text` 一致：`请求语言目录 → zh_CN 目录`；
             值已经是字符串（新结构一个文件只有一种语言），不用再按 dict 取语言。
             再缺就由前端自己的 t(key, 默认文案) 兜底，最后才显示 key 本身。
+
+        ⚠️ `terms`：三语「类别/标签译名表」，与界面语言无关，永远给全三份
+            （理由见 `_read_all_terms`）。读失败不影响主流程 —— 前端拿不到就退回
+            只显示规范中文值，界面照常可用，所以这里包一层 try。
         """
         try:
             lang = str(language or self._shell.current_language() or "简体中文")
@@ -527,7 +651,13 @@ class I18nDomain:
                 entry = dict(fallback.get(module, {}))
                 entry.update(primary.get(module, {}))    # 该语言有的词覆盖中文
                 data[module] = entry
-            return _ok(language=normalize_language(lang), locale=locale, modules=data)
+            try:
+                terms = self._read_all_terms()
+            except Exception as exc:                    # noqa: BLE001
+                _log("warn", "语言", "language", f"三语译名表下发失败（前端回退规范值）: {exc}")
+                terms = {}
+            return _ok(language=normalize_language(lang), locale=locale,
+                       modules=data, terms=terms)
         except Exception as exc:                          # noqa: BLE001
             return _fail(exc)
 
@@ -810,6 +940,29 @@ class ClipboardDomain:
         return self.write(text)
 
 
+# Ctrl+左键后台开链接时，前台切换权锁定的时长（毫秒）。
+# 依据：ShellExecuteW 把请求转交给已运行的浏览器实例后，实例自己抢前台一般发生在几百毫秒内；
+# 2500ms 是「慢机器 + 冷启动标签页」的保守上限。太长会把用户自己的点击也挡在外面，
+# 太短则浏览器还能抢 —— 真机若仍有残留，调这个值而不是加抢回前台的代码。
+_FG_LOCK_MS = 2500
+
+
+def _unlock_foreground_later(ms: int) -> None:
+    """延时解除前台锁定（守护线程，主线程不等）。
+
+    为什么不用 time.sleep：open_url 是 pywebview 的 JS↔Python 调用，直接在主线程睡 2.5 秒
+    等于把整个前端卡住；定时器只负责"到点放锁"，浏览器那次抢前台早就过去了。
+    LockSetForegroundWindow 是进程级状态，线程是谁调的都无所谓，所以守护线程解锁是安全的。
+    """
+    try:
+        timer = threading.Timer(max(0.0, ms / 1000.0), win32.unlock_foreground)
+        timer.daemon = True
+        timer.name = "ToolsGCP-fg-unlock"
+        timer.start()
+    except Exception:                             # noqa: BLE001
+        # 定时器都起不来的话，就地解锁，绝不能把系统锁死
+        win32.unlock_foreground()
+
 class ShellDomain:
     """外部程序相关（打开链接 / 打开目录 / 重启）"""
 
@@ -821,50 +974,53 @@ class ShellDomain:
         ⚠️ 这里**不是** `webbrowser.open()` 那条"跳出应用"的路径：它是"用户点了外链"，
            原版也同样是交给系统浏览器。
         ⚠️ 应用**自身**的页面永远在 pywebview 窗口里，不经过这里。
-        ⚠️⚠️ `background` 决定**要不要把本窗口抢回前台**。
-           原版（py 的 url_open.open_url）只在**后台打开**（按着 Ctrl）时才抢回前台：
-               background=True  → 浏览器在后台开，窗口保持在前台（需要抢回）
-               background=False → 浏览器在前台开，**不要**抢回
-           若普通点击也**无条件**抢回（`_reclaim()` 三拍 150/400/800ms）：
-           用户点了链接 → 浏览器跳出来 → 150ms 后 ToolsGCP 又闪回前台 →
-           浏览器被顶到后面（现象："点链接后突然又闪回 ToolsGCP 窗口"、
-           "关掉标签页时先切到浏览器、又瞬间切回 ToolsGCP"）。
-           所以：普通点击（background=False）**不抢**；只有显式后台打开才抢。
+        ⚠️⚠️⚠️ `background`（前端 = Ctrl+左键）的语义**本轮改过，别再改回去**：
+           用户原话（m03830）：「原本我的预期是 ctrl+左键浏览器打开但是在程序窗口下面的
+           层级，而我现在的这个是先跳转到浏览器页面然后迅速唤出程序窗口，这个应该算 bug
+           不算我说的那个机制，我说的这个是所有 ctrl+左键链接之类的按钮或东西都有的 bug
+           都要修复。」
+           → 现象 "先跳浏览器、再迅速唤出程序窗口" 的真因就是旧实现下面的那行
+             `threading.Thread(target=self._reclaim, ...)`：SW_SHOWNOACTIVATE(3) 已经让
+             浏览器**不抢焦点**地起来（它本来就在程序窗口"下面一层"），随后 `_reclaim()`
+             三拍 150/400/800ms 又主动把 ToolsGCP 抢回前台 —— 用户看到的就是"闪一下窗口"。
+             `SW_SHOWNOACTIVATE` 语义本身已经满足需求，**任何主动抢前台都是多余动作**，
+             所以本轮把 reclaim 线程整段删除（连 `_reclaim()` 方法一起删，避免有人再挂回去）。
+           现在的行为：
+             background=True  → 浏览器以"不激活"方式出现在程序窗口下面，前台窗口始终是本程序
+             background=False → 浏览器正常前台打开（用户就是想让浏览器跳到前面）
+
+        ⚠️ 但只有 SW_SHOWNOACTIVATE 仍然**不够**（用户反馈「修了很多次但是还是没有解决」的
+           真原因）：浏览器**已有实例在跑**时，"open" 是 IPC/DDE 转交给那个实例的，
+           nShow 参数对"已经活着的进程要怎样显示新窗口"没有约束力，Chrome/Edge 会自己
+           调用 SetForegroundWindow 跳到最前 —— 于是出现"有时（没实例时）正常、
+           有时（有实例时）仍被抢到前台"。现在额外用 `LockSetForegroundWindow(LSFW_LOCK)`
+           在这一次打开的窗口期内**禁止任何进程改前台**，浏览器抢不到，就只能留在本程序
+           窗口的下面一层；到点自动解锁。全程不调用 SetForegroundWindow，
+           所以不会有旧版 `_reclaim()` 那种"闪一下唤回窗口"的观感。
         """
         try:
             url = str(url or "").strip()
             if not url.lower().startswith(("http://", "https://", "mailto:")):
                 return _fail(f"拒绝打开非 http(s) 链接: {url}")
             if background:
-                # 后台打开：SW_SHOWNOACTIVATE（=3）不激活浏览器，之后要把窗口抢回前台
-                win32.shell32.ShellExecuteW(None, "open", url, None, None, 3)
-                threading.Thread(target=self._reclaim, name="ToolsGCP-foreground",
-                                 daemon=True).start()
+                # 不激活地打开（SW_SHOWNOACTIVATE = 3）+ 这段时间里锁死前台切换，
+                # 浏览器（尤其是已有实例的情况）就抢不到前台，只能待在我们窗口下面一层。
+                locked = win32.lock_foreground()
+                try:
+                    win32.shell32.ShellExecuteW(None, "open", url, None, None, 3)
+                finally:
+                    # 必须保证解锁：锁没放掉的话整个系统都改不了前台窗口，比 bug 严重得多。
+                    if locked:
+                        _unlock_foreground_later(_FG_LOCK_MS)
             else:
-                # 前台打开：SW_SHOWNORMAL（=1）让浏览器正常获得焦点，
-                # **不抢回** —— 否则浏览器刚跳出来就被 ToolsGCP 顶掉（用户投诉的"闪回"）。
+                # 前台打开：SW_SHOWNORMAL（=1）让浏览器正常获得焦点
                 win32.shell32.ShellExecuteW(None, "open", url, None, None, 1)
             _log("info", "外壳", "url",
                  f"打开外部链接: {label or url}".strip()
-                 + ("（后台打开，已排队抢回前台）" if background else "（前台打开，不抢回焦点）"))
+                 + ("（后台打开，不激活浏览器、不抢前台）" if background else "（前台打开）"))
             return _ok()
         except Exception as exc:                          # noqa: BLE001
             return _fail(exc)
-
-    def _reclaim(self):
-        """多拍把窗口抢回前台（原版 url_open 的 150/400/800ms 三拍）
-        ⚠️ 每拍之前都查一次退出闸门：这个线程要睡将近 1.4 秒，期间用户完全可能已经关掉
-           程序 —— 那时再去 ShowWindow/SetForegroundWindow 会去碰已销毁的 hwnd。
-           （它不调 evaluate_js，所以不会产生 WebView2 那条异常，但同样不该在退出时动窗口。）
-        """
-        for delay in (0.15, 0.40, 0.80):
-            time.sleep(delay)
-            if getattr(self._shell, "_teardown_started", False):
-                return
-            try:
-                frame.bring_to_front(self._shell.hwnd())
-            except Exception:
-                pass
 
     def ping(self, url: str = ""):
         """**真实**测 Ping：DNS 解析 → TCP 握手 →（https 再算 TLS），返回各段毫秒数

@@ -193,6 +193,30 @@
 /* 同理：支持模型勾选区也是滚动容器，chip 里的原生 checkbox 聚焦环会被裁
    → 见下面 .ai-prof-models 的 padding（10px，同样 > 3px 光环）。 */
 .ai-prof-grid::-webkit-scrollbar { width: 8px; }
+/* ══════ 本轮需求：没选服务商时，下方整块"灰色不可点击"（见 index.html 同一处注释）══════
+   行为禁用靠每个控件的 :disabled；这里只负责**看起来**是灰的：
+   · 抽掉饱和度（grayscale）比单纯降 opacity 更像"还没启用"，白底输入框也不发虚；
+   · 容器再兜一层 pointer-events:none —— 覆盖 label / 占位提示这类没有 :disabled
+     可言的死区，免得用户点了没反应还以为卡片坏了；
+   · 服务商下拉那一格**保持可用**：它是唯一能解锁这个表单的控件，一起灰掉就成了
+     "整块都灰、只有它能点"的自相矛盾设计 → 靠 :first-child 放出来。
+   下拉弹层是 teleport 到 body 的（见 comboOpenRegistry 那套），容器上的
+   pointer-events:none 够不着它，所以即使哪天格子顺序变了也不会锁死选择。 */
+.ai-prof-grid > .ai-prof-cell {
+  /* 基础态就声明 transition：锁上/解锁两个方向都是淡入淡出，不是"啪"地跳变 */
+  transition: opacity var(--dur-hover) var(--ease-out-soft),
+              filter var(--dur-hover) var(--ease-out-soft);
+}
+.ai-prof-grid.is-locked > .ai-prof-cell:not(:first-child) {
+  opacity: .5;
+  filter: grayscale(.85);
+  pointer-events: none;
+}
+/* 原生 disabled 控件在部分内核里文字变淡得不够，光标明确给出不可用 */
+.ai-prof-grid.is-locked input:disabled,
+.ai-prof-grid.is-locked .ai-prof-model-chip {
+  cursor: not-allowed;
+}
 /* 弹窗底部按钮与表单之间留一条分隔，避免"贴在一起" */
 .ai-prof-modal-actions {
   margin-top: 18px; padding-top: 14px;
@@ -231,6 +255,11 @@
 }
 .ai-prof-model-chip.is-check { cursor: pointer; user-select: none; -webkit-user-select: none; }
 .ai-prof-model-chip.is-check input { width: 12px; height: 12px; margin: 0; accent-color: var(--accent); }
+/* 这里的勾选框历史上是 12px（模型清单一行挤十几个，16px 会把 chip 撑高），
+   而 components.css 的 `.cbox-tick` 为了对齐标准 16px 复选框写死了 16。
+   SVG 不跟着缩就会「对勾比框大、画到框外面」，所以在这个语境把对勾也缩回 12。
+   特异性 (0,3,0) 压过 `.cbox-tick` 的 (0,1,0)，不必用 !important。 */
+.ai-prof-model-chip.is-check .cbox-tick { width: 12px; height: 12px; }
 .ai-prof-model-chip.is-check.is-on {
   color: var(--accent); border-color: color-mix(in srgb, var(--accent) 42%, var(--card-border));
   background: var(--accent-soft);

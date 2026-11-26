@@ -81,6 +81,517 @@ def _reasoning_of(extra) -> str:
     return str(extra.get("reasoning") or "")
 
 
+# ======================================================================
+# Agent 执行过程的「人话摘要」模板（三语）
+# ======================================================================
+# 用户原话：「插件配置和 ai 的这个输出也要支持三语言」。
+# 每个工具一条句式；%(x)s 是占位符，缺的参数留空即可（不会抛）。
+TEMPLATES = {
+    "zh_CN": {
+        "create_favorite_folder": "正在创建收藏夹「%(name)s」",
+        "set_favorite": "正在把资源 %(code)s 收藏起来",
+        "move_favorite": "正在把 %(code)s 移到「%(folder)s」",
+        "list_favorites": "正在查看收藏夹",
+        "search_resources": "正在搜索「%(query)s」",
+        "get_resource": "正在查资源 %(code)s",
+        "open_resource": "正在打开资源详情页",
+        "resource_stats": "正在统计资源库",
+        "list_all_resources": "正在取资源清单",
+        "goto_page": "正在切换到「%(page)s」页面",
+        "notify_user": "正在发提示",
+        "search_view": "正在调整搜索页外观",
+        "deploy_list": "正在读部署清单",
+        "set_window_state": "正在调整窗口",
+        "get_setting": "正在读取设置 %(key)s",
+        "set_setting": "正在修改设置 %(key)s",
+        "list_settings": "正在列出设置项",
+        "update_settings": "正在批量修改设置",
+        "ui_switch": "正在切换开关 %(key)s",
+        "set_theme": "正在切换主题",
+        "set_language": "正在切换语言",
+        "set_autostart": "正在设置开机自启",
+        "set_hotkeys": "正在设置全局热键",
+        "list_plugins": "正在查看插件列表",
+        "set_plugin_enabled": "正在切换插件开关",
+        "open_plugin_config": "正在打开插件配置",
+        "manage_plugins": "正在管理插件",
+        "list_dir": "正在查看目录 %(path)s",
+        "read_file": "正在读取文件 %(path)s",
+        "write_file": "正在写入文件 %(path)s",
+        "run_python": "正在运行一段代码",
+        "open_url": "正在打开网页",
+        "download_resource": "正在开始下载",
+        "read_logs": "正在读日志",
+        "export_logs": "正在导出日志",
+        "app_diagnostics": "正在做诊断",
+        "new_chat": "正在新建对话",
+        "self_check": "正在自检",
+        "create_plugin": "正在生成插件 %(id)s",
+    },
+    "zh_TW": {
+        "create_favorite_folder": "正在建立收藏夾「%(name)s」",
+        "set_favorite": "正在把資源 %(code)s 收藏起來",
+        "move_favorite": "正在把 %(code)s 移到「%(folder)s」",
+        "list_favorites": "正在查看收藏夾",
+        "search_resources": "正在搜尋「%(query)s」",
+        "get_resource": "正在查資源 %(code)s",
+        "open_resource": "正在開啟資源詳情頁",
+        "resource_stats": "正在統計資源庫",
+        "list_all_resources": "正在取資源清單",
+        "goto_page": "正在切換到「%(page)s」頁面",
+        "notify_user": "正在發提示",
+        "search_view": "正在調整搜尋頁外觀",
+        "deploy_list": "正在讀部署清單",
+        "set_window_state": "正在調整視窗",
+        "get_setting": "正在讀取設定 %(key)s",
+        "set_setting": "正在修改設定 %(key)s",
+        "list_settings": "正在列出設定項",
+        "update_settings": "正在批次修改設定",
+        "ui_switch": "正在切換開關 %(key)s",
+        "set_theme": "正在切換主題",
+        "set_language": "正在切換語言",
+        "set_autostart": "正在設定開機自啟",
+        "set_hotkeys": "正在設定全域熱鍵",
+        "list_plugins": "正在查看外掛清單",
+        "set_plugin_enabled": "正在切換外掛開關",
+        "open_plugin_config": "正在開啟外掛設定",
+        "manage_plugins": "正在管理外掛",
+        "list_dir": "正在查看目錄 %(path)s",
+        "read_file": "正在讀取檔案 %(path)s",
+        "write_file": "正在寫入檔案 %(path)s",
+        "run_python": "正在執行一段程式碼",
+        "open_url": "正在開啟網頁",
+        "download_resource": "正在開始下載",
+        "read_logs": "正在讀日誌",
+        "export_logs": "正在匯出日誌",
+        "app_diagnostics": "正在做診斷",
+        "new_chat": "正在新增對話",
+        "self_check": "正在自檢",
+        "create_plugin": "正在產生外掛 %(id)s",
+    },
+    "en_US": {
+        "create_favorite_folder": "Creating folder \"%(name)s\"",
+        "set_favorite": "Saving resource %(code)s",
+        "move_favorite": "Moving %(code)s to \"%(folder)s\"",
+        "list_favorites": "Reading favorites",
+        "search_resources": "Searching for \"%(query)s\"",
+        "get_resource": "Looking up resource %(code)s",
+        "open_resource": "Opening resource details",
+        "resource_stats": "Computing library stats",
+        "list_all_resources": "Fetching the resource list",
+        "goto_page": "Switching to page \"%(page)s\"",
+        "notify_user": "Showing a notification",
+        "search_view": "Adjusting the search view",
+        "deploy_list": "Reading the deploy list",
+        "set_window_state": "Adjusting the window",
+        "get_setting": "Reading setting %(key)s",
+        "set_setting": "Changing setting %(key)s",
+        "list_settings": "Listing settings",
+        "update_settings": "Updating several settings",
+        "ui_switch": "Toggling %(key)s",
+        "set_theme": "Switching theme",
+        "set_language": "Switching language",
+        "set_autostart": "Setting autostart",
+        "set_hotkeys": "Setting global hotkeys",
+        "list_plugins": "Listing plugins",
+        "set_plugin_enabled": "Toggling a plugin",
+        "open_plugin_config": "Opening plugin settings",
+        "manage_plugins": "Managing plugins",
+        "list_dir": "Listing %(path)s",
+        "read_file": "Reading %(path)s",
+        "write_file": "Writing %(path)s",
+        "run_python": "Running a snippet",
+        "open_url": "Opening a link",
+        "download_resource": "Starting the download",
+        "read_logs": "Reading logs",
+        "export_logs": "Exporting logs",
+        "app_diagnostics": "Running diagnostics",
+        "new_chat": "Starting a new chat",
+        "self_check": "Self-checking",
+        "create_plugin": "Creating plugin %(id)s",
+    },
+}
+
+# ======================================================================
+# Agent 模式逐字流式的「放行闸门」
+# ======================================================================
+# 用户原话：「Agent 模式希望逐字流式输出，而不是等它把全部思考做完再一整段发过来」。
+# 难点不在能不能流，在**流出去的东西不能带调用标记**：模型是边写边决定要不要调工具的，
+# 标记（[TOOL]、DSML/invoke 这类装饰标签、function_call 片段）可能落在回答的任意位置，
+# 而 SSE 分片是按字节到达的 —— 完全可能出现「标记前半截到了、后半截还没到」的瞬间。
+# 所以这里每收到一次累计全文，都重算一遍**可以显示的安全前缀**（规则见 _AnswerGate）。
+
+# 裸关键字：见到就把它和它后面的一切扣住。宁可多扣一段正文，也不让标记的头漏到屏幕上 ——
+# 前端 webui/js/app.js 的 agentMarkerStart() 一旦发现正文里有标记，会把那一行**连同
+# 后面所有正文**一起隐藏，漏一个标记的观感就是「回答写到一半突然断了」，
+# 比少显示几十个字严重得多。这里不含 parameter：正文里"参数名称 parameter_size"
+# 不该触发（真标记的 <parameter ...> 由 _DECORATION_RE / 原生标签两条负责）。
+_ANSWER_BARE_CALL_RE = re.compile(r"(?:DSML|function_call|tool_call|tool_use|antml)",
+                                  re.IGNORECASE)
+# parse_tool_calls 的 pass ③ 认"**裸 JSON 调用**"（模型漏写 [TOOL] 标签，直接吐
+# {"name": ..., "args": ...}）。闸门必须和它同一口径：那边会当成调用去执行，这边就
+# 一个字节都不能显示 —— 判据收紧到"键名 + 冒号"（{"name": / {"tool": / {"function":），
+# 只写 {"name" 没有冒号、或 {"config": ...} 这种正常 JSON 示例都不算标记。
+_ANSWER_JSON_HEAD_RE = re.compile(r'\{\s*"(?:name|tool|function)"\s*:', re.IGNORECASE)
+# 裸 JSON 调用头的可能写法（用于"刚开了个头"的扣字判断）
+_ANSWER_JSON_HEADS = ('{"name"', '{"tool"', '{"function"')
+# 原生 function-calling 的标签片段（部分网关会直接把它们混进 content 里）
+_ANSWER_NATIVE_RE = re.compile(
+    r"<\s*/?\s*(?:antml:)?(?:function_call|tool_call|tool_use|invoke|parameter)\b",
+    re.IGNORECASE)
+# 判断「尾巴是不是标记刚开了个头」时最多回看多少字符
+_ANSWER_TAIL_WINDOW = 4096
+# 没闭合的 < 最多扣多久：装饰标签头（含工具名）实际都远短于这个数，超过就认定
+# "这只是正文里的一个小于号"，别再让后面的正文白等（代价：极端超长的标记头会漏
+# 几个字符到屏幕，前端 agentMarkerStart 还会兜一道）。
+_ANSWER_HEAD_MAX = 80
+# 分隔竖线：DSML 标记用的是全角 U+FF5C，也有模型写半角 | —— 单独冒在结尾时要扣住
+_ANSWER_BAR_CHARS = ("|", "\uff5c")
+# 步骤日志里必须打码的**参数名**（不是子串匹配：工具参数里叫 key 的那个是
+# set_setting/get_setting 的**设置项键名**，必须原样显示出来，见 _brief_args 注释）
+_SENSITIVE_ARG_NAMES = (
+    "api_key", "apikey", "api_key_value", "key_value", "access_key",
+    "secret_key", "private_key", "license_key", "auth_token", "token",
+    "password", "passwd", "secret",
+)
+
+
+def _tool_tag_literal() -> str:
+    """[TOOL] 字面量（与 agent_tools 同一事实来源，取不到就用默认值）"""
+    try:
+        from pymodels.core.ai import agent_tools
+        return str(getattr(agent_tools, "TOOL_TAG", "") or "[TOOL]")
+    except Exception:                                     # noqa: BLE001
+        return "[TOOL]"
+
+
+def _marker_start(text: str) -> int:
+    """累计正文里**第一个调用标记**的起始下标；一个都没有返回 -1。
+
+    认的那几种写法与 agent_tools.parse_tool_calls 同一口径（只**读**它的正则、绝不改它）：
+    XML 属性式 invoke、装饰标签 + JSON、[TOOL] + JSON，再加原生 function_call/tool_call
+    片段与裸关键字。on_chunk 给的是本轮**累计全文**，标记一旦出现就一直在，所以这里返回的
+    下标天然单调 —— 闸门据此保证"已放行的前缀不会被回收"（界面不会闪回）。
+    """
+    hits = []
+    tag = _tool_tag_literal()
+    if tag:
+        i = text.find(tag)
+        if i >= 0:
+            hits.append(i)
+    try:
+        from pymodels.core.ai import agent_tools as _at
+    except Exception:                                     # noqa: BLE001
+        _at = None
+    for attr in ("_XML_INVOKE_RE", "_DECORATION_RE"):
+        rx = getattr(_at, attr, None) if _at is not None else None
+        if rx is None:
+            continue
+        try:
+            m = rx.search(text)
+        except Exception:                                 # noqa: BLE001
+            continue
+        if m is not None:
+            hits.append(m.start())
+    for rx in (_ANSWER_NATIVE_RE, _ANSWER_BARE_CALL_RE, _ANSWER_JSON_HEAD_RE):
+        try:
+            m = rx.search(text)
+        except Exception:                                 # noqa: BLE001
+            continue
+        if m is not None:
+            hits.append(m.start())
+    # ⚠️ 命中下标要**退到标记真正的起点**才准（见 _marker_back_up）：
+    #    实测踩到 `<｜｜DSML｜｜ invoke ...>` 只回测到 3 个字符 —— 裸关键字 "DSML"
+    #    排在第 19，可标记其实从第 16 的 `<` 就开始了，于是 `<｜｜` 漏到屏幕上。
+    return min(_marker_back_up(text, h) for h in hits) if hits else -1
+
+
+def _marker_back_up(text: str, i: int) -> int:
+    """把标记命中下标退回真正的起点（只回退 `<`、`|`、`\uff5c` 三种装饰字符）
+
+    为什么必须退：SSE 是一点一点到的，闸门先靠 _partial_marker_len 把 `<｜｜` 扣住，
+    等 "DSML" 四个字母到齐 _marker_start 才认得出来 —— 这时要是按关键字的下标放行，
+    前面那三个装饰字符就已经漏到屏幕上了（`<｜｜` 这种半截标记最伤：前端
+    agentMarkerStart() 一旦发现正文里有标记，会把**那一行连同后面所有正文**一起隐藏，
+    观感就是"回答写到一半突然断了"）。
+    ⚠️ 白名单里**不含空格**：正文里"前 tool_call 后"这种写法不该把前面的空格也算进标记
+       （顶多是把关键字往后的正文扣住，那是裸关键字规则本身的代价）。
+    """
+    j = i
+    while j > 0 and text[j - 1] in ("<", "|", "\uff5c"):
+        j -= 1
+    return j
+
+
+def _partial_marker_len(tail: str) -> int:
+    """本轮**还没放行**的尾巴末尾，有多少字符可能是「调用标记刚开了个头」，要扣住。
+
+    只在未放行区间里找，所以可疑起点天然 >= 已放行长度：已经显示出去的字不会被收回去
+    （前端是整段覆盖，长度回退就等于"打字机倒着走"）。
+    """
+    n = len(tail)
+    if n == 0:
+        return 0
+    hold = n                    # 最早的可疑起点（tail 内的相对下标）
+    # ① 没闭合的标签头：DSML/invoke 这类标记流到一半就是这个样子。超过 _ANSWER_HEAD_MAX
+    #    还没等到 > 就当作正文里的小于号，别把后面的字全扣住
+    p = tail.rfind("<")
+    if p >= 0 and tail.find(">", p) < 0 and n - p <= _ANSWER_HEAD_MAX:
+        hold = min(hold, p)
+    # ② 结尾的竖线（全角 U+FF5C / 半角 |）：标记分隔符单独冒出来时先扣住
+    for ch in _ANSWER_BAR_CHARS:
+        q = tail.rfind(ch)
+        if q >= 0 and n - q <= 8:
+            hold = min(hold, q)
+    # ③ 标记字面量 / 关键字的**前缀**（长度 >=2 才扣，否则一个孤零零的 [ 或 D
+    #    就会让正文白等一帧，太浪费逐字效果）
+    lower = tail.lower()
+    for token in (_tool_tag_literal().lower(), "dsml", "function_call",
+                  "tool_call", "tool_use", "antml", "invoke"):
+        upto = min(len(token), n)
+        for k in range(upto, 1, -1):
+            if lower.endswith(token[:k]):
+                hold = min(hold, n - k)
+                break
+    # ④ 标记字面量的**首字符是标点**时（[TOOL] 的 `[`、裸 JSON 的 `{`）1 个字符也要扣住。
+    #    实测踩过：上一版"长度 >=2 才扣"让 `[` 先流到屏幕上，下一片才认出 [TOOL]，
+    #    而 _rel 只增不减（收回去就是打字机倒着走）→ 那个 `[` 永远留在正文和落盘文本里。
+    #    代价只有一帧：正文里正常的 `{`（JSON 示例）下一个字符一到就放行。
+    tag = _tool_tag_literal()
+    if tag and not tag[0].isalnum() and tail.endswith(tag[0]):
+        hold = min(hold, n - 1)
+    for head in _ANSWER_JSON_HEADS:
+        upto = min(len(head), n)
+        for k in range(upto, 0, -1):
+            if lower.endswith(head[:k].lower()):
+                hold = min(hold, n - k)
+                break
+    return n - hold
+
+
+def _markup_span(text: str) -> tuple:
+    """标记区间的 (起点, 终点)；没有标记返回 (-1, -1)。起点已经过 _marker_back_up 退到真起点。
+
+    与 _marker_start 的分工：闸门宁可多扣（含裸关键字/裸 JSON 头），收尾必须保守 ——
+    用户问「这段 JSON 对不对」时，回答里的 {"name": "张三"} 或者正文里提到的 "DSML" 一词
+    都不是调用标记，腰斩回答比多留几个字符恶劣得多。所以这里只认**标签形状**：
+    [TOOL] 字面量、成对的 <…invoke…>…</…invoke…>、_DECORATION_RE/_ANSWER_NATIVE_RE
+    那种带尖括号的装饰标签。未闭合的尾巴交给 _partial_marker_len 处理。
+    """
+    s = text or ""
+    if not s:
+        return (-1, -1)
+    hits = []
+    p = s.find("[TOOL]")
+    if p >= 0:
+        hits.append(p)
+    try:
+        from pymodels.core.ai import agent_tools as _at
+        for match in _at._XML_INVOKE_RE.finditer(s):
+            hits.append(match.start())
+            hits.append(match.end())
+        for match in _at._DECORATION_RE.finditer(s):
+            hits.append(match.start())
+            hits.append(match.end())
+    except Exception:                         # noqa: BLE001
+        pass
+    for match in _ANSWER_NATIVE_RE.finditer(s):
+        hits.append(match.start())
+        hits.append(match.end())
+    if not hits:
+        return (-1, -1)
+    starts = [h for h in hits if h >= 0]
+    first = min(starts)
+    last_end = max(starts)
+    backed = _marker_back_up(s, first)
+    return (backed if backed >= 0 else first, last_end)
+
+
+def _markup_start(text: str) -> int:
+    """只要起点（内部实现见 _markup_span）。"""
+    return _markup_span(text)[0]
+
+
+def _markup_is_the_answer(text: str) -> bool:
+    """这串标记是「模型本轮真想调用工具」，还是「正文里引用/解释了这套语法」。
+
+    判据很简单：标记**之后**还有像样的正文（≥25 个非空白字符）→ 那是解释，原样留给
+    用户，不截断也不提示「切到 Agent」；标记后面基本没内容了 → 这是本轮的收尾调用
+    （哪怕 JSON 写坏了），截断才是对的。
+    """
+    start, end = _markup_span(text)
+    if start < 0:
+        return False
+    tail = re.sub(r"\s+", "", (text or "")[end:] if end > start else "")
+    return len(tail) < 25
+
+
+
+
+class _AnswerGate:
+    """Agent 模式流式的**放行闸门**：决定模型累计输出里「现在能给用户看多少」。
+
+    放行策略（与 task-7 的验收口径一一对应）：
+      1. 累计正文里**还没有任何调用标记** → 尾部那小段"可能是标记开头"的可疑文本先扣住，
+         其余照字推 —— 这就是用户要的逐字流式。
+      2. **一旦出现调用标记** → 标记及其后的一切**立刻扣住不显示**，正文只放行标记之前的部分。
+      3. 本轮收尾确认**没有**调用（就是最终回答）→ 把扣住的剩余正文一次性放行，
+         并且过一遍 _clean_reply，保证屏幕上看到的和磁盘落盘的是同一份文本。
+      4. 本轮收尾确认**有**调用 → 标记里的 JSON / 参数绝不显示；这一段正文就此收尾，
+         下一轮从新的一段继续流，已放行的段落**不会**再重复推给前端
+         （前端 dispatchAiStreamEvent 是"整段覆盖"，靠累计全文天然不重复）。
+
+    ⚠️ 回调 on_delta(visible[, reasoning]) 收到的永远是**本次回答的累计全文**，
+       和 client.chat_stream 的 on_chunk 语义一致；真正的事件仍由 _stream_pump 发
+       {stream_id, type:"delta", text, reasoning}，前端契约一个字节都不变。
+    ⚠️ on_delta 只接受一个参数时（回归脚本里 `lambda t: ...` 很常见）就**只传正文**：
+       多传一个参数会变成 TypeError，被上层兜底 except 伪装成"发送异常"落盘，
+       测试全红但真机没坏 —— 与本文件 _build_context 的签名嗅探同一套路。
+    """
+
+    def __init__(self, on_delta=None, hold_body=False):
+        # ★ 本轮（用户 m02537 原话：「如果模型有思考开启则先思考完成后再执行任务
+        #   最后再输出正文，没有任何东西是同时进行的！」）：
+        #   hold_body=True = **agent 模式**：工具轮里模型吐出的正文一个字都不放行，
+        #   只放行思考；等所有工具轮跑完、最后一轮确认没有调用时，才一次性放行最终正文。
+        #   这样屏幕上的顺序必然是「思考 → 步骤 → 正文」，不会出现"正文先冒两句、
+        #   然后才看到它去调工具"的错位（旧行为就是边想边把正文推出去的）。
+        self._hold = bool(hold_body)
+        self._emit = on_delta if callable(on_delta) else None
+        self._emit_two = False
+        if self._emit is not None:
+            try:
+                import inspect
+                params = list(inspect.signature(self._emit).parameters.values())
+                kinds = tuple(p.kind for p in params)
+                pos = sum(1 for k in kinds
+                          if k in (inspect.Parameter.POSITIONAL_ONLY,
+                                   inspect.Parameter.POSITIONAL_OR_KEYWORD))
+                self._emit_two = pos >= 2 or inspect.Parameter.VAR_POSITIONAL in kinds
+            except Exception:                             # noqa: BLE001
+                self._emit_two = False
+        self._prefix = ""      # 已收尾段落拼起来的可见全文（跨轮不重复推）
+        self._raw = ""         # 本轮累计原文（client 的 on_chunk 给什么存什么）
+        self._rel = 0          # 本轮已确认可以显示的前缀长度（只在 _raw 内单调增长）
+        self._r_prefix = ""    # 已收尾段落的思考文本
+        self._r_raw = ""       # 本轮累计思考文本
+
+    # ---------- 对外状态 ----------
+    @property
+    def visible(self) -> str:
+        if self._hold:
+            # 扣住正文期间对外**永远**是空串：前端只能看到思考在长、步骤在跑
+            return ""
+        return self._prefix + self._raw[:self._rel]
+
+    @property
+    def reasoning(self) -> str:
+        if self._r_prefix and self._r_raw:
+            return f"{self._r_prefix}\n{self._r_raw}"
+        return self._r_prefix + self._r_raw
+
+    # ---------- 喂入 ----------
+    def feed(self, text) -> None:
+        """client.chat_stream 的 on_chunk：累计全文 → 算安全前缀 → 推出去"""
+        self._raw = str(text or "")
+        idx = _marker_start(self._raw)
+        if idx >= 0:
+            n = idx                          # 规则 2：标记及之后全部扣住
+        else:
+            tail = self._raw[self._rel:] if self._rel <= len(self._raw) else ""
+            if len(tail) > _ANSWER_TAIL_WINDOW:
+                tail = tail[-_ANSWER_TAIL_WINDOW:]
+            n = len(self._raw) - _partial_marker_len(tail)   # 规则 1
+        if n > self._rel:
+            self._rel = n
+        self._emit_now()
+
+    def note_reasoning(self, text) -> None:
+        """本轮累计思考：思考里不会有调用标记，整段收下（跨轮拼接交给 _r_prefix）"""
+        self._r_raw = str(text or "")
+        self._emit_now()
+
+    def _emit_now(self) -> None:
+        if self._emit is None:
+            return
+        try:
+            if self._emit_two:
+                self._emit(self.visible, self.reasoning)
+            else:
+                self._emit(self.visible)
+        except Exception as exc:                          # noqa: BLE001
+            # 回调崩了绝不能把工具循环带崩：字推不出去，收尾的 done 事件照样会补上全文
+            _log("warn", "AI", "stream", f"流式放行回调异常（已忽略，不影响回答）: {exc}")
+
+    # ---------- 段落收尾 ----------
+    def close_segment(self, content) -> None:
+        """本轮确认**有**工具调用：把已放行的正文收尾成一段，下一轮另起一段继续流
+        ⚠️ hold 模式（agent）下这一轮的正文**直接丢弃**：它是"我去帮你看看"这类
+           过程话，用户要的是"最后再输出正文"，混进最终答案里还会和步骤块挤在一起。
+        """
+        if self._hold:
+            self._raw = ""
+            self._rel = 0
+            self._r_prefix = self.reasoning
+            self._r_raw = ""
+            return
+        self._absorb(str(content or ""))
+
+    def finalize(self, content, clean=None) -> str:
+        """本轮确认**没有**调用（最终回答）：剩余正文一次性放行 + 与 _clean_reply 对齐
+
+        返回可见全文 —— 上层拿它当 done 事件的 text、也当落盘文本，
+        这样「用户看到的」和「历史里的」必然一致（规则 3）。
+        """
+        raw = str(content or "")
+        cleaned = clean(raw) if callable(clean) else raw.strip()
+        if self._hold:
+            # agent 模式：最终正文就是这一轮的正文，之前的过程话全部不要
+            self._prefix = ""
+        self._prefix += str(cleaned or "")
+        self._raw = ""
+        self._rel = 0
+        self._r_prefix = self.reasoning
+        self._r_raw = ""
+        # ⚠️ 只吃首尾空白/换行：正文内部的行距是模型/排版的事，不能动
+        self._prefix = self._prefix.strip("\n").rstrip()
+        self._emit_now()
+        return self._prefix
+
+    def abort(self) -> str:
+        """出错 / 被中断：只把**已确认放行**的部分收尾，可疑尾巴绝不推出去"""
+        if self._hold:
+            # hold 模式没放行过正文，中断时就该是空的（前端会显示"已中断"）
+            self._raw = ""
+            self._rel = 0
+            return ""
+        self._absorb(self._raw)
+        self._prefix = self._prefix.rstrip()
+        return self._prefix
+
+    def _absorb(self, content: str) -> None:
+        """把本轮已放行的前缀并进 _prefix 并重置本轮（content 只用于补最后一次释放）"""
+        idx = _marker_start(content)
+        limit = len(content) if idx < 0 else idx
+        if limit > self._rel:
+            self._rel = limit
+        seg = self._raw[:self._rel]
+        # ★ 本轮修复（用户："agent 每次执行完步骤都会空格几行；没执行步骤就不会"）：
+        #   工具轮的模型正文经常只有 "\n" / "\n\n"（或几个空格），旧代码照样把它
+        #   拼进 _prefix，于是 _prefix 变成"两个换行 + 最终正文" —— 屏幕上就是
+        #   步骤块和正文之间凭空多出几行空白。纯空白段一律不并入。
+        if not seg.strip():
+            seg = ""
+        self._prefix += seg
+        if self._prefix and seg:
+            self._prefix = self._prefix.rstrip() + "\n\n"
+        self._raw = ""
+        self._rel = 0
+        self._r_prefix = self.reasoning
+        self._r_raw = ""
+
+
+
 class AiDomain:
     """GCP-AI 会话 / 历史 / 发送"""
 
@@ -128,61 +639,135 @@ class AiDomain:
         return str(self._setting("ai_profile_id", "") or "").strip().lower()
 
     def _thinking_level_for(self, provider: str, model: str, profile_id: str = "") -> str:
-        """该**模型**单独记住的思考档位。
+        """该**档案 + 该模型**单独记住的思考档位；**没记录就是一律 off**。
 
-        需求原话（本轮）：「切换不同模型他们的思考强度**默认都是关闭的**，
-        每个思考强度都有**单独的存储**等级几的强度」—— 两句话是有冲突的，
-        取这个解释（也是唯一自洽的解释）：
+        需求原话（本轮）：「（同厂商或不同厂商多个同时至少 2 个存在时，或单个厂商
+        添加好了后）每个思考 ui 都应该是关闭状态，并且每个都是独立存储的思考强度挡位，
+        并且删除对应厂商他的思考强度存储也会一并删除」
           · 这台模型**设过** → 用它自己那份记忆（切回来还在，不互相污染）；
-          · 这台模型**从没设过** → **关**（"默认关闭"）。
+          · 这台模型**从没设过** → **off**（"默认关闭"）。
 
-        ⚠️⚠️ 唯一例外：整张表**全空**（= 这个用户还在用旧版，从没在新 UI 上
-           拨过档位）。这时必须退回旧的全局 `ai_thinking`，否则老用户一升级
-           就被静默改成"思考关闭"，他原来调好的 high 凭空没了。
-           表现上也很自然：他**当前这台**模型继续沿用旧值，
-           而从这一刻起遇到的**其它**模型才享受"默认关"。
-           （不这么处理会踩另一个坑：全局值每次切模型都被刷新成"上一个模型的档位"，
-             于是新模型的默认档 = 上一个模型的档位 = high，永远不关 —— 自测抓到的。）
-        ⚠️⚠️ 本轮新增 `profile_id`（用户原话：「同一个服务商的模型思考强度 ui 他们是
-           相通的，可是我需要每个模型都是独立存储的，删除厂商也跟随删除」）：
-           键里必须带上**档案 id**，否则同一家厂商的两条档案列了同一个模型名时
-           共用一条记录 → 在 A 上拨到 high，B 也跟着变 high。
+        ⚠️⚠️ 本轮修掉的真 bug：旧写法在"整张表全空"时回退**全局** `ai_thinking`
+           （注释的理由是"别把老用户调好的 high 静默改成关"）。但全局值每次切模型
+           都会被 `set_model_choice` 刷新成"上一个模型的档位"，于是这条回退等价于
+           **「任何新出现的厂商/档案/模型，默认继承上一家的高档位」** ——
+           用户报的"添加好厂商后思考 ui 不是关闭状态"就是这么来的（不是显示问题，
+           落盘的默认值本身就是 high/medium）。
+           正确解法：该继承的历史值在**启动时一次性迁到它真正属于的那条档案上**
+           （见 profiles.migrate_thinking_store + _ensure_thinking_store），
+           迁移之后这张表就是唯一事实源，查不到 → off。老用户的档位没丢，
+           新档案天然关。
+        ⚠️ `profile_id` 必须在键里（同厂商两条档案列同名模型时不能串档），
+           旧的厂商级键 `<provider>|<model>` 只在迁移时消费一次，读取端不再回退它 ——
+           否则删掉一条档案后，同厂商剩下的那条又会被旧键"复活"成已删档案的档位。
         """
         try:
             from pymodels.core.ai import profiles as ai_profiles
-            store = self._setting("ai_thinking_level", {}) or {}
-            if not isinstance(store, dict):
-                store = {}
-            hit = str(store.get(
-                ai_profiles.thinking_key(provider, model, profile_id)) or "").strip()
-            if not hit and profile_id:
-                # 老配置兜底：这条档案还没写过新键时，认一次旧的 provider|model
-                hit = str(store.get(ai_profiles.thinking_key(provider, model)) or "").strip()
-            if hit:
-                return hit
-            legacy = str(self._setting("ai_thinking", "off") or "off")
-            return legacy if not store else "off"
+            self._ensure_thinking_store()
+            pid = str(profile_id or "").strip().lower()
+            if not pid:
+                # 调用方没给档案 id（老调用点 / 聊天主链路某些分支）→ 自己解析当前生效那条。
+                # 绝不能因为"没有 id"就一律答 off：那会让用户选好的档位凭空消失。
+                pid = self._selected_profile_id()
+            items = self._profiles_raw()
+            if not pid:
+                current = ai_profiles.active_profile(items, self._has_profile_key,
+                                                     "") or {}
+                pid = str(current.get("id") or "").strip().lower()
+            prov = str(provider or "").strip().lower()
+            # ⚠️ 最后一个参数不是可省的：厂商级旧键 `<provider>|<model>` 只有在
+            #    "这家厂商恰好只有一条档案"（归属唯一，不会串档）或"根本还没建立
+            #    档案体系"时才允许被读到。
+            #    · 同厂商两条档案时必须拒掉它 —— 认了就是用户报的"ui 是相通的"；
+            #    · 档案数组为空 / 老配置直接跑时必须**照样读到**，否则老用户调好的
+            #      档位会被判成"没记录"直接变 off（本轮自测抓到的**数据丢失**：
+            #      本机 4 条厂商级记录在 profiles=[] 时跑一次归位全没了）。
+            #    判定与归位规则都在 profiles.get_thinking_level / migrate_thinking_store。
+            return ai_profiles.get_thinking_level(
+                self._thinking_store(), prov, model, "off", pid,
+                ai_profiles.provider_profile_ids(items, prov)) or "off"
         except Exception:                                 # noqa: BLE001
-            return str(self._setting("ai_thinking", "off") or "off")
+            return "off"
 
-    def _remember_thinking_level(self, provider: str, model: str, level: str,
-                                 profile_id: str = "") -> None:
-        """把档位写进"按模型"那张表（同时仍写全局 `ai_thinking` = 当前档，
-        这样老读取方 / 浏览器端不用改也能拿到当前值）。"""
+    def _thinking_store(self) -> dict:
+        """档位表（一次性迁移后的唯一事实源）；**只读**，写走 _remember_thinking_level。"""
+        manager = self.settings_manager
+        raw = manager.settings.get("ai_thinking_level") if manager else None
+        return dict(raw) if isinstance(raw, dict) else {}
+
+    def _ensure_thinking_store(self) -> None:
+        """把"厂商级旧键 / 全局快照"**持续**归位成档案级键（幂等；没变化就不写盘）。
+
+        ⚠️⚠️ 本轮改掉的关键设计 —— 这就是用户报的「厂商添加好了后，思考强度默认
+           并不是关闭」的真因：
+           原先用一次性标记 `ai_thinking_migrated` 只跑一次。本机实测：跑那次
+           `ai_provider_profiles` 还是**空数组** → 厂商级键根本归位不了（这家厂商
+           一条档案都没有，归属无从判定，只能原样保留），可标记已经落了 v2 →
+           以后用户**添加**了服务商、归属变得可判定，归位却再也跑不到 →
+           那条陈旧的 `openai|gpt-5.1: high` 会一直被新档案读到 = 默认不是关闭。
+           → 归位必须**常驻幂等**，不是一次性迁移：
+             · 每次读取都算一遍（纯字典运算，微秒级）；
+             · **只有结果和磁盘上那份不一样才写盘 + 记日志**：全新安装
+               （表空 + 全局 off）每次算出来都相同 → 零 I/O、零日志噪音，
+               成本与"一次性"写法一致；
+             · 归位规则本身可反复跑、无副作用（profiles.migrate_thinking_store）。
+        ⚠️ 上一版落盘的 `ai_thinking_migrated` 标记现在**不再读取**：留着无害，
+           不需要为了清一个死键去动用户配置文件（也别"顺手清理"，那是破坏性操作）。
+        ⚠️ 为什么在本层而不是 core 的迁移循环里：需要同时知道档案数组
+           （`_profiles_raw`）和当前生效那条（`_selected_profile_id`），两样都在本层。
+        """
         manager = self.settings_manager
         if manager is None:
             return
         try:
-            store = dict(manager.settings.get("ai_thinking_level") or {})
-            if not isinstance(store, dict):
-                store = {}
-        except Exception:                                 # noqa: BLE001
-            store = {}
+            from pymodels.core.ai import profiles as ai_profiles
+            store = self._thinking_store()
+            legacy = str(manager.settings.get("ai_thinking", "off") or "off")
+            items = self._profiles_raw()
+            active = self._selected_profile_id()
+            if not active:
+                current = ai_profiles.active_profile(items, self._has_profile_key,
+                                                     active) or {}
+                active = str(current.get("id") or "")
+            migrated = ai_profiles.migrate_thinking_store(store, items, active, legacy)
+            if migrated == store:
+                return                     # 无变化：不写盘、不记日志（零成本路径）
+            manager.update_setting("ai_thinking_level", migrated)
+            _log("info", "AI", "thinking",
+                 f"思考档位已按档案归位：{len(store)} 条 → {len(migrated)} 条"
+                 f"（档案体系建立/变更后重新归属；其余一律默认关闭，不再继承全局快照）")
+        except Exception as exc:                          # noqa: BLE001
+            _log("warn", "AI", "thinking", f"思考档位归位失败（本次按默认关闭处理）: {exc}")
+
+    def _remember_thinking_level(self, provider: str, model: str, level: str,
+                                 profile_id: str = "") -> None:
+        """把档位写进"按档案+模型"那张表。
+
+        ⚠️ 全局 `ai_thinking` 仍然照写：它只是"当前这一次用的档位"的**快照**
+           （给老读取方 / 浏览器模式 / 元信息段看），**不再是任何默认值的来源**
+           —— 谁把它当默认值读，谁就会复现"新厂商默认继承上一家档位"那个 bug。
+        """
+        manager = self.settings_manager
+        if manager is None:
+            return
         try:
             from pymodels.core.ai import profiles as ai_profiles
+            # ⚠️ 没有 profile_id（旧前端 / 兜底路径）时**先解析出当前生效那条档案**，
+            #    绝不再写厂商级 `<provider>|<model>` 键：那种键同厂商两条档案共用，
+            #    正是用户报的"相通的"；而读取端本轮起也不再回退它，写了等于没写。
+            pid = str(profile_id or "").strip().lower()
+            if not pid:
+                pid = (self._selected_profile_id()
+                       or str(self._setting("ai_profile_id", "") or "").strip().lower())
+            if not pid:
+                items = self._profiles_raw()
+                current = ai_profiles.active_profile(
+                    items, self._has_profile_key, "") or {}
+                pid = str(current.get("id") or "").strip().lower()
+            store = self._thinking_store()
             # ⚠️ 用**带档案 id 的键**写入（见 _thinking_level_for 里的需求说明）。
-            #    没有 id（旧前端 / 兜底路径）时退回旧格式，行为不比改之前差。
-            store[ai_profiles.thinking_key(provider, model, profile_id)] = str(level or "off")
+            provider = str(provider or self._setting("ai_provider", "") or "").strip().lower()
+            store[ai_profiles.thinking_key(provider, model, pid)] = str(level or "off")
             manager.update_setting("ai_thinking_level", store)
         except Exception as exc:                          # noqa: BLE001
             _log("warn", "AI", "thinking", f"记住思考档位失败（不影响本次请求）: {exc}")
@@ -560,11 +1145,14 @@ class AiDomain:
             #    条目**永远留着** —— 于是①配置里积累一堆指向已删档案的死条目；
             #    ②更糟的是新建一条档案如果**复用了同一个 id**（几乎不可能但 id 撞车时），
             #    或者旧格式键 `provider|model` 残留，都会让"新档案"莫名其妙带着旧档位。
-            #    ⚠️ 按 `profile_id|` **前缀**删，只清这一条，同厂商另一条档案的记忆
-            #       完全不受影响（正是用户要的"而不是同厂商的就允许相同"）。
+            #    ⚠️ 按 `profile_id|` **前缀**删，只清这一条，同厂商另一条档案的
+            #       **档案级**记忆完全不受影响（正是用户要的"而不是同厂商的就允许相同"）。
+            #    ⚠️ 额外把该厂商留下的**厂商级旧键**也清掉（strip_thinking_store 的
+            #       provider 参数）：那种键同厂商共用、读取端已不再回退，留着只有坏处。
             try:
                 store = manager.settings.get("ai_thinking_level")
-                cleaned = ai_profiles.strip_thinking_store(store, removed["id"])
+                cleaned = ai_profiles.strip_thinking_store(
+                    store, removed["id"], removed.get("provider") or "")
                 if cleaned != (store if isinstance(store, dict) else {}):
                     manager.update_setting("ai_thinking_level", cleaned)
                     _log("op", "AI", "profiles",
@@ -704,6 +1292,12 @@ class AiDomain:
                      f"（清单={allowed}）")
             if not want_model:
                 want_model = str(target.get("model") or (allowed[0] if allowed else ""))
+            # ⚠️⚠️ 必须在第①步**改档案指针之前**触发一次性归位迁移：
+            #    迁移要接住的老值（厂商级脏键 / 全局 `ai_thinking` 快照）属于
+            #    **切换之前**那条档案；等 ai_profile_id 被改成新档案之后再迁，
+            #    旧档位就会被记到刚被选中的新档案头上 ——
+            #    表现正是用户报的「同厂商两条档案的思考强度 ui 是相通的」。
+            self._ensure_thinking_store()
             # ① 记住"当前用哪条档案 + 哪个模型"（平铺键仍是派生快照，供老读取方用）
             changed = []
             for key, value in (("ai_profile_id", str(target.get("id") or "")),
@@ -728,9 +1322,11 @@ class AiDomain:
                 except Exception:                          # noqa: BLE001
                     pass                                   # 外壳没这个方法（预览 mock）：不影响落盘
             # ② 思考档位：给了就按**这条档案 + 这个模型**记；没给就查它自己存过的档位。
-            #    需求"切换不同模型，思考强度默认都是关闭的"落在：**从没单独设过档位的
-            #    模型**查表查不到 → 退回 `ai_thinking` 的默认 "off"（全新安装就是 off）。
-            #    ⚠️ 本轮把 profile_id 一起带进键里（同厂商两条档案不再串档）。
+            #    需求"每个思考 ui 都应该是关闭状态，并且每个都是独立存储的"落在：
+            #    **这条档案这个模型从没单独设过档位** → 查表查不到 → off
+            #    （本轮已删掉"回落到全局 ai_thinking"那条：见 _thinking_level_for 注释，
+            #     那条回落正是"新加一家厂商默认就是 high"的真因）。
+            #    ⚠️ profile_id 一起带进键里（同厂商两条档案不再串档）。
             level = str(thinking or "").strip()
             target_id = str(target.get("id") or "")
             if level:
@@ -1124,11 +1720,12 @@ class AiDomain:
                     store.save(loaded)
                 except Exception:                         # noqa: BLE001
                     pass
-            return _ok(session={"id": loaded.id, "title": loaded.title,
-                                "created_at": loaded.created_at,
-                                "updated_at": loaded.updated_at,
-                                "messages": [self._message_view(m)
-                                             for m in (loaded.messages or [])]})
+            # ★ 本轮修复（用户原话：「它不存储起来，重新加载历史对话信息就没了」）：
+            #   旧版这里**手拼**一个 session 字典，字段和 _dump() 几乎一样、唯独漏了
+            #   usage_total —— 前端 loadAiSession 读的就是 session.usage_total（缓存命中/
+            #   会话统计的数据源），于是每次重开都"没存过"一样。改成直接复用 _dump()，
+            #   两个读取口（session / 发消息后的 done）永远同一份口径。
+            return _ok(session=self._dump(loaded))
         except Exception as exc:                          # noqa: BLE001
             return _fail(exc)
 
@@ -1178,14 +1775,61 @@ class AiDomain:
             pass
         return []
 
-    # ---------- 工具循环（create_plugin） ----------
+    # ---------- 工具循环 ----------
+    def _agent_tools_ready(self) -> bool:
+        """现在允许模型调用 Agent 工具吗（拼提示词与执行**共用**这一个判据）
+
+        ⚠️ 为什么必须共用：提示词里列着工具、执行时却不认，模型会连续两轮白调；
+           反过来执行放行、提示词不列，模型根本不会调（等于没有）。
+        判据 = **对话模式是 Agent** + Agent 总开关开着 + 注册表里确实有工具。
+        ⚠️ 本轮新增「对话模式」这道闸：插件是强制开启的（能力永远在），但**每次对话**
+           用 Chat 还是 Agent 由用户那颗胶囊决定（默认 Chat）。Chat 模式下必须
+           **既不注入工具清单、也不放行工具循环** —— 否则"纯聊天"照样每轮烧掉
+           一两千 token 的工具清单，而且模型会忍不住去调工具（用户明确要求 Chat 只聊天）。
+        ⚠️ 这里**不**判断"某个具体工具"开没开：那是逐项守卫（bridge.tool_on），
+           放在 _execute_tool 里，两处职责不同。
+        """
+        try:
+            bridge = self._agent_bridge()
+            if not bridge.enabled():
+                return False
+        except Exception:                                 # noqa: BLE001
+            return False
+        # 对话模式：Chat（默认）下不注入清单、不跑工具循环
+        try:
+            from pymodels.core.ai import agent_runtime
+            if agent_runtime.chat_mode(self._shell) != agent_runtime.CHAT_MODE_AGENT:
+                return False
+        except Exception:                                 # noqa: BLE001
+            return False
+        try:
+            from pymodels.core.ai import agent_tools
+            return agent_tools.get_registry().count() > 0
+        except Exception:                                 # noqa: BLE001
+            return False
+
+    def _web_ctx(self):
+        """构造 `agent_web.WebAgentContext(shell)`（Web 版工具的上下文）
+
+        ⚠️ ImportError 必须**在调用方**兜住并给出可读错误：agent_web.py 是本轮新增文件，
+           它缺失时不能让整个 "import desktop.api.ai" 链炸掉（那会让程序起不来）。
+        """
+        from pymodels.core.ai import agent_web
+        return agent_web.WebAgentContext(self._shell)
+
     def _execute_tool(self, name: str, args: dict, locale: str) -> dict:
         """执行一个 [TOOL] 调用，返回工具结果信封（**绝不抛**）
-        ⚠️ 只执行 `create_plugin` 和 `list_all_resources`：内置 Agent 工具（search_resources / open_page…）
-           全都依赖 py 版 Qt 主窗口对象，Web 版既没有也不该在乱动界面 ——
-           模型要是凭记忆硬写一个名字过来，就明确告诉它"不支持"，让它直接回答用户。
-           `list_all_resources`（需求 5）例外：纯读资源库（Web 版自己那份 loader），
-           不碰任何界面，正好治"列举所有只给一两条"。
+
+        执行链（契约 2.4 / 4.5），顺序不能换：
+          ① `create_plugin` 走原路径（它属于插件制作辅助，不在 Agent 注册表里）；
+          ② **注册表里必须真有这个工具** —— 模型凭记忆硬写一个不存在的名字，
+             就明确回"没有这个工具"，别让它以为调用成功了；
+          ③ **逐项开关守卫** `bridge.tool_on(name)` —— 用户在插件配置界面关掉的模块
+             不许执行（用户原话："属于插件里的东西开关都可以控制"）；
+          ④ 委派给 `agent_web.execute(name, args, ctx)`（Web 版真实实现）；
+             agent_web 缺失时退回注册表里的原实现，并把"尚未就绪"如实回给模型。
+        ⚠️ 以前这里只放行 create_plugin / list_all_resources，其余一律"本轮不支持"：
+           于是配置界面里 31 个开关看起来都有用、实际 29 个点了也没用（用户报的就是这个）。
         """
         tool = str(name or "").strip()
         if tool == "create_plugin":
@@ -1195,19 +1839,57 @@ class AiDomain:
             except Exception as exc:                      # noqa: BLE001
                 _log("err", "AI", "agent_tool", f"create_plugin 执行异常: {exc}")
                 return {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
-        if tool == "list_all_resources":
-            try:
-                from pymodels.core.ai import agent_tools
-                registry = agent_tools.get_registry()
-                return registry.execute("list_all_resources",
-                                        args if isinstance(args, dict) else {},
-                                        agent=self)
-            except Exception as exc:                      # noqa: BLE001
-                _log("err", "AI", "agent_tool", f"list_all_resources 执行异常: {exc}")
-                return {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
-        return {"ok": False,
-                "error": f"本轮不支持工具 {tool}（只支持 create_plugin / "
-                         f"list_all_resources）；请直接用文字回答用户。"}
+        params = args if isinstance(args, dict) else {}
+        # ② 注册表守卫：不存在的工具直接回绝（也顺手挡住"名字拼错"时的静默成功）
+        try:
+            from pymodels.core.ai import agent_tools
+            registry = agent_tools.get_registry()
+            entry = registry.get(tool)
+        except Exception as exc:                          # noqa: BLE001
+            _log("err", "AI", "agent_tool", f"读取工具注册表失败: {exc}")
+            return {"ok": False, "error": f"工具注册表不可用: {exc}"}
+        if entry is None:
+            _log("warn", "AI", "agent_tool", f"模型调用了不存在的工具 {tool!r}")
+            return {"ok": False,
+                    "error": f"没有这个工具：{tool}。请只用系统提示词里列出的工具，"
+                             f"也不要假设它已经执行成功。"}
+        # ③ 逐项开关守卫（关掉的模块不许执行）
+        try:
+            allowed = bool(self._agent_bridge().tool_on(tool))
+        except Exception as exc:                          # noqa: BLE001
+            _log("warn", "AI", "agent_tool", f"工具开关判定失败（按关闭处理）: {exc}")
+            allowed = False
+        if not allowed:
+            _log("op", "AI", "agent_tool", f"工具 {tool} 已被关闭，拒绝执行")
+            return {"ok": False,
+                    "error": "这个模块已被关闭（在插件配置界面打开它再试）"}
+        # ④ 委派给 Web 版实现（agent_web 缺失时退回注册表里的原实现）
+        try:
+            ctx = self._web_ctx()
+            from pymodels.core.ai import agent_web
+            return agent_web.execute(tool, params, ctx)
+        except ImportError:
+            # ⚠️ agent_web 还没就绪（本轮新增文件，可能尚未部署）：
+            #    只放行 `list_all_resources` 这一条 —— 它上一版就在 _execute_tool 里
+            #    白名单里，纯读资源库、不碰任何界面对象，算"回归行为不倒退"。
+            #    **其它工具一律回"尚未就绪"**，绝不退回 Qt 版实现去跑：
+            #    那些 handler 会摸 window.switchTo / QWidget / subprocess，
+            #    在 Web 壳上要么静默失败、要么做出用户没预期的事（比报错更糟）。
+            if tool == "list_all_resources":
+                try:
+                    outcome = registry.execute(tool, params, agent=self)
+                    if isinstance(outcome, dict) and outcome.get("ok"):
+                        return outcome
+                except Exception as exc:                  # noqa: BLE001
+                    _log("warn", "AI", "agent_tool", f"工具 {tool} 回退执行失败: {exc}")
+            _log("warn", "AI", "agent_tool",
+                 f"工具 {tool} 无法执行：agent_web 尚未就绪")
+            return {"ok": False,
+                    "error": "Web 版工具实现尚未就绪，请直接用文字回答用户"}
+        except Exception as exc:                          # noqa: BLE001
+            _log("err", "AI", "agent_tool",
+                 f"工具 {tool} 执行异常: {type(exc).__name__}: {exc}")
+            return {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
 
     def _call_context_messages(self, session, content: str, reply_mode: str, upto: int,
                                provider_id: str, display_model: str,
@@ -1229,15 +1911,68 @@ class AiDomain:
         except Exception:                                 # noqa: BLE001
             names = set()
         if "provider_id" in names:
-            return self._context_messages(
+            built = self._context_messages(
                 session, content, reply_mode, upto,
                 provider_id=provider_id, display_model=display_model,
                 api_model=api_model, thinking_row=thinking_row)
-        return self._context_messages(session, content, reply_mode, upto)
+        else:
+            built = self._context_messages(session, content, reply_mode, upto)
+        # ★ 本轮（上下文分段进度条）：把「这次真正发出去的 messages」的
+        #   system / 工具清单 / 对话消息 字符数一并带回。在这里算而不是在
+        #   _context_messages 里算，是为了不动那个方法的签名 —— 回归脚本用
+        #   4 参 lambda 把整段上下文换掉（见上面的说明），改签名会把测试打红。
+        mix = None
+        try:
+            mix = self._context_mix(built[0] if isinstance(built, (tuple, list)) and built else None)
+        except Exception as exc:                          # noqa: BLE001
+            _log("warn", "AI", "usage", f"上下文构成统计失败（本次不带）: {exc}")
+        if isinstance(built, (tuple, list)):
+            return tuple(built) + (mix,)
+        return built, None, None, mix
+
+    def _context_mix(self, messages) -> dict:
+        """统计本次请求的输入构成（**字符数**，不是 token）
+
+        面板里要显示「系统提示词 / 工具定义 / 对话消息」各占多少。服务端只回
+        一个总的 prompt_tokens，没有分类字段，所以这里给**真实字符数**，
+        前端按字符占比把实测 prompt_tokens 折算到三段上（界面写「≈」并注明折算）。
+        ⚠️ 工具清单是拼进 system 正文里的（_context_messages:3251 起），
+           所以要从 system 字符数里**减掉**它才不会重复计数；
+           prompt_section() 可能因注册表变化与注入那一刻不同，clamp 一下防负数。
+        """
+        sys_chars = 0
+        msg_chars = 0
+        msg_count = 0
+        try:
+            for item in (messages or []):
+                if not isinstance(item, dict):
+                    continue
+                content = item.get("content")
+                text = content if isinstance(content, str) else str(content or "")
+                if str(item.get("role") or "") == "system":
+                    sys_chars += len(text)
+                else:
+                    msg_chars += len(text)
+                    msg_count += 1
+        except Exception:                                 # noqa: BLE001
+            pass
+        tool_chars = 0
+        try:
+            if self._agent_tools_ready():
+                section = str(self._agent_bridge().prompt_section() or "")
+                tool_chars = max(0, min(len(section), sys_chars))
+        except Exception:                                 # noqa: BLE001
+            tool_chars = 0
+        system_chars = max(0, sys_chars - tool_chars)
+        return {"system_chars": system_chars, "tools_chars": tool_chars,
+                "messages_chars": msg_chars,
+                "total_chars": system_chars + tool_chars + msg_chars,
+                "message_count": msg_count}
 
     def _chat_with_tools(self, messages: list, api_key: str, model: str, api_base: str,
                          locale: str = "zh_CN", allow_tools: bool = False,
-                         thinking=None, max_tokens: int = 0):
+                         thinking=None, max_tokens: int = 0,
+                         on_delta=None, should_stop=None, usage_hook=None):
         """请求模型；回答里带 [TOOL] 就执行、把结果塞回去再问一轮
         返回 `(result, rounds, created_plugins)`：
             result —— 最后一次 `ChatResult`（ok=False 表示失败，调用方照原样转成 error）；
@@ -1264,6 +1999,15 @@ class AiDomain:
             chat_store：历史里只留"用户问 → 最终回答"，否则历史面板会被一堆 JSON 淹掉。
         ⚠️ 这是 js_api 的工作线程，同步阻塞是预期行为（前端显示"正在思考…"），
         但最多 6 轮，不会无限转。
+        ⚠️⚠️ 本轮新增 `on_delta` / `should_stop`（Agent 模式逐字流式；用户原话
+            「希望逐字流式输出，而不是等它把全部思考做完再一整段发过来」）：
+            · `on_delta(visible)` —— 给了它就走 `client.chat_stream` + `_AnswerGate`
+              逐字放行（回调收到的永远是**本次回答的累计全文**，不是增量片段，
+              与 chat_stream 的 on_chunk 同语义）；没给就走原来的 `client.chat`
+              整段请求，**行为与改动前一字不差**（回归脚本只 mock 了 chat）。
+            · `should_stop()` —— 流式线程的中断判定，原样透传给 chat_stream。
+            · 返回形状不变（仍是 result/rounds/created 三元组）：可见全文挂在
+              `result.agent_visible` 上（沿用 `_attach_steps` 给 result 挂属性的做法）。
         """
         from pymodels.core.ai import agent_tools
         from pymodels.core.ai import client as ai_client
@@ -1271,36 +2015,184 @@ class AiDomain:
         created = []
         scratch = []
         rounds = 0
-        result = ai_client.chat(messages, api_key, model, api_base,
-                                # ⚠️ 只有 wants_all 那类请求才带 max_tokens（上层算好传进来，
-                                #    0 = 不发，保持旧请求体形状不变，回归脚本的 mock 签名不受影响）
-                                max_tokens=int(max_tokens or 0), thinking=thinking)
+        # 本轮执行的每一步（最后挂到 result 上，供上层落盘 → 历史对话能还原）
+        collected_steps = []
+
+        # ⚠️⚠️ 逐字流式（task-7）：**给了 on_delta 才走流式**，没给一律保持原来的整段
+        #    `ai_client.chat`。理由和上面"不要给 chat 多传参数"是同一条 —— 既有回归脚本
+        #    只 mock 了 `chat`，这里无条件改 `chat_stream` 会 AttributeError，然后被 send()
+        #    的兜底 except 伪装成"发送异常"，测试全红但真机没坏，极难定位。
+        # ★ 本轮：agent 模式（allow_tools）用 hold 闸门 —— 工具轮正文一律不显示，
+        #   最后确认没有调用时才放行最终正文（顺序永远是 思考→步骤→正文，见 _AnswerGate）。
+        #   纯聊天（allow_tools=False）保持原来的逐字放行，行为不变。
+        gate = _AnswerGate(on_delta, hold_body=bool(allow_tools)) if callable(on_delta) else None
+
+        def _stopped() -> bool:
+            return bool(should_stop()) if callable(should_stop) else False
+
+        # ★ 本轮修复（用户点名「缓存命中/会话统计暂时不可用」的 Agent 侧根因）：
+        #   工具循环一次回答 = N 次真实请求，以前只有**最后一次**的 usage 被记账，
+        #   前几轮的 token 全部隐身 → 统计严重偏低。现在每一轮请求落地后都交给
+        #   usage_hook 累计（上层把 N 轮合并成一份"这问答的真实总用量"）。
+        #   幂等：同一个 ChatResult 只记一次（循环顶部各分支可能再次拿到它）。
+        _noted_ids = set()
+
+        def _note_usage(res) -> None:
+            if not callable(usage_hook) or res is None:
+                return
+            try:
+                if id(res) in _noted_ids:
+                    return
+                _noted_ids.add(id(res))
+                usage_hook(res)
+            except Exception as exc:                      # noqa: BLE001
+                _log("dbg", "AI", "agent", f"用量记账失败（不影响回答）: {exc}")
+
+        def _ask(msgs, first_round: bool):
+            """问模型一轮：有闸门就逐字放行，没闸门就整段请求（后者与改动前完全一致）"""
+            if gate is None:
+                if first_round:
+                    # ⚠️ 只有 wants_all 那类请求才带 max_tokens（上层算好传进来，
+                    #    0 = 不发，保持旧请求体形状不变，回归脚本的 mock 签名不受影响）
+                    return ai_client.chat(msgs, api_key, model, api_base,
+                                          max_tokens=int(max_tokens or 0), thinking=thinking)
+                return ai_client.chat(msgs, api_key, model, api_base, thinking=thinking)
+            return ai_client.chat_stream(
+                msgs, api_key, model, api_base,
+                max_tokens=int(max_tokens or 0) if first_round else 0,
+                on_chunk=gate.feed,
+                # 思考只进闸门的 reasoning 格（与正文分开记账，见 _AnswerGate），
+                # 档位关着时压根不注册回调 —— 不该出现的思考块一个字节都不落地
+                on_reasoning=gate.note_reasoning if self._thinking_open(thinking) else None,
+                should_stop=_stopped,
+                thinking=thinking)
+
+        def _finish(res):
+            """把闸门算好的可见全文挂到 result 上（返回形状仍是 _attach_steps 那三元组）
+
+            上层（`_stream_reader`）用 `result.agent_visible` 当 done 事件的 text 和落盘
+            文本 → 「用户看到的」必然等于「历史里的」。非流式（gate=None）不挂属性，
+            上层照旧走 `_clean_reply(content)`。
+            """
+            if gate is not None:
+                try:
+                    setattr(res, "agent_visible", gate.visible)
+                except Exception:                          # noqa: BLE001
+                    pass
+            return self._attach_steps(res, collected_steps), rounds, created
+
+        # 跨轮"已执行调用"账本（本轮修复：重复动作根治，见循环内"去重分派"注释）
+        executed_calls = {}
+        result = _ask(messages, True)
+        _note_usage(result)
+        # ⚠️ 与 send() / 流式聊天同一套降级：网关把思考档位判成 400 → 去掉思考参数重试一次。
+        #    逐字路径必须**换一个新闸门**再重试：半截思考和已放行的正文都属于旧档位那一次
+        #    请求，留着就是用户报的"档位已关但思考块还在"。
+        if (gate is not None and not getattr(result, "ok", False)
+                and thinking is not None
+                and getattr(result, "kind", "") == "bad_request"
+                and not _stopped()):
+            _log("warn", "AI", "agent",
+                 f"网关拒绝了思考档位 {thinking!r}（{getattr(result, 'message', '')}），"
+                 f"已去掉思考参数重试一次")
+            gate = _AnswerGate(on_delta, hold_body=bool(allow_tools))
+            thinking = None
+            result = _ask(messages, True)
+            _note_usage(result)
         if not allow_tools:
-            return result, rounds, created
+            return self._attach_steps(result, collected_steps), rounds, created
         while True:
+            # ⚠️ 本轮（用户 m02381：「agent模式或chat模式下，ai每次都会先出现一个『v』
+            #   大概是这个样子的ui然后后面消失了，因为agent和chat没让它干活但是还显示这个
+            #   就不对了」）：
+            #   原来这里是**每轮开头无条件**推 planning → 前端把「正在规划」当成
+            #   「有工具步骤」渲染出一张带 V 形折叠箭头（#i-chevron_down）的过程卡，
+            #   等这一轮发现根本没有工具调用时卡片又被收掉 —— 用户看到的就是
+            #   「先冒出一个 v，然后消失」（chat 模式同样中招，因为 plugin_command 路径
+            #   也会走工具循环）。
+            #   现在：**先解析出工具调用，确认真的有活要干，才通知前端"正在规划"**。
+            #   没有工具调用的一轮从头到尾不推 planning → 前端不会冒出那张卡片。
             if not getattr(result, "ok", False):
-                return result, rounds, created
+                # 请求失败：闸门只收尾**已确认放行**的部分，可疑尾巴（半个标记）绝不推出去
+                if gate is not None:
+                    gate.abort()
+                return _finish(result)
             content = str(getattr(result, "content", "") or "")
             if rounds >= int(getattr(agent_tools, "MAX_ROUNDS", 6)):
                 _log("warn", "AI", "agent",
                      f"工具轮数到达上限 {getattr(agent_tools, 'MAX_ROUNDS', 6)}，按普通回答收尾")
-                return result, rounds, created
+                if gate is not None:
+                    gate.finalize(content, self._clean_reply)
+                return _finish(result)
             try:
                 calls, _cleaned = agent_tools.parse_tool_calls(content)
             except Exception as exc:                      # noqa: BLE001
                 _log("warn", "AI", "agent", f"解析工具调用失败（按普通回答处理）: {exc}")
-                return result, rounds, created
+                if gate is not None:
+                    gate.finalize(content, self._clean_reply)
+                return _finish(result)
             if not calls:
-                return result, rounds, created
+                # 放行策略规则 3：这一轮就是最终回答 → 扣住的剩余正文一次性放行，
+                # 且过一遍 _clean_reply，保证屏幕上的字和落盘的字是同一份
+                if gate is not None:
+                    gate.finalize(content, self._clean_reply)
+                return _finish(result)
+
+            # ★ 本轮：确认**真的有工具调用**了，才通知前端"正在规划"。
+            #   （原本在循环开头无条件推 → 无工具调用的一轮也会闪出一张带 V 形箭头的
+            #    过程卡再消失 = 用户报的「先出现一个 v 然后后面消失」。）
+            self._push_agent_progress(phase="planning", round=rounds + 1)
 
             results = []
+            # ★ 本轮修复（用户报「agent 经常输出重复内容动作…无法执行此动作」）：
+            #   ① 同一轮里模型常把**同一个调用**用不同写法重复 2~3 次（DSML+JSON 双份），
+            #      全部照跑 = 重复动作；现在同轮内 (name+规范化 args) 相同只执行一次，
+            #      后面的重复标记直接复用第一次的结果回给模型。
+            #   ② **跨轮**重复：模型从 scratch 里重新"推导"时会把上一轮已执行过的调用
+            #      原样再发一遍（收藏夹建了两次那种）。现在整组调用都和已执行集合重合时
+            #      不再重跑，直接把缓存结果 + 一句"已经执行过，别再重复"喂回去；
+            #      混合场景只重跑新的那些。
+            round_seen = {}
             for call in calls:
                 name = str(call.get("name") or "")
                 args = call.get("args") if isinstance(call.get("args"), dict) else {}
                 try:
+                    _ck = name + "|" + json.dumps(args, sort_keys=True,
+                                                  ensure_ascii=False)[:400]
+                except Exception:
+                    _ck = name + "|" + repr(sorted(args.items()))[:400]
+                # —— 去重分派（见上面本轮修复注释 ①②）：重复调用不重跑，直接回缓存结果
+                if _ck in round_seen:
+                    _dup = round_seen[_ck]
+                    results.append(_dup)
+                    continue
+                if _ck in executed_calls:
+                    # 跨轮完全相同的调用：不再执行，回上次结果 + 明确警告
+                    results.append(executed_calls[_ck])
+                    continue
+                # ① 通知前端"正在调用哪个工具"（大厂 Agent 都会提示这一步，
+                #    否则用户面前只有一串空白等待，完全不知道 AI 在干什么）。
+                self._push_agent_progress(
+                    phase="calling", round=rounds + 1, tool=name, args=args,
+                    summary=self._tool_summary(name, args, locale))
+                try:
                     outcome = self._execute_tool(name, args, locale)
                 except Exception as exc:                  # noqa: BLE001
                     outcome = {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
+                # ② 通知"这一步做完了 / 失败了"
+                self._push_agent_progress(
+                    phase="result", round=rounds + 1, tool=name,
+                    ok=bool(outcome.get("ok")),
+                    summary=self._tool_summary(name, args, locale),
+                    detail=self._tool_result_brief(outcome))
+                # ③ 记一步（落盘用：历史对话里要能还原"完成了几步"）
+                collected_steps.append({
+                    "tool": name,
+                    "summary": self._tool_summary(name, args, locale),
+                    "args": self._brief_args(args)[1:-1][:120],
+                    "ok": bool(outcome.get("ok")),
+                    "detail": str(self._tool_result_brief(outcome) or "")[:120],
+                })
                 if name == "create_plugin" and outcome.get("ok"):
                     created_id = str((outcome.get("data") or {}).get("id") or "")
                     if created_id:
@@ -1309,15 +2201,263 @@ class AiDomain:
                      f"工具 {name} ok={bool(outcome.get('ok'))} "
                      f"args={list(args.keys())[:6]}")
                 try:
-                    results.append(agent_tools.format_result(name, outcome))
+                    _fmt = agent_tools.format_result(name, outcome)
                 except Exception:                         # noqa: BLE001
-                    results.append(f"{getattr(agent_tools, 'RESULT_TAG', '[TOOL_RESULT]')} "
-                                   f'{{"tool":"{name}","ok":false}}')
+                    _fmt = (f"{getattr(agent_tools, 'RESULT_TAG', '[TOOL_RESULT]')} "
+                            f'{{"tool":"{name}","ok":false}}')
+                results.append(_fmt)
+                round_seen[_ck] = _fmt
+                # 跨轮去重账本：失败的调用**也**记账（重复的失败调用同样不该重跑，
+                # 结果里已有错误详情，模型照着回即可；重跑只会再错一次）。
+                executed_calls[_ck] = _fmt
             scratch.append({"role": "assistant", "content": content})
             scratch.append({"role": "user", "content": "\n".join(results)})
             rounds += 1
-            result = ai_client.chat(messages + scratch, api_key, model, api_base,
-                                    thinking=thinking)
+            # 放行策略规则 4：本轮确认**有**调用 → 标记里的 JSON / 参数绝不显示；
+            # 这一段正文就此收尾（已放行的部分并进累计全文），下一轮从新的一段继续逐字流，
+            # 已推出去的字不会被再推一遍（前端是整段覆盖，靠累计全文天然不重复）。
+            if gate is not None:
+                gate.close_segment(content)
+            result = _ask(messages + scratch, False)
+            _note_usage(result)
+
+    # ---------- Agent 过程可视化（大厂 Agent 的"正在调用工具"提示） ----------
+    # 用户原话：「我希望他有那种大厂agent软件会提示正在调用工具什么的 调用什么和规划
+    #   之类的都要有」「我希望它输出的内容是人话」。
+    # ⚠️ 为什么要后端给 summary 而不是让前端翻译工具名：
+    #    前端只认识 create_favorite_folder 这种英文名，翻成人话要维护一张映射表、
+    #    新加工具就会漏；后端这里本来就有参数（args），能拼出带具体对象的句子
+    #    （"正在创建收藏夹「GCP」"比"正在调用 create_favorite_folder"有用得多）。
+    TOOL_SUMMARY_RULES = None       # 惰性初始化（见 _tool_summary）
+
+    @staticmethod
+    def _attach_steps(result, steps):
+        """把本轮执行步骤挂到 result 上（供上层落盘 → 历史对话能还原）
+
+        ⚠️ 为什么挂在 result 上而不是改返回值签名：_chat_with_tools 有多个 return 点、
+           而且有回归脚本按 3 元组解包（改签名会 TypeError）。挂属性是最小侵入的做法。
+        """
+        try:
+            if result is not None and steps:
+                setattr(result, "agent_steps", list(steps))
+        except Exception:                                 # noqa: BLE001
+            pass
+        return result
+
+    @staticmethod
+    def _brief_args(args) -> str:
+        """把工具参数压成一行日志文本：【敏感项打码 + 值截断】
+
+        ⚠️ 为什么要打码：list_settings / set_setting 可能碰到 api_key 一类键，
+           日志文件是会被导出、贴给别人看的（AGENTS.md 明令不许把 Key 写进日志）。
+        ⚠️ 为什么要记值：排查"工具失败了"时，**知道它传了什么**比知道它调了哪个工具
+           有用得多（这轮就卡在"只知道调了 get_setting，不知道查哪个键"）。
+        """
+        if not isinstance(args, dict) or not args:
+            return "{}"
+        # 特例（保密钥）：set_setting / get_setting 的参数名是 **key/value**，名字本身
+        # 不敏感，但当 key 指向 api_key 这类密钥设置项时，**value 就是密钥本体**。
+        # 于是先看一眼 key 说的是什么键，是密钥键就把同行那个 value 一起打码。
+        secret_value = False
+        for name0, value0 in list(args.items())[:6]:
+            if str(name0).lower() not in ("key", "setting", "setting_key"):
+                continue
+            try:
+                from pymodels.utils.logger import is_secret_key
+                if is_secret_key(str(value0)):
+                    secret_value = True
+            except Exception:                             # noqa: BLE001
+                pass
+        parts = []
+        for key, value in list(args.items())[:6]:
+            name = str(key)
+            low = name.lower()
+            # ⚠️ 只对**真的是密钥的参数名**打码：旧写法"名字里含 key 就打码"会把
+            #   set_setting / get_setting 的 key 参数（它是**设置项键名**，如"配色"）
+            #   也打成 *** —— 用户看到步骤里只有 "key=***, value=橙色"，既看不出
+            #   agent 想改哪一项，也没法排查"没有名为 配色 的设置项"。
+            #   api_key / license_key 这类真敏感参数名仍然打码（它们在下面命中）。
+            if low in _SENSITIVE_ARG_NAMES or (low.endswith("_key") and low != "key") \
+                    or any(word in low for word in ("secret", "token", "password")):
+                parts.append("%s=***" % name)
+                continue
+            if secret_value and low in ("value", "new_value"):
+                parts.append("%s=***" % name)
+                continue
+            text = str(value)
+            if len(text) > 60:
+                text = text[:60] + "…"
+            parts.append("%s=%s" % (name, text))
+        return "{" + ", ".join(parts) + "}"
+
+    def _push_agent_progress(self, phase: str = "", **fields):
+        """往前端推一条 Agent 执行进度（失败绝不影响主链路）"""
+        try:
+            payload = {"phase": str(phase or "")}
+            payload.update({k: v for k, v in fields.items() if v is not None})
+            self._shell.push_event("ai.agent_progress", payload)
+        except Exception:                                 # noqa: BLE001
+            pass
+
+    @staticmethod
+
+
+
+    def _tool_summary(name: str, args: dict, locale: str = "") -> str:
+        """把"工具名 + 参数"翻成一句人话（前端直接显示）
+
+        用户原话：「我希望它输出的内容是人话」，以及本轮：
+          「插件配置和 ai 的这个输出也要支持三语言」。
+
+        ⚠️⚠️ 三语（本轮修复）：旧实现是**硬编码中文**的 lambda 字典 ——
+           界面切到 English/繁中 之后，Agent 执行过程卡片仍然整片中文。
+           现在改成 三语模板表，用 %(k)s 占位符；locale 由调用方从 _locale() 传入。
+        ⚠️ 每个工具一条固定句式。参数名严格照 agent_web 的注册表，
+           不在这里做"猜" —— 猜错会让用户看到跟实际不符的描述。
+        """
+        tool = str(name or "").strip()
+        args = args if isinstance(args, dict) else {}
+        loc = str(locale or "zh_CN")
+        if loc not in TEMPLATES:
+            loc = "zh_CN"
+        table = TEMPLATES[loc]
+
+        def arg(key):
+            value = args.get(key)
+            return str(value).strip() if value not in (None, "") else ""
+
+        tpl = table.get(tool)
+        if tpl:
+            try:
+                # 缺的参数给空串（模板里可能引用多个占位符）
+                return tpl % {
+                    "name": arg("name"), "code": arg("code"), "folder": arg("folder"),
+                    "query": arg("query"), "path": arg("path"), "key": arg("key"),
+                    "page": arg("page"), "id": arg("id"), "language": arg("language"),
+                    "theme": arg("theme"),
+                }
+            except Exception:                             # noqa: BLE001
+                pass
+        # 兜底：用表名（三语各一句）
+        return {
+            "zh_CN": "正在执行 %s",
+            "zh_TW": "正在執行 %s",
+            "en_US": "Running %s",
+        }[loc] % tool
+
+
+    @staticmethod
+    def _tool_result_brief(outcome: dict) -> str:
+        """把工具结果压成一句"结果说明"（给过程卡片用，不是给模型的 JSON）"""
+        if not isinstance(outcome, dict):
+            return ""
+        if not outcome.get("ok"):
+            return str(outcome.get("error") or "失败")[:120]
+        data = outcome.get("data")
+        if isinstance(data, str):
+            return data[:120]
+        if isinstance(data, dict):
+            for key in ("result", "summary", "folder", "path", "text"):
+                if data.get(key):
+                    return str(data[key])[:120]
+            for key in ("count", "total", "items", "returned"):
+                if data.get(key) is not None:
+                    return "%s: %s" % (key, data[key])
+        if isinstance(data, list):
+            return "%d 条结果" % len(data)
+        return "完成"
+
+    def _markup_notice(self, raw: str, reply: str, acting: bool) -> str:
+        """模型写了调用标记、本轮却**没有真的执行**任何工具 → 在回答后面补一句实话
+
+        ⚠️ 为什么要专门补这句（用户实测）：Chat 模式下模型照样会吐 DSML/invoke 那套标记，
+           _clean_reply 把标记抠掉之后回答看着像"说完了"，用户以为收藏夹真的被改过了。
+           知之为不知 —— 明说没动手，并且告诉他切哪颗按钮。
+        ⚠️ acting 区分两种原因，文案不同：
+           · False = 当前根本不是 Agent 执行态（Chat 模式）→ 提示切模式；
+           · True  = Agent 开着但这轮的标记是坏的（解析不出调用）→ 提示换个说法，
+                     不能骗用户"切到 Agent"（他已经在 Agent 了）。
+        """
+        text = str(raw or "")
+        if _markup_start(text) < 0 and _tool_tag_literal() not in text:
+            return reply
+        # 正文里引用这套语法（标记后面还有一大段话）时不提示 —— 用户问"那串乱码是
+        # 什么"，回答里带着例子解释，被塞一句"我并没有真的执行"会莫名其妙。
+        if not _markup_is_the_answer(text) and _tool_tag_literal() not in text:
+            return reply
+        if acting:
+            note = self._text(
+                "ai_mode_call_failed",
+                "（我试着调用工具，但这轮写的调用没解析成功，所以什么都没改；"
+                "请把需求说得更具体一点再试一次。）")
+        else:
+            note = self._text(
+                "ai_mode_not_acting",
+                "（上面这段试图调用工具，但当前是 Chat 模式，我并没有真的执行任何操作。"
+                "要我动手的话，点输入框左边那颗模式胶囊切到 Agent 再说一次。）")
+        current = str(reply or "")
+        if not current:
+            return note
+        if note in current:
+            return current
+        return current + "\n\n" + note
+
+    # 列表块 / 步骤标题：这些行的**前面**要空一行（用户要求"每步正文前至少空一行"）
+    _BLANK_BEFORE_RES = (
+        re.compile(r"^\s*(?:[-*+•]\s+|\d+[.、)]\s+|\(\d+\)\s+)"),
+        re.compile(r"^\s*(?:#{1,6}\s+|第\s*[0-9一二三四五六七八九十百]+\s*步|"
+                   r"步骤\s*[0-9一二三四五六七八九十]*|Step\s*\d+)", re.IGNORECASE),
+    )
+
+    @staticmethod
+    def _ensure_blank_lines(text: str) -> str:
+        """段落 / 步骤之间至少留一个空行（用户原话：每步正文前空一行、偏爱空行）
+
+        ⚠️ 只处理 fenced code 之外的行：代码块里的空行有语义，绝不能动。
+        ⚠️ 只补「上一行是正文、这一行是列表块/标题/第X步」的位置，
+           不把单个 \\n 全改成 \\n\\n —— 那会把列表项、软换行的长句全拆散。
+        ⚠️ 同一列表块内相邻两项之间不补（prev_kind == "list"），否则清单会散架。
+        """
+        raw = str(text or "")
+        if not raw:
+            return ""
+        lines = raw.replace("\r\n", "\n").replace("\r", "\n").split("\n")
+        out = []
+        in_fence = False
+        prev_kind = "blank"        # blank / text / list / step / fence
+        for line in lines:
+            stripped = line.strip()
+            is_fence = stripped.startswith("```") or stripped.startswith("~~~")
+            if is_fence:
+                out.append(line)
+                in_fence = not in_fence
+                prev_kind = "fence"
+                continue
+            if in_fence:
+                out.append(line)
+                continue
+            if not stripped:
+                out.append("")
+                prev_kind = "blank"
+                continue
+            if AiDomain._BLANK_BEFORE_RES[0].match(line):
+                kind = "list"
+            elif AiDomain._BLANK_BEFORE_RES[1].match(line):
+                kind = "step"
+            else:
+                kind = "text"
+            # 补空行的三种位置：
+            #   ① 正文 → 列表 / 步骤标题
+            #   ② 步骤标题 → 步骤说明正文（用户要"每个步骤的说明之前空一行"）
+            #   ③ 步骤标题 → 列表（"第二步 点保存" 紧跟 "- 项目一" 同样难看）
+            if (prev_kind in ("text", "step") and kind in ("list", "step")) \
+                    or (prev_kind == "step" and kind == "text"):
+                out.append("")
+            out.append(line)
+            prev_kind = kind
+        cleaned = "\n".join(out)
+        cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
+        return cleaned.strip()
 
     @staticmethod
     def _clean_reply(text: str) -> str:
@@ -1327,16 +2467,30 @@ class AiDomain:
            这里改成"认出了调用就用 cleaned（哪怕为空）"。
         """
         raw = str(text or "")
-        if "[TOOL]" not in raw:
-            return raw.strip()
+        cut = _markup_start(raw)
+        if cut < 0:
+            return AiDomain._ensure_blank_lines(raw.strip())
         try:
             from pymodels.core.ai import agent_tools
             calls, cleaned = agent_tools.parse_tool_calls(raw)
-            if calls:
-                return str(cleaned or "").strip()
-            return raw.strip()
         except Exception:
-            return raw.strip()
+            return AiDomain._ensure_blank_lines(raw.strip())
+        if calls:
+            # 认出了调用就用 cleaned —— 哪怕它是空串（整条回答只有一个 [TOOL] 调用时
+            # cleaned 恰恰为空，旧写法「cleaned or raw」会把原始标记又 fallback 回来）。
+            return AiDomain._ensure_blank_lines(str(cleaned or "").strip())
+        # ⚠️ 本轮补的洞（用户实测「Agent 一屏乱码」的另一半）：标记形状认得出来、
+        #    但里面的 JSON 坏到 parse_tool_calls 一条调用都解析不出时，旧代码
+        #    「return raw.strip()」等于把这串机器标记**原样甩到屏幕上**
+        #    （send() 和流式的 finalize 都走这里，两条路同源一起修）。
+        #    现在分两种情况处理：
+        #    · 标记就是本轮的收尾（后面没正文了）→ 宁可少说半句，从标记起点截断，
+        #      剩下的由 _markup_notice 那句实话补上，不算静默吞掉答案；
+        #    · 标记后面还有一大段正文 → 模型是在**引用/解释这套语法**（用户问
+        #      "你刚才吐的那串是什么"就会遇到），这时候截断等于腰斩回答，原样留着。
+        if _markup_is_the_answer(raw):
+            return AiDomain._ensure_blank_lines(raw[:cut].rstrip())
+        return AiDomain._ensure_blank_lines(raw.strip())
 
     def _persist_message(self, store, session, role: str, content: str,
                          extra: dict = None) -> bool:
@@ -1674,10 +2828,13 @@ class AiDomain:
           ① 模型**不支持**思考 → 返回 None：连各家思考参数都不发。
              老网关/中转对不认识的参数会 400，"不支持就别发"是唯一安全的做法；
              界面上也因此不画滑块（见 model_choices 的 thinking_levels 只有 off 一档）。
-          ② 支持思考 → 读设置里的 `ai_thinking` 并**归一成档位**（providers.normalize_thinking
-             兼容旧的布尔配置：False→"off"、True→"medium"），默认 off；
+          ② 支持思考 → 走 `_thinking_level_for(档案 id, 厂商, 模型)` 查**档案级档位表**
+             并**归一成档位**（providers.normalize_thinking 兼容旧的布尔配置：
+             False→"off"、True→"medium"），**查不到就是 off**（需求"默认关闭"）；
              再用 resolve_thinking_level 修正成**当前模型官方表里真实存在的 value**
              （各家档位不同：从 DeepSeek 的 max 切到 Gemini 会就近取档）。
+             ⚠️ 这里绝不读全局 `ai_thinking` —— 它只是"当前这一次档位"的快照，
+                拿它当默认值就会让新厂商/新模型继承上一个模型的高档位。
           ③ ⚠️ 本轮起返回的是**档位行 dict**（{value,label,effort,style,...}）：
              各家请求体字段不同（reasoning_effort / thinking{type} / enable_thinking /
              thinking_config / budget），client._thinking_params 按 style 分发。
@@ -1699,6 +2856,51 @@ class AiDomain:
             return dict(ai_providers.THINKING_LEVELS[0])
         except Exception:                                 # noqa: BLE001
             return None
+
+    def _send_thinking(self, creds: dict, requested=None):
+        """这一次请求**真正要发**的思考档位行（前端显式传上来的优先，其次档案表）
+
+        需求原话（本轮）：「每个对话发送第一句就算你带思考也没用他就是当没开思考」。
+        以前前端从来没把"界面上显示的那一档"传给后端（ai.send_stream 压根没有这个参数），
+        后端只能自己按档案表查「档案id|厂商|模型」：
+          · 前端刚改档位、还没写进表 → 查不到 = off；
+          · 两端的档案 id / 模型写法差一点 → 也查不到 = off。
+        两种都表现为"你明明开着思考，第一句却完全没思考"。
+        ⇒ 现在以**前端传来的档位为准**（模型不支持思考时仍返回 None，绝不硬塞参数），
+          并顺手记忆回档案表 —— 下一次（刷新/新会话/不带参数的老调用方）查表也是它。
+        """
+        row = self._thinking_state(creds.get("provider"), creds.get("model"),
+                                   creds.get("profile_id") or "")
+        want = str(requested or "").strip().lower()
+        if row is None or not want:
+            return row
+        try:
+            from pymodels.core.ai import providers as ai_providers
+            pid = str(creds.get("provider") or "").strip().lower()
+            name = str(creds.get("model") or "")
+            table = list(ai_providers.thinking_levels(pid, name))
+            legal = [str(r.get("value")) for r in table]
+            level = ai_providers.normalize_thinking(want)
+            if legal and level not in legal:
+                # 就近取档（各家档位不同：前端记的 high 落到只有 low/medium 的模型上）
+                level = ai_providers.resolve_thinking_level(pid, name, level)
+            picked = None
+            for r in table:
+                if str(r.get("value")) == level:
+                    picked = dict(r)
+                    break
+            if picked is None:
+                return row
+            if level != str(row.get("value")):
+                # 记忆：只在与档案表不同时写（同档位反复写会每次发请求都动一遍设置）
+                self._remember_thinking_level(pid, name, level,
+                                              creds.get("profile_id") or "")
+                _log("info", "AI", "thinking",
+                     f"按前端传来的档位请求：{pid}/{name} {row.get('value')} → {level}")
+            return picked
+        except Exception as exc:                          # noqa: BLE001
+            _log("warn", "AI", "thinking", f"解析前端思考档位失败（按档案表处理）: {exc}")
+            return row
 
     @staticmethod
     def _thinking_level_of(thinking_row) -> str:
@@ -1786,6 +2988,17 @@ class AiDomain:
                         "supports_thinking": bool(
                             ai_providers.model_supports_thinking(pid, name)),
                         "thinking_levels": ai_providers.thinking_levels(pid, name),
+                        # ⚠️ 本轮新增（需求「每个思考 ui 都应该是关闭状态，并且每个都是
+                        #    独立存储的」）：每个模型**自己存过的档位**，由后端按
+                        #    `档案 id|厂商|模型` 查表给出，没记录就是 "off"。
+                        #    为什么由后端给而不是前端查本地镜像表：前端那份
+                        #    `settings.ai_thinking_level` 只有它自己写过的条目，
+                        #    查不到时旧写法回落到**全局** `ai_thinking`（= 上一个模型的
+                        #    档位）→ 新厂商/新模型看着就像"默认不是关闭"，同厂商两条档案
+                        #    也会串档。表的事实源在磁盘上，只有后端算得准。
+                        "thinking": ai_providers.resolve_thinking_level(
+                            pid, name,
+                            self._thinking_level_for(pid, name, profile.get("id") or "")),
                     })
                 if not models and pid != ai_providers.PROVIDER_CUSTOM:
                     continue
@@ -1927,6 +3140,52 @@ class AiDomain:
             _log("warn", "AI", "meta", f"构建运行时元信息失败（本次不带该段）: {exc}")
             return ""
 
+    def _tool_memory_section(self, window) -> str:
+        """本会话「已经真的执行过」的操作记忆（旧值 → 新值）→ 拼成 system 末尾的一段
+
+        ⚠️ 为什么非喂回去不可（用户原话：「它上下文中应该是要知道语言的」）：
+           上下文里只有 user/assistant 的**正文**，工具步骤只活在气泡下面那张卡片里，
+           模型根本看不到自己上一轮改了哪些设置。于是用户说"恢复刚才那样"，
+           它第一句反问"是哪个设置"，第二句更离谱 ——"我不知道你之前是什么语言"。
+           步骤本身就带着 old → new（agent_web 的 set_setting / set_language 结果串），
+           把它当"本会话已发生的事实"回灌，模型就有据可依，不用再问。
+        ⚠️ 只当记忆、不当指令：开头明写"已经发生过、不要重复执行"，
+           否则模型会照着这段再调一遍工具（白烧两轮 token）。
+        ⚠️ 有上限（最多 20 条 / 每条 160 字）：这是每轮都要发的 system 前缀，
+           无上限会让长会话越聊越贵，也更容易把真正的要求挤出注意力。
+        """
+        try:
+            lines = []
+            for m in list(window or []):
+                if str(m.get("role") or "") != "assistant":
+                    continue
+                steps = m.get("steps")
+                if not isinstance(steps, list):
+                    continue
+                for st in steps:
+                    if not isinstance(st, dict):
+                        continue
+                    if not st.get("ok", True):
+                        continue        # 失败那次没改动任何东西，不算"已发生的事实"
+                    text = str(st.get("detail") or st.get("summary") or "").strip()
+                    if not text:
+                        continue
+                    lines.append("- %s：%s"
+                                 % (str(st.get("tool") or "操作"), text[:160]))
+            if not lines:
+                return ""
+            lines = lines[-20:]
+            head = ("【本会话已执行过的操作（记忆，不是新指令）】\n"
+                    "以下是本会话里已经真的执行过、并且已经生效的操作（含「旧值 → 新值」）。"
+                    "用户说“恢复/还原/改回去/刚才那样”时，直接依据这里记录的历史值动手，"
+                    "**不要**再反问用户“是哪个设置”“之前是什么值”；也不要因为这些记录"
+                    "重复执行已经做过的操作。\n")
+            return head + "\n".join(lines)
+        except Exception as exc:                          # noqa: BLE001
+            _log("warn", "AI", "agent", f"拼装工具操作记忆失败（本次不带）: {exc}")
+            return ""
+
+
     def _context_messages(self, session, content: str, reply_mode: str, upto: int,
                           provider_id: str = "", display_model: str = "",
                           api_model: str = "", thinking_row=None):
@@ -1958,6 +3217,21 @@ class AiDomain:
             want_all = ai_prompt.wants_all_resources(content)
         except Exception:                                 # noqa: BLE001
             want_all = False
+        # 本轮需求：问"关于 ToolsGCP 自己"（开发者是谁/仓库在哪/收费吗…）→
+        # 按需读 `.ToolsGCP/about/ToolsGCP_About.txt` 把正文垫进这一次 system。
+        # ⚠️ 为什么光有"去翻文件"的指引不够：内置插件「GCP-AI Agent」**默认关闭**
+        #    （constants: gcp_ai_agent_enabled=False），关着时模型没有 read_file 这只手，
+        #    指引它就只会回"你自己去打开那个文件看" —— 网友报的问题一个都没解决。
+        #    按需注入 = 问到才翻（后端替它翻），一次一问多约 2.6K 字符，
+        #    没问到零成本；与 wants_all_resources / EXHAUSTIVE_RULE 同一套路子。
+        #    Agent 开着时也同样注入：正文就在上下文里，答得更稳，也省一轮工具调用。
+        try:
+            want_about = ai_prompt.wants_about_info(content)
+            if want_about:
+                _log("info", "AI", "about",
+                     "判定为「关于本软件」提问：已按需加载介绍正文进本次上下文")
+        except Exception:                                 # noqa: BLE001
+            want_about = False
         # 需求 3：回复语言（后端拼强制指令，前端只管存设置值）
         try:
             reply_language = str(self._setting("ai_reply_language", "auto") or "auto")
@@ -1968,10 +3242,15 @@ class AiDomain:
         if display_model or provider_id:
             meta = self._runtime_meta(provider_id, display_model, api_model,
                                       thinking_row)
+        # ★ 本轮需求 5（缓存命中省 token）：「当前时间」从 system 开头挪到 system 末尾 ——
+        #   网关的前缀缓存按公共前缀算，一秒一变的时钟摆在最前面 = 每次请求前缀全作废。
+        #   时钟文本一个字不少，只是位置变了；调用点仍每次实时计算。
         messages = ai_prompt.build_messages(
             window, self._resources(), self._language(),
             context_rounds=rounds, keyword=keyword, mode=mode,
-            meta=meta, want_all=want_all, reply_language=reply_language)
+            meta=meta, want_all=want_all, reply_language=reply_language,
+            want_about=want_about,
+            clock=ai_prompt.runtime_clock())
 
         # `/plugin`：把插件制作辅助的 Skill 指令追加到 system 末尾
         # ⚠️ 只改**第一条 system**（build_messages 保证 system 永远第一条且只有一条）：
@@ -1986,6 +3265,70 @@ class AiDomain:
                 messages.insert(0, {"role": "system", "content": plugin_prompt})
             _log("info", "AI", "hint",
                  f"用户输入 /plugin：已注入插件制作辅助指令（{len(plugin_prompt)} 字）")
+        # ① 当前对话模式（Chat / Agent）—— **必须**告诉模型它现在是什么模式
+        #    用户原话：「AI我问他他不知道自己是chat还是agent模式，中途切换还坚持之前的
+        #    答案的bug」。system 里从来没写过这一句，模型只能靠"有没有工具清单"瞎猜；
+        #    中途切换时它还会顺着上下文里自己上一轮的回答继续坚持。
+        #    所以：System 里放完整说明 + (用户问模式时) user 消息前再压一条短提醒。
+        try:
+            from pymodels.core.ai import agent_runtime as _rt
+            from pymodels.core.ai import agent_tools as _at
+            _mode = _rt.chat_mode(self._shell)
+            _mode_text = _at.build_mode_prompt(_mode, self._locale())
+            if _mode_text:
+                if messages and str(messages[0].get("role")) == "system":
+                    messages[0]["content"] = (str(messages[0].get("content") or "")
+                                              + "\n" + _mode_text)
+                else:
+                    messages.insert(0, {"role": "system", "content": _mode_text})
+            # 用户正在问"你是什么模式"→ 在最近一条 user 消息前再提醒一次，
+            # 把模型上下文里那条**陈旧**的自我描述压下去（LLM 会顺着自己的历史回答走）。
+            if _at.asks_about_mode(content):
+                _reminder = _at.mode_reminder(_mode, self._locale())
+                _tail = len(messages)
+                for _i in range(len(messages) - 1, 0, -1):
+                    if str(messages[_i].get("role")) == "user":
+                        _tail = _i
+                        break
+                messages.insert(_tail, {"role": "system", "content": _reminder})
+                _log("dbg", "AI", "mode",
+                     f"用户询问模式：已在 user 消息前插入当前模式提醒（{_mode}）")
+        except Exception as exc:                          # noqa: BLE001
+            _log("warn", "AI", "mode", f"注入对话模式说明失败（本次不带）: {exc}")
+
+        # Agent 工具清单（契约 2.4）：**必须**和 _execute_tool 的放行判据同一个闸门 ——
+        # 列了却不放行 = 模型白调两轮；放行却不列 = 模型根本不知道有这只手。
+        # ⚠️ 用 bridge.prompt_section() 而不是自己拼：它已经把"用户逐项关掉的工具"
+        #    排除掉（enabled_tool_names），三处口径只有那一份。
+        try:
+            if self._agent_tools_ready():
+                section = self._agent_bridge().prompt_section()
+                if section:
+                    if messages and str(messages[0].get("role")) == "system":
+                        messages[0]["content"] = (str(messages[0].get("content") or "")
+                                                  + "\n" + section)
+                    else:
+                        messages.insert(0, {"role": "system", "content": section})
+                    _log("dbg", "AI", "agent",
+                         f"已注入 Agent 工具清单（{len(section)} 字）")
+        except Exception as exc:                          # noqa: BLE001
+            _log("warn", "AI", "agent", f"注入 Agent 工具清单失败（本次不带）: {exc}")
+
+        # ★ 本轮修复（用户原话：「我再说恢复，它会问是不是语言这个，我再回复是，它说
+        #   我不知道你之前是什么语言」）：把本会话此前**真的执行过**的工具步骤
+        #   （带旧值 → 新值）当"记忆"垫进 system。模型上下文里原本只有正文，
+        #   步骤卡片里的 old/new 它从来没见过，所以一说"恢复"就只能反问。
+        try:
+            memory = self._tool_memory_section(window)
+            if memory:
+                if messages and str(messages[0].get("role")) == "system":
+                    messages[0]["content"] = (str(messages[0].get("content") or "")
+                                              + "\n\n" + memory)
+                else:
+                    messages.insert(0, {"role": "system", "content": memory})
+                _log("dbg", "AI", "agent", f"已注入本会话操作记忆（{len(memory)} 字）")
+        except Exception as exc:                          # noqa: BLE001
+            _log("warn", "AI", "agent", f"注入本会话操作记忆失败（本次不带）: {exc}")
         return messages, plugin_command, locale
 
     def _persist_assistant(self, store, session, content: str, regenerate_at=None,
@@ -2023,6 +3366,18 @@ class AiDomain:
                                            reasoning=_reasoning_of(extra))
             message["kind"] = kind if is_error else ""
             message["ts"] = _now()
+            # ★ 本轮修复（用户报「Agent 执行步骤存储不到对应对话文件中，有时甚至缺失」
+            #   的根因之一）：重新生成分支以前只把正文/思考写成新版本，extra 里的
+            #   steps 被整份丢掉 —— 磁盘上留的还是**上一轮**的步骤（甚至根本没有），
+            #   界面加载历史时"完成几步"就对不上或干脆消失。步骤按消息整体记
+            #   （卡片只画在这条回答下面），所以新版本直接用最新一次执行的步骤覆盖。
+            #   usage 同理：翻版本后"这一问花了多少 token"必须跟着新版本走。
+            if isinstance(extra, dict) and isinstance(extra.get("steps"), list) \
+                    and extra["steps"]:
+                message["steps"] = [s for s in extra["steps"] if isinstance(s, dict)][:40]
+            if isinstance(extra, dict) and isinstance(extra.get("usage"), dict) \
+                    and extra["usage"]:
+                message["usage"] = dict(extra["usage"])
         else:
             if index is not None:
                 _log("warn", "AI", "chat",
@@ -2076,7 +3431,11 @@ class AiDomain:
             return False
 
     def send(self, session_id: str = "", text: str = "", reply_mode: str = "",
-             resend: bool = False, user_index=None, assistant_index=None):
+             resend: bool = False, user_index=None, assistant_index=None,
+             thinking_level=None):
+        # ⚠️ thinking_level：前端**每次发送**都带上界面当前档位（本轮修复「第一句
+        #   带思考也没用」的关键）。它是"这一次要用的档位"，不是新设置项；
+        #   模型不支持思考 / 参数为空时照旧按档案表处理（见 _send_thinking）。
         """发一条消息：落盘用户消息 → 组装上下文 → 请求 → 回答落盘（全部走版本树）
 
         返回 `{ok, reply, session_id, session, variant_count, variant_index}`；
@@ -2177,9 +3536,8 @@ class AiDomain:
 
             # ③ 组装上下文（system 提示词 / 资源清单 / 上下文轮数 / 元信息 / /plugin 全走原版实现）
             #    ⚠️ 思考档位先算：元信息段里"当前思考档位"一行要用它（需求 1/4）
-            thinking = self._thinking_state(creds.get("provider"), display_model,
-                                           creds.get("profile_id") or "")
-            ctx_messages, plugin_command, locale = self._call_context_messages(
+            thinking = self._send_thinking(creds, thinking_level)
+            ctx_messages, plugin_command, locale, ctx_mix = self._call_context_messages(
                 session, content, reply_mode, upto,
                 creds.get("provider") or "", display_model, model, thinking)
 
@@ -2190,10 +3548,24 @@ class AiDomain:
             #    ⚠️ 本轮：「列举所有资源」这类请求主动垫高输出预算（_request_max_tokens），
             #    否则 52 条列到一半就被网关默认上限掐掉（用户实测"还是漏一大部分"的另一半）。
             req_max_tokens = self._request_max_tokens(content)
+            # ⚠️ 工具通道 = `/plugin` 指令 **或** Agent 总开关开着（契约 2.4）。
+            #    以前只有 /plugin 才放行：于是"强制开启 Agent"之后工具清单进了提示词，
+            #    执行侧却 still 只认 /plugin —— 模型列出调用、后端一律回"本轮不支持工具"
+            #    （用户看到的正是"开关都开了，AI 却说做不到"）。
+            allow_tools = bool(plugin_command or self._agent_tools_ready())
+            _ubox = {}
             result, tool_rounds, created = self._chat_with_tools(
                 ctx_messages, api_key, model, api_base, locale=locale,
-                allow_tools=plugin_command, thinking=thinking,
-                max_tokens=req_max_tokens)
+                allow_tools=allow_tools, thinking=thinking,
+                max_tokens=req_max_tokens,
+                # ★ 本轮：工具循环每一轮请求的用量都累进 _ubox，循环结束后把
+                #   N 轮的**真实总量**写回 result.usage（统计面板要的是准确数字）
+                usage_hook=lambda r: self._merge_usage(_ubox, r))
+            if _ubox:
+                try:
+                    result.usage = dict(_ubox)
+                except Exception:
+                    pass
 
             # ④.5 ⚠️ 本轮新增：**网关不认思考参数就自动降级重试一次**。
             #    多档强度靠 `reasoning_effort` / `thinking` 两个字段，官方 DeepSeek/OpenAI
@@ -2206,9 +3578,18 @@ class AiDomain:
                 _log("warn", "AI", "chat",
                      f"网关拒绝了思考档位 {thinking!r}（{getattr(result, 'message', '')}），"
                      f"已去掉思考参数重试一次")
+                # 降级重试是**另一批请求**：用量账本重开一份，写回这次总量
+                #（前一次的 usage 不能算钱 —— 网关压根没处理那次请求）
+                _ubox2 = {}
                 result, tool_rounds, created = self._chat_with_tools(
                     ctx_messages, api_key, model, api_base, locale=locale,
-                    allow_tools=plugin_command, thinking=None)
+                    allow_tools=allow_tools, thinking=None,
+                    usage_hook=lambda r: self._merge_usage(_ubox2, r))
+                if _ubox2:
+                    try:
+                        result.usage = dict(_ubox2)
+                    except Exception:
+                        pass
                 thinking = None       # 这次确实没思考：落盘/界面都不该出现思考块
 
             if not getattr(result, "ok", False):
@@ -2224,10 +3605,17 @@ class AiDomain:
                 # ⚠️ 报错也要落盘（带 error 标记）：这就是"从历史点进来对话没了"的根因修复，
                 #   以前失败分支只 return，前端只在内存里推一个气泡。
                 #   重新生成时同样"就地成一个版本"，报错气泡也带版本字段才能翻页。
+                # ★ 本轮修复：这一轮失败前**已经执行过**的工具步骤也要落盘 ——
+                #   旧写法只存报错文本，steps 整份丢失，用户重开对话后完全看不出
+                #   "AI 其实已经动过哪些手"（有时动到一半就失败，恰恰最需要留痕）。
+                _err_extra = {"error": True, "kind": kind}
+                _err_steps = getattr(result, "agent_steps", None)
+                if _err_steps:
+                    _err_extra["steps"] = _err_steps
                 saved = self._persist_assistant(
                     store, session, error_text,
                     None if edit_regen else ai_idx,
-                    {"error": True, "kind": kind})
+                    _err_extra)
                 _log("err", "AI", "chat",
                      f"请求失败 kind={kind} {message}"
                      f"（错误已落盘={saved}，会话 {session.id}）")
@@ -2237,6 +3625,11 @@ class AiDomain:
                              persisted=bool(saved))
 
             reply = self._clean_reply(str(getattr(result, "content", "") or ""))
+            if not tool_rounds:
+                # 本轮一个工具都没执行（Chat 模式 / Agent 开着但这轮标记是坏的）：
+                # 模型却写了调用标记 → 如实告知没动手，别让用户以为收藏夹已经改好了。
+                reply = self._markup_notice(str(getattr(result, "content", "") or ""),
+                                            reply, bool(allow_tools))
             if not reply:
                 reply = ("AI 反复调用工具但没有给出最终回答，请把你的需求说得更具体一点，"
                          "或者直接告诉它插件的 id。" if tool_rounds
@@ -2246,10 +3639,29 @@ class AiDomain:
             #    档位关着（off）/ 模型不支持（None）/ 网关拒绝后降级 → 一律空串，磁盘上不留思考。
             reasoning = (str(getattr(result, "reasoning", "") or "")
                          if self._thinking_open(thinking) else "")
+            # 落盘内容 = 思考（可选）+ **本轮执行步骤**（历史对话要能还原"完成了几步"）
+            _extra = {}
+            if reasoning:
+                _extra["reasoning"] = reasoning
+            _steps = getattr(result, "agent_steps", None)
+            if _steps:
+                _extra["steps"] = _steps
+            # ★ 本轮（缓存命中/统计）：这一问的用量随回答落盘。
+            #   消息上只记**本次请求**那份（result.usage）；会话累计那份由
+            #   _usage_of → session.usage_total 负责，两个口径不要混。
+            _usage = getattr(result, "usage", None)
+            if isinstance(_usage, dict) and _usage:
+                _extra["usage"] = dict(_usage)
+            # ★★ 本轮修复「重载历史后 缓存命中/会话统计 没了」（用户原话：
+            #   「好用是好用的可是它不存储起来，重新加载历史对话信息就没了」）：
+            #   旧顺序 = 先 _persist_assistant 落盘、**后** _usage_of 折账本 ——
+            #   磁盘上那份永远少最新一问的累计（只聊一轮就关程序 = 整个账本没落盘）。
+            #   现在把 _usage_of 提到落盘**之前**（它顺手把 usage_total 折进 session），
+            #   落盘的就是含本次的完整账本；回传信封与磁盘一次成型。
+            _usage_env = self._usage_of(session, result, ctx_mix)
             reply_saved = self._persist_assistant(store, session, reply,
                                                   None if edit_regen else ai_idx,
-                                                  {"reasoning": reasoning}
-                                                  if reasoning else None)
+                                                  _extra or None)
             if not reply_saved:
                 _log("err", "AI", "chat",
                      f"回答写盘失败（会话 {session.id}）：本次回答只显示在界面上")
@@ -2266,6 +3678,10 @@ class AiDomain:
                        plugin_command=bool(plugin_command),
                        reasoning=reasoning, thinking=self._thinking_open(thinking),
                        persisted=bool(reply_saved),
+                       # ★ 本轮（缓存命中统计）：本次请求用量 + 会话累计，随回答一起回传
+                       #   ⚠️ 必须复用落盘前算好的 _usage_env：_usage_of 有副作用
+                       #   （把本次折进 session.usage_total），再调一次 = 账本翻倍。
+                       usage=_usage_env,
                        **self._variant_of(session, ai_idx if regen else None))
         except Exception as exc:                          # noqa: BLE001
             _log("err", "AI", "chat", f"发送异常: {type(exc).__name__}: {exc}")
@@ -2400,7 +3816,8 @@ class AiDomain:
             return False
 
     def send_stream(self, session_id: str = "", text: str = "", reply_mode: str = "",
-                    resend: bool = False, user_index=None, assistant_index=None):
+                    resend: bool = False, user_index=None, assistant_index=None,
+                    thinking_level=None):
         """流式版 send()：**立刻**返回 `{ok, stream_id, session_id, session}`，回答靠事件推。
 
         返回 ok=False + `kind:"fallback"` 表示"这条别走流式"（外壳推不了事件 / 缺 Key /
@@ -2411,6 +3828,8 @@ class AiDomain:
            `_prepare_send` 会把用户消息**落盘**。如果先落盘再说"这条别走流式"，
            前端退回 `send()` 时会**再落一次**同一条提问 —— 历史里凭空多出一模一样的两条
            （这个坑很隐蔽：界面只看得到"多发了一次"，磁盘上才是证据）。
+           本轮 Agent 模式改为**走流式**（task-7），红线一条没动：所有 fallback 判断
+           仍然全部在 `_prepare_send()` 之前做完，一个都没往后挪。
         """
         content = str(text or "").strip()
         if not content:
@@ -2431,6 +3850,16 @@ class AiDomain:
             plugin_command, _plugin_prompt = self._plugin_prompt(content)
             if plugin_command:
                 return _fail("需要回退到整段返回", kind="fallback", reason="plugin_command")
+            # ③.5 Agent 模式：本轮起**不再回退**（task-7）。
+            #   以前这里直接 fallback 到 send()，因为工具循环只长在 send() 的整段返回路径上，
+            #   流式路径压根不解析 [TOOL] —— 用户实测到的那一幕：模型吐出一串
+            #   <||DSML||...>{"name":"create_favorite_folder"...} 标记，流式把它当普通文本
+            #   逐字显示，收藏夹一点变化都没有（用户原话「agent现在又用不了而且无法调用工具
+            #   和输出异常等bug」）。当时"牺牲逐字换工具能用"是对症的取舍；现在
+            #   _chat_with_tools 自己会逐字（给了 on_delta 就每轮流式 + _AnswerGate 放行，
+            #   标记一个字节都不会漏到屏幕上），逐字和办事两个都要，所以这道回退删掉。
+            #   ⚠️ 判定只在这里做一次，塞进 context 给 _stream_reader 决定问模型的方式。
+            allow_tools = bool(self._agent_tools_ready())
             # ④ 后端客户端没有流式实现（被裁掉的旧版本）
             if not hasattr(ai_client, "chat_stream"):
                 return _fail("需要回退到整段返回", kind="fallback", reason="no_stream_client")
@@ -2451,10 +3880,9 @@ class AiDomain:
                     return plan["failed"]
 
                 # 思考档位先算：元信息段里"当前思考档位"一行要用它（与 send() 同一口径）
-                thinking_row = self._thinking_state(creds.get("provider"),
-                                                    creds.get("model"),
-                                                    creds.get("profile_id") or "")
-                ctx_messages, still_plugin, locale = self._call_context_messages(
+                # 前端带上来的档位优先（见 _send_thinking 的说明）
+                thinking_row = self._send_thinking(creds, thinking_level)
+                ctx_messages, still_plugin, locale, ctx_mix = self._call_context_messages(
                     session, content, reply_mode, plan["upto"],
                     creds.get("provider") or "", creds.get("model") or "",
                     creds.get("api_model") or "", thinking_row)
@@ -2485,6 +3913,9 @@ class AiDomain:
                     #    前端据此区分"该走打字机"还是"整段本来就到不了几个包"。
                     "deltas": 0,
                     "first_pending": True,   # 第一个有内容的包要**立刻**推（不等 120ms）
+                    # Agent 工具循环实际跑了几轮（普通聊天恒 0）；只用于日志排查，
+                    # **不进 done 事件**（事件形状一个字节都不能改，前端契约靠它）
+                    "rounds_done": 0,
                 }
                 with self._streams_lock:
                     self._streams[stream_id] = state
@@ -2492,6 +3923,8 @@ class AiDomain:
                     "store": store, "session": session, "plan": plan, "creds": creds,
                     "messages": ctx_messages, "locale": locale, "content": content,
                     "thinking": thinking,
+                    # Agent 模式（工具可用）→ _stream_reader 走 _chat_with_tools 的逐字工具循环
+                    "allow_tools": allow_tools,
                 }
                 threading.Thread(target=self._stream_reader, args=(stream_id, context),
                                  name=f"ToolsGCP-ai-stream-{stream_id}", daemon=True).start()
@@ -2537,23 +3970,67 @@ class AiDomain:
             def should_stop() -> bool:
                 return bool(state.get("stop")) or not self._can_push()
 
-            result = ai_client.chat_stream(
-                context["messages"], creds["api_key"], creds["api_model"],
-                # ⚠️ wants_all 的列举类回答同样垫高输出预算（和 send() 一个口径）：
-                #    流式路径以前恒 max_tokens=0，网关默认上限照样把 52 条掐一半。
-                creds["api_base"],
-                max_tokens=self._request_max_tokens(context.get("content") or ""),
-                temperature=0.7,
-                on_chunk=on_chunk, should_stop=should_stop,
-                on_reasoning=on_reasoning if self._thinking_open(thinking) else None,
-                thinking=thinking)
+            def on_delta(visible: str, reasoning: str = "") -> None:
+                """Agent 工具循环的逐字放行：**写进和聊天模式同一套 state**
+
+                ⚠️ 事件仍由 _stream_pump 统一发，delta 形状
+                   {stream_id, type:"delta", text, reasoning} 一个字节不变
+                   （前端 dispatchAiStreamEvent 是"整段覆盖"语义）。
+                ⚠️ visible 是**本次回答的累计全文**（跨工具轮、已抠掉调用标记），
+                   所以这里不需要任何拼接/去重逻辑。
+                """
+                state["latest"] = str(visible or "")
+                state["dirty"] = True
+                if reasoning:
+                    state["reasoning"] = str(reasoning)
+                    state["reasoning_dirty"] = True
+
+            # ⚠️ wants_all 的列举类回答同样垫高输出预算（和 send() 一个口径）：
+            #    流式路径以前恒 max_tokens=0，网关默认上限照样把 52 条掐一半。
+            budget = self._request_max_tokens(context.get("content") or "")
+
+            def _request():
+                """问模型：普通聊天 = 一条 SSE；Agent 模式 = 逐字 + 工具循环（task-7）
+
+                ⚠️ Agent 走 _chat_with_tools 时**必须给 on_delta**，它才会每轮改成
+                   chat_stream + _AnswerGate（不给就是原来的整段 chat —— 那条路径
+                   仍是 send() 在用，不能动）。
+                """
+                if not context.get("allow_tools"):
+                    return ai_client.chat_stream(
+                        context["messages"], creds["api_key"], creds["api_model"],
+                        creds["api_base"], max_tokens=budget, temperature=0.7,
+                        on_chunk=on_chunk, should_stop=should_stop,
+                        on_reasoning=on_reasoning if self._thinking_open(thinking) else None,
+                        thinking=thinking)
+                box = {}
+                res, done_rounds, _created = self._chat_with_tools(
+                    context["messages"], creds["api_key"], creds["api_model"],
+                    creds["api_base"], locale=context.get("locale") or "zh_CN",
+                    allow_tools=True, thinking=thinking, max_tokens=budget,
+                    on_delta=on_delta, should_stop=should_stop,
+                    # ★ 本轮：每一轮请求的用量都累进 box，最后把**总量**写回
+                    #   res.usage —— 统计面板看到的就是这一问的真实成本。
+                    usage_hook=lambda r: AiDomain._merge_usage(box, r))
+                if box:
+                    try:
+                        res.usage = dict(box)
+                    except Exception:
+                        pass
+                state["rounds_done"] = done_rounds
+                return res
+
+            result = _request()
 
             # ⚠️ 与 send() 同一套降级：网关把思考档位判成 400 → 去掉参数重试一次。
             #    流式这里要**先清掉已经收到的思考**再重试，否则旧档位的半截思考会
             #    跟着降级后的回答一起显示（档位已经关了却还有思考块）。
+            #    ⚠️ Agent 模式**不在这里重试**：_chat_with_tools 内部的降级会自己换一个
+            #       新闸门重跑第一轮（半截思考和已放行正文都属于旧档位那次请求）；
+            #       这里再重跑一遍等于把整段回答推两遍 + 工具执行两次，绝不允许。
             if (not getattr(result, "ok", False)) and thinking is not None \
                     and getattr(result, "kind", "") == "bad_request" \
-                    and not state.get("stop"):
+                    and not state.get("stop") and not context.get("allow_tools"):
                 _log("warn", "AI", "stream",
                      f"网关拒绝了思考档位 {thinking!r}（{getattr(result, 'message', '')}），"
                      f"已去掉思考参数重试一次")
@@ -2565,11 +4042,10 @@ class AiDomain:
                 state["latest"] = ""
                 state["dirty"] = False
                 state["pushed_len"] = -1
+                # 到这里的只可能是普通聊天（Agent 分支上一条判断已经排除）
                 result = ai_client.chat_stream(
                     context["messages"], creds["api_key"], creds["api_model"],
-                    creds["api_base"],
-                    max_tokens=self._request_max_tokens(context.get("content") or ""),
-                    temperature=0.7,
+                    creds["api_base"], max_tokens=budget, temperature=0.7,
                     on_chunk=on_chunk, should_stop=should_stop,
                     on_reasoning=None, thinking=None)
             cancelled = bool(state.get("stop")) or getattr(result, "kind", "") == "cancelled"
@@ -2583,10 +4059,21 @@ class AiDomain:
                 payload = None
                 if partial:
                     partial = f"{partial}\n\n（本次回答被中断）"
+                    # ★ 本轮修复：被中断时也要把**已经执行过的 Agent 步骤**落盘
+                    #   （旧写法只带思考；中断恰恰是"做了一半"的场景，步骤不留，
+                    #    重开对话就完全看不出动过什么 —— 用户报的"步骤缺失"之一）
+                    _cancel_extra = {}
+                    if think_text:
+                        _cancel_extra["reasoning"] = think_text
+                    if context.get("allow_tools"):
+                        _cs = (getattr(result, "agent_steps", None)
+                               or state.get("collected_steps"))
+                        if _cs:
+                            _cancel_extra["steps"] = _cs
                     reply_saved = self._persist_assistant(
                         store, session, partial,
                         None if plan["mode"] == "edit" else plan["assistant_index"],
-                        {"reasoning": think_text} if think_text else None)
+                        _cancel_extra or None)
                     payload = self._dump(session)
                 self._push({"stream_id": stream_id, "session_id": session.id,
                             "type": "cancelled", "text": partial,
@@ -2604,10 +4091,16 @@ class AiDomain:
                                                creds["key_tail"])
                 error_text = (message + "\n"
                               + self._text("ai_err_current_config", "当前配置：") + config) if config else message
+                # ★ 本轮修复：同 send() —— 失败前执行过的步骤要留痕落盘
+                _err_extra = {"error": True, "kind": kind}
+                _err_steps = (getattr(result, "agent_steps", None)
+                              if context.get("allow_tools") else None)
+                if _err_steps:
+                    _err_extra["steps"] = _err_steps
                 saved = self._persist_assistant(
                     store, session, error_text,
                     None if plan["mode"] == "edit" else plan["assistant_index"],
-                    {"error": True, "kind": kind})
+                    _err_extra)
                 _log("err", "AI", "stream",
                      f"流式请求失败 kind={kind} {message}（错误已落盘={saved}）")
                 self._push({"stream_id": stream_id, "session_id": session.id,
@@ -2619,19 +4112,57 @@ class AiDomain:
                             "delta_count": int(state.get("deltas") or 0)})
                 return
 
-            reply = self._clean_reply(str(getattr(result, "content", "") or text or ""))
+            if context.get("allow_tools"):
+                # Agent 模式：闸门在收尾时已经过了一遍 _clean_reply（放行策略规则 3），
+                # 这份全文 = 用户逐字看到的 = 该落盘的，三者同源；
+                # 拿它优先，否则只剩最后一轮那半截正文，前面几轮"我先看看收藏夹"会丢。
+                reply = str(getattr(result, "agent_visible", "") or "") \
+                    or self._clean_reply(str(getattr(result, "content", "") or text or ""))
+                # ⚠️ 口径拉平（队友发现）：send() 在 Agent 模式遇到坏标记时会补一句
+                #    "这轮没真动手"，而流式这条分支以前什么都不说 —— 同一条回答两条路给
+                #    用户的确定性不一样，用户照样会以为收藏夹已经改好了。
+                #    守卫用 rounds_done（_stream_reader 自己记的账，见 :3512）：
+                #    真跑过工具的轮次绝不补，否则"已帮你收藏"后面跟一句废话。
+                if int(state.get("rounds_done") or 0) == 0:
+                    reply = self._markup_notice(
+                        str(getattr(result, "content", "") or text or ""), reply, True)
+            else:
+                reply = self._clean_reply(str(getattr(result, "content", "") or text or ""))
+                # 与 send() 同一口径：Chat 模式下模型吐了调用标记 → 补一句"没真动手"。
+                # 提示文字走 done 的 text，不新增事件类型（前端只认那几种）。
+                reply = self._markup_notice(
+                    str(getattr(result, "content", "") or text or ""), reply, False)
             if not reply:
                 reply = "模型没有返回内容，换个说法再试一次。"
             # 思考文本：档位关着 / 模型不支持 / 网关拒绝后降级 → 一律清空（不该出现思考块）
             think_final = (str(getattr(result, "reasoning", "") or "") or think_text) \
                 if self._thinking_open(thinking) else ""
+            # 落盘附带信息与 send() 同一口径：思考 + Agent 执行步骤（历史对话要能还原
+            # "完成了几步" —— 用户报过「加载历史对话里面的调用工具完成几步那个不见了」）
+            _extra = {}
+            if think_final:
+                _extra["reasoning"] = think_final
+            _steps = (getattr(result, "agent_steps", None)
+                      if context.get("allow_tools") else None)
+            if _steps:
+                _extra["steps"] = _steps
+            # ★ 本轮（缓存命中/统计）：流式这条也记本次请求的用量（同 send() 口径）
+            _usage = getattr(result, "usage", None)
+            if isinstance(_usage, dict) and _usage:
+                _extra["usage"] = dict(_usage)
+            # ★★ 同 send() 的修复：_usage_of 有"把本次折进 session.usage_total"的
+            #   副作用，必须在落盘**之前**调用，磁盘账本才含最新一问；
+            #   done 信封直接复用这份，绝不再调第二次（调两次 = 账本翻倍）。
+            _usage_env = self._usage_of(session, result, ctx_mix)
             reply_saved = self._persist_assistant(
                 store, session, reply,
                 None if plan["mode"] == "edit" else plan["assistant_index"],
-                {"reasoning": think_final} if think_final else None)
+                _extra or None)
             _log("op", "AI", "stream",
                  f"流式回答完成 {stream_id}：{len(reply)} 字（写盘={reply_saved}）"
                  + (f"（思考 {len(think_final)} 字）" if think_final else "")
+                 + (f"（工具 {int(state.get('rounds_done') or 0)} 轮）"
+                    if int(state.get("rounds_done") or 0) else "")
                  + ("（新版本）" if plan["mode"] == "regen" else "")
                  + ("（新分支）" if plan["mode"] == "edit" else ""))
             # 收尾：done 必达，带上**整会话**让前端用磁盘为准重建（下标从此也重新对齐）
@@ -2647,7 +4178,11 @@ class AiDomain:
                         "session": self._dump(session),
                         "persisted": bool(reply_saved),
                         "streamed": deltas >= 2,
-                        "delta_count": deltas})
+                        "delta_count": deltas,
+                        # ★ 本轮（缓存命中统计）：done 也带 usage（与 send() 同一口径；
+                        #   复用落盘前折好的 _usage_env —— _usage_of 有折账本副作用，
+                        #   在 done 处再调一次会把最新一问重复入账）
+                        "usage": _usage_env})
         except Exception as exc:                          # noqa: BLE001
             _log("err", "AI", "stream", f"流式线程异常 {stream_id}: {exc}")
             try:
@@ -2977,6 +4512,17 @@ class AiDomain:
         view = {"role": m.get("role"), "content": m.get("content"),
                 "ts": m.get("ts", ""),
                 "error": bool(m.get("error")), "kind": m.get("kind", "")}
+        # ⚠️ Agent 执行步骤要**跟着消息一起存/取**（用户原话：
+        #    「我加载历史对话里面的调用工具完成几步那个不见了，没有存储起来的bug」）。
+        #    步骤本来只活在内存里，换会话/重启就没了 —— 存进这条 assistant 消息里，
+        #    前端 loadAiSession 时读回来重建卡片（见 app.js 的 restoreAgentStepsFromSession）。
+        steps = m.get("steps")
+        if isinstance(steps, list) and steps:
+            view["steps"] = [st for st in steps if isinstance(st, dict)][:40]
+        # ★ 本轮（缓存命中/会话统计 UI）：这一问的用量随消息回传（老消息没有 = 不带键）
+        usage = m.get("usage")
+        if isinstance(usage, dict) and usage:
+            view["usage"] = dict(usage)
         variants = m.get("variants")
         if isinstance(variants, list) and len(variants) > 1:
             view["variants"] = [str(v or "") for v in variants]
@@ -3011,10 +4557,133 @@ class AiDomain:
         return view
 
     @staticmethod
+    def _fold_usage(session, usage):
+        """把**这一次请求**的 usage 累计到会话账本上（session.usage_total）。
+
+        ⚠️ 为什么要我们自己记账：网关每次只回**本次请求**的用量，而用户要看的是
+        "这场对话一共吃了多少 token、缓存命中了多少"。累计写在会话对象上，跟着
+        chat_store 一起落盘（顶层多一个 usage_total 键；老版本读档忽略未知键，
+        向后兼容，不需要迁移）。
+        ⚠️ last_prompt/last_cached 是"最近一问"的快照：缓存命中率是最近这一问的
+        性质，历史平均值只会越算越假；累计值只用于"这场对话总共花了多少"。
+        """
+        try:
+            if not isinstance(usage, dict):
+                return None
+            total = getattr(session, "usage_total", None)
+            if not isinstance(total, dict):
+                total = {"prompt": 0, "completion": 0, "total": 0,
+                         "requests": 0,
+                         "last_prompt": 0, "last_cached": 0}
+            total = dict(total)
+            total["prompt"] = int(total.get("prompt") or 0) + int(usage.get("prompt") or 0)
+            total["completion"] = int(total.get("completion") or 0) \
+                + int(usage.get("completion") or 0)
+            total["total"] = int(total.get("total") or 0) + int(usage.get("total") or 0)
+            # 一次"问答"在 Agent 模式下是 N 次真实请求（合并 box 会带 requests=N），
+            # 普通聊天是 1 次 → 按 usage 里给的次数累加，绝不无脑 +1（否则虚高）。
+            total["requests"] = int(total.get("requests") or 0) \
+                + int(usage.get("requests") or 1)
+            # cached_total：整场对话里"命中缓存的输入 token"**累加** ——
+            # 面板里"会话级命中率"要的就是它（不是最近一问的平均）。
+            # ⚠️ 只有**这次 usage 明确带了 cached 字段**才累加：
+            #    "报了 0"（DeepSeek 冷启动，真 0%）与"压根不报"（很多网关没有该字段）
+            #    必须区分 —— 无差别 +0 会让没报的家显示成 0% 假数据，
+            #    正是用户点名的"不许虚假/大约数"。没报过的会话：键始终缺席
+            #    → 前端如实显示"暂未可用"。
+            if "cached" in usage:
+                total["cached_total"] = int(total.get("cached_total") or 0) \
+                    + int(usage.get("cached") or 0)
+            total["last_prompt"] = int(usage.get("prompt") or 0)
+            total["last_cached"] = int(usage.get("cached") or 0)
+            try:
+                session.usage_total = total
+            except Exception:
+                pass
+            return total
+        except Exception:
+            return None
+
+    @staticmethod
+    def _merge_usage(box, result):
+        """把一次请求的 usage 累进 box（Agent 工具循环 N 轮 → 一份真实总量）
+
+        ⚠️ requests 计的是**真实请求次数**：Agent 模式一次回答背后可能发了
+        4~10 次请求，全部加起来才是这一问的成本；只算最后一次会严重低估，
+        缓存命中率也会被算错（分子分母不是同一批请求）。
+        """
+        try:
+            usage = getattr(result, "usage", None)
+            if not isinstance(usage, dict) or not usage:
+                return box
+            # ⚠️ 只有源里**真的带了** cached 才并入 box：补一个 0 会让
+            #   "这家网关压根不报缓存" 的会话被记成 cached=0 的真值 →
+            #   面板显示 0% 假数据（用户点名不许大约数/假数）。
+            for key in ("prompt", "completion", "total", "cached"):
+                if key not in usage:
+                    continue
+                box[key] = int(box.get(key) or 0) + int(usage.get(key) or 0)
+            box["requests"] = int(box.get("requests") or 0) + 1
+        except Exception:
+            pass
+        return box
+
+    @staticmethod
+    def _usage_of(session, result, mix=None):
+        """组装这一问答给前端的 usage 包：本次值 + 会话累计 + 缓存命中率
+
+        mix：_context_mix() 算出的输入构成（字符数）。挂两份：
+            · last.mix —— 这次请求的分段（面板顶部那条分段进度条）；
+            · total.last_mix —— 跟着会话账本落盘，重开历史对话后仍能画出来。
+        """
+        out = {}
+        try:
+            usage = getattr(result, "usage", None)
+            if isinstance(usage, dict) and usage:
+                last = dict(usage)
+                if isinstance(mix, dict) and mix:
+                    last["mix"] = dict(mix)
+                prompt = int(usage.get("prompt") or 0)
+                cached = int(usage.get("cached") or 0)
+                if prompt > 0:
+                    last["hit_rate"] = round(min(1.0, cached / prompt) * 100.0, 1)
+                out["last"] = last
+            folded = AiDomain._fold_usage(session, usage) if session is not None else None
+            if folded:
+                # 会话级命中率 = 累计命中 ÷ 累计输入（cached_total 本轮新增；
+                # 老账本没这个键时退回 last_cached，至少不留空）
+                p = int(folded.get("prompt") or 0)
+                ct = folded.get("cached_total")
+                c = int(ct) if ct is not None else int(folded.get("last_cached") or 0)
+                if p > 0:
+                    folded["hit_rate"] = round(min(1.0, c / p) * 100.0, 1)
+                if isinstance(mix, dict) and mix:
+                    # 与 session.usage_total 是同一个 dict（_fold_usage 已写回），
+                    # 这里补键即等于把「这次的分段」也一起落盘；
+                    # 再赋值一次只是把意图写明（老会话对象可能被换成副本）。
+                    folded["last_mix"] = dict(mix)
+                    try:
+                        session.usage_total = folded
+                    except Exception:                     # noqa: BLE001
+                        pass
+                out["total"] = folded
+        except Exception:
+            pass
+        return out or None
+
+    @staticmethod
     def _dump(session) -> dict:
-        return {"id": session.id, "title": session.title,
+        data = {"id": session.id, "title": session.title,
                 "created_at": session.created_at, "updated_at": session.updated_at,
                 "messages": [AiDomain._message_view(m) for m in (session.messages or [])]}
+        # ★ 本轮：会话累计用量随会话一起回传（缓存命中/上下文/会话统计 UI 的数据源）
+        try:
+            folded = getattr(session, "usage_total", None)
+            if isinstance(folded, dict) and folded:
+                data["usage_total"] = dict(folded)
+        except Exception:
+            pass
+        return data
 
     def provider_models(self, provider: str = ""):
         """某个服务商的模型候选（设置页"刷新模型列表"用；纯本地表，不联网）"""
@@ -3064,17 +4733,131 @@ class AiDomain:
         return get_bridge(self._shell)
 
     def agent_state(self):
-        """Agent 配置页一次拉全：开关 / 全部模块 / 统计 / 最近动作"""
+        """Agent 配置页一次拉全：开关 / 全部模块 / 统计 / 最近动作
+
+        ⚠️ `locked` 必须一起下发（契约 1.3）：配置页的开关要置灰 + 显示「强制开启」，
+           只靠前端自己猜 manifest.locked 不行 —— 用户可能直接把配置页当独立页面打开。
+        """
         try:
             bridge = self._agent_bridge()
+            locked = bool(bridge.is_locked())
+            locale = self._locale()
+            tools = bridge.tools()
+            # ⚠️⚠️ 给每个工具补一条三语显示名（用户原话：
+            #    「插件界面有些东西只有英文的没用其他2个语言的了，我要的是三语言
+            #    而且和设置中的语言同切换」）。
+            # 配置页以前把 tool.name（search_resources 这种英文标识符）当**唯一标题**，
+            # 切到中文/繁中标题依然全是英文。现在下发 label，前端优先用它当标题。
+            try:
+                from pymodels.core.ai import agent_web as _aw
+                for item in tools:
+                    if isinstance(item, dict):
+                        item["label"] = _aw.tool_label(item.get("name"), locale)
+            except Exception:                             # noqa: BLE001
+                pass
             return _ok(enabled=bool(bridge.enabled()),
                        setting_on=bool(bridge.setting_on()),
-                       tools=bridge.tools(),
+                       locked=locked,
+                       lockable=not locked,
+                       tools=tools,
                        stats=bridge.stats(),
                        actions=bridge.recent_actions(20),
+                       locale=locale,
                        language=self._language())
         except Exception as exc:                          # noqa: BLE001
             return _fail(exc)
+
+    # ---------- 对话模式（Chat / Agent，输入框旁边那颗胶囊） ----------
+    def chat_mode(self):
+        """当前对话模式 + 可选项（前端画胶囊用）
+
+        用户原话：「…只有一个Chat和Agent选项，Chat只能聊天也是默认选项，Agent则可以
+           调用AI Agent获取可以行动起来的能力，不单单是只能聊天…（这两个模式切换也出
+           储存在配置里面）」。
+        ⚠️ 默认 chat：插件是强制开启的（能力在），但默认**不动手**更符合直觉，
+           也更省 token（Chat 下不注入工具清单）。
+        """
+        try:
+            from pymodels.core.ai import agent_runtime
+            mode = agent_runtime.chat_mode(self._shell)
+            return _ok(mode=mode,
+                       options=[{"value": agent_runtime.CHAT_MODE_CHAT, "label": "Chat"},
+                                {"value": agent_runtime.CHAT_MODE_AGENT, "label": "Agent"}],
+                       agent_enabled=bool(self._agent_bridge().enabled()),
+                       language=self._language())
+        except Exception as exc:                          # noqa: BLE001
+            return _fail(exc)
+
+    def set_chat_mode(self, mode: str = ""):
+        """切换对话模式并**落盘**（用户要求"这两个模式切换也出储存在配置里面"）
+
+        ⚠️ 走 settings_manager.update_setting（和别的设置同一条链路：落盘 + op 日志），
+           这样前端 settings-changed 广播/另一端同步/重启后记忆全都自动成立。
+        """
+        try:
+            from pymodels.core.ai import agent_runtime
+            want = agent_runtime.set_chat_mode(self._shell, mode)
+            manager = self.settings_manager
+            try:
+                if manager is not None:
+                    self._shell.push_event("settings-changed",
+                                           {"key": agent_runtime.CHAT_MODE_KEY, "new": want})
+            except Exception:                             # noqa: BLE001
+                pass
+            _log("op", "AI", "mode", f"对话模式切换为 {want}")
+            return _ok(mode=want)
+        except Exception as exc:                          # noqa: BLE001
+            return _fail(exc)
+
+    def agent_reply(self, req_id: str = "", payload=None):
+        """前端回应 agent.ui 里**需要回值**的请求（目前只有 deploy_list）
+
+        协议（契约 4.3）：后端 `push_event("agent.ui", {"op": "deploy_list", "reqId": "u-3"})`
+        → 前端拿到清单后 `bridge.tryCall("ai.agent_reply", "u-3", {items: [...]})`
+        → **这里只做转交**，真正的等待表在 `agent_web`（工具实现侧）。
+
+        ⚠️⚠️ 为什么本方法**不自己实现等待逻辑**：
+           等待表如果两边各写一份，迟早出现"界面回了 A 表、工具在等 B 表"——
+           表现就是界面明明回应了、AI 还是白等超时（最难查的一类 bug）。
+           所以唯一事实来源是 `agent_web.submit_reply(req_id, payload)`，
+           本方法只负责把前端回调转过去、把结果包成 JSON 信封。
+        ⚠️ 线程安全由 agent_web 自己的锁负责（它在工具执行线程里 wait、
+           在 js_api 工作线程里被本方法唤醒，跨线程唤醒必须由持有人加锁）。
+        ⚠️ **永不抛**：这是前端回调，抛异常会让 UI 的 await reject，
+           用户看到的是"回复失败"，而实际动作可能已经成功了。
+        """
+        rid = str(req_id or "").strip()
+        data = payload if isinstance(payload, dict) else {}
+        if not rid:
+            return _fail("没有指定要回应的请求 id")
+        try:
+            from pymodels.core.ai import agent_web
+        except Exception:                                 # noqa: BLE001
+            # agent_web 还没就绪（本轮新增文件，可能未部署）：如实回错误，
+            # 别让前端以为"回应已收到"（那样 __ 会一直等到超时）。
+            _log("warn", "AI", "agent_tool",
+                 f"agent_reply 失败：Web 版工具实现尚未就绪（req={rid}）")
+            return _fail("Web 版工具尚未就绪", req_id=rid)
+        try:
+            handled = bool(agent_web.submit_reply(rid, data))
+        except Exception as exc:                          # noqa: BLE001
+            _log("err", "AI", "agent_tool",
+                 f"agent_reply 转交失败 req={rid}: {type(exc).__name__}: {exc}")
+            return _fail(f"转交回应失败: {exc}", req_id=rid)
+        # 兼容转发：agent_web 的 wait 可能同时探测 core 侧的通用等待槽
+        # （见 agent_runtime.new_agent_request/wait_agent_reply）。这里只是把
+        # 同一份 payload 再投一次，**不新增任何等待状态**；重复投递是幂等的。
+        if not handled:
+            try:
+                from pymodels.core.ai import agent_runtime
+                handled = bool(agent_runtime.provide_agent_reply(rid, data))
+            except Exception:                             # noqa: BLE001
+                pass
+        _log("dbg", "AI", "agent_tool",
+             f"agent_reply {rid} 已投递 handled={handled} keys={list(data.keys())[:6]}")
+        # ⚠️ handled=False 不算失败：前端可能回得比工具等待的超时还晚（正常现象），
+        #    此时工具早已按"界面没有及时回应"收尾，回 ok 让前端别弹错。
+        return _ok(req_id=rid, handled=handled)
 
     def set_agent_enabled(self, on: bool = False):
         """Agent 总开关（和设置里的 gcp_ai_agent_enabled 是同一个键）

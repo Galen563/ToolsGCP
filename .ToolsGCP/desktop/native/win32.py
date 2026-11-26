@@ -67,6 +67,8 @@ WM_QUIT = 0x0012
 WM_NCCALCSIZE = 0x0083
 WM_NCHITTEST = 0x0084
 WM_GETMINMAXINFO = 0x0024
+# 带超时的 SendMessage 标志：对端线程不泵消息时不要一直等下去
+SMTO_ABORTIFHUNG = 0x0002
 WM_NCLBUTTONDOWN = 0x00A1
 WM_SYSCOMMAND = 0x0112
 WM_LBUTTONUP = 0x0202
@@ -193,6 +195,24 @@ class MINMAXINFO(ctypes.Structure):
                 ("ptMinTrackSize", POINT), ("ptMaxTrackSize", POINT)]
 
 
+class WINDOWPLACEMENT(ctypes.Structure):
+    """GetWindowPlacement/SetWindowPlacement 的参数结构
+
+    ⚠️ 为什么必须用它（而不是自己拿 GetWindowRect 记一个矩形）：
+       对**最大化**窗口来说，窗口矩形是系统外扩过边框的（日志实测：1920x1032 的工作区
+       → 窗口矩形 (-8,-8,1928,1040)），而系统真正记住的「还原点」是
+       rcNormalPosition（普通态矩形）。F11 全屏退出时若拿窗口矩形去 SetWindowPos，
+       那一刻窗口不是最大化 → 这一步会把还原点**改写成最大化矩形**，之后点最大化/
+       还原就再也回不到原来的窗口大小（用户报的"窗口大小被固定死全屏大小 / 伪全屏"）。
+       GetWindowPlacement 的 rcNormalPosition + showCmd 才是官方口径，存下来原样塞回去
+       （SetWindowPlacement）就能同时处理"回普通态"和"回最大化"两种情况。
+    ⚠️ length 必须由调用方先写 sizeof（系统靠它判版本，写 0 直接失败）。
+    """
+    _fields_ = [("length", wintypes.DWORD), ("flags", wintypes.DWORD),
+                ("showCmd", wintypes.UINT), ("ptMinPosition", POINT),
+                ("ptMaxPosition", POINT), ("rcNormalPosition", RECT)]
+
+
 class SIZE(ctypes.Structure):
     """分层窗口 UpdateLayeredWindow 的尺寸参数"""
     _fields_ = [("cx", ctypes.c_long), ("cy", ctypes.c_long)]
@@ -282,6 +302,15 @@ def _declare():
     u.SendMessageW.restype = LRESULT
     u.SendMessageW.argtypes = [wintypes.HWND, ctypes.c_uint, ctypes.c_size_t,
                                ctypes.c_ssize_t]
+
+    # 带超时的 SendMessage：向「可能正忙」的窗口问它自己的最小尺寸
+    # （WM_GETMINMAXINFO）只能用这个，裸 SendMessageW 在对端不泵消息时
+    # 会把调用线程挂住 —— 而调用方正是 pywebview 的 JS 桥线程。
+    u.SendMessageTimeoutW.restype = ctypes.c_size_t
+    u.SendMessageTimeoutW.argtypes = [wintypes.HWND, wintypes.UINT,
+                                      wintypes.WPARAM, ctypes.c_void_p,
+                                      wintypes.UINT, wintypes.UINT,
+                                      ctypes.POINTER(ctypes.c_size_t)]
     u.PostQuitMessage.restype = None
     u.PostQuitMessage.argtypes = [ctypes.c_int]
     u.RegisterHotKey.restype = wintypes.BOOL
@@ -306,12 +335,20 @@ def _declare():
     u.IsZoomed.argtypes = [wintypes.HWND]
     u.IsIconic.restype = wintypes.BOOL
     u.IsIconic.argtypes = [wintypes.HWND]
+    # 窗口位置/状态的官方口径（还原点 = rcNormalPosition，不是窗口矩形）
+    u.GetWindowPlacement.restype = wintypes.BOOL
+    u.GetWindowPlacement.argtypes = [wintypes.HWND, ctypes.POINTER(WINDOWPLACEMENT)]
+    u.SetWindowPlacement.restype = wintypes.BOOL
+    u.SetWindowPlacement.argtypes = [wintypes.HWND, ctypes.POINTER(WINDOWPLACEMENT)]
     u.GetForegroundWindow.restype = wintypes.HWND
     u.GetForegroundWindow.argtypes = []
     u.GetWindowThreadProcessId.restype = wintypes.DWORD
     u.GetWindowThreadProcessId.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.DWORD)]
     u.AttachThreadInput.restype = wintypes.BOOL
     u.AttachThreadInput.argtypes = [wintypes.DWORD, wintypes.DWORD, wintypes.BOOL]
+    # 锁定/解锁「前台窗口」的切换权（Ctrl+左键后台开链接要靠它，见 shell.py 注释）
+    u.LockSetForegroundWindow.restype = wintypes.BOOL
+    u.LockSetForegroundWindow.argtypes = [wintypes.UINT]
     u.MonitorFromWindow.restype = wintypes.HMONITOR
     u.MonitorFromWindow.argtypes = [wintypes.HWND, wintypes.DWORD]
     u.GetMonitorInfoW.restype = wintypes.BOOL
@@ -321,6 +358,11 @@ def _declare():
                                         wintypes.LPVOID, wintypes.UINT]
     u.GetCursorPos.restype = wintypes.BOOL
     u.GetCursorPos.argtypes = [ctypes.POINTER(POINT)]
+    # 物理按键状态：拖动兜底要判断"用户此刻还按着左键吗"（与消息队列无关）
+    u.GetAsyncKeyState.restype = ctypes.c_short
+    u.GetAsyncKeyState.argtypes = [ctypes.c_int]
+    u.GetKeyState.restype = ctypes.c_short
+    u.GetKeyState.argtypes = [ctypes.c_int]
     u.EnumWindows.restype = wintypes.BOOL
     u.EnumWindows.argtypes = [ctypes.c_void_p, wintypes.LPARAM]
     u.GetWindowTextLengthW.restype = ctypes.c_int
@@ -480,7 +522,22 @@ def wndproc_guard(func):
                         f"窗口过程异常 msg=0x{int(msg) & 0xFFFFFFFF:04X}: {exc}")
             except Exception:
                 pass
-            return 0
+            # ⚠️⚠️ 兜底**必须回到系统默认过程**，不能返回 0。
+            #   教训（2026-11-23 真实故障）：窗口过程里写错一个常量名 →
+            #   NameError → 这里吞掉异常并 return 0 → **每一条窗口消息都被丢弃**：
+            #     · WM_CLOSE 被吞 → Form.Close() 永远不完成 → 主线程卡在
+            #       webview.start() → 进程退不出去（托盘点了"退出"还剩一个 python 进程）；
+            #     · WM_NCCALCSIZE/WM_SIZE 被吞 → 窗口过程彻底失效 →
+            #       **任务栏没有窗口、只有托盘**（用户原话："程序打不开"）。
+            #   DefWindowProcW 是"没接住这条消息"的**正确**去处：交给系统默认值，
+            #   窗口照样能显示、能关闭。return 0 只对个别消息成立，不能当通用兜底。
+            try:
+                hwnd, msg_id = args[0], args[1]
+                wparam = args[2] if len(args) > 2 else 0
+                lparam = args[3] if len(args) > 3 else 0
+                return user32.DefWindowProcW(hwnd, msg_id, wparam, lparam)
+            except Exception:
+                return 0
     return wrapper
 
 
@@ -496,6 +553,67 @@ def dpi_scale(hwnd) -> float:
     except Exception:
         pass
     return 1.0
+
+
+def system_dpi_scale() -> float:
+    """**进程当前坐标系**的缩放比例（还没有任何窗口时用这个）。
+
+    ⚠️ 为什么不用 GetDpiForWindow(0)：那条要一个已存在的句柄；启动画面在建窗之前
+       就得把 logo 尺寸算对，只能先问系统。GetDpiForSystem 是 Win10+ 的 API，
+       老系统 / 导出缺失时退回 DC 的 LOGPIXELSX，再不行就 1.0 —— 绝不抛。
+    ⚠️ 前提是进程 DPI awareness 已经定下来（见本模块 ensure_dpi_awareness）：
+       awareness 没确定之前，这个值随时会被系统改写，算出来的尺寸就不作数。
+    """
+    try:
+        dpi = user32.GetDpiForSystem()
+        if dpi:
+            return dpi / 96.0
+    except Exception:
+        pass
+    try:
+        gdi32 = ctypes.windll.gdi32
+        hdc = user32.GetDC(None)
+        try:
+            dpi = gdi32.GetDeviceCaps(hdc, 88)          # LOGPIXELSX
+            if dpi:
+                return dpi / 96.0
+        finally:
+            user32.ReleaseDC(None, hdc)
+    except Exception:
+        pass
+    return 1.0
+
+
+def ensure_dpi_awareness() -> str:
+    """把进程的 DPI awareness **定下来**，返回一句给日志看的实际状态。
+
+    ⚠️⚠️ 这是"启动画面先在屏幕中央、随后突然跳到别处"那个用户反馈的**正解**，
+       改这行之前务必看懂为什么（别再当成居中算法算错了）：
+         ① pywebview 6.2.1 的 winforms 后端是在 **webview.start() 里面**才调
+            `SetProcessDPIAware()`（webview/platforms/winforms.py:820，master 分支）。
+         ② 启动画面是在 start() **之前**、用自己那条线程建的裸 Win32 分层窗口。
+            建窗那一刻进程还是 DPI-Unaware → 我们给的坐标被系统**虚拟化**
+            （除以缩放比），DWM 再把整块画面拉伸，看上去是居中的。
+         ③ 紧接着 webview.start() 把进程切成 System-DPI-Aware → 同一组坐标从此
+            按**物理像素**解释 → 已存在窗口的位置和尺寸同时变了含义
+            → 用户看到"画面先在正中间，然后猛地跳到偏左上/右上角"。
+         ④ 100% 缩放的机器上虚拟化是恒等操作，翻转前后一模一样 →
+            **开发者本机永远不复现**，只有 125%/150% 缩放的用户会看到。
+       修法：在**建任何窗口之前**，先调用和 pywebview **完全同一个 API**。
+       这样坐标系从第一帧起就是物理像素、再不会中途翻转；而 pywebview 后面那次
+       同名调用会因为"已经设置过"而返回 False 并被它自己忽略 —— 也就是说
+       **进程最终状态与不改之前完全一样**：主窗口的 _ui_scale、WebView2 的
+       ZoomFactor、frame.apply_page_zoom 那一整套缩放语义都不受任何影响。
+       （这是刻意选的保守做法：只提前"什么时候定下来"，不换"定成什么"。
+        想升级 Per-Monitor v2 必须整条主窗口缩放链路重新验证，别顺手改。）
+       返回值只给日志用；任何异常都吞掉（顶多少一层保护，不能让它挡住启动）。
+    """
+    try:
+        if user32.SetProcessDPIAware():
+            return "已置 System-DPI-Aware"
+        return "SetProcessDPIAware 返回 False（awareness 已由别处定下，保持现状）"
+    except Exception as exc:                            # noqa: BLE001
+        return f"SetProcessDPIAware 异常（忽略）: {exc}"
 
 
 def work_area(hwnd=None):
@@ -527,3 +645,40 @@ def rect_of(hwnd):
 
 def is_thread_alive(thread) -> bool:
     return bool(thread is not None and thread.is_alive())
+
+
+# LockSetForegroundWindow 的两个计数值（WinUser.h：LSFW_LOCK=1 / LSFW_UNLOCK=2）
+LSFW_LOCK = 1
+LSFW_UNLOCK = 2
+
+
+def lock_foreground() -> bool:
+    """锁住前台切换权：返回 TRUE 后**其它进程**调用 SetForegroundWindow 一律无效。
+
+    为什么需要它（Ctrl+左键顽固 bug 的第二半边，用户说「修了很多次还是没解决」）：
+      `ShellExecuteW(..., SW_SHOWNOACTIVATE)` 只约束「外壳启动进程时」要不要激活，
+      而浏览器**本来就有实例在跑**时，"open" 动词是 IPC/DDE 转交给那个已有进程的，
+      新窗口的显示方式由浏览器自己定 —— Chrome/Edge 都会在此刻自己 SetForegroundWindow
+      把自己提到最前。所以 nShow=3 根本管不住它，这就是「有时」的来源：没有浏览器实例
+      时正常，有实例时照样抢前台。
+      解法是在这次打开动作期间**禁止任何进程改前台**：浏览器抢不到前台，就只能留在
+      我们窗口的下面一层；随后解锁。全程不主动调用 SetForegroundWindow，
+      所以不会出现旧版 `_reclaim()` 那种「闪一下把窗口唤回来」的观感（那是用户明确
+      否掉的方案，别再走回头路）。
+    """
+    if user32 is None:
+        return False
+    try:
+        return bool(user32.LockSetForegroundWindow(LSFW_LOCK))
+    except Exception:
+        return False
+
+
+def unlock_foreground() -> None:
+    """解除 lock_foreground() 的锁定（幂等；失败不抛，反正系统会在下次输入时自动放行）。"""
+    if user32 is None:
+        return
+    try:
+        user32.LockSetForegroundWindow(LSFW_UNLOCK)
+    except Exception:
+        pass

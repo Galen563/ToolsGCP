@@ -111,6 +111,60 @@ PROVIDERS = [
     },
 ]
 
+
+# ---------- 采样参数口径（"发了就 400"的那一类） ----------
+# ⚠️ 本轮需求（m06454 第①项）的判据是**用户日志原文**，不是猜测：
+#   2026-11-13 15:34:26 kimi/kimi-k3 → 400
+#   `invalid temperature: only 1 is allowed for this model`
+#   聊天固定发 temperature=0.7、「测试连接」固定发 0 ⇒ 两个值都撞这条 400，
+#   于是"API Key 肯定没问题，但 Kimi 什么都发不出去"（用户原话）。
+# 口径只有两种，别加第三种：
+#   · "default" 照旧发我们自己的 temperature（多数厂商要这个才有风格）
+#   · "omit"    **整个字段不发**，用服务端默认值
+#     为什么不是"改发 1"：官方默认值恰好是 1，不发一定不会再撞同一条错误；发 1 是在赌
+#     "只接受 1"这句话对该模型为真（k2.6 这类没逐条核实的就可能反过来 400）。
+#     代价 = 这一类的采样风格不由程序决定；用户要的是"能发出去"，取舍写在这。
+# ⚠️ 只按**模型名**判、不绑服务商：中转/自定义端点跑的同名模型有同样限制；
+#    同一家换了非推理线（moonshot-v1 那批）也不该被误伤。
+_SAMPLING_OMIT_TEMPERATURE = (
+    "kimi-k3",              # 官方：思考恒开、temperature 只允许 1（用户日志实证）
+    "kimi-k2.7-code",       # 官方：thinking is always on
+    "kimi-k2.6",            # 同一条推理线（thinking 默认 enabled）
+    "kimi-k2",              # k2 系列旧写法兜底（含 k2-0905-preview 这类带日期的）
+    "kimi-latest",          # 官方 latest 走推理线
+    "moonshot-kimi",
+    "gpt-5",                # OpenAI：gpt-5 系只接受默认 temperature
+    "o1", "o3", "o4",       # OpenAI 推理线（o1-mini / o3-mini / o4-* 同前缀）
+    "deepseek-reasoner",    # 官方：不支持 temperature/top_p（v4 系见下面的例外）
+)
+
+# 明确"照旧发"的例外，写出来是防止后人把上面那串扩大化：
+# DeepSeek v4 系用户实测正常（m06454 原话「我只测试了deepseek厂商没问题」）⇒ 不动。
+_SAMPLING_DEFAULT = ("deepseek-v4", "deepseek-chat", "deepseek-v3")
+
+
+def model_tail(name: str) -> str:
+    """去掉 "厂商/" 这类路由前缀后的模型名小写（与 _THINKING_TABLES 同一口径）"""
+    text = str(name or "").strip().lower()
+    return text.rsplit("/", 1)[-1].strip()
+
+
+def temperature_mode(provider_id: str = "", name: str = "") -> str:
+    """这个模型该不该发 temperature："omit"=整个字段不发 / "default"=照旧发。
+    `provider_id` 只给日志用，不参与判断（判断只看模型名，理由见上面注释）。
+    """
+    tail = model_tail(name)
+    if not tail:
+        return "default"
+    for known in _SAMPLING_DEFAULT:
+        if tail.startswith(known):
+            return "default"
+    for prefix in _SAMPLING_OMIT_TEMPERATURE:
+        if tail.startswith(prefix):
+            return "omit"
+    return "default"
+
+
 # id -> 服务商字典
 PROVIDER_MAP = {p["id"]: p for p in PROVIDERS}
 

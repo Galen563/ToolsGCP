@@ -1,0 +1,3 @@
+[ok] 模块级反查函数 109 行插在 class MakerDomain 之前（新行号 84）
+[ok] _merge_i18n 旧注释（后端不翻译）改为指向 task-24 兜底
+[ok] _merge_i18n 值兜底循环接在 merged 赋值之后（新行号 366）

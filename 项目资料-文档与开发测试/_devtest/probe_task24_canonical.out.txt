@@ -1,0 +1,319 @@
+── ① 三语显示文本 → 规范值（zh_CN / zh_TW / en_US 都认）──
+[PASS] canonical_term('粘贴板') → '粘贴板'
+     got ="粘贴板"
+     want="粘贴板"
+[PASS] canonical_term('粘貼板') → '粘贴板'
+     got ="粘贴板"
+     want="粘贴板"
+[PASS] canonical_term('Clipboard') → '粘贴板'
+     got ="粘贴板"
+     want="粘贴板"
+[PASS] canonical_term('游戏平台') → '游戏平台'
+     got ="游戏平台"
+     want="游戏平台"
+[PASS] canonical_term('遊戲平台') → '游戏平台'
+     got ="游戏平台"
+     want="游戏平台"
+[PASS] canonical_term('Game platform') → '游戏平台'
+     got ="游戏平台"
+     want="游戏平台"
+[PASS] canonical_term('文件转换') → '文件转换'
+     got ="文件转换"
+     want="文件转换"
+[PASS] canonical_term('文件轉換') → '文件转换'
+     got ="文件转换"
+     want="文件转换"
+[PASS] canonical_term('FileConverter') → '文件转换'
+     got ="文件转换"
+     want="文件转换"
+[PASS] canonical_term('轻量') → '轻量'
+     got ="轻量"
+     want="轻量"
+[PASS] canonical_term('輕量') → '轻量'
+     got ="轻量"
+     want="轻量"
+[PASS] canonical_term('Lightweight') → '轻量'
+     got ="轻量"
+     want="轻量"
+[PASS] canonical_term('教学辅助') → '教学辅助'
+     got ="教学辅助"
+     want="教学辅助"
+[PASS] canonical_term('教學輔助') → '教学辅助'
+     got ="教学辅助"
+     want="教学辅助"
+[PASS] canonical_term('Teaching aid') → '教学辅助'
+     got ="教学辅助"
+     want="教学辅助"
+[PASS] canonical_term('社交') → '社交'
+     got ="社交"
+     want="社交"
+[PASS] canonical_term('社交') → '社交'
+     got ="社交"
+     want="社交"
+[PASS] canonical_term('Social') → '社交'
+     got ="社交"
+     want="社交"
+[PASS] canonical_term('管理器') → '管理器'
+     got ="管理器"
+     want="管理器"
+[PASS] canonical_term('管理器') → '管理器'
+     got ="管理器"
+     want="管理器"
+[PASS] canonical_term('Manager') → '管理器'
+     got ="管理器"
+     want="管理器"
+[PASS] canonical_term('服务器部署') → '服务器部署'
+     got ="服务器部署"
+     want="服务器部署"
+[PASS] canonical_term('伺服器部署') → '服务器部署'
+     got ="服务器部署"
+     want="服务器部署"
+[PASS] canonical_term('Server deployment') → '服务器部署'
+     got ="服务器部署"
+     want="服务器部署"
+[PASS] canonical_term('图标生成') → '图标生成'
+     got ="图标生成"
+     want="图标生成"
+[PASS] canonical_term('圖標生成') → '图标生成'
+     got ="图标生成"
+     want="图标生成"
+[PASS] canonical_term('Icon Maker') → '图标生成'
+     got ="图标生成"
+     want="图标生成"
+[PASS] canonical_term('多平台') → '多平台'
+     got ="多平台"
+     want="多平台"
+[PASS] canonical_term('多平台') → '多平台'
+     got ="多平台"
+     want="多平台"
+[PASS] canonical_term('Multi-Platform') → '多平台'
+     got ="多平台"
+     want="多平台"
+[PASS] canonical_term('版本控制') → '版本控制'
+     got ="版本控制"
+     want="版本控制"
+[PASS] canonical_term('版本控制') → '版本控制'
+     got ="版本控制"
+     want="版本控制"
+[PASS] canonical_term('Version Control') → '版本控制'
+     got ="版本控制"
+     want="版本控制"
+[PASS] canonical_term('AI原生浏览器') → 'AI原生浏览器'
+     got ="AI原生浏览器"
+     want="AI原生浏览器"
+[PASS] canonical_term('AI原生瀏覽器') → 'AI原生浏览器'
+     got ="AI原生浏览器"
+     want="AI原生浏览器"
+[PASS] canonical_term('AI-native browser') → 'AI原生浏览器'
+     got ="AI原生浏览器"
+     want="AI原生浏览器"
+[PASS] canonical_term('抠图') → '抠图'
+     got ="抠图"
+     want="抠图"
+[PASS] canonical_term('摳圖') → '抠图'
+     got ="抠图"
+     want="抠图"
+[PASS] canonical_term('Image matting') → '抠图'
+     got ="抠图"
+     want="抠图"
+[PASS] canonical_term('去背景') → '去背景'
+     got ="去背景"
+     want="去背景"
+[PASS] canonical_term('去背') → '去背景'
+     got ="去背景"
+     want="去背景"
+[PASS] canonical_term('Background Removal') → '去背景'
+     got ="去背景"
+     want="去背景"
+[PASS] canonical_term('AI图像') → 'AI图像'
+     got ="AI图像"
+     want="AI图像"
+[PASS] canonical_term('AI圖像') → 'AI图像'
+     got ="AI图像"
+     want="AI图像"
+[PASS] canonical_term('AI Cutout') → 'AI图像'
+     got ="AI图像"
+     want="AI图像"
+[PASS] canonical_term('工具') → '工具'
+     got ="工具"
+     want="工具"
+[PASS] canonical_term('工具') → '工具'
+     got ="工具"
+     want="工具"
+[PASS] canonical_term('Tools') → '工具'
+     got ="工具"
+     want="工具"
+[PASS] canonical_term('编程') → '编程'
+     got ="编程"
+     want="编程"
+[PASS] canonical_term('程式設計') → '编程'
+     got ="编程"
+     want="编程"
+[PASS] canonical_term('Programming') → '编程'
+     got ="编程"
+     want="编程"
+[PASS] canonical_term('实用') → '实用'
+     got ="实用"
+     want="实用"
+[PASS] canonical_term('實用') → '实用'
+     got ="实用"
+     want="实用"
+[PASS] canonical_term('Utility') → '实用'
+     got ="实用"
+     want="实用"
+[PASS] canonical_term('系统') → '系统'
+     got ="系统"
+     want="系统"
+[PASS] canonical_term('系統') → '系统'
+     got ="系统"
+     want="系统"
+[PASS] canonical_term('System') → '系统'
+     got ="系统"
+     want="系统"
+[PASS] 'Photo Tool' 作为键名自等（不猜成 图片处理）
+     got ="Photo Tool"
+     want="Photo Tool"
+── ② 用户自定义值原样保留（不猜、不丢）──
+[PASS] 自定义值 'MC启动器' 原样
+     got ="MC启动器"
+     want="MC启动器"
+[PASS] 自定义值 '知名' 原样
+     got ="知名"
+     want="知名"
+[PASS] 自定义值 '自造标签X' 原样
+     got ="自造标签X"
+     want="自造标签X"
+[PASS] 自定义值 'GCP-AI' 原样
+     got ="GCP-AI"
+     want="GCP-AI"
+[PASS] 自定义值 'xxx-插件' 原样
+     got ="xxx-插件"
+     want="xxx-插件"
+[PASS] 自定义值 '图片处理-自用' 原样
+     got ="图片处理-自用"
+     want="图片处理-自用"
+[PASS] 自定义值与术语混排也不丢
+     got =["MC启动器", "知名", "游戏平台"]
+     want=["MC启动器", "知名", "游戏平台"]
+[PASS] 反查后同值必须去重（粘贴板/粘貼板/Clipboard 并成一份）
+     got =["粘贴板"]
+     want=["粘贴板"]
+── ③ 幂等：跑两遍零 diff ──
+[PASS] 幂等（函数层）["粘贴板", "粘貼板", "Clipboard"]
+     got =["粘贴板"]
+     want=["粘贴板"]
+[PASS] 幂等（函数层）{"简体中文": ["工具"], "繁體中文": ["工具"], "English": ["Tools"]}
+     got =["工具"]
+     want=["工具"]
+[PASS] 幂等（函数层）{"简体中文": ["AI图像", "去背景", "抠图"], "繁體中文": ["AI圖像", "去背", "
+     got ={"简体中文": ["AI图像", "去背景", "抠图"], "繁體中文": ["AI图像", "去背景", "抠图"], "English": ["去背景", "AI图像", "Photo Tool"]}
+     want={"简体中文": ["AI图像", "去背景", "抠图"], "繁體中文": ["AI图像", "去背景", "抠图"], "English": ["去背景", "AI图像", "Photo Tool"]}
+[PASS] 幂等（函数层）{"English": ["Game platform"]}
+     got =["游戏平台"]
+     want=["游戏平台"]
+[PASS] 幂等（函数层）["MC启动器", "知名"]
+     got =["MC启动器", "知名"]
+     want=["MC启动器", "知名"]
+[PASS] 幂等（函数层）{"简体中文": [], "繁體中文": ["实用"], "English": []}
+     got =["实用"]
+     want=["实用"]
+[PASS] 幂等（函数层）{"简体中文": ["编程"], "繁體中文": ["工具"], "English": ["工具"]}
+     got ={"简体中文": ["编程"], "繁體中文": ["工具"], "English": ["工具"]}
+     want={"简体中文": ["编程"], "繁體中文": ["工具"], "English": ["工具"]}
+[PASS] 幂等（函数层）"工具,粘贴板"
+     got ="工具,粘贴板"
+     want="工具,粘贴板"
+[PASS] 幂等（函数层）null
+     got =null
+     want=null
+[PASS] 幂等（函数层）123
+     got =123
+     want=123
+[PASS] 幂等（真实库 57 条走 _normalize 两遍零 diff）
+     got =[]
+     want=[]
+     库里仍残留的显示文本（=「三池不一致」未自动改的那几条）0 处：[]
+── ④ 形态覆盖（走 MakerDomain._normalize 落盘链路）──
+[PASS] dict 形态·三池同内容 → 塌缩扁平 list[str]
+     got =["粘贴板"]
+     want=["粘贴板"]
+[PASS] dict 形态·只送 English → 规范值扁平
+     got =["游戏平台"]
+     want=["游戏平台"]
+[PASS] 扁平 list 形态
+     got =["游戏平台"]
+     want=["游戏平台"]
+[PASS] 逗号串历史形态
+     got =["粘贴板"]
+     want=["粘贴板"]
+[PASS] 三池内容不一致 → 保持字典形态（不合并内容），但值已规范化
+     got ={"简体中文": ["MC启动器", "知名"], "繁體中文": ["MC启动器"], "English": ["MC启动器"]}
+     want={"简体中文": ["MC启动器", "知名"], "繁體中文": ["MC启动器"], "English": ["MC启动器"]}
+[PASS] 全语言皆空 → 不写回字段（与 normalize_lang_list 的丢弃口径一致）
+     got =null
+     want=null
+[PASS] 未知语言键不静默丢
+     got ={"English": ["粘贴板"], "日本語": ["貼上"]}
+     want={"English": ["粘贴板"], "日本語": ["貼上"]}
+── ⑤ 与当前界面语言无关（English 界面下同样还原）──
+     set_language('English') 后 locale='en_US'
+[PASS] English 界面下 dict 反查 → 规范中文扁平
+     got =["粘贴板"]
+     want=["粘贴板"]
+[PASS] English 界面下读侧 translate_term('工具') 仍给显示译名（不变）
+     got ="Tools"
+     want="Tools"
+[PASS] English 界面下反查仍回规范中文
+     got ="工具"
+     want="工具"
+── ⑥ links / name / description 的既有行为不变 ──
+[PASS] links 未被值反查改写（与 normalize_links 结果完全一致）
+     got =[{"label": {"简体中文": "官网", "繁體中文": "官網", "English": "Site"}, "url": "https://example.com"}, {"label": "Clipboard", "url": "https://example.org"}]
+     want=[{"label": {"简体中文": "官网", "繁體中文": "官網", "English": "Site"}, "url": "https://example.com"}, {"label": "Clipboard", "url": "https://example.org"}]
+[PASS] links 里那条 label='Clipboard' 仍是 'Clipboard'（证明兜底没越界动 links）
+     got ="Clipboard"
+     want="Clipboard"
+[PASS] name 三语不同 → 仍保留字典（未被兜底动过）
+     got ={"简体中文": "小工具", "繁體中文": "小工具", "English": "Widget"}
+     want={"简体中文": "小工具", "繁體中文": "小工具", "English": "Widget"}
+[PASS] description 三语不同 → 仍保留字典
+     got ={"简体中文": "描述", "繁體中文": "描述", "English": "Desc"}
+     want={"简体中文": "描述", "繁體中文": "描述", "English": "Desc"}
+[PASS] category 已反查成规范值
+     got =["游戏平台"]
+     want=["游戏平台"]
+[PASS] name 三语同值 → 仍塌缩成字符串
+     got ="小工具"
+     want="小工具"
+[PASS] description 三语同值 → 仍塌缩成字符串
+     got ="描述"
+     want="描述"
+[PASS] 同一条里 tags 塌缩、name 塌缩互不干扰
+     got =["粘贴板"]
+     want=["粘贴板"]
+[PASS] name 里的 'Clipboard' 不被反查（只动 category/tags）
+     got ="Clipboard 粘贴板"
+     want="Clipboard 粘贴板"
+[PASS] tags 里的 'Clipboard' 被反查
+     got =["粘贴板"]
+     want=["粘贴板"]
+     LANG_LIST_FIELDS=["category", "tags"]（兜底只碰这些字段）
+── ⑦ 脏元素 / 拿不到管理器时不抛 ──
+[PASS] 非字符串元素原样保留
+     got =[{"坏": 1}, 2, "游戏平台"]
+     want=[{"坏": 1}, 2, "游戏平台"]
+[PASS] None 原样
+     got =null
+     want=null
+[PASS] 字符串原样（形状交给 normalize 压平）
+     got ="工具"
+     want="工具"
+[PASS] 空 dict 原样
+     got ={}
+     want={}
+[PASS] manager=None 时仍返回字符串（内部会兜底建管理器）
+     got =true
+     want=true
+[PASS] 坏条目整条不抛（links 传非 list）
+     got =true
+     want=true

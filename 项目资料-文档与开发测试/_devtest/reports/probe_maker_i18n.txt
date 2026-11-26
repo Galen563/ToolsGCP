@@ -1,0 +1,39 @@
+PASS  ① 默认类别 = 内置「工具」，各分段显示该语言译名（工具 / Tools）  {"zh":"工具","en":"Tools"}
+PASS  ① 默认标签三语全空（本轮需求：默认标签输入框为空）  {"zh":"\"\"","en":"\"\""}
+PASS  ① 「跟随类别」按钮已消失  []
+PASS  ② 简体中文填「工具, 系统」后切到 English：English 池不受污染（本轮修的 bug）  {"enAfterZh":"","zhStill":"工具, 系统"}
+PASS  ② 三种语言各自独立：简体=工具,系统 / English=Tools / 繁體=空  {"pools":{"简体中文":"工具, 系统","繁體中文":"","English":"工具"}}
+PASS  ② 类别也各自独立：简体=游戏 / English=Tools, Network  {"简体中文":"游戏","繁體中文":"工具","English":"工具, 网络"}
+PASS  ③ English 分段输入内置项（三种语言写法都认）还原成规范值；自定义值原样  [{"input":"Tools","got":"工具","want":"工具"},{"input":"游戏","got":"游戏","want":"游戏"},{"input":"遊戲","got":"游戏","want":"游戏"},{"input":"Games","got":"游戏","want":"游戏"},{"input":"Official","got":"官方","want":"官方"},{"input":"知名","got":"知名","want":"知名"},{"input":"我的自定义","got":"我的自定义","want":"我的自定义"}]
+PASS  ③ 标签同样还原（Tools, Official → 存 工具, 官方）  {"en":"工具, 官方"}
+PASS  ④ 三语类别相同 → 落盘是数组（与老数据同形，不产生冗余字典）  {"category":["工具"]}
+PASS  ④ 三语标签都空 → tags 字段不写（空可选字段不落盘）  {}
+PASS  ④ 三语类别不同 → 落盘是三语字典（后端 task-4 支持该形态）  {"category":{"简体中文":["工具"],"繁體中文":["工具"],"English":["工具","网络"]}}
+PASS  ④ 标签只有 English 非空 → 塌缩成该语言的数组（不写冗余字典）  {"tags":["官方"]}
+PASS  ⑤ 载入老形态（数组）→ 三个池灌同一份规范值  {"cat":{"简体中文":"工具, 网络","繁體中文":"工具, 网络","English":"工具, 网络"},"tags":{"简体中文":"官方","繁體中文":"官方","English":"官方"}}
+PASS  ⑤ 老形态载入后 English 分段显示英文译名（Tools, Network）  {"shown":"Tools, Network"}
+PASS  ⑤ 载入三语字典形态 → English 池拿到自己那份（工具, 网络）  {"pools":{"简体中文":"工具","繁體中文":"工具","English":"工具, 网络"}}
+PASS  ⑤ 字典形态里缺失的语言（繁體没写 tags）回退简体中文  {"tw":"官方"}
+PASS  ⑤ 同一份数据切回简体分段显示自己那份（工具）—— 独立池而非翻译同一份  {"shown":"工具"}
+PASS  ⑤ 载入三语字典 → 原样落盘（往返无损）  {"category":{"简体中文":["工具"],"繁體中文":["工具"],"English":["工具","网络"]}}
+PASS  ⑥ 找到设置里的语言行（真实切换入口）  {"found":true}
+PASS  ⑥ 界面语言已切到 English  {"language":"English"}
+PASS  ⑥a 切语言后分段立刻落到 English  {"idx":2,"language":"English"}
+PASS  ⑥a 类别输入框显示英文写法（不含中文）  {"cat":"Tools, Network"}
+PASS  ⑥a 类别下拉候选内容也是英文  {"options":["Tools","Games","Platforms"]}
+PASS  ⑥ 切语言后清空表单：分段默认落到界面语言（English）  {"idx":2}
+PASS  ⑥ 此时默认类别显示 Tools、标签仍为空  {"cat":"Tools","tags":""}
+PASS  ⑦ 预览按界面语言取池（简体界面看简体那份）  {"previewEn":["[官方]","[知名]"]}
+PASS  ⑦ 简体池为空时预览回退到其它语言那份（不是空白，与后端 first_text 同口径）  {"previewFallback":["[官方]","[知名]"]}
+PASS  ⑦b term_知名 三语齐备（en_US 必须是英文写法，不能漏键）  {"zh":"知名","tw":"知名","en":"Popular"}
+PASS  ⑦b English 界面下预览显示「知名」的英文译名 Popular  {"shown":["[Official]","[Popular]"],"language":"English"}
+PASS  ⑦c 简体中文界面：预览取简体池，与真实卡片一致  {"preview":["[工具]"],"zhPool":"工具","enPool":"官方, 知名","language":"简体中文"}
+PASS  ⑦c English 界面：预览换成 English 池那份（官方/知名），不再是简体池  {"preview":["[Official]","[Popular]"],"language":"English"}
+PASS  ⑧ 前缀提示 UI 仍不存在  {}
+PASS  ⑧ 仓库行顺序仍是 下拉→输入框→粘贴按钮  ["combo","input","button"]
+PASS  ⑧ 粘贴仍能提取链接  {"github":"https://github.com/foo/bar"}
+PASS  ⑧ 无链接时不填值  {}
+PASS  ⑧ 产出后全清：类别回默认、标签回空  {"cat":{"简体中文":"工具","繁體中文":"工具","English":"工具"},"tags":{"简体中文":"","繁體中文":"","English":""}}
+
+==== 汇总: 36/36 通过 ====
+probe_maker_i18n_exit=0

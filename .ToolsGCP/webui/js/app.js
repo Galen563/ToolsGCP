@@ -30,8 +30,12 @@ const CATEGORY_ORDER = ['工具', '游戏', '平台', '编程', '游戏引擎',
 const FALLBACK_CATEGORY = '其他';                                      // resource_query.py:28
 const LATEST_N = 10;                                                   // resource_query.py:39
 const UPDATED_DAYS = { '10d': 10, '30d': 30, '180d': 180 };             // resource_query.py:41
-const SYSTEMS = ['全平台', 'Windows', 'macOS', 'Android', 'iOS', 'Linux', 'web', '其他'];    // resource_schema.py:22
-const ARCHITECTURES = ['x64', 'x86', 'arm64', 'arm', 'Apple Silicon', '其他'];               // resource_schema.py:27
+/* 适用系统闭集：与 resource_schema.py 的 SYSTEMS **逐项同序**（顺序就是界面顺序）。
+   ⚠️ m04188 第④项扩充过：新增 iPadOS / watchOS / tvOS / visionOS / HarmonyOS / ChromeOS，
+      以后改动只改 resource_schema.py，然后同步这一行和下面的 makerPlatforms。 */
+const SYSTEMS = ['全平台', 'Windows', 'macOS', 'Linux', 'Android', 'iOS',
+                 'iPadOS', 'watchOS', 'tvOS', 'visionOS', 'HarmonyOS', 'ChromeOS',
+                 'web', '其他'];
 const CARD_PRESETS = {                                                   // app_card.py:233-278
   small: { height: 168, icon: 48, lines: 2, button: 22, buttonIcon: 14 },
   medium: { height: 196, icon: 64, lines: 2, button: 26, buttonIcon: 16 },
@@ -52,11 +56,17 @@ const DEFAULT_SETTINGS = {
   debug_info_enabled_Galen563: false, debug_info_enabled_Cyric373: false,
   search_source: 'Github', download_source: 'Github', download_speed_limit_enabled: false,
   download_speed_limit: 100, deploy_mode: false, splash_screen_enabled: false,
-  splash_screen_duration: 2, auto_search: true, hotkey_enabled: true,
+  // ⚠️ `splash_screen_duration` 本轮已随需求删除（显示时长改由主流程决定，
+  //    见 desktop/shell.py 的 _dismiss_splash）；后端 constants.py 同步删掉了这个键。
+  auto_search: true, hotkey_enabled: true,
   hotkey_search: 'Ctrl+Q', hotkey_ai: 'Ctrl+Alt+G', search_card_size: 'medium',
   search_view: 'tile', search_show_github: true, search_show_view_switch: true,
   plugin_view: 'grid', resource_source: 'cloud', local_resource_dir: '',
-  update_channel: 'all', api_key: '', api_key_enc: '', model_name: '',
+  update_channel: 'all', update_auto_check: 'corner',
+  /* 本轮：自动检查里被用户点「取消」跳过的那个版本号（空 = 没跳过过任何版本）。
+     必须落盘（下次启动同一个版本不能再弹），见 app.js 的 muteUpdateTag / autoCheckUpdate。 */
+  update_muted_tag: '',
+  api_key: '', api_key_enc: '', model_name: '',
   ai_provider: 'deepseek', api_base: 'https://api.deepseek.com/v1',
   /* ⚠️ 本轮新增（与 pymodels/constants.py 同名键一一对应，别只加一边）：
      · ai_profile_id     —— 聊天框里显式选中的**档案 id**（同厂商两条档案靠它区分）
@@ -84,6 +94,10 @@ const DEFAULT_SETTINGS = {
      auto = 跟随输入语言；其余为强制回复语言。真值清单优先用后端给的，拿不到走前端兜底 4 项。
      ⚠️ 与 ai_thinking 一样是**字符串枚举**，别用 settingOn()。 */
   ai_reply_language: 'auto',
+  /* 对话模式（本轮新增）：'chat' 只聊天（默认）/ 'agent' 允许动手。
+     ⚠️ 和 gcp_ai_agent_enabled 分工不同：那是插件总开关（强制开启），
+        这是"本次对话要不要真的动手"。前端按钮/胶囊都读它。 */
+  ai_chat_mode: 'chat',
   gcp_ai_agent_enabled: false, gcp_ai_agent_tools_off: [], gcp_plugin_maker_enabled: false,
   gcp_plugin_maker_options: {}, ui_font_family: '微软雅黑',
   /* ---- 新增的四个设置（默认值按需求定）----*/
@@ -164,7 +178,12 @@ const DEV_GUIDE = [
 ].join('\n');
 
 /* ===================== 文案（原版 15 个语言模块 + 三语回退） =====================*/
-const I18N = reactive({ map: {}, modules: {}, language: '简体中文', version: 0 });
+/* terms：三语「类别/标签译名表」`{zh_CN|zh_TW|en_US: {规范中文值: 该语言写法}}`
+   由后端 i18n.bundle 一并下发（见 desktop/api/__init__.py 的 _read_all_terms）。
+   ⚠️ 它和 map/terms 的区别：map 只有**界面语言**那一份，而制作器「多语言字段」卡片
+   有自己的语言分段（用户点哪个分段就编辑哪一份），那个分段**不跟随界面语言**，
+   所以必须三份都有 —— 提交软件的类别/标签就是靠它按分段显示译名的。 */
+const I18N = reactive({ map: {}, modules: {}, language: '简体中文', terms: {}, version: 0 });
 const settingsState = ref(null);
 
 function t(key, fallback, module) {
@@ -178,6 +197,8 @@ function t(key, fallback, module) {
 function flattenI18n(payload) {
   if (!payload) return;
   I18N.language = payload.language || I18N.language;
+  /* 三语译名表（老后端没这个键 → 保持空表，termIn 会退回规范值，界面照常可用） */
+  if (payload.terms && typeof payload.terms === 'object') I18N.terms = payload.terms;
   I18N.map = {};
   I18N.modules = payload.modules || {};
   Object.keys(I18N.modules).forEach((name) => {
@@ -196,18 +217,114 @@ function uiLanguage() {
   if (lang.startsWith('zh')) return '简体中文';
   return 'English';
 }
+/* 语言代码 → manifest 里的「语言名」键。
+   ⚠️ 内置插件的 manifest.name / description 用的是语言名（简体中文 / 繁體中文 / English），
+      而 uiLanguage() 返回的是代码（zh_CN / en_US）。旧实现只查代码，命中不了就一路退到简体中文，
+      于是「界面切成英文、插件中心还是满屏中文」——用户反馈的插件页面不跟随语言就是这个。
+      取值顺序与后端 plugins.py 的 _pick_locale 保持一致。 */
+const LANG_NAME_BY_CODE = { zh_CN: '简体中文', zh_TW: '繁體中文', en_US: 'English' };
 function pickI18n(value, fallback) {
   if (value == null) return fallback || '';
   if (typeof value === 'string') return value;
   if (typeof value !== 'object') return String(value);
   const lang = uiLanguage();
-  return value[lang] || value['简体中文'] || value['繁體中文'] || value['English'] || fallback || '';
+  const chain = [LANG_NAME_BY_CODE[lang], lang, '简体中文', 'zh_CN', 'English', 'en_US'];
+  for (const key of chain) {
+    if (key && value[key]) return String(value[key]);
+  }
+  for (const item of Object.values(value)) {   // 最后兜底：别让插件名退化成 id
+    if (item) return String(item);
+  }
+  return fallback || '';
 }
 /* 类别/标签/系统/架构的**显示译名**（匹配仍用规范中文值 —— common_language.json 的 term_*）*/
 function term(value) {
   if (!value) return '';
   const hit = I18N.map['term_' + value];
+  if (typeof hit === 'string' && hit) return hit;
+  /* 未命中再按规范值查一次（对齐 py 的 translate_term 两段查）：老数据/云端镜像里存的
+     可能本身就是繁体或英文写法，直接原样显示会变成"只有外文"。 */
+  const canon = canonicalAny(value);
+  if (canon !== value) {
+    const again = I18N.map['term_' + canon];
+    if (typeof again === 'string' && again) return again;
+  }
+  return value;
+}
+
+/* ---------- 按**指定语言**取类别/标签的译名（制作器多语言分段专用） ----------
+   与 term() 的差别：term() 只看界面语言，这里看调用方给的那一种语言。
+   制作器「多语言字段」卡片里的类别/标签要跟着**卡片自己的分段**变，
+   而分段可以是三种语言里的任意一种，与界面语言无关，所以必须有这一族函数。
+   ⚠️ 全部读 I18N.terms（reactive）⇒ 设置里切语言、bundle 重新下发时会自动重算，
+      不需要额外 void I18N.version。 */
+const LANG_LOCALES = { 简体中文: 'zh_CN', 繁體中文: 'zh_TW', English: 'en_US' };
+/* 规范中文值 → 该语言的写法；认不出来（自定义类别）原样返回 */
+function termIn(lang, value) {
+  if (!value) return '';
+  const table = I18N.terms[LANG_LOCALES[lang] || 'zh_CN'] || {};
+  const hit = table[value];
   return (typeof hit === 'string' && hit) ? hit : value;
+}
+/* 该语言的写法 → 规范中文值（落盘/匹配一律用规范值，界面只负责显示译名）。
+   ⚠️ 三种语言的写法都认：用户在 English 分段敲 "Tools"、在繁體分段敲 "遊戲"，
+      和在简体中文分段敲 "游戏" 是同一件事 —— 都还原成规范值存起来，
+      所以"手动输入的文本只要和内置项一样，就同样视为内置的多语言"。
+      规范值本身也认（zh_CN 表里 term_工具 的值就是 "工具"，天然覆盖这一种）。 */
+function canonicalIn(lang, value) {
+  const text = String(value == null ? '' : value).trim();
+  if (!text) return '';
+  const table = I18N.terms[LANG_LOCALES[lang] || 'zh_CN'] || {};
+  for (const canonical of Object.keys(table)) {
+    if (String(table[canonical]) === text) return canonical;
+  }
+  return text;                      // 自定义值：原样保留，可继续手动修改
+}
+/* ---------- 写法 → 规范中文值（对齐 py 的 language_manager.canonical_term） ----------
+   第五轮需求③「更多筛选里很多只有简体中文」的地基：术语表一个概念只登记**规范简体中文值**
+   一个键，繁简/英文只是同一概念的其它写法。候选列表必须先折叠成规范值，否则
+   「游戏平台 / 遊戲平台 / Game platform」在下拉里并列三项，而简体中文界面里只有第一项
+   显示成本地文字，后两项看着就是"没翻译"。
+
+   ⚠️ 反查表按**界面语言优先**构建（当前语言的写法先入表）：库里存在同一个写法既是
+      甲语言规范值、又是乙语言译名值的情况（Photo Tool 的简体译名「图片工具」），
+      先到先得才能保证用户看到他自己语言里的写法。py 端固定 zh_CN→zh_TW→en_US，
+      差异只落在极少数交叉写法上，规范值本身两边一致。
+   ⚠️ 缓存失效依据是 I18N.terms 的**引用**：flattenI18n 是整体赋值（见 :197），
+      换语言/重新下发 bundle 都会换引用；再按 locale 分桶，切语言不全表重建。
+   ⚠️ 查不到（用户自己敲的类别/标签）原样返回 —— 绝不吞掉自定义值。 */
+const CANON_ORDER = ['zh_CN', 'zh_TW', 'en_US'];
+const CANON_CACHE = { source: null, byLang: {} };
+function canonicalMap(lang) {
+  const locale = LANG_LOCALES[lang] || 'zh_CN';
+  if (CANON_CACHE.source !== I18N.terms) {
+    CANON_CACHE.source = I18N.terms;
+    CANON_CACHE.byLang = {};
+  }
+  if (CANON_CACHE.byLang[locale]) return CANON_CACHE.byLang[locale];
+  /* Object.create(null)：术语表可能有 "__proto__" 这种键名，普通对象会被污染原型 */
+  const map = Object.create(null);
+  const order = [locale].concat(CANON_ORDER.filter((x) => x !== locale));
+  order.forEach((loc) => {
+    const table = I18N.terms[loc] || {};
+    Object.keys(table).forEach((canon) => {
+      const spell = String(table[canon]);
+      if (!(spell in map)) map[spell] = canon;     // 先到先得 = 当前语言优先
+    });
+  });
+  CANON_CACHE.byLang[locale] = map;
+  return map;
+}
+function canonicalAny(value) {
+  const text = String(value == null ? '' : value).trim();
+  if (!text) return '';
+  const hit = canonicalMap(uiLanguage())[text];
+  return (typeof hit === 'string' && hit) ? hit : text;
+}
+
+/* 逗号/顿号/分号分隔的文本 ⇄ 规范值数组（显示按语言、存储按规范值） */
+function termsToText(lang, list) {
+  return (list || []).map((value) => termIn(lang, value)).join(', ');
 }
 
 /* ===================== 桥（pywebview js_api） =====================*/
@@ -468,11 +585,36 @@ window.ToolsGCP = window.ToolsGCP || {};
 window.ToolsGCP._listeners = window.ToolsGCP._listeners || {};
 window.ToolsGCP.on = function (name, fn) {
   (window.ToolsGCP._listeners[name] = window.ToolsGCP._listeners[name] || []).push(fn);
+  return fn;
+};
+/* ⚠️ 必须有 off：插件配置页是 iframe，它往**父窗口**注册 settings-changed 监听
+   （见各插件目录下的 config.html 里 hookHostEvents）。以前只有 on/emit，iframe 关闭时
+   没法反注册 → 每开一次配置页就在父窗口的 _listeners 里永久留一个闭包。
+   现在提供 off，并在 emit 时把**抛过错的**监听自动摘掉
+   （监听器所在文档已销毁时调用它会抛，这比静默留着更明确）。 */
+window.ToolsGCP.off = function (name, fn) {
+  const list = window.ToolsGCP._listeners[name];
+  if (!list) return false;
+  if (!fn) { delete window.ToolsGCP._listeners[name]; return true; }
+  const index = list.indexOf(fn);
+  if (index < 0) return false;
+  list.splice(index, 1);
+  if (!list.length) delete window.ToolsGCP._listeners[name];
+  return true;
 };
 window.ToolsGCP.emit = function (name, payload) {
-  (window.ToolsGCP._listeners[name] || []).forEach((fn) => {
-    try { fn(payload); } catch (error) { console.error('[ToolsGCP] listener error', error); }
-  });
+  const list = window.ToolsGCP._listeners[name];
+  if (!list || !list.length) return;
+  /* 反向遍历：摘除元素时不打乱后续下标 */
+  for (let i = list.length - 1; i >= 0; i -= 1) {
+    try {
+      list[i](payload);
+    } catch (error) {
+      console.error('[ToolsGCP] listener error', error);
+      list.splice(i, 1);            /* 坏掉的监听不留（典型：iframe 已卸载） */
+    }
+  }
+  if (list && !list.length) delete window.ToolsGCP._listeners[name];
 };
 window.ToolsGCP.t = t;
 function onEvent(name, fn) { window.ToolsGCP.on(name, fn); }
@@ -525,6 +667,45 @@ function stripMarkdown(text) {
     .replace(/^\s*[-*+]\s+/gm, '• ').replace(/\*\*|__|`/g, '')
     .replace(/<[^>]+>/g, '').replace(/\n{3,}/g, '\n\n').trim();
 }
+/* ---------- Markdown 渲染（公告 / 更新说明用） ----------
+   渲染器在 webui/js/markdown.js（全局 ToolMarkdown，零依赖自研，先转义再转换）。
+   ⚠️ 这里两层兜底是**必需**的：
+     1) markdown.js 万一没加载（用户手抖删了文件 / 老资源包缺文件）→ 退回"转义 +
+        换行"的纯文本，界面绝不会变成空白，也绝不会把原文当 HTML 插进去；
+     2) 渲染器本身抛异常 → 同样退回纯文本。
+   调用方拿到的是**已经安全**的 HTML，可以交给 v-html；未经这两层兜底的文本一律
+   禁止进 v-html（AGENTS.md 第 5 节 + 本项目一贯的"不用 v-html"口径）。 */
+function escapeHtmlText(value) {
+  return String(value == null ? '' : value)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+function mdEngine() {
+  return (typeof ToolMarkdown !== 'undefined' && ToolMarkdown && ToolMarkdown.render)
+    ? ToolMarkdown : null;
+}
+function renderMarkdown(text) {
+  const raw = String(text == null ? '' : text);
+  if (!raw.trim()) return '';
+  const engine = mdEngine();
+  if (engine) {
+    try {
+      const html = engine.render(raw);
+      if (html) return html;
+    } catch (error) { /* 退回纯文本，见上面注释 */ }
+  }
+  return escapeHtmlText(raw).replace(/\n/g, '<br>');
+}
+/* 截断也要"按 Markdown 边界"，否则截在半条 ** 或半个代码围栏上，渲染会串成一片 */
+function mdTruncate(text, limit) {
+  const raw = String(text == null ? '' : text);
+  const max = Number(limit) || 2000;
+  const engine = mdEngine();
+  if (engine && engine.truncate) {
+    try { return engine.truncate(raw, max); } catch (error) { /* 退化到硬截 */ }
+  }
+  return raw.length > max ? raw.slice(0, max) : raw;
+}
 function splitList(text) {                        // 拆 , ， 、 ; ；，**不拆 /**
   return String(text || '').split(/[,，、;；]/).map((v) => v.trim()).filter(Boolean);
 }
@@ -546,7 +727,19 @@ const App = {
           启动步骤日志全靠它，撤掉状态会把启动流程弄断。现在它只是个"启动流程是否
           走完"的内部标志，不再渲染任何界面。bootText 同理（仍写 document.title / 日志）。 */
     const booting = ref(true);
-    const bootText = ref('正在加载资源库…');
+    /* ★ 第 28 轮③：启动加载画面的进度（0-100）与"核心步骤"文案。
+       ⚠️ 只显示 4 个核心阶段（用户原话："只显示几个核心的，已注册快捷键这类不用显示"）：
+         正在启动 → 正在准备界面 → 正在加载资源 → 即将完成。 */
+    /* ⚠️⚠️ bootText 必须在这里有定义，别删！
+       第 28 轮③加「启动加载画面」时，补丁脚本把这一行**覆盖**掉了
+       （原来这里是 `const bootText = ref('正在加载资源库…')`），
+       而 setup() 的返回对象里仍然导出着 bootText ⇒ setup 执行到 return
+       就抛 `ReferenceError: bootText is not defined` ⇒ Vue 根本没挂载成功
+       ⇒ 窗口一片空白，后端也等不到「首屏就绪」上报（用户报的就是这个：
+       日志里会出现「首屏在 20000 ms 内未上报就绪，已按超时继续显示窗口」）。
+       ⚠️ 教训：给 app.js 打补丁时锚点行必须**新增**而不是替换；改完必须跑
+       「setup 返回对象里的每个名字是否都有定义」的静态审计（见 round28 脚本）。 */
+    const bootText = ref('正在启动…');
     /* ---------- 云端资源库加载遮罩 ----------
        ⚠️⚠️ 本轮修复用户报的「加载资源的那个 ui 不见了」。
        markup、组件注册、三处 <resource-loading /> 全都还在（不是被删了），
@@ -636,7 +829,9 @@ const App = {
     }
     const win = reactive({ maximized: false, fullscreen: false, minimized: false });
     const info = reactive({ app: 'ToolsGCP', version: '', channel: 'beta', python: '',
-                            dataDir: '', configDir: '', resourceFile: '', language: '简体中文', args: [] });
+                            dataDir: '', configDir: '', resourceFile: '', language: '简体中文', args: [],
+                            // frameless：自绘标题栏模式开关（app.info 回填；默认 true = 老行为）
+                            frameless: true });
     const settings = reactive({ ...DEFAULT_SETTINGS });
     settingsState.value = settings;
 
@@ -734,6 +929,12 @@ const App = {
     /* ---------- 对话框（确认 / 输入 / 公告 / 更新 / 密钥列表 共用外壳） ---------- */
     const dialog = reactive({
       open: false, title: '', body: '', extra: '', notes: '', rows: null,
+      /* ⚠️ notesMd / bodyMd：显式开关，**默认 false**。
+         true 时 notes / body 走 Markdown 渲染（内部已先转义，产物安全）；
+         false 时维持原来的插值纯文本 —— openDialog 的其它调用点（确认框、密钥
+         列表、存储重启提示…）行为一字不变，不会因为这次改动被"转 HTML"弄坏文案。
+         目前只有两处显式开启：新公告弹窗（maybePopup）与发现新版本弹窗（checkUpdate）。 */
+      notesMd: false, bodyMd: false,
       input: false, inputValue: '', inputPlaceholder: '',
       /* 通用对话框支持一个下拉框（收藏夹选择用）。inputWhen = 选中哪个值时
          才显示下面的输入框（选新建收藏夹才出现名称输入）。 */
@@ -741,6 +942,14 @@ const App = {
       /* 勾选组（收藏夹导出用）。每项 {value,label,checked}；
          确认时 answer() 回传已勾选 value 数组，取消回传 null。 */
       checks: null,
+      /* ── 下面三个是「可选片段」，只有 openDialog 显式传了才渲染（其余对话框一律 null，
+             行为和外观都不变）。版式照旧 PyQt 版 update_dialog / announcement_dialog 搬：
+         head  = 抬头（{text 大字, sub 小字说明, badge 徽章文案, badgeKind 'stable'|'prerelease'|'unread'}）
+         link  = 右上角纯图标跳转（{url, tip 悬浮提示}）—— 需求「只有一个图标、不需要文本信息在按钮中，
+                 鼠标悬浮按钮会有相关提示」
+         item  = 带边框的条目块（{title 标题, body 纯文本正文, bodyHtml Markdown 正文, meta 底部说明}）
+                 标题单独再套一层框：需求「公告中的标题部分要用框框框起来不然用户会以为这个时正文内容」 */
+      head: null, link: null, item: null, titleBadge: '',
       buttons: ['取消', '确定'], danger: false, cancelable: true, wide: false,
       /* 点遮罩空白处是否算「取消」。默认 true（原有行为）；
          新公告弹窗在 maybePopup 里传 false —— 用户会不小心点空白把公告弹窗关掉。 */
@@ -768,6 +977,13 @@ const App = {
               label: String(c.label == null ? c.value : c.label), checked: !!c.checked }))
           : null;
         dialog.cancelText = options.cancelText || t('cancel', '取消');
+        /* 三个可选片段：每次都重新赋值（不传就置 null），否则上一个弹窗的抬头/图标
+           会残留到下一个弹窗上 —— dialog 是常驻 reactive，不是每次新建。 */
+        dialog.head = options.head || null;
+        dialog.link = options.link || null;
+        dialog.item = options.item || null;
+        /* 标题旁的小徽章（新公告弹窗的「N 条未读」）：每次重新赋值，防残留 */
+        dialog.titleBadge = options.titleBadge || '';
         dialog.buttons = options.buttons
           || (options.cancelable === false
             ? [options.confirmText || t('confirm', '确定')]
@@ -775,6 +991,8 @@ const App = {
                options.confirmText || t('confirm', '确定')]);
         dialog.danger = !!options.danger;
         dialog.wide = !!options.wide;
+        dialog.notesMd = !!options.notesMd;
+        dialog.bodyMd = !!options.bodyMd;
         dialog.cancelable = options.cancelable !== false;
         /* 只有显式传 backdropClose:false 才禁止点空白关闭；其余对话框维持旧行为 */
         dialog.backdropClose = options.backdropClose !== false;
@@ -809,6 +1027,108 @@ const App = {
       const all = list.every((c) => c.checked);
       return some && !all;
     });
+    /* 弹窗正文 / 更新说明的 Markdown 产物（index.html 里 v-if="dialog.notesMd" 才用）。
+       关掉开关时这两个 computed 直接返回空串，模板继续走原来的 {{ dialog.notes }} 插值。 */
+    const dialogNotesHtml = computed(() =>
+      (dialog.notesMd && dialog.notes) ? renderMarkdown(dialog.notes) : '');
+    const dialogBodyHtml = computed(() =>
+      (dialog.bodyMd && dialog.body) ? renderMarkdown(dialog.body) : '');
+    /* 公告正文（列表页 + 弹窗）：⚠️ 取值口径 `body_md || body`。
+       后端新增的 body_md 是**未经擦除的原始 markdown**（已按行边界夹到 6000 字），
+       body 是 markdown_to_text() 擦出来的纯文本 —— 老后端 / 老缓存没有 body_md，
+       那时就用 body，渲染器对纯文本也是原样输出（转义 + 换行），不会显示成源码。 */
+    function noticeSource(notice) {
+      const n = notice || {};
+      return String(n.body_md || n.body || '');
+    }
+    function noticeBodyHtml(notice) { return renderMarkdown(noticeSource(notice)); }
+
+    /* ---------- 公告正文右键菜单（复制链接 / 复制 / 全选） ----------
+       用户原话：「公告界面或公告弹窗新增可点击链接（蓝色带下划线字体，适配左键单击和
+       ctrl+左键），右键连接部分自动框选此处连接部分 并且右键菜单为复制链接（适配三语言）；
+       公告界面和公告弹窗支持右键菜单里面有复制和全选。」
+       ⚠️ 链接的"可点"本来就成立：markdown.js 产出 <a class="md-link" data-mdlink>（故意不带
+       href，避免 WebView2 自己开新窗口），app.js 的 onMarkdownLinkClick 在**捕获阶段**接住
+       click/auxclick → openLink(url, event)，第三参 ctrl = 用后台浏览器标签打开。
+       这里只补右键这一半：
+         · 右键落在链接上 → 先用 Range 把这条链接整段框选（用户要的"自动框选此处连接部分"），
+           菜单首项变成「复制链接」；
+         · 右键落在正文其它位置 → 保留用户已有选区，菜单是「复制 / 全选」。
+       菜单本体在 index.html（.card-menu.notice-menu），与气泡右键菜单同一套外观。 */
+    const noticeCtx = ref(null);      // { x, y, link, hasSel }
+    /* ⚠️ 正文容器是 DOM 元素，**不能**塞进响应式对象：被 Proxy 包一层后 Selection/Range
+       仍能用，但身份比较和"当前作用域"会变得难以推理。用普通变量存。 */
+    let _noticeCtxScope = null;
+    function closeNoticeCtx() { noticeCtx.value = null; }
+    function _noticeSelectNode(node) {
+      try {
+        const sel = window.getSelection && window.getSelection();
+        if (!sel || !node) return;
+        const range = document.createRange();
+        range.selectNodeContents(node);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      } catch (e) { /* 选区 API 不可用：不框选，菜单照开 */ }
+    }
+    function onNoticeContext(event) {
+      const scope = event.currentTarget || null;
+      _noticeCtxScope = scope;
+      const linkEl = (event.target && event.target.closest)
+        ? event.target.closest('a[data-mdlink]') : null;
+      const link = linkEl ? String(linkEl.getAttribute('data-mdlink') || '').trim() : '';
+      /* 右键链接 = 立刻把这条链接框选出来（用户能看到"我复制的是哪一段"） */
+      if (linkEl) _noticeSelectNode(linkEl);
+      const vw = window.innerWidth; const vh = window.innerHeight;
+      noticeCtx.value = {
+        /* 菜单宽约 176、三项高约 110：夹进视口，别被右缘/下缘裁掉 */
+        x: Math.max(8, Math.min(event.clientX || 0, vw - 190)),
+        y: Math.max(8, Math.min(event.clientY || 0, vh - 116)),
+        link: link,
+        hasSel: !!link || aiHasSelection(),
+        /* ⚠️ 选区**快照**：菜单项是 <button>，点它的时候浏览器可能先把文档选区收掉，
+           那时再去读 window.getSelection() 就只剩空串，「复制选中内容」会变成复制全文。
+           所以在这里就把文本抄下来，点击时优先用快照。 */
+        selText: link
+          ? String((linkEl && linkEl.textContent) || link)
+          : (aiHasSelection()
+            ? String((window.getSelection && window.getSelection().toString()) || '') : ''),
+      };
+    }
+    function noticeCtxCopyLink() {
+      const menu = noticeCtx.value;
+      closeNoticeCtx();
+      if (!menu || !menu.link) return;
+      copyText(menu.link);
+    }
+    function noticeCtxCopy() {
+      /* 有框选 → 复制框选；没有 → 复制整段正文（和"右键空白也想拷全文"的直觉一致）。
+         ⚠️ 优先用打开菜单时的快照（见 onNoticeContext 的 selText 注释）：点菜单会收掉选区。 */
+      const menu = noticeCtx.value;
+      const live = aiHasSelection()
+        ? String((window.getSelection && window.getSelection().toString()) || '') : '';
+      const snap = String((menu && menu.selText) || '');
+      const whole = _noticeCtxScope ? String(_noticeCtxScope.innerText || '') : '';
+      closeNoticeCtx();
+      const text = live.trim() ? live : (snap.trim() ? snap : whole);
+      if (text) copyText(text);
+    }
+    function noticeCtxSelectAll() {
+      const scope = _noticeCtxScope;
+      closeNoticeCtx();
+      if (scope) _noticeSelectNode(scope);
+    }
+    /* 右键点到公告正文以外的地方：先把菜单收掉（否则它会悬在别的页面上）。
+       ⚠️ 在 window 捕获阶段判断——正文自己的 @contextmenu.prevent 是冒泡阶段，
+          这里先关、随后再开，同一帧内不会有闪烁。 */
+    window.addEventListener('contextmenu', (event) => {
+      if (!noticeCtx.value) return;
+      const t = event.target;
+      if (t && t.closest && (t.closest('.notice-menu')
+        || t.closest('.notice-body') || t.closest('.modal-body') || t.closest('.dlg-item-body'))) return;
+      closeNoticeCtx();
+    }, true);
+    /* 滚动时菜单会与正文脱开：直接收起（和输入框右键菜单同一策略） */
+    window.addEventListener('scroll', () => { if (noticeCtx.value) closeNoticeCtx(); }, true);
     /* 对话框里下拉框切换时调用；选中 inputWhen 指定的值时显示输入框 */
     function onDialogSelect(value) {
       dialog.selectValue = value;
@@ -825,6 +1145,10 @@ const App = {
     }
     function answer(label) {
       dialog.open = false;
+      /* Markdown 开关跟着本次对话结束一起清掉：下一次 openDialog 没传就还是纯文本 */
+      dialog.notesMd = false;
+      dialog.bodyMd = false;
+
       const resolve = dialog.resolve;
       dialog.resolve = null;
       if (!resolve) return;
@@ -943,7 +1267,14 @@ const App = {
       top: 'is-top', top_right: 'is-tr', bottom_right: 'is-br',
       top_left: 'is-tl', bottom_left: 'is-bl',
     };
-    const toastClass = computed(() => TOAST_POS_CLASS[settings.toast_position] || 'is-top');
+    /* ⚠️ 本轮需求（用户原话）：「左上角和左下角的提示位置应该再往左一点在左侧栏的右侧就行，
+       如果点击左侧栏展开他还会跟随往右走 点击收起或者自动收起时也跟随回到原位。」
+       → 除了贴收起态侧栏右边（CSS），还要把**展开态**告诉 CSS：navOpen 在栈上挂
+         is-nav-open，宽度从 --nav-collapsed 过渡到 --nav-expanded（和侧栏自己
+         220ms 的过渡同步），提示条就会跟着滑，而不是跳。 */
+    const toastClass = computed(() =>
+      (TOAST_POS_CLASS[settings.toast_position] || 'is-top')
+      + (navOpen.value ? ' is-nav-open' : ''));
     function applyAppearance() {
       const dark = isDark.value;
       const root = document.documentElement;
@@ -1177,10 +1508,48 @@ const App = {
        ⚠️ 不能只靠 .pop-backdrop：它的 z-index 低于内容区，点内容区根本收不到事件，
        之前就是"切页、点空白、点其它 UI 都不消失"。这里用捕获阶段的 mousedown 兜底：
        只有点在 .more-pop 内部或左侧栏内部才不处理（侧栏内部的关闭由 goto() 负责）。 */
+    /* 「框选后点空白处取消框选」（task-12 需求 6）。
+       ⚠️ 口径**严格限定在详情区自己的选区**：只有当现有选区的锚点落在 .detail-wrap 里、
+       且这次左键按在详情区之外（或区内不可选部位）时才清。
+       理由：Chromium 对 user-select:none 区域本来就会在 mousedown 收起选区，
+       真正需要钉死的是"详情区选完、点同页不可选部位"这种内核行为不一致的情形。
+       不这么限定的话，日志页 / 公告页拖选的锚点会被我们抢先把 removeAllRanges 清掉，
+       等于用新 bug 换老需求。编辑控件（input/textarea/contenteditable）永远不碰。 */
+    const SEL_KEEP_SELECTORS = [
+      'input', 'textarea', 'select', '[contenteditable]', '.card-menu',
+    ].join(', ');
+    /* 详情区内部**允许框选**的那些元素：点在它们身上（含边缘空白）不算"点空白"，
+       那是用户在继续调整选区。与 components.css 的 .detail-wrap 白名单同步。 */
+    const SEL_TEXT_KEEP = [
+      '.detail-desc', '.detail-name', '.detail-code', '.para',
+      '.detail-key', '.detail-val', '.detail-link',
+    ].join(', ');
     function onDocMoreDown(event) {
       /* 卡片右键菜单：点到菜单外面任何地方都收起 */
       if (cardMenu.value && !(event.target && event.target.closest
         && event.target.closest('.card-menu'))) cardMenu.value = null;
+      /* task-12 需求 6：详情区选区菜单同样"点外面就收"。
+         ⚠️ 菜单自身是 .card-menu，用 .sel-menu 进一步区分，
+         否则两个菜单同时在场会互相顶掉。 */
+      if (selMenu.value && !(event.target && event.target.closest
+        && event.target.closest('.card-menu.sel-menu'))) selMenu.value = null;
+      /* 需求 6 原文「框选后点空白处取消框选」，实现见 SEL_KEEP_SELECTORS 注释的口径。
+         ⚠️ 只处理**左键**：右键 mousedown 正是"在已有选区上再右键"的路径
+         （onSelContext 要读这个选区），这里清了它菜单就只有空文本。 */
+      const _t = event.target;
+      if (event.button === 0 && _t && _t.closest && !_t.closest(SEL_KEEP_SELECTORS)) {
+        try {
+          const _sel = window.getSelection && window.getSelection();
+          if (_sel && !_sel.isCollapsed) {
+            const _anchor = _sel.anchorNode;
+            const _ael = _anchor && (_anchor.nodeType === 1 ? _anchor : _anchor.parentElement);
+            /* 锚点在详情区 **且** 按下的位置不是详情区可选文本 → 取消框选 */
+            if (_ael && _ael.closest('.detail-wrap') && !_t.closest(SEL_TEXT_KEEP)) {
+              _sel.removeAllRanges();
+            }
+          }
+        } catch (err) { /* 静默 */ }
+      }
       /* 收藏夹右键菜单（重命名/删除）：点到菜单外面任何地方都收起 */
       if (favMenu.open && !(event.target && event.target.closest
         && event.target.closest('.fav-menu'))) favMenu.open = false;
@@ -1194,8 +1563,18 @@ const App = {
         && event.target.closest('.ai-ctx-menu'))) closeAiCtx();
       if (aiModelOpen.value && !(event.target && event.target.closest
         && event.target.closest('.ai-model-wrap'))) aiModelOpen.value = false;
+      /* 对话模式弹层同理：点它外面就收起 */
+      if (aiModeOpen.value && !(event.target && event.target.closest
+        && event.target.closest('.ai-mode-wrap'))) aiModeOpen.value = false;
+      /* 本轮（需求 4 + 用户新规格）：用量统计浮层**不**由"点外面"关闭 ——
+         开合只认悬浮：进入 .ai-stats-wrap 显示、离开这块区域自动收（见 aiStatsHover）。
+         全局"点外面收起弹层"这条链如果保留它，鼠标还停在区域内点一下就关了、
+         mouseenter 又不会重新触发，面板会"悬着不出来"，正是用户要杜绝的。 */
       if (toastLink.open && !(event.target && event.target.closest
         && event.target.closest('.toast-link-menu'))) toastLink.open = false;
+      /* 公告正文右键菜单：点菜单外面收起（菜单内部自己 .stop，不会走到这里） */
+      if (noticeCtx.value && !(event.target && event.target.closest
+        && event.target.closest('.notice-menu'))) closeNoticeCtx();
       /* 清空下拉菜单：点到外面就收起 */
       if (clearMenuOpen.value && !(event.target && event.target.closest
         && event.target.closest('.dropdown-btn'))) clearMenuOpen.value = false;
@@ -1262,28 +1641,70 @@ const App = {
        ⚠️ 只影响「呼出搜索框」这条路径：「手动滚动 → 切走 → 切回要回原位」
           这个既有需求**不受影响**（那个由 pageScrollMemory 独立负责）。 */
     let pendingScrollTop = false;
-    function findPageScroller(pageKey) {
-      if (!pageKey) return null;
+    /* ⚠️ 同一个记忆 key 可能挂在**多个候选容器**上，必须由这里挑出"真正在滚的那一个"：
+       · 投稿表单宽屏时 .maker-form-scroll 是滚动容器（layout.css:472 overflow-y:auto），
+         而窗口宽 ≤1128px 时 CSS 把滚动权交给父级 .maker-body、同时把
+         .maker-form-scroll 改成 overflow:visible（layout.css:1280-1286）⇒
+         旧实现按文档顺序取第一个（父级 .maker-body），在窄窗口里量到的永远是 0，
+         "切走再切回就回到顶端"就是这么来的；
+       · 投稿页另外三个分节（资源浏览 / 批量合成 / 使用说明）各有各的
+         .maker-section-scroll，也要能记住自己的位置。
+       ⚠️ 判据不能只看 scrollHeight > clientHeight：overflow:hidden 的容器
+          一样会"内容比盒子高"，必须先看计算样式的 overflow-y。 */
+    function canScrollY(el) {
+      try {
+        const overflow = getComputedStyle(el).overflowY;
+        return overflow === 'auto' || overflow === 'scroll' || overflow === 'overlay';
+      } catch (error) { return false; }
+    }
+    /* 投稿页四个分节的滚动容器互不相同（v-if 切换），记忆也按分节分开存：
+       否则"表单滚到 800 → 切到资源浏览（那里是 0）→ 切页 → 切回"会把表单那 800 冲掉。 */
+    function scrollMemoryKey(pageKey) {
+      return pageKey === 'maker' ? 'maker:' + activeSection.value : pageKey;
+    }
+    function findPageScroller(scrollerKey) {
+      if (!scrollerKey) return null;
       const list = document.querySelectorAll('[data-scroll-key]');
+      let first = null, scrolled = null, tall = null;
       for (let i = 0; i < list.length; i += 1) {
         const el = list[i];
-        if (el.getAttribute('data-scroll-key') === pageKey) return el;
+        if (el.getAttribute('data-scroll-key') !== scrollerKey) continue;
+        if (!first) first = el;
+        if (!canScrollY(el)) continue;                 // 滚不动的容器不配当滚动容器
+        if (el.scrollTop > 0) scrolled = el;           // 正在滚的那个（切走时量它）
+        if (!tall && el.scrollHeight > el.clientHeight + 1) tall = el;   // 有溢出内容（切回时写它）
       }
-      return null;
+      return scrolled || tall || first;
     }
     function rememberPageScroll(pageKey) {
-      const el = findPageScroller(pageKey);
-      if (el) pageScrollMemory[pageKey] = el.scrollTop;
+      const key = scrollMemoryKey(pageKey);
+      const el = findPageScroller(key);
+      if (el) pageScrollMemory[key] = el.scrollTop;
     }
-    function restorePageScroll(pageKey, attempt = 0) {
-      const key = pageKey;
+    function restorePageScroll(pageKey, attempt = 0, userMoved = null) {
+      const key = scrollMemoryKey(pageKey);
       const want = Number(pageScrollMemory[key] || 0);
       const el = findPageScroller(key);
       if (!el) {
         /* 页面还在过渡中（out-in 的 enter 尚未挂载）→ 下一帧再试 */
-        if (attempt < 12) requestAnimationFrame(() => restorePageScroll(key, attempt + 1));
+        if (attempt < 12) requestAnimationFrame(() => restorePageScroll(key, attempt + 1, userMoved));
         return;
       }
+      /* ⚠️ 别把用户刚滚出来的位置拽回去（真实缺陷，不是探针问题）：
+         切页走 out-in 过渡，恢复位置要等 @after-enter（新页面真的挂上了）才跑，
+         而新页面在这几百毫秒里已经"活"了 —— 用户完全可能已经先滚了一下
+         （页面内容一进来就很长时尤其明显）。
+         这时再按记忆值写一次 scrollTop ⇒ 画面被瞬间拽回顶部/中段，
+         右下角"回到顶部"球也跟着熄灭（用户会以为滚动失灵）。
+         判定：容器已经离开初始位置(0) 且不等于目标值 ⇒ 认定用户动过了，让用户的位置作数。
+         ⚠️ 容器还在 0（刚挂载）时照常恢复 ⇒ "切走再切回要回原位"这个既有需求不受影响。
+         ⚠️ 这个判定只做一次（第一次找到容器时），后面的重试沿用同一个结论：
+            否则"内容高度晚一两帧才稳定"的重试链会把我们**自己**被浏览器截断的写入
+            （scrollTop 被夹到内容上限）误判成"用户动过"，重试就断了。 */
+      const moved = (userMoved === null)
+        ? (el.scrollTop !== 0 && el.scrollTop !== want)
+        : userMoved;
+      if (moved) return;
       if (key === 'search') {
         measureViewport();
         scrollTop.value = want;             /* 虚拟列表按目标位置先算出要渲染的行 */
@@ -1292,9 +1713,197 @@ const App = {
       if (key === 'search') scrollTop.value = el.scrollTop;
       /* 内容高度可能晚一两帧才稳定（虚拟列表 / 图片 / 筛选面板），继续追几帧 */
       if (el.scrollTop !== want && attempt < 12) {
-        requestAnimationFrame(() => restorePageScroll(key, attempt + 1));
+        requestAnimationFrame(() => restorePageScroll(key, attempt + 1, moved));
       }
     }
+    /* ---------- 右下角「回到顶部」悬浮球（第七轮需求） ----------
+       用户要的形态：圆球 + 朝上箭头，只在**搜索页 / 定制页**（m06914 收紧过范围），
+       页面不在最顶端时从下往上渐变出现，回到顶端时从上往下渐变消失，
+       点击后按"两边慢中间快"的曲线滚回顶部。
+
+       ⚠️ 可见性只在**跨越阈值时**才写响应式 ref（见 syncBackTop 的 if）：
+          滚动事件每帧都来，直接 backTopVisible.value = (scrollTop > 8) 会让整个
+          setup 作用域跟着重渲染评估 —— 搜索页是虚拟列表，那个代价付不起。
+       ⚠️ backTopScroller 缓存"最后一次滚动的容器"：定制页的 .page-scroll 没有 ref，
+          点击时再查一次 DOM 也行，但缓存能躲开"v-if 刚切换、querySelector 拿不到"的窗口。 */
+    const BACK_TOP_PAGES = ['search', 'customize'];
+    /* 出现阈值：用户第十轮（m08106）「页面往下翻一小段距离才出现，例如第二排一半
+       高度的卡片高度长度距离才会出现这个 ui」⇒ 不再用"一动就亮"的字面像素，而是
+       **按当前视图的排距现算 1.5 排**（第一排整排 + 第二排的一半）。
+       为什么不能写死数字：搜索页排距随卡片尺寸档位（小/中/大）、视图（网格/磁贴）、
+       列数余数摊分而变，定制页卡片另有 196px 起的高度；写死 300px 在某种档位下
+       就是"刚露第二排就亮"或"翻两排还不亮"。
+       ⚠️ 兜底顺序：量不到行距（容器还没挂载卡片 / 列表为空）时退回下面的下限，
+          至少保证"顶端不闪现、往下滚一定出现"，绝不因为量不到就永不出现。 */
+    const BACK_TOP_ROW_FACTOR = 1.5;
+    /* 下限仍保留 8px（不是 >0）：高 DPI 下 WebView2 会报出 0.5 这类分数 scrollTop，
+       用 >0 会让球在顶端反复闪现。行距量不到时它就是唯一闸门。 */
+    const BACK_TOP_SHOW_PX = 8;
+    /* 一行的"排距"= 行高 + 行间距。两处来源都是**页面自己怎么摆的就怎么量**：
+       · 搜索页虚拟列表把 row.height / row.gap 写在 .vrow 行内样式上（app.js 的 rowModel
+         算出来的），所以读行内样式即可，不必再复制一遍布局算法（复制了就会有两套真相）；
+       · 定制页是 flex-wrap 的 .grid-static（components.css：gap 14px），卡片高度由内容
+         撑出来，只能量真实 rect。 */
+    function backTopRowPitch(el) {
+      if (!el) return 0;
+      const row = el.querySelector('.vrow');
+      if (row) {
+        const h = parseFloat(row.style.height) || 0;
+        const g = parseFloat(row.style.gap) || 0;
+        if (h > 0) return h + g;
+      }
+      const grid = el.querySelector('.grid-static');
+      const card = grid && (grid.querySelector('.card') || grid.firstElementChild);
+      if (card) {
+        const cs = window.getComputedStyle(grid);
+        const h = (card.getBoundingClientRect && card.getBoundingClientRect().height) || 0;
+        const g = parseFloat(cs.rowGap) || parseFloat(cs.gap) || 0;
+        if (h > 0) return h + g;
+      }
+      return 0;
+    }
+    function backTopShowPx(el) {
+      const pitch = backTopRowPitch(el);
+      return pitch > 0 ? Math.max(BACK_TOP_SHOW_PX, Math.round(pitch * BACK_TOP_ROW_FACTOR))
+        : BACK_TOP_SHOW_PX;
+    }
+    const backTopVisible = ref(false);
+    const backTopPage = computed(() => BACK_TOP_PAGES.indexOf(page.value) >= 0);
+    let backTopScroller = null;
+    let backTopRaf = 0;
+    function backTopKey() { return scrollMemoryKey(page.value); }
+    function syncBackTop(el) {
+      const node = el || findPageScroller(backTopKey());
+      if (!node) {
+        /* 容器还没挂载（切页过渡中）：先熄灭，别把上一页的状态带过来 */
+        if (backTopVisible.value) backTopVisible.value = false;
+        return;
+      }
+      backTopScroller = node;
+      const on = node.scrollTop > backTopShowPx(node);
+      if (on !== backTopVisible.value) backTopVisible.value = on;
+    }
+    /* scroll 不冒泡 ⇒ 只能捕获阶段挂 document。
+       搜索页已有 @scroll.passive（onScrollArea）、定制页什么都没挂，与其给定制页补一个
+       模板绑定、再在两个处理器里各调一次，不如这一处统一接管：以后多放一个页面
+       只改 BACK_TOP_PAGES。 */
+    function onAnyScrollForBall(ev) {
+      if (!backTopPage.value) return;
+      const el = ev && ev.target;
+      if (!el || el.nodeType !== 1 || typeof el.getAttribute !== 'function') return;
+      if (el.getAttribute('data-scroll-key') !== backTopKey()) return;
+      syncBackTop(el);
+    }
+    /* 用户自己动手（滚轮 / 触摸 / 方向键）就立刻放弃程序动画：
+       动画中途还在写 scrollTop 会和用户的滚动打架（表现为"滚不动"或"跳回去"）。 */
+    function abortBackTopAnim() {
+      if (backTopRaf) { cancelAnimationFrame(backTopRaf); backTopRaf = 0; }
+    }
+    function onUserScrollInput(ev) {
+      if (!backTopRaf) return;
+      /* 键盘只拦真正会滚页面的那几个键，否则打字（AI 输入框）也会打断 */
+      if (ev && ev.type === 'keydown') {
+        const k = String(ev.key || '');
+        if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].indexOf(k) < 0) return;
+      }
+      abortBackTopAnim();
+    }
+    /* 原生 smooth 不可用时的兜底动画（老内核）。用户嫌慢之后时长压到 260~520ms，
+       和原生 smooth 的手感对齐；曲线仍是 easeInOutCubic（两头慢中间快）。 */
+    function runFallbackBackTop(el, start, isSearch) {
+      if (!el || !el.isConnected) return;
+      const from = Math.max(0, Number(el.scrollTop) || 0);
+      if (from <= 0) { syncBackTop(el); return; }
+      const dur = Math.min(520, Math.max(260, Math.round(from * 0.32)));
+      const showPx = backTopShowPx(el);
+      const t0 = (window.performance && performance.now) ? performance.now() : Date.now();
+      const ease = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+      const step = (now) => {
+        const t = (now - t0) / dur;
+        const p = t >= 1 ? 1 : (t <= 0 ? 0 : t);
+        el.scrollTop = from * (1 - ease(p));
+        if (isSearch) { scrollTop.value = el.scrollTop; measureViewport(); }
+        const on = el.scrollTop > showPx;
+        if (on !== backTopVisible.value) backTopVisible.value = on;
+        if (p < 1) { backTopRaf = requestAnimationFrame(step); return; }
+        backTopRaf = 0;
+        el.scrollTop = 0;
+        if (isSearch) { scrollTop.value = 0; measureViewport(); }
+        if (backTopVisible.value) backTopVisible.value = false;
+      };
+      backTopRaf = requestAnimationFrame(step);
+    }
+    function backToTop() {
+      const key = backTopKey();
+      const el = (backTopScroller && backTopScroller.isConnected)
+        ? backTopScroller : findPageScroller(key);
+      if (!el) return;
+      const start = Math.max(0, Number(el.scrollTop) || 0);
+      abortBackTopAnim();
+      if (start <= 0) { syncBackTop(el); return; }
+      /* 时长跟距离走（0.55ms/px，夹在 360~880ms）：几十 px 不该拖 0.9 秒，
+         上万 px 也不该一帧闪完（用户要的是"看得见加减速"的曲线）。 */
+      /* 时长跟距离走（用户第十轮：「速度要让用户能看清而不是特别快」）。
+         旧口径 0.55ms/px、上限 880ms 的实际观感：翻十几屏也只 0.9 秒冲回去，
+         中段快到人看不清自己在往哪走。改成 0.9ms/px、夹在 900~1600ms：
+         近距离不低于 0.9 秒（起步/收尾都看得见），超远距离封顶 1.6 秒（再长就成拖沓）。 */
+      /* ⚠️ 用户第十三轮：「搜索页/定制页那个回到顶部滑得太慢，GCP-AI 那颗按钮的速度就很好」。
+         GCP-AI 用的是浏览器**原生 smooth**（约 300~500ms，和距离无关，所以多远都不觉得拖）。
+         之前这里手写了 900~1600ms 的曲线，是上一轮为了「看得清加减速」特意放慢的，
+         结果和 AI 页面对比之下就成了「太慢」—— 同一软件里两套滚动速度手感就是不一致。
+         现在统一走原生：搜索页的虚拟列表靠 @scroll.passive=onScrollArea 驱动，
+         原生平滑滚动一样会逐帧派发 scroll 事件（和用户滚轮滚到底同一条链路），
+         所以不会露空白行；老内核没有 behavior 参数时才退回下面的手写动画。 */
+      if (typeof el.scrollTo === 'function') {
+        try {
+          el.scrollTo({ top: 0, behavior: 'smooth' });
+          /* 两帧后还没动 = 这个内核不认 smooth（老 Edge/WebView2 兼容模式），补手写动画；
+             已经在动就交给原生 + scroll 事件，别再插手，否则两边抢 scrollTop。 */
+          requestAnimationFrame(() => requestAnimationFrame(() => {
+            const now = Number(el.scrollTop) || 0;
+            if (now <= 0) { syncBackTop(el); return; }
+            if (Math.abs(now - start) < 2) runFallbackBackTop(el, start, isSearch);
+          }));
+          return;
+        } catch (err) { /* 不支持对象参数：落到下面的手写动画 */ }
+      }
+      const dur = Math.min(520, Math.max(260, Math.round(start * 0.32)));
+      const showPx = backTopShowPx(el);   // 阈值在动画开始时定一次，见上面注释
+      const t0 = (window.performance && performance.now) ? performance.now() : Date.now();
+      const isSearch = el.getAttribute('data-scroll-key') === 'search';
+      /* easeInOutCubic = 两边慢中间快（起步先加速、中段最快、快到顶端慢慢停） */
+      const ease = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+      const step = (now) => {
+        const t = (now - t0) / dur;
+        const p = t >= 1 ? 1 : (t <= 0 ? 0 : t);
+        el.scrollTop = start * (1 - ease(p));
+        /* ⚠️ 搜索页是虚拟列表：光写 el.scrollTop 不会重算渲染窗口，
+           必须和 restorePageScroll 一样同步 scrollTop.value + measureViewport()，
+           否则动画期间会露出空白行。 */
+        if (isSearch) {
+          scrollTop.value = el.scrollTop;
+          measureViewport();
+        }
+        const on = el.scrollTop > showPx;
+        if (on !== backTopVisible.value) backTopVisible.value = on;
+        if (p < 1) { backTopRaf = requestAnimationFrame(step); return; }
+        backTopRaf = 0;
+        el.scrollTop = 0;                      // 收尾对齐整数，别停在 0.4 这种残值
+        if (isSearch) { scrollTop.value = 0; measureViewport(); }
+        if (backTopVisible.value) backTopVisible.value = false;
+      };
+      backTopRaf = requestAnimationFrame(step);
+    }
+    /* ⚠️ 监听 page 本身，不能监听 backTopPage：搜索页 ⇄ 定制页两边都算"允许页"，
+       布尔 computed 的值压根没变，watch 不触发 ⇒ 动画继续写已经被 v-if 摘掉的旧容器，
+       还会按旧容器的位置去点亮新页面的球（probe_back_top_ball.mjs 的 R6 就是这么抓到的）。 */
+    watch(page, () => {
+      abortBackTopAnim();
+      backTopScroller = null;
+      if (!backTopPage.value) { backTopVisible.value = false; return; }
+      nextTick(() => syncBackTop());
+    });
+
     /* 页面 transition 真正结束（新页面已挂载）后由模板 @after-enter 调进来 */
     function onPageAfterEnter() {
       /* ⚠️ 「呼出搜索框」的强制回顶必须放在 restorePageScroll **之前**：
@@ -1317,6 +1926,9 @@ const App = {
       }
       restorePageScroll(page.value);
       if (page.value === 'search') measureViewport();
+      /* 回到顶部球：restorePageScroll 恢复出来的位置可能本来就不在顶端（用户切走前
+         滚在中段，切回来球就该是亮着的）。容器已挂载，这里直接对账一次。 */
+      syncBackTop();
       /* 收藏页的网格是 `v-if="favItems.length"` 的 —— 页面**真正挂载后**
          才拿得到元素。doGoto 里的 nextTick 早于 out-in 的 enter，那时量不到宽度，
          卡片会用兜底宽度渲染；这里补一次真实测量，宽度就准了。
@@ -1416,6 +2028,12 @@ const App = {
       win.fullscreen = !!full;
       const root = document.getElementById('app');
       if (root) root.classList.toggle('is-fullscreen', !!win.fullscreen);
+      /* 全屏/窗口切换会改变左侧栏可用高度：底部导航条目（设置 / 更多…）由
+         nav-spacer 撑到栏底，栏高一变它们整体上下移动。而这里只是切了个类名，
+         **不会**触发 window resize（resize 在 SetWindowPos 时就已先于本函数触发，
+         那时标题栏还没隐藏、量到的是旧高度），指示标会留在旧坐标上——
+         看起来就是"切全屏后选中标指着错的条目"。所以状态落地、布局重排后补量一次。 */
+      requestAnimationFrame(() => syncNavIndicator(false));
     }
     onEvent('window.fullscreen', (payload) => {
       if (payload && typeof payload === 'object' && 'fullscreen' in payload) {
@@ -1449,14 +2067,114 @@ const App = {
       } else if (!result) needApi('window.toggle_maximize', '最大化');
       setTimeout(syncWindow, 260);
     }
-    /* 窗口边缘热区 → 系统原生缩放（见 index.html .win-resize 的说明）
-       —— 内容和标题栏拖动同一套：ReleaseCapture + WM_NCLBUTTONDOWN，
-          后端只负责投递请求，缩放由系统的模态循环完成。 */
-    async function startResize(direction) {
-      const result = await bridge.tryCall('window.start_resize', String(direction || ''));
-      if (!result) needApi('window.start_resize', t('resize_window', '调整窗口大小'));
-      else if (!result.ok) {
-        toast(t('resize_failed', '缩放窗口失败：') + (result.error || ''), 'error');
+    /* 窗口边缘热区 → 缩放。两条路，优先第一条：
+       ① 确定性缩放会话（window.resize_begin/resize_drag/resize_end）：
+          后端快照「起始物理矩形 + 最小尺寸 + CSS→物理系数」，我们每帧只报
+          **相对按下点的位移**，窗口位置由后端重算。不吃 WS_THICKFRAME、
+          不进系统模态循环 ⇒ 网友报的「拖边完全没反应」不再依赖对方机器上
+          那条原生链路是否装成功（见 desktop/native/frame.py 会话区的注释）。
+       ② 原生 start_resize（ReleaseCapture + WM_NCLBUTTONDOWN）：只在 ①
+          明确不可用时回落 —— 最大化/全屏（这两种情况原生手感更好：会先还原
+          再缩放、或根本不该缩），以及老后端没有会话接口。
+       ⚠️ 位移用 **screenX/screenY** 的差值，不用 clientX/clientY：client 坐标是
+          **相对视口**的，而拖左边/上边时视口本身正在被我们移动 —— 窗口挪 Δ，
+          同一个物理位置的 clientX 就跟着变 Δ，下一帧算出的位移又小 Δ，于是
+          缩回去一点、再放大一点，形成自激振荡。用户报的「左侧和斜角拉拽时窗口
+          不停颤抖、越远越明显」（m05379 第②项）就是这个：只有**会移动窗口原点**
+          的边和角抖，右边和下边不抖，完全对得上。screen 坐标相对物理屏幕，
+          窗口怎么动都不影响它 ⇒ 回路断开。仍然是「只传差值、不传绝对坐标」：
+          界面同时受 DPI 和页面 ZoomFactor 影响，绝对坐标混进链路就是越拖越偏。
+       ⚠️ pointerdown 被 .prevent 掉是为了压住 Chromium 的默认行为（文字选择、
+          以及最顶端那几像素会误触标题栏拖动），CSS 里已把顶端热区压到 4px。 */
+    let _resizeSession = null;
+    async function startResize(direction, event) {
+      /* ⚠️ 最大化 / F11 全屏下一律不缩（用户 m00766：全屏时靠近边缘出现拉伸光标，
+         会让人觉得「这不是真全屏，是自己画的」）。模板与 CSS 已经把热区去掉了，
+         这里再挡一道：状态万一还没同步过来，也不会真的进缩放流程。 */
+      if (win.maximized || win.fullscreen) return;
+      const dir = String(direction || '');
+      const zone = event && event.currentTarget ? event.currentTarget : null;
+      const pointerId = event ? event.pointerId : undefined;
+      const ox = (event && event.screenX) || 0;
+      const oy = (event && event.screenY) || 0;
+      let last = { x: ox, y: oy };
+      let busy = false;
+      let again = false;
+      const stop = () => {
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', onUp);
+        window.removeEventListener('pointercancel', onUp);
+        window.removeEventListener('blur', onBlur);
+        if (zone && zone.releasePointerCapture && pointerId !== undefined) {
+          try { zone.releasePointerCapture(pointerId); } catch (e) { /* 已释放 */ }
+        }
+        if (_resizeSession && _resizeSession.stop === stop) _resizeSession = null;
+      };
+      /* 焦点被抢走时 pointerup 可能永远收不到（无边框 + WebView2 尤其容易：
+         系统弹窗、切窗口、浏览器抢前台都会让它漏掉）。漏掉的后果是会话一直挂着，
+         之后鼠标每动一下都在缩放窗口 —— 比"拖不动"还诡异。blur 兜一道。 */
+      const onBlur = () => {
+        const live = !!_resizeSession;
+        stop();
+        if (live) bridge.tryCall('window.resize_end').catch(() => {});
+      };
+      const send = () => {
+        /* 节流：一次调用在飞时只保留最后一次“鼠标动过”的信号，不排队
+           （连续流丢中间帧没人察觉，排队反而让窗口跟在鼠标后面爬）。 */
+        if (busy) { again = true; return; }
+        busy = true;
+        /* ⚠️ 一个坐标都不传：位移由后端 GetCursorPos 自己量（物理像素）。
+           下面的 ox/oy/last 是 screen 坐标，**只用来判断这一帧到底动没动**，
+           不参与任何窗口位置计算 —— 页面坐标受 DPI 与 ZoomFactor 双重影响，
+           拿它算位移就是上一版「越拖越偏」的来源（详见 frame.resize_drag）。 */
+        if (last.x === ox && last.y === oy) { busy = false; return; }
+        bridge.tryCall('window.resize_drag').then(() => {
+          busy = false;
+          if (again && _resizeSession) { again = false; send(); }
+        }).catch(() => { busy = false; again = false; });
+      };
+      const onMove = (e) => {
+        if (!_resizeSession) return;
+        last = { x: e.screenX, y: e.screenY };
+        send();
+      };
+      const onUp = () => {
+        const live = !!_resizeSession;
+        stop();
+        if (live) bridge.tryCall('window.resize_end').catch(() => {});
+      };
+      // 会话已经开着又被按了一次（多指/连点/上一次漏了 pointerup）：
+      // ⚠️ 必须调**上一任**的 stop（`_resizeSession.stop`），不是本闭包的 stop() ——
+      //    摘错函数的话旧 onMove 还挂在 window 上，两个闭包各按自己的原点发
+      //    resize_drag，窗口会跟着跳。
+      if (_resizeSession && _resizeSession.stop) {
+        _resizeSession.stop();
+        bridge.tryCall('window.resize_end').catch(() => {});
+      }
+
+      let begun = null;
+      try {
+        begun = await bridge.tryCall('window.resize_begin', dir, window.innerWidth || 0);
+      } catch (e) { begun = null; }
+
+      if (begun && begun.ok) {
+        _resizeSession = { dir: dir, stop: stop };
+        if (zone && zone.setPointerCapture && pointerId !== undefined) {
+          // 捕获到热区元素上：指针滑出那 4px 也不会丢事件（否则一出边缘就停）
+          try { zone.setPointerCapture(pointerId); } catch (e) { /* 不支持就算了 */ }
+        }
+        window.addEventListener('pointermove', onMove);
+        window.addEventListener('pointerup', onUp);
+        window.addEventListener('pointercancel', onUp);
+        window.addEventListener('blur', onBlur);
+        return;
+      }
+
+      // ② 回落原生：最大化/全屏（后端会话明确拒绝的两种）与老后端
+      const result = await bridge.tryCall('window.start_resize', dir);
+      if (!result) { needApi('window.start_resize', t('resize_window', '调整窗口大小')); return; }
+      if (!result.ok && !(begun && begun.maximized)) {
+        toast(t('resize_failed', '缩放窗口失败：') + (result.error || (begun && begun.error) || ''), 'error');
       }
     }
     /* 关闭程序时如果有**下载任务正在跑** → 弹窗确认
@@ -1516,128 +2234,55 @@ const App = {
       return !!(target && target.closest
         && target.closest('button, input, select, textarea, a, .no-drag, .card, .nav, .content'));
     }
-    /* 自定义标题栏按下 → 移动窗口。
-       ⚠️⚠️⚠️ 本轮**推翻上一轮我自己写的"双通道自愈"**（用户原话：
-          「拖动窗口出现拖动不统一，例如我拖动一厘米距离结果它往几个方向卡顿的移动
-           好多不同路径方向和距离的bug」—— 这个抖动**就是我上一轮引入的**，
-           诊断和修复都必须承认这一点）。
-       上一轮的错误假设：「原生模态循环接管后页面收不到 mousemove」。
-       实际上 **WebView2 在系统拖动循环期间照常把 mousemove 送进 DOM**
-       （模态循环移动的是*窗口*，命中测试的鼠标消息仍然发给最上层子窗口）。
-       于是两条通道**同时**在搬窗口：
-         · 原生循环按"光标↔窗口"的锚点偏移移动；
-         · 我的 JS 兜底又按增量 `drag_delta` 追加一次移动；
-         · 每次 `drag_delta` 都要过 js_api 线程 → BeginInvoke → GUI 线程（timeout 1s），
-           到位时间**完全不均匀**，于是每个迟到的小增量都打在错误的基线上 ——
-           观感正好是用户描述的"往几个方向、卡顿、路径和距离都不一致"。
-       ⇒ 正解 = **只留一条通道**（原生，手感与系统窗口一致），
-         原生真的不可用时才用兜底，而且兜底必须自己做到幂等（见 dragFallbackBy）。
-
-       原生通道唯一剩下的风险是**时序竞态**（frame.py 早就写明：排队过去的
-       WM_NCLBUTTONDOWN 到达时用户可能已经松手 = "拖不动"）。
-       这一条**在原生侧治**（见 frame.start_drag 的 token 机制：
-       新的一次按下会让上一次还没送达的排队消息作废），不在前端再叠一条移动通道。 */
-    /* ⚠️⚠️ 本轮（第三次报同一个功能）把主通道换成**后端绝对定位那一条**，
-       原生 `window.start_drag` **不再调用**。原因必须写清楚：
-         `start_drag()` 返回 True 只代表"请求已投递"。真正的 WM_NCLBUTTONDOWN
-         是排队到 GUI 线程后才发的；它到达时用户往往已经松手（frame.py 注释里
-         写明的历史根因），系统模态循环**根本没起来** —— 可前端看到的是
-         `started:true`，于是**不会**启用兜底 ⇒ 用户得到"按住标题栏拖，
-         窗口纹丝不动"（= 本轮报的现象）。
-         上一轮我以为"原生侧 token 机制能治这个竞态"，治不了：
-         token 只能让**过期**的消息作废，不能让**没送达**的消息补救。
-       ⇒ 只留一条通道，且每一步都可验证（见 startDragSession）。
-       ⚠️ 绝不能再"两条并存"：上一轮的抖动就是这么来的
-         （我原以为原生循环期间页面收不到 mousemove，实测是错的，
-          WebView2 在系统模态循环里照常向 DOM 投递 mousemove，
-          两条一起搬窗口 = 方向与距离全乱）。 */
+    /* 自定义标题栏按下 → **拖动窗口**：**只走系统原生这一条**。
+       用户原话：「标题栏拖拽……通过 ctypes 调用 ReleaseCapture() +
+       SendMessage(hwnd, WM_NCLBUTTONDOWN, HTCAPTION, 0)。移除所有自定义 JS/Python 拖拽代码。」
+       · 后端 frame.start_drag 做的是原生那套：ReleaseCapture + SendMessage(WM_NCLBUTTONDOWN,
+         HTCAPTION)（F11 真全屏的 popup 窗口改用 WM_SYSCOMMAND/SC_MOVE，同样系统原生）；
+       · 原来的「确定性移动会话」（window.drag_begin/drag_drag/drag_end）整条删除：
+         自己算矩形落位 = 模拟，与系统行为不一致（最大化后拖动不会先还原、不吸附屏幕边缘），
+         也是上一轮「窗口乱跳」的来源之一；
+       · 拖动由系统模态循环接管，前端 fire-and-forget 即可，不需要等结果。 */
+    let dragToken = 0;
+    /* 拖动起点阈值（屏幕像素）：按下之后**真的移动了**才发拖动请求。
+       ⚠️ 为什么必须有：最大化 / F11 全屏下，后端 start_drag 会**先把窗口还原成普通态**
+          （_drag_restore_geometry，为了做到“光标下的那个点还原后还在原来的相对位置”）。
+          如果按下就发，用户在标题栏上只是**点一下**（没拖），窗口也会莫名其妙地退出
+          最大化/全屏 —— Windows 自己的行为是「移动超过拖动阈值才还原」，这里对齐它。
+       ⚠️ 阈值判断用 screenX/screenY：client 坐标会随窗口移动而变（还原那一下窗口就动了），
+          用它判断会把“窗口被还原”误当成“用户移动了”。 */
+    const TITLE_DRAG_THRESHOLD = 3;
     function onTitleDown(event) {
-      if (event.button !== 0 || interactive(event.target)) return;
-      startDragSession();
-    }
-    /* ---------- 唯一的拖动通道（后端绝对定位） ----------
-       ⚠️⚠️ 三条必须遵守的规则，每一条都对应一个真实故障：
-         ① **一个坐标都不传给后端**。前端这些 `screenX/screenY` 是 WebView2 视口里的
-            CSS 像素，同时受 DPI 与**页面 ZoomFactor**（本项目非 1080p 会等比缩放）
-            影响，而窗口位置是 WinForms 逻辑像素 —— 两者不相等时每一帧按错误比例
-            累加一遍 = "越拖越偏"。后端自己用 GetCursorPos / GetWindowRect
-            （都是物理像素，物理像素之间做差**没有单位问题**）。
-         ② 后端那条通道是**绝对定位且幂等**的：目标 = 按下时记的起始矩形 +
-            (当前光标 − 按下时光标)。起始值只在 drag_start 写一次，所以
-            同一帧重复送达、第 3 帧比第 2 帧先到，落点都一模一样 ——
-            旧写法"在当前值上 +dx" 的累加式只要有两条在飞就必然错位（就是用户
-            本轮报的"往几个方向卡顿地移动"）。
-         ③ 每帧最多发一次（rAF 节流）且**上一条没回来不发下一条**：
-            鼠标 125~1000Hz，逐事件发会把 js_api 队列塞满，反而更卡。 */
-    let dragSessionActive = false;
-    let dragSessionCleaned = null;      // 上一次会话的清理函数，保证**绝不会留两组监听**
-    function startDragSession() {
-      /* ⚠️⚠️ 上一轮遗留的**致命漏洞**（很可能就是用户说"还是拖不动"的直接原因）：
-         如果某次拖动的 mouseup 没收到（在窗口外松手、拖动中切走焦点、
-         或者 WebView2 在窗口移动时把鼠标捕获换掉了 —— 都很常见），
-         那么 `dragSessionActive` 一直是 true、监听也一直挂着、后端会话也不重置。
-         下一次按下时这个函数**直接 return**（"已在拖动中"），
-         于是界面靠的是一整套**上一次**的 old mousemove 闭包和**上一次**的起始基准：
-           · 起点是上一次按下时的窗口位置 → 一拖动就"跳回"老地方；
-           · 更糟的是若上一次的 mouseup 根本没注册成功，就**彻底拖不动**了。
-         ⇒ 正解：按下这一刻**无条件先把上一次彻底收掉**，再开新的。
-            不做任何"看起来还在拖"的乐观判断 —— 拖动是一次一次独立的动作，
-            宁可多收一次，也不能留下僵尸监听。 */
-      if (typeof dragSessionCleaned === 'function') dragSessionCleaned();
-      dragSessionActive = true;
-      let pending = false, again = false, raf = 0, alive = true;
-      const send = () => {
-        if (!alive) return;
-        if (pending) { again = true; return; }        // 在飞：只保留"还要再发一次"这个意图
-        pending = true; again = false;
-        const done = () => {
-          pending = false;
-          if (again && alive) { again = false; send(); }
-        };
-        Promise.resolve(bridge.tryCall('window.drag_move'))
-          .then(() => {}, () => {})
-          .then(done, done);
+      if (!event || event.button !== 0 || interactive(event.target)) return;
+      dragToken += 1;
+      const token = dragToken;
+      const sx = Number(event.screenX) || 0;
+      const sy = Number(event.screenY) || 0;
+      let started = false;
+      let finished = false;
+      const cleanup = () => {
+        finished = true;
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', onUp);
+        window.removeEventListener('pointercancel', onUp);
+        window.removeEventListener('blur', onUp);
       };
-      const move = (e) => {
-        /* ⚠️ 这一句是整个方案的安全网：`e.buttons === 0` = **左键其实已经松了**
-           （不管是松在窗口外、还是被系统吃掉了一次 mouseup）。
-           这时候必须当场收摊，而不是等那个永远不会再来的 mouseup。
-           没有它，一次"窗口外松手"就会把监听和后端会话留成僵尸（见上面那段）。 */
-        if (e && e.buttons !== undefined && (e.buttons & 1) === 0) { up(); return; }
-        if (!alive || raf) return;                    // 一帧最多一次
-        raf = requestAnimationFrame(() => { raf = 0; send(); });
-      };
-      const up = () => {
+      function onMove(e) {
+        if (started || finished) return;
+        const dx = Math.abs((Number(e.screenX) || 0) - sx);
+        const dy = Math.abs((Number(e.screenY) || 0) - sy);
+        if (dx < TITLE_DRAG_THRESHOLD && dy < TITLE_DRAG_THRESHOLD) return;
+        started = true;
         cleanup();
-        bridge.tryCall('window.drag_end').catch(() => {});
-      };
-      function cleanup() {
-        /* ⚠️ 已经被**更新的一次按下**接管时，这里一个字都不该动：
-           上一次会话那条还在飞的 drag_start/drag_move 回调稍后也会调用它自己的
-           cleanup，若那时把 dragSessionActive 置回 false、或摘掉 dragSessionCleaned，
-           就会把**新会话**的状态搅乱（表现为"拖到一半突然又不跟手了"）。
-           判据：全局那份 cleaned 还是不是我 —— 不是就说明我已过期。 */
-        if (dragSessionCleaned !== cleanup) return;
-        alive = false;
-        dragSessionActive = false;
-        if (raf) { cancelAnimationFrame(raf); raf = 0; }
-        window.removeEventListener('mousemove', move);
-        window.removeEventListener('mouseup', up);
-        window.removeEventListener('blur', up);
-        dragSessionCleaned = null;
+        /* fire-and-forget：拖动由系统模态循环接管，前端不需要等结果；
+           失败（非 Windows/窗口未就绪）时窗口不动，但不会留下任何僵尸监听。 */
+        bridge.tryCall('window.start_drag', token).catch(() => {});
       }
-      dragSessionCleaned = cleanup;
-      /* 失焦也算松手：拖动中弹出别的窗口 / 切走了，鼠标状态就不可信了 */
-      window.addEventListener('blur', up);
-      /* 先让后端记下起始矩形/光标；这一步失败就别动窗口（宁可拖不动，也别乱跳）。
-         ⚠️ 两条出口都必须把 dragSessionActive 复位，否则一次失败之后
-            这个函数会永久直接 return，标题栏再也拖不动（= 用户反复报的现象）。 */
-      Promise.resolve(bridge.tryCall('window.drag_start'))
-        .then((result) => {
-          if (!result || !result.ok || !alive) { cleanup(); return; }
-          window.addEventListener('mousemove', move);
-          window.addEventListener('mouseup', up);
-        }, cleanup);
+      function onUp() { cleanup(); }
+      window.addEventListener('pointermove', onMove);
+      window.addEventListener('pointerup', onUp);
+      window.addEventListener('pointercancel', onUp);
+      window.addEventListener('blur', onUp);
     }
     function onTitleDouble(event) { if (!interactive(event.target)) maximizeWindow(); }
 
@@ -1666,8 +2311,11 @@ const App = {
            （不能让 Ctrl+C 变成一个"吞掉但什么也不干"的死键）。 */
     /* ⚠️ 只列**页面里真实存在**的类（.ai-msg 并不存在，别留死选择器）：
        .bubble = 气泡本体，.ai-think-body = 思考正文，.ai-messages = 消息列表容器
-       （覆盖容器内的"AI正在查看问题…"这类非气泡文本，复制它们同样是用户期望）。 */
-    const COPY_ON_CTRL_C_SELECTORS = '.bubble, .ai-think-body, .ai-messages';
+       （覆盖容器内的"AI正在查看问题…"这类非气泡文本，复制它们同样是用户期望）。
+       ⚠️ task-12 需求 6：详情区（.detail-wrap）的框选文字也要 Ctrl+C 可用 ——
+       WebView2 的 AreBrowserAcceleratorKeysEnabled=False 会吞掉默认复制，这里整段接管。
+       归属判定用**容器**而不是逐个文本类，一次覆盖名称/编码/介绍/详细信息/链接文字。 */
+    const COPY_ON_CTRL_C_SELECTORS = '.bubble, .ai-think-body, .ai-messages, .detail-wrap';
     function onGlobalCopy(event) {
       if (!event.ctrlKey || event.altKey || event.shiftKey || event.metaKey) return;
       if (String(event.key || '').toLowerCase() !== 'c') return;
@@ -1735,6 +2383,14 @@ const App = {
       const intro = pickI18n(raw.intro, '');
       const category = Array.isArray(raw.category) ? raw.category : (raw.category ? [raw.category] : []);
       const tags = Array.isArray(raw.tags) ? raw.tags : (raw.tags ? [raw.tags] : []);
+      /* 并集字段（task-6 后端契约）：三种语言池里出现过的**全部规范值**。
+         · 显示/分组用 category/tags（= 当前界面语言那一份）；
+         · 筛选候选、关键词匹配、喜好计数用 category_all/tags_all
+           —— 否则"只在 English 池里填了「网络」"的条目在简体界面搜不到。
+         ⚠️ 后端没给这两个字段时（旧后端/云端镜像）回退到 category/tags 本身，
+            行为与改动前完全一致（向后兼容，不赌后端先上线）。 */
+      const categoryAll = Array.isArray(raw.category_all) ? raw.category_all : category;
+      const tagsAll = Array.isArray(raw.tags_all) ? raw.tags_all : tags;
       return {
         id: raw.id || raw.code || name,
         code: raw.code || raw.id || '',
@@ -1745,17 +2401,33 @@ const App = {
         guide: pickI18n(raw.guide || raw.details, ''),
         category,
         tags,
+        category_all: categoryAll,
+        tags_all: tagsAll,
         icon: iconName ? (/^https?:/i.test(String(raw.icon)) ? String(raw.icon)
           : '/res/image/icon/' + encodeURIComponent(iconName)) : '',
         url: raw.url || '', github: raw.github || '', download_url: raw.download_url || '',
+        /* 多组开源仓库：压成 [{platform, url}] 纯文本列表 —— 详情页要逐行列出来，
+           列表页那一列要显示「第一组 +N」。老数据没有 repos 时为空数组，
+           repoRowsFor 会退回 github 那一条。 */
+        repos: (Array.isArray(raw.repos) ? raw.repos : [])
+          .map((row) => (row && typeof row === 'object' && row.url
+            ? { platform: String(row.platform || 'custom'), url: String(row.url) } : null))
+          .filter(Boolean),
         /* 下载**页面**的网址（用户填的下载地址= 下载页的网页地址，
            和 download_url（安装包直链）是两种语义）。 */
         download_page_url: raw.download_page_url || '',
         author_url: raw.author_url || '', chat_url: raw.chat_url || '',
+        /* 自定义链接：这里就按当前界面语言压成 {label, url} 纯文本，
+           详情页与卡片只管显示，不必再判字典/字符串两种形态。 */
+        links: (Array.isArray(raw.links) ? raw.links : [])
+          .map((row) => (row && typeof row === 'object'
+            ? { label: pickI18n(row.label, ''), url: pickI18n(row.url, '') } : null))
+          .filter((row) => row && row.label && /^https?:\/\//i.test(row.url)),
         listed_at: raw.listed_at || '',
         systems: Array.isArray(raw.systems) ? raw.systems : (raw.systems ? [raw.systems] : []),
-        architectures: Array.isArray(raw.architectures) ? raw.architectures
-          : (raw.architectures ? [raw.architectures] : []),
+        /* 本轮删除 CPU 架构（用户：「删除所有的CPU架构……卡片ui界面里面的详细信息的
+           CPU 架构都要删除」）：数据文件里的 architectures 已删，这里不再解析 ——
+           留一个恒为 [] 的字段只会让后面每一处过滤/详情都要写"它永远是空的"注释。 */
         variants: Array.isArray(raw.variants) ? raw.variants : [],
         default_variant: raw.default_variant || '',
         _fav: false, _sel: false,
@@ -1858,7 +2530,11 @@ const App = {
       if (detail.value) apply(detail.value);
     }
     async function loadFavorites() {
-      const result = await bridge.tryCall('favorites.list');
+      /* 显式带上界面语言：收藏夹的显示名由后端 display_folder_name() 决定
+         （真名恒为 "Default"，显示要跟着设置里的语言走）。不传就退化成后端
+         自己记的语言 —— 桌面端一般一致，但**切语言的那一刻**后端可能还没刷
+         新到这份数据，界面上就会出现「English 界面却写着「默认收藏夹」」。 */
+      const result = await bridge.tryCall('favorites.list', uiLanguage());
       if (!result || !result.ok) return false;
       folders.value = (result.folders || []).map((f) => ({ ...f, label: f.label || f.name }));
       syncFavoriteState();
@@ -1876,7 +2552,7 @@ const App = {
     const filterOpen = ref(false);
     const chevronDeg = ref(0);
     const filters = reactive({ category: [], tag: [], source: [], favorite: [],
-                               updated: [], system: [], arch: [] });
+                               updated: [], system: [] });
     const latestCodes = ref(new Set());
     const groups = ref([]);
     const filtered = ref([]);
@@ -1950,28 +2626,76 @@ const App = {
 
     /* 选项优先取后端 filter_options（值 = 规范中文，显示名 = 译名），拿不到再本地算 */
     const remoteOptions = ref(null);
+    /* ⚠️ 候选的 label 是**后端按传入语言翻好**送来的（desktop/api/resources.py:1270
+       def filter_options(self, language: str = "") —— 不传则用 shell.current_language()），
+       以前只在启动时拉一次且不传语言 ⇒ 设置里切到 English 后，「更多筛选」里
+       类别 / 标签 / 系统三组候选仍是简体中文（其余几组是前端 t() 文案，会跟着变），
+       看起来就像"只有三个字没翻"。所以：拉取时显式带上界面语言，切语言后重拉。
+       值（value）永远保持规范中文，只有 label 本地化 —— 与后端约定一致，不要改。 */
+    async function loadFilterOptions() {
+      const options = await bridge.tryCall('resources.filter_options', uiLanguage());
+      /* tryCall 返回 null = 后端没这个接口 ⇒ 显式降级：filterRows 走本地算出来的候选 */
+      if (options && options.ok) remoteOptions.value = options;
+    }
     const filterRows = computed(() => {
       const all = { value: '', label: t('filter_all', '全部') };
       const remote = remoteOptions.value;
       const cats = [];
+      const seenCat = new Set();
       const tags = new Set();
+      /* 候选值取**并集**（category_all/tags_all）：这样"只在 English 池里填了「网络」"
+         的条目，在简体中文界面下也能从下拉里选到「网络」。
+         ⚠️ 并集之后还要**折成规范中文值**再进候选（第五轮需求③）：新表单三个语言池各填
+            各的写法，不折叠就会出现「游戏平台 / 遊戲平台 / Game platform 三项并列，
+            简体中文界面里后两项显示为外文」。后端 filter_options 已按同一口径折叠，
+            这里照做是**兜底**：浏览器模式（serve.py 的 mock）没有 filter_options，
+            老后端与云端直连也不会折叠，只改后端会把这些场景漏在外面。
+         显示仍走 term()（值恒为规范中文，翻不翻都由界面语言决定）。 */
+      const pushCanon = (bag, value) => {
+        const canon = canonicalAny(value);
+        if (!canon || seenCat.has(canon)) return;
+        seenCat.add(canon);
+        bag.push(canon);
+      };
       items.value.forEach((it) => {
-        it.category.forEach((c) => { if (cats.indexOf(c) < 0) cats.push(c); });
-        it.category.concat(it.tags || []).forEach((k) => tags.add(k));
+        (it.category_all || it.category).forEach((c) => pushCanon(cats, c));
+        (it.category_all || it.category).concat(it.tags_all || it.tags || [])
+          .forEach((k) => tags.add(canonicalAny(k)));
       });
       const ordered = CATEGORY_ORDER.filter((c) => cats.indexOf(c) >= 0)
         .concat(cats.filter((c) => CATEGORY_ORDER.indexOf(c) < 0));
       const list = (values) => [all].concat(values.map((v) => ({ value: v, label: term(v) })));
-      const fromRemote = (key, fallbackList) => {
-        if (remote && Array.isArray(remote[key]) && remote[key].length) {
-          return [all].concat(remote[key].map((o) => ({ value: o.value, label: o.label || term(o.value) })));
-        }
-        return fallbackList;
+      /* 远端候选同样折叠 + 去重（canon=true 只给类别/标签用）。
+         label 优先用前端 term()：它跟着界面语言实时重算，切语言后到重拉落地的
+         那一小段时间里不会残留旧语言的写法；术语表查不到才用后端给的 label。
+         ⚠️「适用系统」必须 canon=false —— 系统名不在术语表里、后端也没折叠它，
+            折了会把 value 改成对不上号的字符串，筛选直接失效（系统那组走另一张表）。 */
+      const fromRemote = (key, fallbackList, canon) => {
+        if (!(remote && Array.isArray(remote[key]) && remote[key].length)) return fallbackList;
+        const seen = new Set();
+        const out = [];
+        remote[key].forEach((o) => {
+          const raw = String((o && o.value != null) ? o.value : '');
+          const value = canon ? canonicalAny(raw) : raw;
+          if (!value) return;
+          if (canon) {
+            if (seen.has(value)) return;
+            seen.add(value);
+          }
+          const localized = term(value);
+          const backend = (o && o.label) || '';
+          out.push({
+            value,
+            label: canon ? (localized !== value ? localized : (backend || value))
+              : (backend || localized || value),
+          });
+        });
+        return [all].concat(out);
       };
       return [
         { key: 'category', label: t('filter_category', '类别'),
-          options: fromRemote('category', list(ordered)) },
-        { key: 'tag', label: t('filter_tag', '标签'), options: fromRemote('tag', list(Array.from(tags).sort())) },
+          options: fromRemote('category', list(ordered), true) },
+        { key: 'tag', label: t('filter_tag', '标签'), options: fromRemote('tag', list(Array.from(tags).sort()), true) },
         { key: 'source', label: t('filter_source', '来源'), options: [all,
           { value: 'site', label: t('source_site', '有官网') },
           { value: 'repo', label: t('source_repo', '有代码仓库') },
@@ -1984,8 +2708,28 @@ const App = {
           { value: '30d', label: t('updated_30d', '30 天前') },
           { value: '180d', label: t('updated_180d', '半年前') }] },
         { key: 'system', label: t('filter_system', '适用系统'), options: fromRemote('system', list(SYSTEMS)) },
-        { key: 'arch', label: t('filter_arch', 'CPU 架构'), options: fromRemote('arch', list(ARCHITECTURES)) },
       ];
+    });
+
+    /* ★ 本轮新增（只给定制页用，搜索页继续用 filterRows —— 用户明确「不要改错了，
+       只更改制页的而不是搜索页的」）：定制页的「更多筛选」里，类别 / 标签的候选必须
+       **只列资源库里真实存在的值**。
+       filterRows 的候选来自 items 并集 **+ 后端 filter_options 的并集**，而后者可能带上
+       资源库里已经一条都没有的陈旧值（资源删过、语言池改过）→ 选它必然 0 结果。
+       这里按 items 实际值把这两组再过一遍（值已在 filterRows 里折成规范中文，
+       所以直接用 same-value 比对即可），其余行（来源/收藏/更新时间/适用系统）原样透传。 */
+    const customFilterRows = computed(() => {
+      const present = new Set();
+      const add = (v) => { const canon = canonicalAny(v); if (canon) present.add(canon); };
+      items.value.forEach((it) => {
+        (it.category_all || it.category || []).forEach(add);
+        (it.tags_all || it.tags || []).forEach(add);
+      });
+      return filterRows.value.map((row) => {
+        if (row.key !== 'category' && row.key !== 'tag') return row;
+        /* 第一项是「全部」（value 为空）永远保留 */
+        return Object.assign({}, row, { options: row.options.filter((o) => !o.value || present.has(o.value)) });
+      });
     });
 
     /* 本地兜底：与 resource_query.py 逐条对齐（后端在时不会被用到） */
@@ -1999,15 +2743,25 @@ const App = {
       if (String(item.id || '').toLowerCase() === key) return true;
       if (String(item.name || '').toLowerCase().indexOf(key) >= 0) return true;
       if (String(item.description || '').toLowerCase().indexOf(key) >= 0) return true;
-      return item.category.concat(item.tags || [])
+      /* 并集：英文池里独有的类别/标签也要能被关键词搜到 */
+      return (item.category_all || item.category)
+        .concat(item.tags_all || item.tags || [])
         .some((k) => String(k).toLowerCase().indexOf(key) >= 0);
     }
     function passesFilters(item, state) {
       const f = state || filters;
-      if (f.category.length && !item.category.some((c) => f.category.indexOf(c) >= 0)) return false;
+      /* 筛选值恒为规范中文（来自并集候选），所以这里也用并集比对：
+         用户在简体界面选「网络」，条目只在 English 池里填了它，同样应该命中。 */
+      /* 两侧都折成规范中文值再比（与后端 passes_filters 的 category/tags 分支同口径）：
+         候选是规范值，而条目可能写着三种语言里的任一写法（新表单各池独立填的），
+         只折一侧会"选了「游戏平台」却筛不出只在 English 池填 Game platform 的条目"。 */
+      const wantCats = f.category.map(canonicalAny);
+      const itemCats = (item.category_all || item.category).map(canonicalAny);
+      if (wantCats.length && !itemCats.some((c) => wantCats.indexOf(c) >= 0)) return false;
       if (f.tag.length) {
-        const keys = item.category.concat(item.tags || []);
-        if (!f.tag.some((v) => keys.indexOf(v) >= 0)) return false;
+        const wantTags = f.tag.map(canonicalAny);
+        const keys = itemCats.concat((item.tags_all || item.tags || []).map(canonicalAny));
+        if (!wantTags.some((v) => keys.indexOf(v) >= 0)) return false;
       }
       if (f.source.length) {
         const repo = !!item.github, download = !!item.download_url || repo, site = !!item.url;
@@ -2032,11 +2786,6 @@ const App = {
         if (!item.systems.length) return false;
         const values = item.systems.map((v) => String(v).toLowerCase());
         if (!f.system.some((v) => values.indexOf(String(v).toLowerCase()) >= 0)) return false;
-      }
-      if (f.arch.length) {
-        if (!item.architectures.length) return false;
-        const values = item.architectures.map((v) => String(v).toLowerCase());
-        if (!f.arch.some((v) => values.indexOf(String(v).toLowerCase()) >= 0)) return false;
       }
       return true;
     }
@@ -2159,16 +2908,18 @@ const App = {
       const gap = columns > 1 ? spacing + remainder / (columns - 1) : spacing;
       return { columns, itemW, gap };
     });
-    /* 卡片"卡脚多一行下载页按钮"时需要的额外高度：
-       .card-foot-links 是 26px 按钮 + 与上一行的 gap 6 = 32px。
-       ⚠️ 虚拟列表的行高必须是**确定值**（top/height 都是 JS 算的），
-       所以这里按"这一行里有没有带下载页的卡片"整行加高 ——
-       不加高就会撞上 task-3 ③ 同一类 bug：固定 196 + overflow:hidden
-       把简介下沿/卡脚裁掉（AGENTS.md 第 5 条禁止写死卡片宽高的原因）。 */
-    const FOOT_LINKS_H = 32;
-    function rowNeedsLinks(rowItems) {
-      return (rowItems || []).some((it) => isHttp(it.download_page_url));
-    }
+    /* ⚠️ 本轮删除 FOOT_LINKS_H / rowNeedsLinks（卡片"多一行下载页按钮"的加高逻辑）。
+       需求原话：「删除搜索页或定制页的MT管理器上的卡片ui中的那个下载按钮，我估计是我
+       之前和agent提了这个要求但是它只隐藏了固定软件有这个按钮的东西并没有按我要求删除
+       这个页面上的这个按钮（只删除按钮按钮和相关的东西关于这个按钮的，不删除进入页面
+       里面的下载地址部分）」。
+       核实结论：上一轮 agent 确实**删了旧的 Releases/下载按钮，却又新增了这颗
+       "打开下载页面"按钮**（搜索页/定制页/收藏页三处都有），等于没删。
+       本轮把三处模板、这段行高补偿、r22-fixes.css 的 .card-foot-links、i18n 文案键
+       一起删干净 —— 行高必须跟着删：虚拟列表的 height 是 JS 算的确定值，
+       按钮没了还多留 32px，卡脚下方就会空出一条。
+       ⚠️ 只删**卡片上**的入口：详情页"详细信息"里的「下载地址」行（detailRows 的
+       row_download_page）按用户要求**保留**，Releases 入口也保留在详情页顶栏。 */
     const rowModel = computed(() => {
       const cols = Math.max(1, layout.value.columns || 1);
       const baseH = cardPx.value.height;
@@ -2183,7 +2934,7 @@ const App = {
         }
         for (let i = 0; i < list.length; i += cols) {
           const slice = list.slice(i, i + cols);
-          const rowH = baseH + (rowNeedsLinks(slice) ? FOOT_LINKS_H : 0);
+          const rowH = baseH;
           rows.push({ type: 'items', key: 'r' + (seed++), items: slice,
             top: y, height: rowH, itemW: layout.value.itemW, gap: layout.value.gap });
           y += rowH + cfg.value.spacing;
@@ -2280,21 +3031,126 @@ const App = {
          否则之后任何一次 restorePageScroll('search') 都会把旧位置"恢复"回来。 */
       pageScrollMemory.search = 0;
     }
-    /* ---------- 卡片标签：放不下时把最后一个换成「+X」 ----------
-       需求（原话）："比如 OBS 他多个标签都放不下了会挤压右侧的按钮，所以可以自动识别
-       实例间计算后把最后一个标签改为 X+"。这里在**渲染前**用估算宽度做布局计算：
-       tag 宽度 = 文字宽 + 左右 padding 20px（.tag padding 0 10px、字号 11.5）。
-       中文按 11.5px/字、西文按 6.2px/字估宽（与 CSS 实测基本吻合，留一点余量）。
-       空间不够时保留「+X」胶囊，X = 被隐藏的标签数量。 */
-    const TAG_FONT = 11.5, TAG_PAD = 20, TAG_GAP = 6, PLUS_TAG_W = 40;
-    function tagTextWidth(text) {
+    /* ---------- 卡片标签：放不下时把最后一个换成「+X」（task-14 重做） ----------
+       需求（原话）：「标签放不下应该最后一个变为那个+x的标签，而不是放不下就把所有标签
+       变为+x标签；或者明明超出边界还是强硬显示而不变为+x标签ui导致最后一个被遮挡住」。
+       旧实现的两条病根，这次都治：
+       ① 宽度靠估算（西文 0.54×字号）⇒ 估小就超边界被 .card{overflow:hidden} 裁字。
+          现在用 **canvas measureText 实测**（字体串取 body 的 computed fontFamily +
+          .tag 钉死的 11.5px；胶囊 .tag-more 是 font-weight:600，测它时用 600），
+          按「显示文本」缓存 —— 键是 term() 之后的文本，切语言自动换键、互不污染；
+          虚拟列表每帧重渲染不会重复测。
+       ② 「+X」胶囊写死 40px ⇒ "+3" 和 "+12" 一样宽，位数一多就估小。
+          现在胶囊宽度**按它自己的文本实算**（tagTextPx('+N', true) + tagMetrics().pad）。
+       安全余量：实测值 +2px 再向上取整（浮点宽度的最后一像素是渲染器拿不准的半像素，
+       宁可空 2px 也不能裁字）。无 canvas 的老内核退回**偏大**的估算（0.65 系数，
+       方向反过来：估大只会少放一个标签，估小才会裁字 —— 取不裁字这一边）。 */
+    /* ⚠️ 两个视图的 .tag 尺寸**不一样**（components.css）：
+         · 磁贴 tile：font-size 11.5 / padding 0 10px / 行间 gap 6
+         · 网格 grid：font-size 10.5 / padding 0 7px  / 行间 gap 4（.card.is-grid .tag）
+       所以度量必须**跟着 computed 走**（任务要求「按 .tag 实际 computed 字体」）——
+       拿磁贴的尺寸去量网格卡会整体偏大 ≈15%，表现就是"明明还放得下却提前变 +N"。
+       优先从**真实渲染出来的** .tag / .card-foot > .row 上读；读不到（卡片还没挂过、
+       或人在别的页面）退回与 CSS 逐条对齐的常量表。
+       注意 fallback **不写进缓存**：下次卡片渲染出来后还能读到真值再升级。 */
+    const TAG_METRIC_FALLBACK = {
+      tile: { font: 11.5, pad: 20, gap: 6, family: '' },
+      grid: { font: 10.5, pad: 14, gap: 4, family: '' },
+    };
+    const _tagMetrics = { tile: null, grid: null };
+    function tagMode() { return viewMode.value === 'grid' ? 'grid' : 'tile'; }
+    function tagMetrics() {
+      const mode = tagMode();
+      if (_tagMetrics[mode]) return _tagMetrics[mode];
+      const m = { font: TAG_METRIC_FALLBACK[mode].font, pad: TAG_METRIC_FALLBACK[mode].pad,
+                  gap: TAG_METRIC_FALLBACK[mode].gap, family: '' };
+      let got = false;
+      try {
+        /* 直接按**选择器**取对应视图的那枚标签：网格卡带 .is-grid，磁贴卡没有 ⇒
+           即使当前只显示其中一种视图，两种度量也都能各取到一次真值。 */
+        const sel = mode === 'grid' ? '.card.is-grid .card-foot > .row > .tag'
+                                    : '.card:not(.is-grid) .card-foot > .row > .tag';
+        const el = document.querySelector(sel);
+        if (el && window.getComputedStyle) {
+          const cs = window.getComputedStyle(el);
+          const fs = parseFloat(cs.fontSize);
+          const pl = parseFloat(cs.paddingLeft) || 0;
+          const pr = parseFloat(cs.paddingRight) || 0;
+          if (fs > 0) { m.font = fs; got = true; }
+          if (pl + pr > 0) m.pad = pl + pr;
+          m.family = cs.fontFamily || '';
+          const row = el.parentElement;
+          const rcs = row && window.getComputedStyle(row);
+          if (rcs) {
+            const g = parseFloat(rcs.columnGap || rcs.gap || '');
+            if (!isNaN(g)) m.gap = g;
+          }
+        }
+      } catch (error) { /* 拿不到就用常量表 */ }
+      if (got) _tagMetrics[mode] = m;          // 只有读到真值才长期缓存
+      return m;
+    }
+    let _tagCtx = null;                        // null=未探测；false=没有 2d；否则是复用上下文
+    function getTagMeasureCtx() {
+      if (_tagCtx !== null) return _tagCtx;
+      try {
+        const c = document.createElement('canvas');
+        _tagCtx = c.getContext('2d') || false;
+      } catch (error) { _tagCtx = false; }
+      return _tagCtx;
+    }
+    /* canvas 字体串：字号/字族取自 tagMetrics()（= 真 .tag 的 computed 值），
+       bold=true 对应 .tag-more 的 font-weight:600。 */
+    function tagFontSpec(bold) {
+      const m = tagMetrics();
+      const family = m.family || (() => {
+        try { return window.getComputedStyle(document.body).fontFamily || 'sans-serif'; }
+        catch (error) { return 'sans-serif'; }
+      })();
+      return (bold ? '600 ' : '') + m.font + 'px ' + family;
+    }
+    function tagEstimateWidth(text) {
+      const f = tagMetrics().font;
       let width = 0;
-      for (const ch of String(text || '')) width += (/[\u2E80-\uFFFF]/.test(ch) ? TAG_FONT : TAG_FONT * 0.54);
+      for (const ch of String(text || '')) width += (/[\u2E80-\uFFFF]/.test(ch) ? f : f * 0.65);
       return width;
     }
-    function tagWidth(tag) { return tagTextWidth(term(tag)) + TAG_PAD; }
+    const TAG_W_CACHE = new Map();             // '视图|R|文本' → 实测 px
+    function tagTextPx(text, bold) {
+      /* 缓存键**必须带视图**：磁贴 11.5px、网格 10.5px，同一个 "工具" 两种宽。 */
+      const key = tagMode() + '|' + (bold ? 'B' : 'R') + '\u0000' + text;
+      const hit = TAG_W_CACHE.get(key);
+      if (hit !== undefined) return hit;
+      let px;
+      const ctx = getTagMeasureCtx();
+      if (ctx) {
+        try { ctx.font = tagFontSpec(bold); px = ctx.measureText(text).width + 2; }
+        catch (error) { px = tagEstimateWidth(text); }
+      } else { px = tagEstimateWidth(text); }
+      px = Math.ceil(px);
+      /* 缓存防失控：语言/自定义标签极端多时清一次重来（重测成本 = 每文本一次 measure） */
+      if (TAG_W_CACHE.size > 6000) TAG_W_CACHE.clear();
+      TAG_W_CACHE.set(key, px);
+      return px;
+    }
+    function tagBoxWidth(tag) { return tagTextPx(term(tag), false) + tagMetrics().pad; }
+    function plusBoxWidth(hidden) { return tagTextPx('+' + hidden, true) + tagMetrics().pad; }
+    /* 行间 gap 同样跟着 computed 走（磁贴 6 / 网格 4）—— 见 tagMetrics 的注释。 */
+    function tagGap() { return tagMetrics().gap; }
     function tagListOf(item) {
-      return item.category.concat((item.tags || []).filter((v) => item.category.indexOf(v) < 0));
+      /* m06170 第 3 项 + m06395 定夺：**药丸只放标签**。以前这里把类别也拼进来当药丸显示，
+         于是「类别」和「标签」在界面上长得一模一样（用户原话：「类别……是 text 的而不是标签，
+         标签只有投稿表单的标签那个才是标签」）。类别并没有因此看不见：
+           · 按类别分组时它是分组标题（index.html 的 .vgroup-title，纯文本）；
+           · 详情页详细信息里有「类别」一行（detailRows 的 row_category，纯文本）。
+         落盘数据一个字节都没动 —— 只是不再把 category 画成药丸。 */
+      return (item.tags || []).filter(Boolean);
+    }
+    /* 一行已放标签的总宽 = Σ 胶囊宽 + 相邻间隙（空行 = 0，只有一个 = 不加 gap）。 */
+    function tagRowWidth(list) {
+      let w = 0;
+      for (let i = 0; i < list.length; i += 1) w += tagBoxWidth(list[i]) + (i ? tagGap() : 0);
+      return w;
     }
     function tagLayout(item, avail) {
       const all = tagListOf(item);
@@ -2303,17 +3159,35 @@ const App = {
         const fixed = all.slice(0, viewMode.value === 'grid' ? 2 : 4);
         return { shown: fixed, hidden: 0 };
       }
-      const shown = [];
+      /* ① 尽量放（需求原话「最后一个变为那个+x」）：按顺序逐个试放，
+         **放不下的跳过、继续试后面的** —— 旧算法在第一个放不下的标签处 break，
+         宽标签排在前时整排塌成 +N（病根①）。跳过中间某个宽标签时，
+         「+N」的 N = 没渲染的总数（放不下的 + 尾部没放的），胶囊 title 仍是全量标签，
+         信息不丢、也不谎报数量。 */
+      const placed = [];
       let used = 0;
+      let rest = 0;
       for (let i = 0; i < all.length; i += 1) {
-        const need = tagWidth(all[i]) + (shown.length ? TAG_GAP : 0);
-        const remaining = all.length - (shown.length + 1);
-        const reserve = remaining > 0 ? (PLUS_TAG_W + TAG_GAP) : 0;
-        if (used + need + reserve > avail) break;
-        used += need;
-        shown.push(all[i]);
+        const w = tagBoxWidth(all[i]) + (placed.length ? tagGap() : 0);
+        if (used + w <= avail) { used += w; placed.push(all[i]); } else { rest += 1; }
       }
-      return { shown, hidden: all.length - shown.length };
+      if (!rest) return { shown: placed, hidden: 0 };   // 全放下了：没有剩余就没有胶囊
+      /* ② 收缩到「已放 + gap + 实算胶囊宽」放得下：胶囊要给 "+N" 腾位，
+         放不下就从**尾部**吐回已放标签（每次至少省 ~28px；hidden 多一位数字
+         只让胶囊变宽 ≤7px，净效果单调收窄）。尾部吐回保证：显示出来的永远是
+         顺序最靠前的那批，"+N" 语义仍成立。 */
+      for (let keep = placed.length; keep >= 0; keep -= 1) {
+        const shown = placed.slice(0, keep);
+        const hidden = all.length - shown.length;
+        const total = tagRowWidth(shown) + (keep ? tagGap() : 0) + plusBoxWidth(hidden);
+        if (total <= avail) return { shown, hidden };
+      }
+      /* ③ 退化：连"光杆 +X 胶囊"都放不下（avail < 胶囊 ≈30px）。
+         这时**连胶囊都不渲染**（hidden 归 0，模板的 v-if 自然不出）——
+         渲染一个必被裁的半截胶囊就是"遮挡"，正是需求禁止的；整卡行宽塌到
+         30px 以下说明布局本身已崩，宁可标签区留空。注释此路径为任务要求的
+         "退化策略说明"。真实卡宽下永远走不到（最窄验收形态 240px 卡余 134px）。 */
+      return { shown: [], hidden: 0 };
     }
     function visibleTags(item, avail) { return tagLayout(item, avail).shown; }
     function hiddenTagCount(item, avail) { return tagLayout(item, avail).hidden; }
@@ -2483,9 +3357,31 @@ const App = {
        ⚠️ **Ctrl + 点击 = 后台打开**（浏览器在后台开，ToolsGCP 保持在前台）——
           对齐原版 py 的 url_open.open_url（按着 Ctrl 才后台打开 + 抢回前台）。
        ⚠️ event 可能没有（某些调用点不传），这时按普通点击处理。 */
+    /* Ctrl+左键「后台打开」的第二道保险（用户：「这个 bug 修了很多次但是还是没有解决」）。
+       根因是 ctrl 语义**只**从鼠标事件上取，而有一批调用点手里根本没有事件对象：
+         · 下载接口未就绪时退化成打开页面（deploy 那段 `openLink(target.url, null)`）
+         · 更新包没有下载接口时打开发布页（`openLink(downloadUrl)`）
+         · 任何少写一个 `$event` 的模板调用点
+       这些点按鼠标事件判定永远是 false ⇒ 明明按住 Ctrl 仍被浏览器抢到前台，
+       而且表现成"有时"（取决于点的是哪颗按钮）。
+       → 再记一份键盘上 Ctrl 的**物理按下状态**当兜底：事件里带了就用事件的，
+         没带就认「此刻 Ctrl 是不是按着的」。 */
+    if (!window.__toolsGcpCtrlTrack) {
+      window.__toolsGcpCtrlTrack = true;
+      window.__ctrlKeyDown = false;
+      window.addEventListener('keydown', (e) => { if (e.key === 'Control') window.__ctrlKeyDown = true; });
+      window.addEventListener('keyup', (e) => { if (e.key === 'Control') window.__ctrlKeyDown = false; });
+      /* 窗口失焦必须清零：浏览器被别的程序抢到前台时我们收不到 keyup，
+         不清零就会卡在"Ctrl 一直按着"，之后所有普通点击都变成后台打开。 */
+      window.addEventListener('blur', () => { window.__ctrlKeyDown = false; });
+    }
+    function ctrlHeld(event) {
+      return !!(event && event.ctrlKey) || !!window.__ctrlKeyDown;
+    }
+
     async function openLink(url, event) {
       if (!isHttp(url)) { toast(t('link_empty', '这个链接是空的'), 'info'); return; }
-      const ctrl = !!(event && event.ctrlKey);
+      const ctrl = ctrlHeld(event);
       const result = await bridge.tryCall('shell.open_url', url, '', ctrl);
       if (!result) { needApi('shell.open_url', '打开链接'); return; }
       if (!result.ok) toast(t('open_failed', '打开失败：') + (result.error || url), 'error');
@@ -2515,42 +3411,174 @@ const App = {
       closeCardMenu();
       if (item) mentionAi(item);
     }
+    /* ---------- task-12 需求 6：详情区「选区」右键菜单 ----------
+       与卡片菜单是**两套独立状态**（cardMenu 按 item，selMenu 按选中文本）；
+       共用 .card-menu 外观。数据：屏幕坐标 + 选中文本 + 所属条目 code。 */
+    const selMenu = ref(null);         // { x, y, text, code }
+    function closeSelMenu() { selMenu.value = null; }
+    /* 在详情区里右键：有非空文档选区才接管（弹菜单 + 记下选区归属），
+       没有选区就**原样放行**——保持"右键什么都不发生"的旧观感，
+       也不抢 WebView2 原生右键（框架里没有我们能用的东西）。 */
+    function onSelContext(event) {
+      const sel = window.getSelection && window.getSelection();
+      const text = sel && !sel.isCollapsed ? String(sel.toString() || '') : '';
+      if (!text.trim()) { closeSelMenu(); return; }
+      /* 菜单挂回后点内部会触发 contextmenu，模板已 .prevent；这里只管首次定位 */
+      event.preventDefault();
+      event.stopPropagation();
+      /* 选区归属：anchor/focus 两头的公共祖先里最近的 [data-code]。
+         详情页渲染时 .detail-wrap 带当前条目（模板里 detail.code 就挂在这），
+         所以 code 直接取 detail —— 但选区可能是**旧条目**的残留（切卡片不清选区），
+         用 DOM 归属判断太绕，这里以"当前打开的详情"为准：菜单出现即代表
+         用户正对着这条详情提问。 */
+      const vw = window.innerWidth, vh = window.innerHeight;
+      selMenu.value = {
+        x: Math.max(8, Math.min(event.clientX || 0, vw - 190)),
+        y: Math.max(8, Math.min(event.clientY || 0, vh - 86)),
+        text: text,
+        code: (detail.value && detail.value.code) || '',
+      };
+    }
+    /* 两个菜单项都**先取走文本快照再清选区**：copyText 用的是快照（不是活动选区），
+       所以清掉不影响复制；清完用户不会再看到一条"已经消费掉的"蓝色高亮。 */
+    function clearDocSelection() {
+      try {
+        const s = window.getSelection && window.getSelection();
+        if (s) s.removeAllRanges();
+      } catch (err) { /* 静默 */ }
+    }
+    function selMenuMention() {
+      const menu = selMenu.value;
+      closeSelMenu();
+      if (!menu || !detail.value) return;
+      clearDocSelection();
+      /* 把**选中文本**带进 token：@名称(编码)[选中文本]，整段一个可点 token */
+      mentionAi(detail.value, menu.text);
+    }
+    function selMenuCopy() {
+      const menu = selMenu.value;
+      closeSelMenu();
+      if (!menu) return;
+      copyText(menu.text);
+      clearDocSelection();
+    }
     /* 测 Ping：走桌面端 `shell.ping` 做**真实**网络测量
        （DNS 解析 / TCP 握手 / https 的 TLS 握手），不再拿本地图标文件自测。
-       没有可用地址时明确报错，不假装成功。 */
-    async function cardMenuPing() {
-      const item = cardMenuItem();
-      closeCardMenu();
-      if (!item) return;
-      const url = item.url || item.github || item.download_url || '';
+       没有可用地址时明确报错，不假装成功。
+       ⚠️ task-12 需求 7：抽成 pingTarget(name, url) —— 卡片右键菜单和详情页
+       每条链接的测 Ping 按钮**共用同一条链路**，提示口径（尤其失败必须带名称）不会走偏。 */
+    /* ---------- 第五轮需求④：测 Ping 的"进行中"状态 ----------
+       用户原话：「点击……Ping测试按钮点击后按钮变为不可点击状态 测试完毕恢复原样，按钮内部的图标
+       测试期间改为. .. ...循环……记得按钮大小不要改变这个是我最担心的一个bug。」
+       口径已与用户确认：状态只加在**详情页链接行那枚图标按钮**上，卡片正面不新增按钮。
+       ⚠️ 为什么这套状态是"按行 key 的表"而不是一个布尔：详情页一排里官网/GitHub/作者主页/聊天
+          各有一枚 Ping 按钮，用户可以连着点不同行；用单个布尔会让先结束的那行把仍在测的行也"点亮"
+          或提前熄灭。key = label|value（label 是显示文本，同一行在同一次打开里稳定且唯一）。
+       ⚠️ 大小不许跳：盒子尺寸只由 .copy-btn 的固定 28×28（layout.css）决定，这里换的永远是
+          盒子里的内容（SVG ↔ 点阵 span），点阵最宽 3 个点也远小于 28px，不参与任何布局计算。 */
+    const pingBusy = reactive({});
+    /* 点阵步进间隔（毫秒）：抽成常量是为了让 _devtest/probe_ping_busy_ui.mjs 能直接钉住它，
+       不再写死 380 这种"改代码必改探针"的耦合。 */
+    const PING_TICK_MS = 160;
+    const pingTickCount = ref(1);
+    let pingTickTimer = null;
+    function pingRowKey(row) {
+      return String((row && row.label) || '') + '|' + String((row && row.value) || '');
+    }
+    function pingBusyStart(key) {
+      pingBusy[key] = true;
+      /* 计时器只在"至少有一枚在测"时存在：全部测完立刻 clearInterval，不留常驻 tick（虚拟列表
+         常驻 tick 会白白让整页重渲染）。
+         ⚠️ 间隔 160ms：上一版取 380ms（一轮 . → .. → ... 要 1.14s），用户第七轮明确反馈
+            「动画切换每个状态时的那个动画间隔时间太长了 减小间隔时间」⇒ 压到 160ms，
+            一轮约 0.48s，仍然远慢于 60Hz 重绘、不会看着闪。 */
+      if (!pingTickTimer) {
+        pingTickCount.value = 1;
+        pingTickTimer = setInterval(() => { pingTickCount.value = pingTickCount.value % 3 + 1; }, PING_TICK_MS);
+      }
+    }
+    function pingBusyEnd(key) {
+      delete pingBusy[key];
+      if (pingTickTimer && !Object.keys(pingBusy).length) { clearInterval(pingTickTimer); pingTickTimer = null; }
+    }
+    function pingIsBusy(row) { return !!pingBusy[pingRowKey(row)]; }
+    /* "." → ".." → "..." 三轮一循环（用户写的 . .. ... 就是这个序列） */
+    const pingDotsText = computed(() => '.'.repeat(pingTickCount.value));
+    async function pingTarget(name, url) {
+      const label = String(name || '');
       if (!url) {
-        toast(t('ping_no_target', '「{name}」没有可测的网站或仓库地址').replace('{name}', item.name), 'info');
+        toast(t('ping_no_target', '「{name}」没有可测的网站或仓库地址').replace('{name}', label), 'info');
         return;
       }
-      toast(t('ping_running', '正在测 Ping：{name} …').replace('{name}', item.name), 'info');
+      toast(t('ping_running', '正在测 Ping：{name} …').replace('{name}', label), 'info');
       const result = await bridge.tryCall('shell.ping', url);
       if (!result) { needApi('shell.ping', '测 Ping'); return; }
       if (!result.ok) {
-        toast(t('ping_failed', '测 Ping 失败：{msg}').replace('{msg}', result.error || url), 'error');
+        /* 需求 7 原文：「测 Ping 失败时要写出名称（不能只说"测 Ping 失败"）」。
+           词条 ping_failed 已带 {name} 与 {msg} 两个占位 —— {name} 用条目名称，不是 URL。 */
+        /* 第五轮需求①：Ping 之后的提示统一停留 4 秒（用户口径，原来结果 6s / 失败 2s 不一致，
+           失败信息往往比结果更长，反而消失得最快）。 */
+        toast(t('ping_failed', '测 Ping 失败：{name} — {msg}')
+          .replace('{name}', label)
+          .replace('{msg}', result.error || url), 'error', '', { duration: 4000 });
         return;
       }
       const level = result.total_ms < 200 ? 'success' : (result.total_ms < 600 ? 'info' : 'warning');
-      /* 需求：不同项**各占一行**，不要挤成一行；提示再延长 3 秒（3s → 6s） */
+      /* 需求：不同项**各占一行**，不要挤成一行。
+         停留时长演进：3s →（上一轮）6s →（第五轮需求①，用户原话「还是改为停留4秒后再自动消失吧」）4s。 */
       const lines = [
         t('ping_result', '测 Ping：{name} — {total} ms')
-          .replace('{name}', item.name)
+          .replace('{name}', label)
           .replace('{total}', result.total_ms),
         'DNS   ' + result.dns_ms + ' ms',
         'TCP   ' + result.tcp_ms + ' ms',
       ];
       if (result.tls_ms != null) lines.push('TLS   ' + result.tls_ms + ' ms');
       const text = lines.join(String.fromCharCode(10));
-      toast(text, level, '', { copy: text, duration: 6000, pre: true });
+      toast(text, level, '', { copy: text, duration: 4000, pre: true });
+    }
+    async function cardMenuPing() {
+      const item = cardMenuItem();
+      closeCardMenu();
+      if (!item) return;
+      await pingTarget(item.name, item.url || item.github || item.download_url || '');
+    }
+    /* task-12 需求 7：详情页每条链接的复制按钮后那枚"测 Ping"图标按钮。
+       测的是**这一行自己的地址**（官网就测官网、GitHub 就测 GitHub），
+       名称用条目名 —— 与卡片右键菜单同一口径。 */
+    async function detailRowPing(row) {
+      if (!detail.value || !row || !row.value) return;
+      /* :disabled 已经挡住鼠标重复点击，这里是兜底（键盘回车 / 程序内直接调用同样走这条路），
+         避免同一行并发测两次。 */
+      if (pingIsBusy(row)) return;
+      const key = pingRowKey(row);
+      pingBusyStart(key);
+      try {
+        await pingTarget(detail.value.name, row.value);
+      } finally {
+        /* 三条退出路径都要恢复原样：没地址（ping_no_target 提前 return）、后端没这个接口
+           （needApi 提前 return）、失败（ping_failed 提前 return）、成功。finally 是唯一
+           能保证"测试完毕恢复原样"的地方 —— 漏一条按钮就会永远卡在转点状态。 */
+        pingBusyEnd(key);
+      }
     }
     function enterCardMenuKey(event) {
-      if (event.key === 'Escape') closeCardMenu();
+      if (event.key === 'Escape') { closeCardMenu(); closeSelMenu(); }
     }
-    function mentionAi(item) {
+    /* task-12 需求 6：selText 非空时 token 变成 @名称(编码)[选中文本] 整段一个 token。
+       选中文本可能带换行 / nbsp / 超长 / 方括号（方括号是 token 语法边界，必须去掉，
+       否则正则与用户手敲的变体都对不上）；清洗只做**空白折叠 + 去括号 + 截断**，
+       全程走 textContent 赋值（buildTokenEl 不用 innerHTML），HTML 注入无路可走。 */
+    function mentionTokenSuffix(selText) {
+      const cleaned = String(selText == null ? '' : selText)
+        .replace(/[\u00a0\r\n\t]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .replace(/[\[\]]/g, '')
+        .trim()
+        .slice(0, 80);
+      return cleaned ? '[' + cleaned + ']' : '';
+    }
+    function mentionAi(item, selText) {
       if (!settings.ai_enabled) { toast(t('ai_disabled', 'GCP-AI 还没有开启，可在设置里打开。'), 'info'); return; }
       if (!item || !item.code) return;
       /* 先把 AI 界面切出来（侧栏页或悬浮抽屉），再等一帧让 rich-ai-input 挂载，
@@ -2559,7 +3587,7 @@ const App = {
       const payload = {
         name: item.name || '',
         code: item.code || '',
-        text: '@' + (item.name || '') + '(' + (item.code || '') + ')',
+        text: '@' + (item.name || '') + '(' + (item.code || '') + ')' + mentionTokenSuffix(selText),
       };
       /* 刚切页 / 刚打开抽屉时 rich-ai-input 还没挂载（页面 transition 130ms、v-if 一帧），
          ref 会短暂为 null。这里轮询到它出现为止（最多 ~600ms），只插入一次。 */
@@ -2615,12 +3643,15 @@ const App = {
             的陈旧值（常常是 0）"，把 closeDetail 刚写回的位置又覆盖成顶端 ——
             这就是"进卡片→返回，整页滚回最顶端"的根因。两处共用同一个真相后不再打架。
          ⚠️ 拿不到容器（如 AI 页 @token 进来时列表还没挂载）：不要清零，沿用上一次的记忆。 */
-      const scroller = findPageScroller(page.value);
+      /* key 走 scrollMemoryKey()：投稿页那份记忆是按分节存的（maker:form 之类），
+         这里不换算就会量到 null、把记忆清零。 */
+      const scrollerKey = scrollMemoryKey(page.value);
+      const scroller = findPageScroller(scrollerKey);
       if (scroller) {
         detailScrollMemory = scroller.scrollTop;
-        pageScrollMemory[page.value] = detailScrollMemory;
+        pageScrollMemory[scrollerKey] = detailScrollMemory;
       } else {
-        detailScrollMemory = Number(pageScrollMemory[page.value] || 0);
+        detailScrollMemory = Number(pageScrollMemory[scrollerKey] || 0);
       }
       /* 记下"这个详情是从哪个页面打开的" —— 切走再切回时要能回到这个详情。 */
       detailPage.value = page.value;
@@ -2666,7 +3697,7 @@ const App = {
             写进 pageScrollMemory，两条恢复链**互认**，不会再互相覆盖）。 */
       const want = detailScrollMemory;
       const restore = (attempt) => {
-        const el = findPageScroller(page.value);
+        const el = findPageScroller(scrollMemoryKey(page.value));
         if (!el) {
           if (attempt < 12) requestAnimationFrame(() => restore(attempt + 1));
           return;
@@ -2680,7 +3711,8 @@ const App = {
     }
     const detailTags = computed(() => {
       const it = detail.value || {};
-      return (it.category || []).concat((it.tags || []).filter((v) => (it.category || []).indexOf(v) < 0));
+      // 与 tagListOf 同一口径（m06170 第 3 项）：这一排药丸只放标签；类别走 detailRows 的文本行。
+      return (it.tags || []).filter(Boolean);
     });
     const introParagraphs = computed(() => {
       const it = detail.value || {};
@@ -2689,14 +3721,42 @@ const App = {
     });
     const detailRows = computed(() => {
       const it = detail.value || {};
+      /* ⚠️⚠️ 本轮两处改动（用户原话 m03713）：
+         ①「删除所有的CPU架构……还有卡片ui界面里面的详细信息的CPU架构都要删除」
+           → 这里不再产出 `row_architectures` 行。数据侧的 architectures 已从
+             ToolsGCP-Resources.json 删除，前端如果还画这一行就是一条永远空的行。
+         ②「进入页面里面中的作者和聊天都要放在这个详细信息里而不是有单独的按钮
+            （作者改名为作者主页）」
+           → 原来详情页顶栏有两颗独立的 btn-link（作者 / 聊天），现在删掉了，
+             改成这里的两个链接行，和官网 / GitHub / 下载地址同一副面孔。
+             键用一开始就存在的 `author_page`（作者主页）与 `row_chat`（聊天），
+             三语都有，不新增键。 */
       const rows = [
         { label: t('row_systems', '适用系统'), value: (it.systems || []).map(term).join('、') },
-        { label: t('row_architectures', 'CPU 架构'), value: (it.architectures || []).map(term).join('、') },
         { label: t('row_category', '类别'), value: (it.category || []).map(term).join('、') },
         { label: t('row_listed_at', '上架时间'), value: String(it.listed_at || '').slice(0, 16) },
       ];
       if (isHttp(it.url)) rows.push({ label: t('row_url', '官网'), value: it.url, link: true });
-      if (isHttp(it.github)) rows.push({ label: t('row_github', 'GitHub'), value: it.github, link: true });
+      /* 开源仓库：可能有多组，逐行列出（标签 = 平台名）。
+         老数据只有 github 一条 → repoRowsFor 内部会退回那一行。 */
+      repoRowsFor(it).forEach((repo) => {
+        if (isHttp(repo.url)) rows.push({ label: repo.label, value: repo.url, link: true });
+      });
+      /* 作者主页 / 聊天：本轮从"顶栏按钮"搬进详细信息的链接行（顺序放在 GitHub 之后、
+         下载地址之前 —— 它们是"人/社群"的信息，比"去哪下载"更靠近来源）。 */
+      if (isHttp(it.author_url)) {
+        rows.push({ label: t('author_page', '作者主页'), value: it.author_url, link: true });
+      }
+      if (isHttp(it.chat_url)) {
+        rows.push({ label: t('row_chat', '聊天 / 论坛'), value: it.chat_url, link: true });
+      }
+      /* 自定义链接（m05525：「他最终的效果在卡片ui页面里的详细信息一样」）：
+         排在作者/聊天之后、下载地址之前，和固定链接同一副面孔（标签在左、可点开）。 */
+      (it.links || []).forEach((row) => {
+        if (row && row.label && isHttp(row.url)) {
+          rows.push({ label: row.label, value: row.url, link: true });
+        }
+      });
       /* 下载**页面**的网址（和 download_url 直链是两种语义） */
       if (isHttp(it.download_page_url)) {
         rows.push({ label: t('row_download_page', '下载地址'), value: it.download_page_url, link: true });
@@ -3227,16 +4287,25 @@ const App = {
     const customizeOnboarded = computed(() => !!settings.customize_onboarded);
     const interestCatalog = computed(() => {
       const counter = new Map();
+      /* 计数与 kind 判定都用并集：否则"只在某个语言池出现两次的标签"进不了喜好目录。 */
       items.value.forEach((it) => {
-        it.category.forEach((v) => counter.set(v, (counter.get(v) || 0) + 1));
-        (it.tags || []).forEach((v) => { if (it.category.indexOf(v) < 0) counter.set(v, (counter.get(v) || 0) + 1); });
+        const cats = it.category_all || it.category;
+        cats.forEach((v) => counter.set(v, (counter.get(v) || 0) + 1));
+        (it.tags_all || it.tags || []).forEach((v) => {
+          if (cats.indexOf(v) < 0) counter.set(v, (counter.get(v) || 0) + 1);
+        });
       });
+      /* ⚠️⚠️ 本轮修正（用户原话：「定制页类别和标签不是固定死的而且有的就要在里面
+         没有的不能在里面」）：
+         旧版这里 filter(count >= 2) + slice(0, 20) —— 只出现过 1 次的类别/标签被**整条丢掉**、
+         超出 20 个的被截断，于是"资源库里明明有这个类别，定制页里却选不到"。
+         现在：**资源库里出现过的全部列出**（类别按 category_all 并集、标签按 tags_all 并集），
+         一个都不丢、也不设上限；排序仍是"资源越多越靠前"，同样数量按名称排。
+         注意不是写死清单：将来资源库增删类别，这里自动跟着变。 */
       return Array.from(counter.entries())
-        .filter(([, count]) => count >= 2)
         .map(([name, count]) => ({ name, count,
-          kind: items.value.some((it) => it.category.indexOf(name) >= 0) ? 'category' : 'tag' }))
-        .sort((a, b) => (b.count - a.count) || a.name.localeCompare(b.name))
-        .slice(0, 20);
+          kind: items.value.some((it) => (it.category_all || it.category).indexOf(name) >= 0) ? 'category' : 'tag' }))
+        .sort((a, b) => (b.count - a.count) || a.name.localeCompare(b.name));
     });
     const interestGroups = computed(() => ([
       { kind: 'category', label: t('filter_category', '类别'),
@@ -3256,9 +4325,13 @@ const App = {
     });
     function clearInterests() { selectedInterests.value = []; }
     async function saveInterests() {
-      /* ⚠️ 不再强制"至少选一个"：页面副标题写的就是"不想选也可以直接保存"，
-         原版也允许空喜好保存（推荐页会显示空状态，可再点「去设置喜好」回来挑）。
-         之前这里弹"请至少选择一个喜好"，和自家 UI 文案自相矛盾。 */
+      /* ★ 本轮修正（用户原话：「开始是不可点击状态，至少选择其中一个标签则可点击」）：
+         空选时主按钮本身已 :disabled（见 index.html），这里再加一道守卫，
+         防止键盘回车 / 程序化调用绕过按钮状态 —— 两处用同一句文案。 */
+      if (!selectedInterests.value.length) {
+        toast(t('customize_need_one', '至少选择一个类别或标签，再点这里开始'), 'warning');
+        return;
+      }
       const order = interestCatalog.value.map((i) => i.name);
       const names = selectedInterests.value.map((i) => i.name)
         .sort((a, b) => order.indexOf(a) - order.indexOf(b));
@@ -3301,7 +4374,7 @@ const App = {
        （组件、外观、行为与搜索页完全相同，只是互不干扰：在定制页筛选不会顺手改掉搜索结果）。
        另外补上「类别」排序档：和搜索页一样，每个类别有自己的标题文字，而不是平铺成一种样式。 */
     const customFilters = reactive({ category: [], tag: [], source: [], favorite: [],
-                                     updated: [], system: [], arch: [] });
+                                     updated: [], system: [] });
     const customFilterOpen = ref(false);
     const customPanelH = ref(0);
     const customChevronDeg = computed(() => (customFilterOpen.value ? 180 : 0));
@@ -3339,8 +4412,9 @@ const App = {
            定制页自己的筛选条件仍然生效（和搜索页同一套判定）。 */
         if (!passesFilters(it, customFilters)) return;
         let score = 0;
-        it.category.forEach((c) => { if (picked.has(c)) score += 3; });
-        (it.tags || []).forEach((v) => { if (picked.has(v)) score += 1; });
+        const cats = it.category_all || it.category;
+        cats.forEach((c) => { if (picked.has(c)) score += 3; });
+        (it.tags_all || it.tags || []).forEach((v) => { if (picked.has(v)) score += 1; });
         if (score > 0) scored.push({ ...it, _score: score });
       });
       /* 排序口径与 py `_rank_recommendations` 逐字对齐：
@@ -3475,10 +4549,17 @@ const App = {
         return login === 'galen563' || String(issue.author_association || '').toUpperCase() === 'OWNER';
       }).map((issue) => {
         const created = new Date(issue.created_at || '');
+        /* ⚠️ body_md = **原始 Markdown**（这条路径是前端直连 GitHub Issue，拿到的
+           本来就是原文，不需要也不应该再过 stripMarkdown 擦掉）；body 继续是擦过的
+           纯文本 —— 老的 localStorage 缓存、以及"只要纯文本"的地方还在用它，
+           渲染侧统一走 `body_md || body`（见 noticeSource）。
+           截断按 Markdown 边界做，避免留下半个 ** 或没配对的代码围栏。 */
+        const mdRaw = mdTruncate(issue.body || '', 2000);
         return {
           id: issue.id || issue.number, number: issue.number,
           title: String(issue.title || '').trim(),
-          body: stripMarkdown(issue.body || '').slice(0, 2000),
+          body: stripMarkdown(mdRaw).slice(0, 2000),
+          body_md: mdRaw,
           author: (issue.user || {}).login || '', url: issue.html_url || '',
           date: Number.isNaN(created.getTime()) ? String(issue.created_at || '').slice(0, 16)
             : created.getFullYear() + '-' + pad(created.getMonth() + 1) + '-' + pad(created.getDate())
@@ -3515,28 +4596,61 @@ const App = {
       await bridge.tryCall('announcements.mark_all_read');
       toast(t('mark_all_read', '全部已读'), 'success');
     }
-    function openNotice(notice) { markRead(noticeKey(notice)); openLink(notice.url); }
+    /* 第二个参数是鼠标事件：公告卡片的右上角标就是「在 GitHub 查看」，
+       不带事件的话 Ctrl+左键的后台语义会在这里丢失（见 ctrlHeld 的注释）。 */
+    function openNotice(notice, event) { markRead(noticeKey(notice)); openLink(notice.url, event); }
     /* 公告弹窗：⚠️ 隐私弹窗开着的时候不许弹（它俩都是遮罩式，叠一起很难看） */
     let noticePopped = false;
     function maybePopup() {
-      if (noticePopped || !unread.value.length) return;
+      if (noticePopped) return;
       if (privacy.open) return;                       // 隐私政策没同意 → 公告让路
-      const newest = unread.value[0];
+      /* ⚠️⚠️ 本轮需求（用户原话）：「公告弹窗系统假设有2条未读消息只弹窗最新的消息永远，
+         假设最新的标记为已读之前的也不要弹窗，每次只检测公告最新是什么如果已读则不弹窗，
+         当然x条未读还是要正确显示数量的。」
+         → 判定基准从"有没有任何未读"改成**只看最新一条公告**（notices[0]，
+            loadNotices 已按 created 新→旧排好序）：
+            · 最新一条已读 → 永远不弹（哪怕更早的还躺着未读——旧行为会弹更早那条，
+              用户明确说这不对："之前的也不要弹窗"）；
+            · 未读计数、侧栏红点、弹窗里的「N 条未读」胶囊仍按真实未读数显示，
+              只是"弹不弹"与它们解耦。 */
+      const latest = (notices.value || [])[0];
+      if (!latest || isReadKey(noticeKey(latest))) return;
       noticePopped = true;
+      const count = unread.value.length;
       openDialog({
+        /* 「N 条未读」并入标题旁边（用户：有x条未读放到"新公告"旁边）：
+           走现成的 titleBadge 通道，弹窗不再出现程序图标（head 整段删掉）。 */
         title: t('notice_dialog_title', '新公告'),
-        body: newest.title,
-        notes: newest.body,
-        extra: (unread.value.length > 1
-          ? t('notice_dialog_more', '还有 {n} 条未读公告，请到公告页查看。').replace('{n}', unread.value.length - 1) + '\n' : '')
-          + t('notice_dialog_read_tip', '点「全部已读」后，左侧栏的未读数字会清零。'),
+        titleBadge: t('notice_unread_count', '{n} 条未读').replace('{n}', count),
+        /* ── 本轮版式改动（用户逐条点名）：
+              · 「公告弹窗不要有程序图标出现」→ 不再传 head（logo 块整块消失）；
+              · 「标题ui不要放在框框里而是上面」→ 公告标题走 item.title 但模板画在
+                边框**外面**（见 index.html .dlg-item 结构），框里只剩正文 + meta；
+              · 「框框下面的2行text删除」→ extra（"还有 N 条…"、"点全部已读…"两句）
+                整段不再传。 ── */
+        item: {
+          title: String(latest.title || ''),
+          bodyHtml: noticeBodyHtml(latest),
+          body: String(noticeSource(latest) || ''),
+          /* meta = 「作者 · #编号 · 日期」（字段由后端 normalize_issue 给：
+             author / number / date）。放在框内底部（正文之下），与旧版一致。 */
+          meta: t('notice_item_meta', '{author} · #{number}')
+            .replace('{author}', String(latest.author || '')).replace('{number}', String(latest.number || ''))
+            + (latest.date ? ' · ' + String(latest.date) : ''),
+        },
+        /* 右上角纯图标 = 在浏览器打开这条公告的 GitHub 页面（上轮需求保持）。 */
+        link: { url: String(latest.url || ''),
+          tip: t('notice_open_in_github', '在 GitHub 查看') },
         buttons: [t('notice_later', '稍后'), t('mark_all_read', '全部已读'), t('notice_view', '查看公告')],
+        /* 点空白关闭时回传的就是 cancelText（answer(dialog.cancelText)）→ 与"稍后"
+           同一个文案，避免遮罩点击后 resolve 出一个按钮行里不存在的『取消』。 */
+        cancelText: t('notice_later', '稍后'),
         wide: true,
-        /* 给公告的弹窗点击旁边空白处改为无反应 不要让窗口关掉。
-           只影响这一个弹窗；其它对话框点空白仍然是取消。 */
-        backdropClose: false,
+        /* ⚠️ 点空白可以关闭（本轮用户点名的 bug：「记住点击空白处窗口不会自行关闭的bug」）。
+           旧注释"用户会不小心点空白把公告弹窗关掉"是旧需求，已被本轮推翻 →
+           backdropClose 恢复默认 true。关掉 = 稍后（本次启动不再弹，公告不会丢）。 */
       }).then((value) => {
-        if (value === t('notice_view', '查看公告')) { doGoto('notice'); markRead(noticeKey(newest)); }
+        if (value === t('notice_view', '查看公告')) { doGoto('notice'); markRead(noticeKey(latest)); }
         else if (value === t('mark_all_read', '全部已读')) markAllRead();
       });
     }
@@ -3551,13 +4665,18 @@ const App = {
        → 都改成 computed（切语言即时重算），文案走语言包；群名用语言包里**早就有**的
          `qq_group_label` / `qq_report_label`（feedback 模块，三语齐全，以前没用上）。
        ⚠️ 文件名（ToolsGCP-改进建议群.jpg）是磁盘上的**真实文件名**，绝不跟着语言变。 */
+    /* ★ 本轮修复：以前这里用的 intro_line_1..5 在**任何语言包里都不存在**，
+       t() 永远吃兜底中文 → GitHub 页的介绍列表切英/繁体不动（用户原话：
+       「Github界面很多地方只有简体中文没有适配三语言」）。github 包里其实早就有
+       tools_intro_point1..5 三语齐全（带 '- ' 前缀是旧 py 版纯文本时代的排版），
+       这里接上并把行首装饰符剥掉（<li> 自带项目符号，不要双重圆点+横线）。 */
     const introLines = computed(() => [
-      t('intro_line_1', '免费开源工具集合'),
-      t('intro_line_2', '集中收录常用软件与网站'),
-      t('intro_line_3', '支持按类别 / 标签 / 系统筛选'),
-      t('intro_line_4', '可收藏、批量部署常用环境'),
-      t('intro_line_5', '提供资源获取等功能'),
-    ]);
+      t('tools_intro_point1', '免费开源工具集合', 'github'),
+      t('tools_intro_point2', '用于解决日常电脑软件查找问题', 'github'),
+      t('tools_intro_point3', '提供软件下载、安装、介绍、使用方法', 'github'),
+      t('tools_intro_point4', '避免下载到盗版、广告软件、找不到', 'github'),
+      t('tools_intro_point5', '提供资源获取等功能', 'github'),
+    ].map((line) => String(line || '').replace(/^[-·•*]\s*/, '')));
     const qqGroups = computed(() => [
       { label: t('qq_group_label', '官方QQ改进/建议群：').replace(/[：:]\s*$/, ''),
         number: '312751713',
@@ -3817,14 +4936,30 @@ const App = {
       });
     }
     /* 用户要求删掉行内的编辑按钮 —— 编辑函数一并移除，避免死代码。 */
-    /* 删除无二次确认（原版 delete 直接 pop + 存盘 + 刷新） */
+    /* 删除无二次确认（原版 delete 直接 pop + 存盘 + 刷新）。
+       ⚠️ 本轮 bug（用户原话）：「部署界面点击垃圾桶跳转到这个对应软件界面中的bug，
+          连续速度越快点越容易出现」。
+          根因是**事件冒泡 + 时间窗**：垃圾桶的 click 冒泡到行的 @dblclick 上，
+          连点两下被浏览器合成 dblclick → 触发 openDeployDetail 跳进详情页；
+          而且第一下已经把该行删掉，DOM 重排后第二下可能落到**滑上来的另一行**，
+          于是还会连删两条。修法是三层，缺一层都还能复现：
+            ① 按钮本身 @click.stop / @dblclick.stop（index.html）；
+            ② 行 handler 里再按 target 过滤一次（防止将来又给按钮绑事件漏了 .stop）；
+            ③ 这里加 300ms 冷却，挡住"两下都被识别成 click"的极快连点。 */
+    let _deployRemoveAt = 0;
     function removeDeployRow(row) {
+      const now = Date.now();
+      if (now - _deployRemoveAt < 300) return;
+      _deployRemoveAt = now;
       const target = activeListRef();
       target.value = target.value.filter((r) => r !== row);
       saveActiveList();
     }
-    /* 部署页双击清单行 → 打开该资源的详情页。详情段已把 v-if 扩到 page==='deploy'。 */
-    function openDeployDetail(row) {
+    /* 部署页双击清单行 → 打开该资源的详情页。详情段已把 v-if 扩到 page==='deploy'。
+       ⚠️ 操作列（GitHub / 官网 / 删除）上的双击一律不算"双击行"：
+          这是垃圾桶误跳详情的第二道闸（见 removeDeployRow 的注释）。 */
+    function openDeployDetail(row, event) {
+      if (event && event.target && event.target.closest && event.target.closest('.col-op')) return;
       const res = resourceOf(String(row && row.code) || '');
       if (!res) {
         toast(t('deploy_no_resource', '资源库中没有这个编码：') + ((row && row.code) || ''), 'warning');
@@ -3955,19 +5090,65 @@ const App = {
       deployProgress.value = 0;
       deployIndeterminate.value = true;
       deployStatusText.value = '正在处理: ' + row.name;
-      const result = await bridge.tryCall('downloader.start', target.url, row.name, downloadDir.value);
+      /* ⚠️⚠️ 本轮修复（用户原话）：「部署页面的部署模式下载的release文件正确 错误文件」。
+         根因：GitHub 类资源以前把 **仓库页 URL** 直接交给 downloader.start，
+         而 start 只接受**直链**（见 downloader.py 的 _prepare_item：只校验 http(s)）——
+         于是存下来的其实是 GitHub 的 HTML 页面（文件名还是资源名，没有扩展名），
+         用户看到的就是"下载的文件不对"。
+         正确链路（与 Releases 弹窗一致）：resolve_asset(仓库地址) 让后端按
+         当前平台/架构挑出真正的 release 资产，再用 asset.download_url +
+         asset.name（+ 精确大小）去 start。 */
+      let downloadUrl = String(target.url || '');
+      let downloadName = row.name;
+      let downloadSize = 0;
+      let downloadSource = '';
+      if (target.kind === 'github') {
+        const picked = await bridge.tryCall('downloader.resolve_asset', downloadUrl);
+        if (!picked) {
+          /* 老桌面端没有 resolve_asset：保持旧行为（打开页面），绝不假装下载成功 */
+          deployIndeterminate.value = false;
+          deployStatusText.value = '';
+          await openLink(downloadUrl, null);
+          setRowStatus(row, ST_OPENED);
+          toast(t('downloader_not_ready', '下载接口 <downloader.start> 未就绪，已改为打开页面'),
+            'warning', t('tip_warning', '提示', 'deploy'));
+          return false;
+        }
+        const asset = (picked.ok && picked.asset) ? picked.asset : null;
+        if (!asset || !isHttp(asset.download_url)) {
+          /* 没有匹配当前系统的安装包（NO_MATCH / 无 release / 网络失败）：
+             把 Releases 页打开让用户自己挑，并在提示里说清楚原因，不偷偷下别的文件。 */
+          deployIndeterminate.value = false;
+          deployStatusText.value = '';
+          setRowStatus(row, ST_OPENED);
+          await openLink(String(downloadUrl).replace(/\/+$/, '') + '/releases', null);
+          toast(t('deploy_release_no_match',
+            '这个项目没有匹配当前系统的安装包，已打开 Releases 页供你手动选择'),
+            'warning', t('tip_warning', '提示', 'deploy'));
+          return false;
+        }
+        downloadUrl = String(asset.download_url);
+        downloadName = String(asset.name || downloadName);
+        downloadSize = Number(asset.size) || 0;
+        downloadSource = String(picked.repo || '');
+      }
+      const result = await bridge.tryCall('downloader.start', downloadUrl,
+        downloadName, downloadDir.value, downloadSize, downloadSource);
       deployIndeterminate.value = false;
       if (result && result.ok) {
         setRowStatus(row, ST_DONE);
         deployStatusText.value = '';
         return true;
       }
-      /* ⚠️ 桌面端没有下载接口（downloader.start）时退化为打开页面，绝不假装下载成功 */
+      /* ⚠️ 桌面端没有下载接口（downloader.start）时退化为打开页面，绝不假装下载成功；
+         有接口但下载失败时把后端错误码带出来，别让用户只看到"行变灰"却不知道原因。 */
       await openLink(target.url, null);
       setRowStatus(row, ST_OPENED);
       deployStatusText.value = '';
       if (!result) {
         toast(t('downloader_not_ready', '下载接口 <downloader.start> 未就绪，已改为打开页面'), 'warning', t('tip_warning', '提示', 'deploy'));
+      } else {
+        toast(t('download_fail', '下载失败：') + (result.error || ''), 'error');
       }
       return false;
     }
@@ -3981,13 +5162,43 @@ const App = {
       await openLink(url, event);
       setRowStatus(row, ST_OPENED);
     }
-    /* 单条部署（:877-887）：kind 不是 direct/github 时退化成打开官网 */
+    /* ★ 本轮新增（用户原话：「部署模式的…对应的有搜索页卡片上那种官网按钮…
+       每个都有，如果有 github 的也要有这个按钮 放在官网按钮左侧」）：
+       表格行内的两个链接按钮，取值口径与搜索页卡片完全一致 —— 官网取 res.url、
+       代码仓库取 res.github，都过 isHttp() 校验（空 / 非 http(s) 一律当没有）。
+       GitHub 按钮是否显示还受设置项 search_show_github 控制（与卡片同一开关）。 */
+    function rowSiteUrl(row) {
+      const res = resourceOf(row.code);
+      const url = (res && res.url) || '';
+      return isHttp(url) ? url : '';
+    }
+    function rowRepoUrl(row) {
+      const res = resourceOf(row.code);
+      const url = (res && res.github) || '';
+      return isHttp(url) ? url : '';
+    }
+    function openRowSite(row, event) {
+      const url = rowSiteUrl(row);
+      if (!url) {
+        toast(t('deploy_no_site', '这条资源没有官网地址', 'deploy'), 'info', t('tip_info', '信息', 'deploy'));
+        return;
+      }
+      openLink(url, event);
+    }
+    function openRowRepo(row, event) {
+      const url = rowRepoUrl(row);
+      if (url) openLink(url, event);
+    }
+    /* 单条部署（:877-887）：kind 不是 direct/github 时**不再**自动开官网，
+       改由行内的「官网 / GitHub」按钮让用户自己点（本轮 user 要求）。 */
     async function deployOne(row) {
       const kind = previewKindOf(row);
       if (kind === 'direct' || kind === 'github') { await startDownload(row); return; }
       const target = downloadTarget(row);
       if (target.kind === 'unknown') { setRowStatus(row, ST_FAILED + ': ' + target.error); return; }
-      await openPageSingle(row);
+      setRowStatus(row, ST_SKIPPED);
+      toast(t('deploy_manual_page', '这一条只有官网 / Releases，请用行右侧的「官网」或「GitHub」按钮打开', 'deploy'),
+        'info', t('tip_info', '信息', 'deploy'));
     }
     /* 一键部署（deploy_all，:954-1008） */
     async function confirmDeploy() {
@@ -4000,7 +5211,7 @@ const App = {
         return;
       }
       const yes = await openDialog({ title: t('confirm_deploy', '开始部署', 'deploy'),
-        body: t('confirm_deploy_body', '将处理清单里的 {n} 个程序：\n· 能从 GitHub / 直链拿到安装包的会自动下载\n· 只能拿到官网的会帮你打开下载页面\n（开始前会让你选一个下载目录）', 'deploy')
+        body: t('confirm_deploy_body', '将处理清单里的 {n} 个程序：\n· 能从 GitHub / 直链拿到安装包的会自动下载\n· 只有官网 / Releases 的不会自动打开浏览器，请用行右侧的「官网 / GitHub」按钮打开\n（开始前会让你选一个下载目录）', 'deploy')
           .replace('{n}', deployList.value.length),
         confirmText: t('start', '开始', 'deploy'), cancelText: t('cancel', '取消', 'deploy') });
       if (!yes) return;
@@ -4008,7 +5219,7 @@ const App = {
       deployRunning.value = true;
       deployIndeterminate.value = false;
       deployProgress.value = 0;
-      let done = 0, opened = 0, failed = 0;
+      let done = 0, skipped = 0, failed = 0;
       for (let i = 0; i < deployList.value.length; i += 1) {
         const row = deployList.value[i];
         deployProgress.value = Math.round((i / deployList.value.length) * 100);
@@ -4017,15 +5228,17 @@ const App = {
         if (kind === 'direct' || kind === 'github') {
           await startDownload(row);
         } else {
+          /* ★ 本轮（用户：「部署界面的部署模式就算没有 releases 的也不要自动打开官网」）：
+             以前这里对只能拿到官网的条目直接 await openPageSingle() 并 sleep 1200ms，
+             一键部署会"哐哐"开一堆浏览器标签页。现在**一律不自动开**：标成「已跳过」，
+             由用户自己点行右侧的「官网 / GitHub」按钮（他明确说要有和搜索页卡片一样的按钮）。 */
           const target = downloadTarget(row);
           if (target.kind === 'unknown') setRowStatus(row, ST_FAILED + ': ' + target.error);
-          else await openPageSingle(row);
-          /* 只拿到官网的停 1200ms 再下一条，避免一次开几十个标签页（:1002-1004） */
-          await new Promise((resolve) => setTimeout(resolve, 1200));
+          else setRowStatus(row, ST_SKIPPED);
         }
         const value = String(row.status || '');
         if (value === ST_DONE) done += 1;
-        else if (value === ST_OPENED) opened += 1;
+        else if (value === ST_SKIPPED) skipped += 1;
         else if (value.indexOf(ST_FAILED) === 0) failed += 1;
         deployIndeterminate.value = false;
         saveDeployList();
@@ -4034,8 +5247,8 @@ const App = {
       deployStatusText.value = '';
       deployIndeterminate.value = false;
       deployRunning.value = false;
-      toast(t('batch_done_summary', '自动下载完成 {done} 个，已打开官网 {opened} 个，失败 {failed} 个', 'deploy')
-        .replace('{done}', done).replace('{opened}', opened).replace('{failed}', failed),
+      toast(t('batch_done_summary', '自动下载完成 {done} 个，仅官网（需手动打开）{skipped} 个，失败 {failed} 个', 'deploy')
+        .replace('{done}', done).replace('{skipped}', skipped).replace('{failed}', failed),
         'success', t('deploy_done', '部署完成', 'deploy'));
     }
     /* ---------- 搜索页勾选条 ----------
@@ -4117,13 +5330,25 @@ const App = {
           /* manifest.id 也兜一层：目录名正常但 id 以 _ 开头 / 是示例时同样隐藏 */
           if (isHiddenPluginId(manifest.id || id)) continue;
           const settingKey = manifest.enabled_setting || '';
-          /* 开关状态同样走 settingOn()，旧配置字符串 "false" 不会再把卡片显示成"已启用" */
-          const enabled = settingKey ? settingOn(settings[settingKey]) : !manifest.default_disabled;
+          /* 强制开启（manifest.locked）：插件中心里开关锁死、也不能删。
+             ⚠️ 必须在 enabled 之前算：locked 的插件不管设置值是啥都算"开"。 */
+          const locked = manifest.locked === true;
+          /* 开关状态同样走 settingOn()，旧配置字符串 "false" 不会再把卡片显示成"已启用"。
+             ⚠️⚠️ 本轮修「default_disabled 是死字段」：
+               原写法 settingKey ? settingOn(settings[settingKey]) : !manifest.default_disabled
+               在**键还不存在**时 settingOn(undefined) === false → 声明了 default_disabled:false
+               的第三方插件永远显示"已禁用"（和它自己配置页的判断相反）。
+               现在：键存在才读它，不存在就按 manifest 的默认值。 */
+          const hasValue = !!(settingKey && settings[settingKey] !== undefined
+            && settings[settingKey] !== null);
+          const enabled = locked ? true
+            : (hasValue ? settingOn(settings[settingKey]) : !manifest.default_disabled);
           results.push({
             id: manifest.id || id, name: pickI18n(manifest.name, id),
             description: pickI18n(manifest.description, ''), author: manifest.author || '',
             version: manifest.version || '', builtin: !!manifest.builtin,
-            protected: !!manifest.builtin, enabled_setting: settingKey, enabled,
+            locked, lockable: !locked,
+            protected: !!manifest.builtin || locked, enabled_setting: settingKey, enabled,
             hasConfig: !!manifest.config_page,
             /* 联动信息（照 py core/plugin_manager.py + plugin_interface._enable_companion）：
                · companion    —— 启用"我"时把"搭子"一起启用（插件制作辅助 → GCP-AI Agent）；
@@ -4171,8 +5396,14 @@ const App = {
       return true;
     }
     async function togglePlugin(plugin) {
+      /* 强制开启的插件：开关是锁死的，后端也会拒绝 —— 这里先拦一道，别让它拨了又回弹 */
+      if (plugin.locked) { toast(t('plugin_locked', '这是内置的强制开启插件，无法关闭'), 'info'); return; }
       if (!plugin.enabled_setting) { toast(t('no_switch', '这个插件没有提供开关配置'), 'info'); return; }
       const next = !plugin.enabled;
+      /* ⚠️ 关闭插件时把它正开着的配置页一起收掉：
+         插件关了、config.html 还挂在 iframe 里的话，它继续每秒/30 秒轮询、
+         继续能写全局设置（用户的要求是"关掉就不占资源、也不该还能动"）。 */
+      if (!next && pluginPage.value && pluginPage.value.id === plugin.id) pluginPage.value = null;
       plugin.enabled = next;
       plugin.status = next ? 'ok' : 'disabled';
       const saved = await saveSetting(plugin.enabled_setting, next);
@@ -4229,6 +5460,7 @@ const App = {
     }
     function cancelNote(plugin) { plugin.editingNote = false; }
     async function deletePlugin(plugin) {
+      if (plugin.locked) { toast(t('plugin_locked', '这是内置的强制开启插件，无法关闭'), 'info'); return; }
       if (plugin.protected) { toast(t('builtin_locked', '内置示例插件，不可删除'), 'warning'); return; }
       const yes = await openDialog({ title: t('delete_plugin', '删除插件'), danger: true,
         body: t('delete_plugin_confirm', '确定要删除插件「{name}」吗？插件文件夹会被整个删掉。')
@@ -4302,9 +5534,21 @@ const App = {
       'AI', '个性化', '其他', '剪辑', '音频', '图像', '设计', '办公', '学习', '网络', '系统',
       '安全', '驱动', '开发工具', '数据库', '聊天', '音乐', '阅读', '下载工具', '压缩解压',
       '远程控制', '虚拟机', '直播', '浏览器'];
-    /* SYSTEMS / ARCHITECTURES：resource_schema.py:22 / :27 */
-    const makerPlatforms = ['全平台', 'Windows', 'macOS', 'Android', 'iOS', 'Linux', 'web', '其他'];
-    const makerArchs = ['x64', 'x86', 'arm64', 'arm', 'Apple Silicon', '其他'];
+    /* 「官方」「知名」：用户要求放在**提交软件·类别下拉的最底下**（第三轮）。
+       ⚠️ 故意**不**塞进 makerCategories：那 31 项与 py 侧 CATEGORIES 是契约
+          （顺序即界面顺序，不许增删/重排），塞进去会连带把搜索页分组顺序、
+          筛选候选一起搞乱。这里单独一份、只追加到制作器的下拉候选末尾。
+       三语译名走 termIn —— common_language.json 里已有 term_官方 / term_知名
+       （简体「官方/知名」、繁体「官方/知名」、English「Official/Popular」）。 */
+    const makerCategoryExtras = ['官方', '知名'];
+    /* 制作器「适用系统」胶囊：必须和 resource_schema.py 的 SYSTEMS 同序同项
+       （顶层那份 SYSTEMS 是给搜索页筛选当兜底用的，这里是制作器自己的一份，
+        两份不一致会出现"制作器里选不了、筛选里却有"或反过来）。
+       ⚠️ m04188 第④项扩充：新增 iPadOS / watchOS / tvOS / visionOS / HarmonyOS / ChromeOS。
+       （ARCHITECTURES 那一档已在 m03713 第⑤项整体删除，注释里的旧行号一并清掉。） */
+    const makerPlatforms = ['全平台', 'Windows', 'macOS', 'Linux', 'Android', 'iOS',
+                            'iPadOS', 'watchOS', 'tvOS', 'visionOS', 'HarmonyOS', 'ChromeOS',
+                            'web', '其他'];
     /* REPO_PLATFORMS：resource_maker_core.py:41-48（顺序即下拉顺序） */
     /* ⚠️ 本轮多语言：最后两项（自定义 / 不开源）是用户可见文字，原来写死在数组里。
        → 改 computed + t()（专名 GitHub/GitCode/Gitee/GitLab 不翻）。
@@ -4319,6 +5563,104 @@ const App = {
     ]);
     const repoPlatformOptions = computed(() => REPO_PLATFORMS.value
       .map((p) => ({ value: p.key, label: p.label })));
+
+    /* ---------- 多组开源仓库 ----------
+       用户原话：「提交软件中开源仓库支持多个同时有，所以增加一个加号图标的按钮
+       点击增加一组，还有垃圾啊桶删除对应组。」
+       形态：maker.repos = [{_key, platform, url}, ...]（每一组一行表单）。
+       ⚠️ 这一整块必须放在 maker 的 reactive 之前：下面 let repoRowSeq = 0 是 TDZ
+          （暂时性死区），而 maker 初始化时就会调用 newRepoRow()，
+          声明写在后面会在 setup 一开始就 ReferenceError。
+       ⚠️ 落盘形态（后端 resource_schema.repos）是 list[dict]{platform,url}，
+          而 github 字段继续写**第一组**（= 主仓库）—— 卡片右下角的仓库按钮、
+          下载部署、AI 工具那些只读 github 单值的代码因此一行都不用改，
+          老数据（只有 github 一条）读出来也自动有一行。 */
+    /* 行数上限：与后端 resource_schema 的 repos 行数上限（20）一致，
+       到顶就明说为什么不能再加，而不是按钮默默没反应。 */
+    const REPOS_MAX_ROWS = 20;
+    let repoRowSeq = 0;
+    /* 每行带一个自增内部键：模板 :key 用它而不是数组下标 ——
+       删掉中间一行时按下标当 key，Vue 会复用错行，输入框里的文字会「串行」。 */
+    function newRepoRow(platform, url) {
+      repoRowSeq += 1;
+      return {
+        _key: repoRowSeq,
+        platform: String(platform || 'github'),
+        url: String(url || ''),
+      };
+    }
+    function addRepoRow() {
+      if (maker.repos.length >= REPOS_MAX_ROWS) {
+        toast(t('repos_too_many', '开源仓库最多 20 组', 'maker'), 'warning',
+          t('tip_warning', '提示', 'maker'));
+        return;
+      }
+      maker.repos.push(newRepoRow());
+      refreshPreview();
+    }
+    function removeRepoRow(index) {
+      maker.repos.splice(index, 1);
+      refreshPreview();
+    }
+    /* 落盘用：逐组补全平台前缀，丢掉「不开源」和空地址的组。
+       判定口径必须和后端 resource_schema._normalize_repos 对齐（http(s) 开头才算数）。 */
+    function reposForEntry() {
+      const out = [];
+      maker.repos.forEach((row) => {
+        const platform = String((row && row.platform) || '').trim();
+        if (!platform || platform === 'none') return;
+        const url = normalizeRepoUrl(platform, String((row && row.url) || '').trim());
+        if (!url) return;
+        out.push({ platform: platform, url: url });
+      });
+      return out;
+    }
+    /* 读回来：优先按 raw.repos 还原每一组；老数据只有 github 一条 → 兜成一行。 */
+    function loadReposFromRaw(raw) {
+      const rows = [];
+      const list = Array.isArray(raw && raw.repos) ? raw.repos : [];
+      list.forEach((item) => {
+        if (!item || typeof item !== 'object') return;
+        const url = String(item.url || '').trim();
+        if (!url) return;
+        rows.push(newRepoRow(String(item.platform || '') || detectRepoPlatform(url), url));
+      });
+      if (!rows.length) {
+        const legacy = String((raw && raw.github) || '').trim();
+        if (legacy) rows.push(newRepoRow(detectRepoPlatform(legacy), legacy));
+      }
+      if (!rows.length) rows.push(newRepoRow());
+      return rows;
+    }
+    /* 平台名（详情页逐行列出多组仓库时当标签用）。 */
+    function repoPlatformLabel(platform) {
+      const key = String(platform || '');
+      const hit = REPO_PLATFORMS.value.find((p) => p.key === key);
+      return hit ? hit.label : t('row_github', 'GitHub', 'maker');
+    }
+    /* 详情页/列表要显示的仓库组：repos 有就用它，没有就退回老的 github 单值。 */
+    function repoRowsFor(item) {
+      const out = [];
+      const list = (item && Array.isArray(item.repos)) ? item.repos : [];
+      list.forEach((row) => {
+        if (!row || !row.url) return;
+        out.push({ label: repoPlatformLabel(row.platform), url: String(row.url) });
+      });
+      if (!out.length && item && isHttp(item.github)) {
+        out.push({ label: repoPlatformLabel('github'), url: String(item.github) });
+      }
+      return out;
+    }
+    /* 资源浏览表那一列：一条一行显示不下，多组就显示「第一组 +N」，悬停给出全部。 */
+    function repoListText(item) {
+      const list = repoRowsFor(item);
+      if (!list.length) return '';
+      return list.length > 1 ? (list[0].url + ' +' + (list.length - 1)) : list[0].url;
+    }
+    function repoListTitle(item) {
+      return repoRowsFor(item).map((r) => r.label + '  ' + r.url).join('\n');
+    }
+
     /* 必须是 computed —— 以前是普通数组，setup 时就把 `t()` 的返回值（当时语言包还没加载，
        只能是代码里的中文 fallback）冻结了，切到 English/繁體 后顶部四个分段标签仍是中文。 */
     const makerSections = computed(() => [
@@ -4331,11 +5673,41 @@ const App = {
     const i18nEnabled = ref(true);           // 多语言开关默认开启（:562）
     const i18nLangIndex = ref(0);
     const maker = reactive({
-      name: '', id: '', code: '', category: makerCategories[0],
-      systems: [], architectures: [],
+      name: '', id: '', code: '',
+      /* ⚠️ 本轮契约变更（用户原话）：「我其他输入框在多语言字段这里都是可以输入不同内容
+         以达到真正的多语言这个功能，而我这个类别和标签三个语言来回切换我发现他们都是
+         同一个输入池而不是独立的，他们不需要同步更改，他们是多语言字段部分的！」
+         → category / tags 从"一个逗号字符串"改成**按语言独立的三个池**：
+              { 简体中文: '工具, 系统', 繁體中文: '工具, 系统', English: '工具' }
+           每个池里存的都是**规范中文值**（输入时按该语言还原，见 canonicalIn），
+           所以三种语言可以填完全不同的内容、互不覆盖。
+           落盘形态由 buildEntry 决定：三语一致 → 塌缩成 list[str]（与老数据同形）；
+           不一致 → 写 {语言: list[str]} 字典（由后端 resource_schema/maker 支持，见 task-4）。
+         默认：类别三语都是「工具」（内置项，各语言显示自己的译名），标签**全空**
+         （本轮需求：「而且默认标签输入框为空」）。 */
+      category: { 简体中文: makerCategories[0], 繁體中文: makerCategories[0], English: makerCategories[0] },
+      tags: { 简体中文: '', 繁體中文: '', English: '' },
+      systems: [],
       icon: '', iconName: '', iconSource: '', iconPicked: false, iconExt: '',
-      tags: makerCategories[0], _tagsAuto: true,
-      url: '', repoPlatform: 'github', github: '', author_url: '', chat_url: '',
+      /* iconPending / iconData（m05525「导入图片选择后应该是预览状态而不是直接保存替换」）：
+         选中图片只进内存当预览，**不立刻写盘**；真正落盘推迟到点「追加到本机资源库」/
+         「保存到原列表」/「另存为独立资源库」那一刻，用那时的最终文件名写。
+         这同时治掉老毛病：以前选图立刻落盘、之后改名称只改内存里的 iconName，
+         于是索引里写着一个从没存在过的文件名，而图片躺在图标目录里叫另一个名字。 */
+      iconPending: false, iconData: '',
+      /* 自定义链接（m05525）：一行 = 一个「标签 + 链接」，标签与链接都跟着语言走，
+         所以每行存成 {label: {三语}, url: {三语}}，落盘前才由后端塌成字符串。 */
+      links: [],
+      /* _tagsAuto / restoreTagsFollow（「跟随类别」那套联动）已按本轮需求**整条删除**：
+         用户原话「提交软件页面的标签跟随类别这个相关代码删除包括跟随类别按钮，
+         而且默认标签输入框为空」。标签现在就是一个独立的、按语言分开填的输入框。 */
+      /* 名称联动开关（m04188 ③）：true = 多语言卡片里的三种名称跟着上方「名称」一起变；
+         用户在下面手动改过任何一种语言名称后置 false，此后上方再改也不覆盖下面。 */
+      _nameAuto: true,
+      url: '', author_url: '', chat_url: '',
+      /* 开源仓库：可以同时挂多组（GitHub + Gitee + …），每一组一行表单。
+         github 字段落盘时写第一组（主仓库），老代码读 github 照旧。 */
+      repos: [newRepoRow()],
       i18n: {
         简体中文: { name: '', description: '', intro: '', supplement: '' },
         繁體中文: { name: '', description: '', intro: '', supplement: '' },
@@ -4351,27 +5723,119 @@ const App = {
       codeAuto: true,
     });
     /* makerLoad（载入现有资源弹层的状态）已随弹层一起删除，不再需要。 */
-    /* 可编辑 combo 的选项（31 项，顺序与 py CATEGORIES 完全一致；label 走 term() 做语言映射）。
-       允许自定义输入由 <combo editable> 负责，不再用原生 datalist。
-       内容核对过 py（resource_maker_core.py:26-32 的 CATEGORIES 就是这 31 项、这个顺序），
-            所以这里**不许**增删/重排；用户看到的"内容缺少"是弹层只露 9 项 + 输入框显示规范中文
-            （英文界面里和列表项对不上），见下面 makerCategoryText + Combo 的 maxHeight/滚动修正。 */
-    const makerCategoryOptions = computed(() => makerCategories.map((c) => ({ value: c, label: term(c) })));
-    /* 类别输入框里显示的文本 = 规范值的**当前语言译名**（对齐 py：下拉显示译名、落盘存规范值）。
-       ⚠️ 必须 void I18N.version 才能跟着语言切换重新计算（term() 读的是非响应式的 I18N.map）。 */
-    const makerCategoryText = computed(() => {
+    /* ---------- 类别 / 标签：「多语言字段」里的两个**独立语言池** ----------
+       两轮需求合起来的最终形态（用户原话按时间顺序）：
+         第 1 轮：「类别和标签没有和其他的一样切换而且他们是独立的…切换到不同语言
+                   上面那个多语言字段 ui 也会变为不同的，包括下拉框的内容」
+         第 2 轮：「我其他输入框在多语言字段这里都是可以输入不同内容以达到真正的多语言
+                   这个功能，而我这个类别和标签三个语言来回切换我发现他们都是同一个输入池
+                   而不是独立的，他们不需要同步更改，他们是多语言字段部分的！」
+                   +「标签跟随类别这个相关代码删除包括跟随类别按钮，而且默认标签输入框为空」
+       落地成四条规则：
+         ① maker.category / maker.tags 是 {简体中文, 繁體中文, English} 三个池，
+            切分段 = 切池子，三种语言各填各的、互不覆盖（这才是"真正的多语言"）；
+         ② 每个池里存的永远是**规范中文值**（逗号分隔），显示时按该池的语言翻成译名；
+         ③ 输入/选中的写法只要是内置项（三种语言的任一种写法）就还原成规范值，
+            认不出来的自定义文本原样保留、可继续手改；
+         ④ 落盘：三语相同 → list[str]（与老数据同形）；不同 → 三语字典（后端 task-4 支持）。
+         ⚠️ 「跟随类别」联动已整条删除（含按钮）；标签默认全空。
+       ⚠️ 依赖 I18N.terms（后端 i18n.bundle 下发的三语译名表）与 i18nLangIndex，
+          两者都是 reactive ⇒ 切分段、设置里切语言都会自动重算。 */
+    /* ⚠️ 下面三个 computed 都带 void I18N.version：term()/译名表读的是语言包，
+       设置里切换界面语言（flattenI18n → version+1）时必须重算，
+       否则分段显示会停在旧语言那一份写法上（项目里一贯的写法，别省）。 */
+    const makerSegLang = computed(() => {
       void I18N.version;
-      return splitList(maker.category).map((c) => term(c)).join(', ');
+      return makerLanguages[i18nLangIndex.value] || '简体中文';
     });
-    /* 把界面上的译名（"Tools" / "工具"）还原成库里的规范值（"工具"）；
-       认不出来的自定义值原样返回（对齐 py 的 _canonical_term）。 */
+    /* 可编辑 combo 的选项（31 项，顺序与 py CATEGORIES 完全一致 —— 不许增删/重排）。
+       ⚠️ value 也用译名：combo 靠 String(o.value)===String(modelValue) 判断"当前项"，
+          而 model-value 交出去的是显示文本，两边必须是同一套写法，否则高亮项永远找不到。
+          下拉内容跟着**分段语言**变（用户原话：「切换到不同语言…包括下拉框的内容」）。 */
+    const makerCategoryOptions = computed(() => makerCategories.concat(makerCategoryExtras).map((c) => {
+      const label = termIn(makerSegLang.value, c);
+      return { value: label, label: label };
+    }));
+    /* ---------- 类别 / 标签 = 「多语言字段」里的两个独立输入池 ----------
+       读写都只碰**当前分段**那一份（maker.category[分段] / maker.tags[分段]），
+       切分段就是切池子，三种语言互不覆盖 —— 这正是本轮修的那个 bug
+       （以前三个分段共用一个字符串，用户以为是"同一个输入池"）。
+       · 池里存的永远是**规范中文值**（逗号分隔）；
+       · 显示 = 该池按当前分段语言翻成译名（内置项有译名，自定义项原样）；
+       · 输入 = 先按当前分段还原，再扫另外两种语言兜底（"和内置一样的文本同样视为内置"），
+         认不出来的自定义文本原样保留、可继续手改；
+        · 例外（本轮用户定夺）：**从下拉里选内置项**时三个语言池一起换成这一项 —— 见下面「分段写入的口径」。 */
+        /* ---------- 分段写入的口径（本轮用户定夺后的最终版） ----------
+       两种来源两种语义，别再混：
+       ① **从下拉里选内置项**（Combo.pick 抛的 change 第二个参数 = true）⇒ 三个语言池
+          **同时**换成这一项。用户原话：「如果切换内置的类别中的选项应该三语言一起
+          同时切换而不是只切换一个语言的」。以前只写当前分段，没编辑过的分段会停在
+          resetMakerForm 预填的默认「工具」，落盘成 {简体中文:[编程],繁體中文:[工具],
+          English:[工具]} 这种三岔字典（实测就是资源库里的 TG-000055 Git）。
+       ② **手打的文本**（Combo.onEditInput 抛的第二个参数 = false）⇒ 只写当前分段那一份
+          池子，段间互不污染（第一轮锁死的行为，本轮保持不变）：自定义内容本来就没有
+          另外两种语言的写法，替用户瞎填另外两段反而是一种污染。
+       落盘侧：三池同值由 poolsForEntry() 塌缩成 list[str]，真不同才写字典。 */
+    const makerCategoryText = computed({
+      get: () => termsToText(makerSegLang.value, splitList(maker.category[makerSegLang.value])),
+      set: (text) => {
+        // 输入先过 canonicalTerm：任一种语言的写法都还原成规范中文，显示文本绝不落盘。
+        // 只写当前分段这一份池子 —— 分段之间互不污染（第一轮定下的行为，手打口径不变）。
+        maker.category[makerSegLang.value] = splitList(text).map(canonicalTerm).filter(Boolean).join(', ');
+        refreshPreview();
+      },
+    });
+    const makerTagsText = computed({
+      get: () => termsToText(makerSegLang.value, splitList(maker.tags[makerSegLang.value])),
+      set: (text) => {
+        maker.tags[makerSegLang.value] = splitList(text).map(canonicalTerm).filter(Boolean).join(', ');
+        refreshPreview();
+      },
+    });
+    /* 把界面上的译名（"Tools" / "工具" / "遊戲"）还原成库里的规范值（"工具" / "游戏"）；
+       认不出来的自定义值原样返回（对齐 py 的 _canonical_term）。
+       ⚠️ 本轮：不再只认**界面语言**那一份写法 —— 三种语言的写法都要认。
+          制作器的类别/标签现在跟着「多语言字段」的分段走，English 分段敲 "Tools"、
+          繁體分段敲 "遊戲"、简体分段敲 "游戏"，指的都是同一个内置项，
+          都必须还原成规范值落盘（用户原话：「手动输入在类别里的文本和内置一样的
+          同样视为内置的多语言」）。
+          顺序：先按当前分段还原（分段优先），再扫另外两种语言兜底。 */
     function canonicalTerm(text) {
-      void I18N.version;
       const value = String(text == null ? '' : text).trim();
       if (!value) return '';
       if (makerCategories.indexOf(value) >= 0) return value;
-      const hit = makerCategories.find((c) => term(c) === value);
-      return hit || value;
+      /* 「官方」「知名」也是内置项（它们在译名表里，只是**不在**那 31 项类别里，
+         所以不进 makerCategories —— 见 makerCategoryExtras 的注释） */
+      if (makerCategoryExtras.indexOf(value) >= 0) return value;
+      const segLang = makerLanguages[i18nLangIndex.value] || '简体中文';
+      const bySeg = canonicalIn(segLang, value);
+      if (bySeg !== value) return bySeg;
+      for (const lang of makerLanguages) {
+        const hit = canonicalIn(lang, value);
+        if (hit !== value) return hit;
+      }
+      return value;                 // 自定义类别/标签：原样保留，可继续手动修改
+    }
+    /* 磁盘形态（list / 逗号串 / 三语字典）→ 三个规范值池 {语言: '规范值, 规范值'}。
+       ⚠️ 每个池都过一遍 canonicalTerm：老数据里可能直接写着英文/繁体写法（历史脏值），
+          灌进池子时顺手还原成规范值，避免"显示时又翻一次"造成串味。 */
+    function poolsFromRaw(value) {
+      const pools = { 简体中文: '', 繁體中文: '', English: '' };
+      const fill = (lang, text) => {
+        pools[lang] = splitList(text).map(canonicalTerm).filter(Boolean).join(', ');
+      };
+      if (value && typeof value === 'object' && !Array.isArray(value)) {
+        makerLanguages.forEach((lang) => {
+          const one = value[lang] != null ? value[lang]
+            : (lang === '繁體中文' && value['繁体中文'] != null ? value['繁体中文'] : value['简体中文']);
+          fill(lang, Array.isArray(one) ? one.join(', ') : String(one == null ? '' : one));
+        });
+        return pools;
+      }
+      const shared = (Array.isArray(value) ? value : [value])
+        .map((v) => String(v == null ? '' : v)).join(', ');
+      makerLanguages.forEach((lang) => fill(lang, shared));
+      return pools;
     }
     let iconRenameTimer = 0;
 
@@ -4385,7 +5849,7 @@ const App = {
     }
     function libraryDir() { return libraryFullPath().replace(/[\\/][^\\/]*$/, ''); }
     const libraryTooltip = computed(() => libraryFullPath() + '\n'
-      + t('library_tooltip', '资源库固定是程序目录下的 .ToolsGCP/ToolsGCP-Resources.json，制作器不会另外生成一份；\n每次写盘前会自动备份到同级 backups/ 目录，只保留最近 20 份。', 'maker'));
+      + t('library_tooltip', '资源库固定是程序目录下的 .ToolsGCP/ToolsGCP-Resources.json，制作器不会另外生成一份；\n每次写盘前会把旧文件滚动备份成固定名的 1 份：用户数据目录 backups/ToolsGCP-Resources.prev.json。', 'maker'));
     const libraryStatusText = computed(() => (libraryExists.value
       ? t('library_count', '资源库 {n} 条', 'maker').replace('{n}', items.value.length)
       : t('library_missing', '资源库还没建', 'maker')));
@@ -4431,20 +5895,56 @@ const App = {
       const hit = REPO_PLATFORMS.value.find((p) => p.prefix && value.indexOf(p.prefix) === 0);
       return hit ? hit.key : 'custom';
     }
-    const repoPrefix = computed(() => {
-      const def = REPO_PLATFORMS.value.find((p) => p.key === maker.repoPlatform);
-      return def ? def.prefix : '';
-    });
-    const repoPlaceholder = computed(() => {
-      const key = maker.repoPlatform;
-      if (key === 'none') return '已选择「不开源」';
-      if (key === 'custom') return 'https://你的仓库地址';
-      return 'owner/repo';
-    });
-    const repoPreviewText = computed(() => {
-      const url = normalizeRepoUrl(maker.repoPlatform, maker.github);
-      return url ? '→ ' + url : '';
-    });
+    /* repoPrefix / repoPreviewText 已按本轮需求删除（用户原话：「开源仓库那里我不需要这个
+       提示 ui 了例如 https://github.com/ 这个 ui 了 相关代码也删除」）：
+         · 输入框左边那块「https://github.com/」前缀标签（.repo-prefix）
+         · 输入框下面那行「→ 完整地址」预览（.repo-preview）
+       平台下拉**保留**（它决定保存时补哪个前缀，也提供"不开源"这个状态），
+       补全逻辑 normalizeRepoUrl 照旧在 buildEntry 里生效，只是不再实时画给用户看。
+       ⚠️ 别把这两个名字加回来 —— 前端模板与 layout.css 里的对应样式已一并清掉。 */
+    /* 占位文字按**这一行**的平台给（多组以后每行平台可以不一样），
+       所以从 computed 改成普通函数 —— computed 只能盯一个 maker.repoPlatform。 */
+    function repoPlaceholderFor(row) {
+      void I18N.version;
+      const key = String((row && row.platform) || 'none');
+      if (key === 'none') return t('repo_ph_none', '已选择「不开源」', 'maker');
+      if (key === 'custom') return t('repo_ph_custom', '粘贴完整仓库地址', 'maker');
+      return t('repo_ph_owner_repo', '例如：owner/repo（也可以直接粘贴完整地址）', 'maker');
+    }
+    /* ---------- 开源仓库「粘贴」按钮 ----------
+       需求（用户原话）：「输入框边长些，它旁边右边有一个粘贴图标的按钮可以粘贴进输入框
+       它粘贴板最近的一次链接文本，否则则提示相关粘贴失败提示。」
+       做法：读剪贴板最近一次文本（复用模块级 _readClipboardText：后端原生 →
+       navigator.clipboard 三级兜底），从里面**提取链接**填进**这一行**的地址框；
+       提取不到（剪贴板空 / 没有链接 / 读不到）→ 明确的粘贴失败提示。
+       ⚠️ 提取出的完整地址交给 normalizeRepoUrl：它会剥掉平台前缀，
+          所以 GitHub 平台粘 "https://github.com/a/b" 与粘 "a/b" 等价，
+          自定义平台则整条保留。 */
+    async function pasteRepoUrl(row) {
+      if (!row || row.platform === 'none') return;
+      const raw = await _readClipboardText();
+      const text = String(raw == null ? '' : raw).trim();
+      if (!text) { pasteRepoFailed(); return; }
+      /* 从任意文本里抓第一个 http(s) 链接；抓不到链接时，
+         整段看起来像 "owner/repo" 这种仓库路径也接受（用户常常只复制这一段）。 */
+      const urlMatch = text.match(/https?:\/\/\S+/i);
+      const looksLikeRepo = /^[A-Za-z0-9._~-]+(?:\/[A-Za-z0-9._~%-]+)+$/.test(text)
+        && text.indexOf(' ') < 0;
+      const value = urlMatch ? urlMatch[0] : (looksLikeRepo ? text : '');
+      if (!value) { pasteRepoFailed(); return; }
+      row.url = value;
+      /* 粘进来的是 Gitee 链接就把这一行切到 Gitee —— 否则「补前缀」会把它拼成
+         https://github.com/… 变成一个并不存在的仓库。认不出平台（custom）时不动用户选的。 */
+      const detected = detectRepoPlatform(value);
+      if (detected !== 'custom') row.platform = detected;
+      refreshPreview();
+      toast(t('paste_repo_done', '已粘贴仓库地址', 'maker'), 'success',
+        t('github', '开源仓库', 'maker'));
+    }
+    function pasteRepoFailed() {
+      toast(t('paste_repo_failed', '粘贴失败：剪贴板里没有找到链接', 'maker'), 'warning',
+        t('tip_warning', '提示', 'maker'));
+    }
     /* next_code：TG- + 6 位数字，从现有最大值 +1（resource_maker_core.py:271-286） */
     function nextCodeFrom(list) {
       let max = 0;
@@ -4484,7 +5984,19 @@ const App = {
       iconRenameTimer = 0;
       if (!maker.iconPicked || !maker.iconSource) return;
       const want = iconWantName();
-      if (want && want !== maker.iconName) maker.iconName = want;
+      if (!want || want === maker.iconName) return;
+      /* ⚠️ 只有「这张图的字节还在内存里」才允许改名（m05525 交叉验证结论）。
+         原来这里无条件改 maker.iconName，而磁盘文件从来不动（整个后端没有任何 rename 接口），
+         于是「导入 → 保存 → 再改一次名称/编号 → 再保存」会让 entry.icon 指向一个盘上不存在的文件名，
+         append_entry 查不到就把 icon **静默裁掉**（maker.py 的 _icon_name_if_exists），
+         用户看到的现象是「图标自己没了」。现在：
+           · 手里有 iconData → 改名 + 重新标记待保存 + 预览退回 dataURL，写盘时按新名重写一份；
+           · 手里没 iconData（图是从资源库载入的）→ 不改名。宁可文件名继续用旧编号，
+             也绝不写一个盘上没有的名字（悬空引用比难看的文件名危害大得多）。 */
+      if (!maker.iconData) return;
+      maker.iconName = want;
+      maker.iconPending = true;
+      maker.iconSource = maker.iconData;
     }
     function setI18nLang(index) { i18nLangIndex.value = index; }
     function refreshPreview() { /* 预览/状态行都是 computed，改动即刷新 */ }
@@ -4494,43 +6006,142 @@ const App = {
       refreshPreview();
     }
 
+    /* 适用系统的互斥规则（m06170）：勾「全平台」就取消「其他」，反之亦然。
+       取消勾选不做任何联动（用户可能就是想全清）。其它组合保持自由：
+       resource_schema.SYSTEMS 里「全平台」是一个独立取值，没有「全平台蕴含全部」的
+       语义，所以不能替用户把 Windows / web 之类一并勾上或清掉。*/
+    function toggleSystem(value) {
+      toggleChip(maker.systems, value);
+      if (maker.systems.indexOf(value) < 0) return;
+      const opposite = value === '全平台' ? '其他' : (value === '其他' ? '全平台' : '');
+      if (!opposite) return;
+      const index = maker.systems.indexOf(opposite);
+      if (index >= 0) maker.systems.splice(index, 1);
+    }
+
     /* 联动规则（:1414-1450）：名称 → id 与图标改名（防抖 800ms） */
     function onNameChanged() {
       const slug = slugify(maker.name).slice(0, 40);
       if (!maker._loading) maker.id = slug;
+      /* 需求 m04188 第③项：上方「名称」一改，下面三种语言的名称跟着一起改。
+         用户在多语言卡片里手动改过名称后 maker._nameAuto 变 false，这里就不再覆盖。
+         （载入已有条目时同样不能覆盖：那时 maker.name 与 i18n 是成对灌进来的。） */
+      if (maker._nameAuto && !maker._loading) {
+        const synced = String(maker.name || '');
+        makerLanguages.forEach((lang) => { maker.i18n[lang].name = synced; });
+      }
       clearTimeout(iconRenameTimer);
       iconRenameTimer = setTimeout(flushNameIconRename, 800);   // 防抖 800ms 才改名
       refreshPreview();
     }
+    /* 多语言卡片里手动改了某一种语言的名称 ⇒ 永久脱离跟随（同「标签跟着类别」那套语义）。
+       不做"清空后自动恢复跟随"：用户明确说的是"只要发生了修改…不会再进行改变"。 */
+    function onLocalNameEdited() {
+      maker._nameAuto = false;
+      refreshPreview();
+    }
+    function restoreNameFollow() {
+      maker._nameAuto = true;
+      const synced = String(maker.name || '');
+      makerLanguages.forEach((lang) => { maker.i18n[lang].name = synced; });
+      refreshPreview();
+    }
     function onIdChanged() { flushNameIconRename(); refreshPreview(); }
-    /* 类别改成可编辑 combo（py EditableComboBox）。combo 通过 change 事件把新值抛进来，
-       这里负责写回 maker.category；标签仍是"自动跟随时才跟着变"。 */
-    function onCategoryChanged(value) {
-      if (value !== undefined) maker.category = value;
-      if (maker._tagsAuto) maker.tags = maker.category;
+    /* 类别可编辑 combo 的 change 回调。第二个参数 fromList 由 Combo 给出：
+         true = 从下拉里点/键盘选中了一项（内置项）⇒ 三个语言池一起换；
+         false/undefined = 手打的文本 ⇒ 只写当前分段。详见上面「分段写入的口径」。
+       ⚠️ 上轮删掉了两件事：
+         · 「标签自动跟着类别写」的联动（以前这里 if (maker._tagsAuto) maker.tags = …）
+         · restoreTagsFollow / 「跟随类别」按钮
+         用户原话：「提交软件页面的标签跟随类别这个相关代码删除包括跟随类别按钮，
+         而且默认标签输入框为空」。 */
+    function onCategoryChanged(value, fromList) {
+      if (value === undefined) return;
+      // combo 抛来的可能是当前分段的显示文本（English 段选 Tools），必须还原成规范值「工具」
+      // 再进池子，否则显示文本被当成规范值落盘，筛选 / 索引 / 分组全对不上。
+      const list = splitList(value).map(canonicalTerm).filter(Boolean);
+      const text = list.join(', ');
+      // 内置项 = 31 个类别 +「官方」「知名」两个角标项；判内置不看来源（手打 "Tools" 也算内置，第一轮口径）。
+      const builtin = list.length > 0
+        && list.every((v) => makerCategories.indexOf(v) >= 0 || makerCategoryExtras.indexOf(v) >= 0);
+      if (fromList && builtin) {
+        // 用户定夺：选内置项 = 三语一起切
+        makerLanguages.forEach((lang) => { maker.category[lang] = text; });
+      } else {
+        maker.category[makerSegLang.value] = text;
+      }
       refreshPreview();
     }
-    function onTagsEdited() { maker._tagsAuto = false; refreshPreview(); }
-    function restoreTagsFollow() {
-      maker._tagsAuto = true;
-      maker.tags = maker.category;
-      refreshPreview();
-    }
-    function onRepoPlatformChanged(value) {
-      maker.repoPlatform = value;
+    function onRepoPlatformChanged(row, value) {
+      if (!row) return;
+      row.platform = value;
       refreshPreview();
     }
 
-    /* 实时预览（update_preview，:396-414）：不显示 intro/supplement/systems/url/github */
-    const previewName = computed(() => String(maker.name || '').trim() || t('preview_name', '（名称）', 'maker'));
+    /* 实时预览（update_preview，:396-414）：不显示 intro/supplement/systems/url/github。
+       ⚠️ 需求（第四轮⑤，用户原话）：「切换到哪个语言就显示对应语言的内容，
+          预览区域也跟随对应语言」⇒ 名称 / 简介 / 标签**三项统一跟「多语言字段」的分段语言**，
+          和左边那三个框同一口径。以前的写法是三种口径混着来（名称取上方规范名、
+          简介永远取简体中文、标签取界面语言），切分段毫无反应，看起来就像预览坏了。
+       · 该分段没填时按后端 _collect_text 的回退链兜底
+         （分段 → 简体中文 → 繁體中文 → English），与真实卡片取值的规则一致；
+       · 标签用 termIn(分段语言, 规范值) 翻译：池子里存的永远是规范中文，
+         预览要还原的是"这一语言下用户看到的那排药丸"。 */
+    const previewFallbackOrder = computed(() => {
+      const seg = makerSegLang.value;
+      return [seg, '简体中文', '繁體中文', 'English'].filter((one, idx, arr) => one && arr.indexOf(one) === idx);
+    });
+    function pickBySegment(bag) {
+      const order = previewFallbackOrder.value;
+      for (let i = 0; i < order.length; i += 1) {
+        const text = String((bag && bag[order[i]]) || '').trim();
+        if (text) return text;
+      }
+      return '';
+    }
+    /* 把 maker.i18n 里某个字段（name/description）摊成 {语言: 文本} 再按分段取，
+       读的是 reactive 的 maker.i18n ⇒ 切分段、在分段里打字都会即时重算。 */
+    function i18nFieldBag(key) {
+      const bag = {};
+      makerLanguages.forEach((lang) => { bag[lang] = maker.i18n[lang] ? maker.i18n[lang][key] : ''; });
+      return bag;
+    }
+    /* 名称兜底顺序：分段那份 → 上方规范名（_nameAuto 打开时两边本来就相同，
+       手写过快照时可能只有上方有值）→ 占位文案。 */
+    const previewName = computed(
+      () => pickBySegment(i18nFieldBag('name')) || String(maker.name || '').trim()
+        || t('preview_name', '（名称）', 'maker'),
+    );
     const previewDesc = computed(() => {
-      const text = String(maker.i18n['简体中文'].description || '').trim() || t('preview_desc', '（简介）', 'maker');
+      const text = pickBySegment(i18nFieldBag('description')) || t('preview_desc', '（简介）', 'maker');
       return text.length > 60 ? text.slice(0, 60) + '...' : text;
     });
-    const previewTagList = computed(() => splitList(maker.tags).map((tag) => '[' + tag + ']'));
-    /* 有文件且不是 .gif → 显示图片；否则显示「?」 */
-    const previewIcon = computed(() => ((maker.iconSource && !/\.gif$/i.test(maker.iconExt || ''))
-      ? maker.iconSource : ''));
+    /* 标签行同理：取**分段那一份池**，用该分段的译名显示。
+       （真实卡片走的是"界面语言那份 + term()"，见上面注释；预览这里刻意跟分段一致，
+         因为用户需求就是"切分段 → 整块（含预览）换语言"。分段语言与界面语言一致时，
+         两者显示完全相同，不会产生"预览和卡片说法不一"的新问题。） */
+    const previewTagList = computed(() => {
+      void I18N.version;
+      const order = previewFallbackOrder.value;
+      const pool = order.map((one) => maker.tags[one]).find((text) => splitList(text).length) || '';
+      const seg = makerSegLang.value;
+      return splitList(pool).map((tag) => '[' + termIn(seg, tag) + ']');
+    });
+    /* 有图标就原样显示。以前这里专门排除 .gif —— 那是 py 版 QIcon 画不动动画留下的限制，
+       web 版只是一个普通 <img>，WebView2 自己会播 gif。判断留着的结果是：导入 gif 之后
+       实时预览永远显示「?」（m06170「实时预览那里不支持gif它会显示问号的bug」）。*/
+    const previewIcon = computed(() => (maker.iconSource ? maker.iconSource : ''));
+
+    /* 「未保存」提示（m06170：双击进入编辑、发生了更改，在实时预览那里要有个未保存）。
+       做法：载入完成那一刻把 buildEntry() 的产物存成字符串当基线，之后每次预览重算都拿
+       现在的 buildEntry() 和它比。两边都走同一个函数，就不会出现「载入时压平一套、
+       写盘时再压平一套」造成的假差异；基线为空（新建／清空表单）时不提示。*/
+    const makerBaseline = ref('');
+    function entrySnapshot() {
+      try { return JSON.stringify(buildEntry()); } catch (error) { return ''; }
+    }
+    const previewDirty = computed(() => !!maker.editingExisting
+      && !!makerBaseline.value && entrySnapshot() !== makerBaseline.value);
 
     /* 校验（validate / validate_warnings，:1589-1646） */
     function makerIdOf(item) { return String((item && item.id) || ''); }
@@ -4542,7 +6153,7 @@ const App = {
       else if (!/^[a-z0-9-]+$/.test(id)) {
         out.push(t('「标识 id」只能包含小写字母、数字和连字符', '「标识 id」只能包含小写字母、数字和连字符', 'maker'));
       }
-      if (maker.iconSource && !maker.iconName) {
+      if (maker.iconSource && !maker.iconName && !maker.iconPending) {
         out.push(t('图标文件不存在（重新导入一次图片）', '图标文件不存在（重新导入一次图片）', 'maker'));
       }
       const editingCode = maker.loadedId ? String(maker.code || '') : '';
@@ -4561,18 +6172,42 @@ const App = {
     }
     function validateWarnings() {
       const out = [];
-      if (!maker.iconName) out.push(t('还没导入图片，卡片上会显示成默认图标', '还没导入图片，卡片上会显示成默认图标', 'maker'));
+      /* 「导入图片」按 m05525 的语义**只进内存预览**：iconPending=true、iconData 有字节，
+         而 iconName 要等点「追加到本机资源库 / 保存到原列表」那一刻才赋值。
+         原来这条警告只盯 iconName ⇒ 用户刚导完图，实时预览的状态行还挂着「还没导入图片」，
+         看上去就像导入根本没生效（用户第七轮反馈 m06914「我导入图片了可是实时预览那里还是提示这个」）。
+         判据改成与预览出图同一口径：有待保存的预览图（iconPending / iconSource）就算已经导入。
+         ⚠️ 不要改成检查 maker.icon —— 那是写盘之后才有的字段，比 iconName 更晚，只会更糟。
+         文件真的丢了（iconSource 有值但既没落盘也没内存字节）由上面 5682 那条**错误**负责，
+         两边不会同时冒出来。 */
+      if (!maker.iconName && !maker.iconPending && !maker.iconSource) out.push(t('还没导入图片，卡片上会显示成默认图标', '还没导入图片，卡片上会显示成默认图标', 'maker'));
       const url = String(maker.url || '').trim();
       if (!url) out.push(t('「官网」留空了，卡片上会没有「官网」按钮', '「官网」留空了，卡片上会没有「官网」按钮', 'maker'));
       else if (!/^https?:\/\//i.test(url)) {
         out.push(t('「官网」没写 http://，已按 https:// 处理', '「官网」没写 http://，已按 https:// 处理', 'maker'));
       }
-      if (!String(maker.i18n['简体中文'].description || '').trim()) {
+      /* 简介也是三语独立池。原来只查简体中文那一份：只在繁體/English 里写了简介时，
+         预览（pickBySegment）早就把文字摆出来了，状态行却还在说「简介留空了」——
+         和上面图标那条同一类病（填了内容、提示不消失）。改成走**与预览完全相同**的回退链，
+         两边口径一致，用户不会再看到"预览有内容、提示说没有"。 */
+      if (!pickBySegment(i18nFieldBag('description'))) {
         out.push(t('「简介」留空了，卡片上只有名称', '「简介」留空了，卡片上只有名称', 'maker'));
       }
-      if (!String(maker.category || '').trim()) {
+      /* 类别是**三语独立池**，所以逐语言各看一遍，同一条问题最多只报一次
+         （三种语言都空 ≠ 三条"留空了"）。标签没有需要报的问题（同名提示已按 m07730 删除）。 */
+      const catPools = makerLanguages.map((lang) => splitList(maker.category[lang]).map(canonicalTerm).filter(Boolean));
+      if (catPools.every((list) => !list.length)) {
         out.push(t('「类别」留空了，这条不会出现在类别分组里', '「类别」留空了，这条不会出现在类别分组里', 'maker'));
       }
+      /* 「类别只为一个」（m06170 第 3 项 + m06395 定夺：只提醒、不改数据）。 */
+      const categoryCount = Math.max.apply(null, catPools.map((list) => list.length));
+      if (categoryCount > 1) {
+        out.push(t('warn_multi_category',
+          '「类别」填了 {n} 个：类别只填一个就够（多个会让它同时出现在几个分组里），' +
+          '要表达附加属性请写进下面的「标签」', 'maker').replace('{n}', String(categoryCount)));
+      }
+      /* 「标签与类别同名」的提示已整段删除（用户 m07730 定夺：「删掉这条提示」）。
+         前后端都不再动同名标签、照写照存，既然不改数据就没必要在状态行多说一句。 */
       [['author_page', maker.author_url], ['chat_url', maker.chat_url]].forEach((pair) => {
         const value = String(pair[1] || '').trim();
         if (value && !/^https?:\/\//i.test(value)) {
@@ -4586,10 +6221,30 @@ const App = {
         out.push(t('warn_no_http_scheme', '「{label}」没写 http://，已按 https:// 处理', 'maker')
           .replace('{label}', t('download_page_url', '下载地址', 'maker')));
       }
-      const platform = maker.repoPlatform;
-      if (platform !== 'none' && platform !== 'custom' && !normalizeRepoUrl(platform, maker.github)) {
-        out.push(t('「开源仓库」留空了，卡片上会没有仓库按钮', '「开源仓库」留空了，卡片上会没有仓库按钮', 'maker'));
-      }
+      /* 自定义链接：后端 normalize_links 对「没有标签 / 任一语言地址不是 http(s) 开头」是**静默丢行**，
+         用户填了却在详情页凭空消失，比报错更难查 —— 这里在状态行一条条点名（m05525：
+         「最终效果要和卡片详细信息一样」）。两种全空的行不吭声：那是本来就打算留空。 */
+      linksWarnRows().forEach((item) => {
+        out.push(t('warn_link_dropped', '第 {n} 条自定义链接{why}，保存时会被丢弃', 'maker')
+          .replace('{n}', String(item.n)).replace('{why}', item.why));
+      });
+      /* 多组开源仓库逐组点名：留空的组不会落盘（卡片上就没有那个仓库按钮），
+         地址不是 http(s) 开头的组会被后端丢掉 —— 这两种都要说，
+         别让用户填完了却发现「没保存上」却不知道哪一组出的问题。 */
+      maker.repos.forEach((row, index) => {
+        const platform = String((row && row.platform) || 'none');
+        if (platform === 'none') return;
+        const full = normalizeRepoUrl(platform, String((row && row.url) || '').trim());
+        if (!full) {
+          out.push(t('warn_repo_empty', '第 {n} 组开源仓库留空了，卡片上会没有仓库按钮', 'maker')
+            .replace('{n}', String(index + 1)));
+          return;
+        }
+        if (!/^https?:\/\//i.test(full)) {
+          out.push(t('warn_repo_bad_scheme', '第 {n} 组开源仓库地址不是 http(s):// 开头，保存时会被丢弃', 'maker')
+            .replace('{n}', String(index + 1)));
+        }
+      });
       return out;
     }
     const makerErrors = computed(() => validateErrors());
@@ -4609,9 +6264,9 @@ const App = {
     });
 
     /* build_entry（:1553-1582）：字段顺序 = FIELD_ORDER（resource_schema.py:362-396） */
-    const MAKER_FIELD_ORDER = ['id', 'code', 'name', 'category', 'tags', 'icon', 'url', 'github',
-      'download_url', 'chat_url', 'author_url', 'description', 'intro', 'supplement', 'listed_at',
-      'systems', 'architectures', 'variants', 'default_variant'];
+    const MAKER_FIELD_ORDER = ['id', 'code', 'name', 'category', 'tags', 'icon', 'url', 'github', 'repos',
+      'download_url', 'chat_url', 'author_url', 'links', 'description', 'intro', 'supplement', 'listed_at',
+      'systems', 'variants', 'default_variant'];
     function flattenText(value) { return String(value == null ? '' : value).replace(/\s*\n\s*/g, ' ').trim(); }
     function orderEntry(entry) {
       const out = {};
@@ -4621,9 +6276,12 @@ const App = {
     }
     /* apply_i18n_to_entry（:707-726）：全空跳过；去重后只剩 1 个 → 不写字典。
        多语言字段常开（多语言字段开关删除 我要常开而不是可关闭的），
-       不再有 i18nEnabled 开关，这里无条件应用。 */
+       不再有 i18nEnabled 开关，这里无条件应用。
+       ⚠️ 需求 m04188 第③项：name 也进来了（写"名称"要能三语言分别写）。
+          三种语言完全相同时仍然**不写字典**（保持 build_entry 的纯字符串），
+          所以老的资源库文件不会因为这次改动凭空多出一堆字典字段。 */
     function applyI18nToEntry(entry) {
-      ['description', 'intro', 'supplement'].forEach((key) => {
+      ['name', 'description', 'intro', 'supplement'].forEach((key) => {
         const values = {};
         makerLanguages.forEach((lang) => {
           const text = flattenText(maker.i18n[lang][key]);
@@ -4637,6 +6295,141 @@ const App = {
       });
       return entry;
     }
+    /* ---- 自定义链接：编辑 / 序列化助手（m05525）--------------------------------
+       这一组输入框放在「多语言字段」卡片里，跟着分段器切语言：同一个 row 的
+       label/url 都是三语言字典，切到 English 就编辑 English 那一份。 */
+    /* 行数上限：前端这一处 + 后端 resource_schema.LINKS_MAX_ROWS 那一处，要改就一起改。
+       后端超限是「截断 + validate 告警」，前端到顶是「不追加 + 说明原因」，两边都写不坏数据。 */
+    const LINKS_MAX_ROWS = 20;
+    function blankI18nText() {
+      const obj = {};
+      makerLanguages.forEach((lang) => { obj[lang] = ''; });
+      return obj;
+    }
+    let linkRowSeq = 0;
+    /* 每行带一个自增的内部键。模板 :key 用它而不是数组下标：按下标当 key 时删掉中间一行，
+       Vue 会把后面几行的 DOM 往前挪，输入框里的文字看上去「串行」。
+       下划线开头 = 只活在前端，linksForEntry() 重建对象时不会把它带进资源库 JSON。 */
+    function newLinkRow() {
+      linkRowSeq += 1;
+      return { _key: linkRowSeq, label: blankI18nText(), url: blankI18nText() };
+    }
+    function addLinkRow() {
+      /* 「可以无限点击添加」：只给一个很软的上限（20，与后端一致），
+         到顶就明说为什么不能再加，而不是按钮默默没反应。 */
+      if (maker.links.length >= LINKS_MAX_ROWS) {
+        toast(t('links_too_many', '自定义链接最多 20 条', 'maker'), 'warning',
+          t('tip_warning', '提示', 'maker'));
+        return;
+      }
+      maker.links.push(newLinkRow());
+    }
+    function removeLinkRow(index) { maker.links.splice(index, 1); }
+    /* 「这条链接会不会被丢掉」的预判：判定口径必须和 linksForEntry()、后端
+       resource_schema._links_row 三方一致（标签任一语言非空 + 地址任一语言 http(s) 开头）。 */
+    function linksWarnRows() {
+      const out = [];
+      maker.links.forEach((row, index) => {
+        if (!row) return;
+        const hasLabel = makerLanguages.some((lang) => String((row.label || {})[lang] || '').trim());
+        const hasUrl = makerLanguages.some((lang) => String((row.url || {})[lang] || '').trim());
+        if (!hasLabel && !hasUrl) return;
+        if (!hasLabel) {
+          out.push({ n: index + 1, why: t('link_no_label', '只有地址没有标签', 'maker') });
+          return;
+        }
+        const bad = makerLanguages.some((lang) => {
+          const value = String((row.url || {})[lang] || '').trim();
+          return value && !/^https?:\/\//i.test(value);
+        });
+        if (bad) out.push({ n: index + 1, why: t('link_bad_scheme', '地址不是 http(s):// 开头', 'maker') });
+      });
+      return out;
+    }
+    /* 读/写「当前分段」那一格；字典缺键时按 pickI18n 的顺序回退，切来切去不会看不见。 */
+    function linkCellText(cell) {
+      if (cell == null) return '';
+      if (typeof cell === 'string') return cell;
+      const lang = makerLanguages[i18nLangIndex.value] || '简体中文';
+      return String(cell[lang] || cell['简体中文'] || cell['繁體中文'] || cell['English'] || '');
+    }
+    function linkCellSet(cell, value) {
+      if (!cell || typeof cell !== 'object') return;
+      cell[makerLanguages[i18nLangIndex.value] || '简体中文'] = value;
+    }
+    /* 序列化：label 压平换行、url 去空白；标签或链接为空的整条不进 JSON
+       （详情页那一行没有标签没法显示）。某语言留空时回退简体中文，
+       保证后端拿到的每一格都有值、塌缩判断也不会误判。 */
+    function linksForEntry() {
+      const out = [];
+      maker.links.forEach((row) => {
+        if (!row || !row.label || !row.url) return;
+        const label = {};
+        const url = {};
+        let hasLabel = false;
+        let hasUrl = false;
+        /* 逐语言**直接**取格子，不能走 linkCellText —— 那个函数读的是「当前分段」
+           那一格，在这里按语言循环时会取错格子、把别的语言的值丢掉。 */
+        makerLanguages.forEach((lang) => {
+          label[lang] = flattenText(row.label[lang] || '');
+          url[lang] = String(row.url[lang] || '').trim();
+          if (label[lang]) hasLabel = true;
+          if (url[lang]) hasUrl = true;
+        });
+        if (!hasLabel || !hasUrl) return;
+        makerLanguages.forEach((lang) => {
+          if (!label[lang]) label[lang] = label['简体中文'];
+          if (!url[lang]) url[lang] = url['简体中文'];
+        });
+        out.push({ label: label, url: url });
+      });
+      return out;
+    }
+    /* 读回来：后端可能给三语言字典，也可能已经塌成字符串（三语相同）。 */
+    function linkRawText(value, lang) {
+      if (value == null) return '';
+      if (typeof value === 'string') return value;
+      return String(value[lang] || value['简体中文'] || value['繁體中文'] || value['English'] || '');
+    }
+    /* 从资源库读回来的行同样走 newLinkRow() ⇒ 自动带内部 _key，删中间行不会串位。 */
+    function loadLinksFromRaw(raw) {
+      const list = Array.isArray(raw) ? raw : [];
+      const rows = [];
+      list.forEach((item) => {
+        if (!item || typeof item !== 'object') return;
+        const row = newLinkRow();
+        makerLanguages.forEach((lang) => {
+          row.label[lang] = linkRawText(item.label, lang);
+          row.url[lang] = linkRawText(item.url, lang);
+        });
+        if (row.label['简体中文'] || row.label['繁體中文'] || row.label['English']) rows.push(row);
+      });
+      return rows;
+    }
+
+    /* 三个语言池 → 磁盘形态：
+       · 全空 → undefined（调用方据此**不写**这个字段，与"空的可选字段不落盘"一致）
+       · **非空的那些池**内容完全相同（或只有一种语言非空）→ list[str]（老形态，紧凑）
+       · 否则 → {语言: list[str]} 字典形态（只写非空的语言）
+       ⚠️ 比较只看**非空**的池，且按原顺序比（用户要的就是 "工具, 系统" 而不是 "系统, 工具"）。
+          这条口径必须与后端 maker._merge_i18n（texts 只收非空 → len(set)==1 就塌缩）
+          以及前端 applyI18nToEntry（uniq.size<=1 就不写字典）**三方一致**，
+          否则"前端写字典、后端又塌缩"会让同一份数据往返两次形态漂移。 */
+    function poolsForEntry(pools) {
+      const per = {};
+      const filled = [];
+      makerLanguages.forEach((lang) => {
+        const list = splitList(pools[lang]).map(canonicalTerm).filter(Boolean);
+        per[lang] = list;
+        if (list.length) filled.push(lang);
+      });
+      if (!filled.length) return undefined;
+      const signature = per[filled[0]].join(',');
+      if (filled.every((lang) => per[lang].join(',') === signature)) return per[filled[0]];
+      const dict = {};
+      filled.forEach((lang) => { dict[lang] = per[lang]; });
+      return dict;
+    }
     function buildEntry() {
       const id = String(maker.id || '').trim();
       const code = String(maker.code || '').trim();
@@ -4644,18 +6437,32 @@ const App = {
       if (id) entry.id = id;
       if (code) entry.code = code;
       if (String(maker.name || '').trim()) entry.name = String(maker.name).trim();
-      /* 类别 / 标签在界面上可能是**译名**（English 界面敲 "Tools"），落盘一律还原成
-         规范值（"工具"）—— 对齐 py build_entry 的 _canonical_term（resource_maker_pages.py:1558-1564）。 */
-      const category = splitList(maker.category).map(canonicalTerm).filter(Boolean);
-      if (category.length) entry.category = category;
-      const tags = splitList(maker.tags).map(canonicalTerm)
-        .filter((tag) => tag && category.indexOf(tag) < 0);
-      if (tags.length) entry.tags = tags;
+      /* 类别 / 标签：三个语言池 → 磁盘形态（本轮契约，见 maker 状态区的说明）
+         · 三语内容**完全相同**（或只有一种语言非空）→ 塌缩成 list[str]，与老数据同形，
+           资源库里不会多出一堆无意义的同内容字典（和 name/description 那套一致）；
+         · 真的分语言不同 → 写 {简体中文: [...], 繁體中文: [...], English: [...]}，
+           读侧 resource_schema 的 _collect_text 按语言取自己那一份（task-4 后端支持）。
+         每个池里的值都已经过 canonicalTerm（输入时就还原过），这里再走一遍是幂等保险。 */
+      const category = poolsForEntry(maker.category);
+      if (category !== undefined) entry.category = category;
+      /* ⚠️ m07514 用户报：「类别里有这个选项，我在标签里输入同一个名称，点保存后就不保存」。
+         真因是把「与类别同名的标签」静默过滤掉了。现在照写照存：用户手填的标签一律保留。 */
+      const tags = poolsForEntry(maker.tags);
+      if (tags !== undefined) entry.tags = tags;
       if (maker.iconName) entry.icon = maker.iconName;
+      /* 理论上三个写盘入口都会先 commitIconForWrite，走到这里说明还没落盘：
+         用同一套规则算出目标文件名，和稍后那次写入一字不差，避免写出对不上的引用。 */
+      else if (maker.iconPending) entry.icon = iconWantName();
       const url = autoHttpUrl(maker.url);
       if (url) entry.url = url;
-      const repo = normalizeRepoUrl(maker.repoPlatform, maker.github);
-      if (repo) entry.github = repo;
+      /* 多组开源仓库：每组一行 = {platform, url}；「不开源」和空地址的组直接不算。
+         github 字段继续写**第一组**（= 主仓库）—— 卡片仓库按钮、下载部署、
+         AI 工具那些只读 github 单值的代码因此一行都不用改。 */
+      const repos = reposForEntry();
+      if (repos.length) {
+        entry.repos = repos;
+        entry.github = repos[0].url;
+      }
       if (maker.loadedDownloadUrl) entry.download_url = maker.loadedDownloadUrl;
       /* 下载**页面**的网址（用户填的下载地址）。
          ⚠️ 和上面的 download_url（安装包直链）是两个不同的字段。 */
@@ -4671,7 +6478,8 @@ const App = {
       });
       entry.listed_at = (maker.loadedId && !maker.isNewEntry && maker.listedAt) ? maker.listedAt : nowListedAt();
       if (maker.systems.length) entry.systems = maker.systems.slice();
-      if (maker.architectures.length) entry.architectures = maker.architectures.slice();
+      const links = linksForEntry();
+      if (links.length) entry.links = links;
       return applyI18nToEntry(orderEntry(entry));
     }
     function validateOrToast() {
@@ -4703,36 +6511,63 @@ const App = {
         reader.onload = () => resolve(String(reader.result || ''));
         reader.readAsDataURL(file);
       });
-      maker.iconExt = ext;
-      /* 目标文件名用编号（TG-000053.png）：同一条资源重复导入只会覆盖自己那一张，
-         不会在图标目录里堆垃圾，也不会撞别人的图。 */
-      const want = iconWantName();
-      const result = await bridge.tryCall('maker.save_icon', want, dataUrl);
-      if (result && result.ok) {
-        maker.iconSource = result.url || ('/res/image/icon/' + encodeURIComponent(result.name || want));
-        maker.iconName = result.name || want;
-        maker.iconPicked = true;
-        toast(t('image_saved_as', '已存为 {name}（{path}）', 'maker')
-          .replace('{name}', maker.iconName)
-          .replace('{path}', result.path || t('图标目录', '图标目录', 'maker')),
-          'success', t('图片已导入', '图片已导入', 'maker'));
+      if (!dataUrl) {
+        toast(t('icon_read_failed', '没能读出这张图片', 'maker'), 'error',
+          t('image_import_failed', '图片没能存进图标目录', 'maker'));
         return;
+      }
+      /* 只进预览。dataURL 必然与旧的 URL 字符串不同 ⇒ <img> 一定会重新解码出新图，
+         这正是「选了图预览也没变化」的根治点：原来同编号同名时 URL 一字不变，
+         浏览器沿用内存里那张旧图，看上去就像什么都没发生。 */
+      maker.iconExt = ext;
+      maker.iconData = dataUrl;
+      maker.iconSource = dataUrl;
+      maker.iconPending = true;
+      maker.iconPicked = true;
+      refreshPreview();
+      toast(t('icon_previewed', '已放进预览：点「追加到本机资源库」或「保存到原列表」时才会真正写入图标目录', 'maker'),
+        'info', t('import_image', '导入图片', 'maker'));
+    }
+
+    /* 写盘前把预览里那张图真正存进图标目录（m05525）。
+       文件名取 iconWantName() —— **此刻**的编号/名称，所以保存之前怎么改名称都不会
+       留下悬空引用。返回 false 表示图片没落地，调用方必须中止写资源库：
+       宁可整条资源不写，也不能写出一个指向不存在文件的索引。 */
+    async function commitIconForWrite() {
+      if (!maker.iconPending || !maker.iconData) return true;
+      const want = iconWantName();
+      let result = null;
+      try {
+        result = await bridge.tryCall('maker.save_icon', want, maker.iconData);
+      } catch (error) {
+        result = { ok: false, error: String((error && error.message) || error) };
       }
       if (!result) {
-        /* 后端还没有这个接口：图片没落盘，**绝不能**在 JSON 里写一个不存在的文件名。
-           这里保留本地预览（dataURL）但清空 iconName，并明确告诉用户为什么。 */
-        maker.iconSource = dataUrl;
-        maker.iconName = '';
-        maker.iconPicked = false;
         needApi('maker.save_icon', t('import_image', '导入图片', 'maker'));
-        return;
+        return false;
       }
-      maker.iconSource = dataUrl;
-      maker.iconName = '';
-      maker.iconPicked = false;
-      toast(result.error || t('write_failed', '写入失败', 'maker'), 'error',
-        t('image_import_failed', '图片没能存进图标目录', 'maker'));
+      if (!result.ok) {
+        toast(String(result.error || t('write_failed', '写入失败', 'maker')), 'error',
+          t('image_import_failed', '图片没能存进图标目录', 'maker'));
+        return false;
+      }
+      maker.iconName = String(result.name || want);
+      /* 落盘成功后把预览换成服务器地址，并挂一个一次性时间戳：
+         webhost 那边本来就 no-store，但 <img> 在 src 字符串没变时根本不会再发请求，
+         同名覆盖这种场景必须靠变 URL 才会重新拉图。 */
+      const base = String(result.url || ('/res/image/icon/' + encodeURIComponent(maker.iconName)));
+      maker.iconSource = base + (base.indexOf('?') >= 0 ? '&' : '?') + 'v=' + Date.now();
+      maker.iconPending = false;
+      /* iconData 故意不清空：改了编号/名称之后还要靠它按新名字重写磁盘文件（见 flushNameIconRename）。
+         它只占这张图本身的大小，载入别的条目（loadResourceIntoForm）和清空表单（resetMakerForm）都会清。 */
+      return true;
     }
+
+    /* 图标输入框显示用：还在预览时把「将要写入的文件名」摆出来并标注待保存，
+       用户才知道这张图还没进目录。 */
+    const iconDisplayName = computed(() => (maker.iconName
+      ? maker.iconName
+      : (maker.iconPending ? iconWantName() + ' · ' + t('icon_pending', '待保存', 'maker') : '')));
 
     /* 载入现有资源弹层 + loadExisting / applyLoadExisting 已删除 ——
        用户要求删掉载入到制作资源按钮后，这条路径没有任何入口（双击资源浏览一行
@@ -4743,18 +6578,29 @@ const App = {
       maker.id = String(raw.id || '');
       maker.code = String(raw.code || maker.code);
       maker.codeAuto = false;
-      /* 库里存的是规范值（工具/游戏…），表单显示译名（py load_resource 同样走 _term）：
-         类别交给 makerCategoryText 统一翻译；标签是纯文本框，这里直接写译名，
-         写盘时 canonicalTerm 再还原 —— 往返无损。 */
-      maker.category = (Array.isArray(raw.category) ? raw.category : [raw.category]).filter(Boolean).join(', ');
-      maker.tags = (Array.isArray(raw.tags) ? raw.tags : [raw.tags]).filter(Boolean)
-        .map((tag) => term(tag)).join(', ');
-      maker._tagsAuto = false;
+      /* 类别 / 标签灌进**三个独立池**（本轮契约：它们属于「多语言字段」，按语言各填各的）。
+         磁盘上有两种形态都要收：
+           · 老形态：list[str]（或 "工具,系统" 这种逗号串）⇒ 三种语言灌同一份规范值，
+             界面上各分段显示自己的译名 —— 与改动前观感一致，老数据零迁移；
+           · 新形态：{简体中文: list|str, 繁體中文: …, English: …} ⇒ 各语言灌自己那一份，
+             缺失的语言回退简体中文（与后端 first_text/LANGUAGE_FALLBACK 同一口径）。
+         池子里永远存**规范中文值**（逗号分隔），显示译名交给 makerCategoryText/makerTagsText。
+       ⚠️ 但灌池子取的是**原始形态** category_i18n / tags_i18n，不是 category / tags：
+          后端 detail 出口把 category / tags 恒压成"当前界面语言那一份 list[str]"供卡片显示
+          （desktop/api/resources.py 的 _display_str_list :631、DETAIL_RAW_SUFFIX = "_i18n" :617），
+          规范中文只出现在 *_i18n 里。直接灌 category 的后果：English 界面下编辑一条资源，
+          池子里装的是 "Tools"，写盘时 canonicalTerm 认不出来 ⇒ 当成自定义值落盘，规范值被污染。
+       ⚠️ 老后端 / 老数据没有 *_i18n 时回退那份 list[str]（三种语言灌同一份），语义仍正确。
+          直接灌压平后的 category 还会把作者分语言写的内容塌回同一份（编辑一次就丢两种写法）。 */
+      const rawCategory = raw.category_i18n != null ? raw.category_i18n : raw.category;
+      const rawTags = raw.tags_i18n != null ? raw.tags_i18n : raw.tags;
+      maker.category = poolsFromRaw(rawCategory);
+      maker.tags = poolsFromRaw(rawTags);
       maker.systems = Array.isArray(raw.systems) ? raw.systems.slice() : [];
-      maker.architectures = Array.isArray(raw.architectures) ? raw.architectures.slice() : [];
       maker.url = String(raw.url || '');
-      maker.repoPlatform = detectRepoPlatform(raw.github);
-      maker.github = String(raw.github || '');
+      /* 多组开源仓库：优先按 raw.repos 还原每一组；
+         老数据只有 github 一条 → 兜成一行（平台由地址前缀推断）。 */
+      maker.repos = loadReposFromRaw(raw);
       maker.author_url = String(raw.author_url || '');
       maker.chat_url = String(raw.chat_url || '');
       maker.loadedDownloadUrl = String(raw.download_url || '');   // 表单没有这个字段，原样保留
@@ -4772,43 +6618,64 @@ const App = {
       maker.iconName = iconName;
       maker.iconSource = iconName ? '/res/image/icon/' + encodeURIComponent(iconName) : '';
       maker.iconExt = (iconName.match(/\.[^.]+$/) || [''])[0];
+      maker.links = loadLinksFromRaw(raw.links);
       maker.iconPicked = false;
+      maker.iconPending = false;
+      maker.iconData = '';
       /* （路线 A 的前端一半）：把多语言字段灌进三种语言。
          raw[key] 现在有两种形态：
            · 字典 {简体中文, 繁體中文, English} —— 来自 resources.detail
              （后端把磁盘上的**原始多语言字典**还回来了，见
               resource_loader.get_raw_i18n_by_code 与 desktop/api/resources.py 的 detail）；
            · 字符串 —— 列表接口那一路（mapItem 已按当前语言压平）或老后端。
-         字典：按语言逐个灌满；字符串：只灌简体中文（其余两种留空串）。
+         字典：按语言逐个灌满；标量（字符串 / 逗号串 / list）：**摊给三种语言同一份**。
+           这正是需求（第四轮④）"三种语言都填同一个文本 → 只保存一份文本"的读侧那一半：
+           磁盘上只有一份时，三个分段都必须看得见它 —— 以前只灌简体中文，用户切到 English
+           看到空框以为内容丢了，随手补一份再提交，反而把"三语同名"改成三语不同名。
+           写侧本来就塌缩（applyI18nToEntry 去重后只剩 1 个值就不写字典），读侧补齐即闭环。
          ⚠️ 两种形态都不会让 maker.i18n[lang][key] 变成 undefined。
          ⚠️ 语言键必须**精确**匹配 makerLanguages 的写法（是繁體中文不是繁体中文），
             磁盘上偶尔出现的简写繁体键在这里顺带回退一次（精确键优先）。 */
       const langTextOf = (dict, lang) => {
-        if (!dict || typeof dict !== 'object') return '';
+        if (dict == null) return '';
+        /* 标量 / 数组 = "整条只有一份"，不是"某一种语言那一份" ⇒ 三种语言都返回同一个文本。 */
+        if (typeof dict !== 'object' || Array.isArray(dict)) return flattenText(dict);
         if (dict[lang] != null) return String(dict[lang]);
         const alt = lang === '繁體中文' ? '繁体中文' : '';
         if (alt && dict[alt] != null) return String(dict[alt]);
         return '';
       };
+      /* ⚠️ 声明必须放在 forEach **外面**：下面「跟随状态」那块也要用它。
+         上一轮我把它写在回调里、块外又引用了一次 ⇒ 运行时 `ReferenceError: rawName is not defined`
+         ⇒ 整个 loadResourceIntoForm 中断在 `activeSection.value = 'form'` 之前
+         ⇒ 用户看到的症状就是「资源浏览双击后还停留在浏览界面」（需求 m04892 第①项）。
+         这类越界引用 node --check 与 Vue 编译都放行，只有真跑一遍才炸。 */
+      const rawName = raw.name;
       makerLanguages.forEach((lang) => {
+        /* 三种形态（字典 / 标量 / list）统一走 langTextOf，不要再写"只有简体中文才灌"的分支。 */
         ['description', 'intro', 'supplement'].forEach((key) => {
-          const value = raw[key];
-          let text = '';
-          if (value && typeof value === 'object' && !Array.isArray(value)) {
-            text = langTextOf(value, lang);
-          } else if (lang === '简体中文') {
-            text = String(value == null ? '' : value);
-          }
-          maker.i18n[lang][key] = text;
+          maker.i18n[lang][key] = langTextOf(raw[key], lang);
         });
-        const rawName = raw.name;
-        maker.i18n[lang].name = (rawName && typeof rawName === 'object' && !Array.isArray(rawName))
-          ? langTextOf(rawName, lang)
-          : (lang === '简体中文' ? String(rawName == null ? '' : rawName) : '');
+        maker.i18n[lang].name = langTextOf(rawName, lang);
       });
-      i18nLangIndex.value = 0;
+      /* 跟随状态也一并载入（需求 m04188 第③项的后半）：
+         磁盘上的 name 已经是「各语言写法不同」的字典 ⇒ 说明这位作者手动分过语言，
+         载入后继续跟随会把它们无脑覆盖成上方那一个值，等于把别人的多语言成果抹掉，
+         所以这里直接把 _nameAuto 置 false；纯字符串（或三语言完全相同）才保持跟随。 */
+      {
+        const nameDict = (rawName && typeof rawName === 'object' && !Array.isArray(rawName)) ? rawName : null;
+        const distinct = new Set(makerLanguages
+          .map((lang) => String(maker.i18n[lang].name || '').trim())
+          .filter((text) => text !== ''));
+        maker._nameAuto = !(nameDict && distinct.size > 1);
+      }
+      /* 分段默认落在**当前界面语言**那一段（本轮需求"记得适配设置中的语言切换"）：
+         界面是 English 时打开表单，第一眼就该看到 English 那份池子。 */
+      i18nLangIndex.value = Math.max(0, makerLanguages.indexOf(uiLanguage()));
       maker._loading = false;
       refreshPreview();
+      /* 载入完成 = 有了对照基线（预览那个「未保存」就是和它比出来的）。 */
+      makerBaseline.value = entrySnapshot();
     }
 
     /* 行为链 A：生成稿件（:1675-1746）
@@ -4878,12 +6745,20 @@ const App = {
         downloadJson('resource.json', JSON.stringify(draft, null, 2) + '\n');
         zipMsg = '\n（浏览器环境没有目录选择接口，已单独下载 resource.json；zip 未打包）';
       }
+      /* 产出成功后清空表单（本轮需求：「点击清空表单或者点击产出类似之类的按钮应该全部清空
+         的那个逻辑继续添加这个清空包括范围：标签和类别，类别则是恢复默认的工具」）。
+         原来只有「追加到本机资源库 / 保存到原列表」会清，生成稿件/另存独立库留着一屏内容，
+         用户接着做下一条就得手动清。现在四条产出路径口径一致，都走 resetMakerForm
+         （里面 category 恢复默认「工具」、tags 跟着恢复默认并重新挂上跟随）。
+         ⚠️ 顺序与「追加到本机资源库 / 保存到原列表」保持一致：先清、后 toast
+            （toast 内容里已经带上生成的文件名/路径，不依赖表单里的值，先清不会丢信息）。 */
+      resetMakerForm();
       toast(t('稿件已生成', '稿件已生成', 'maker') + '：' + (dirLabel || 'resource.json') + zipMsg,
         'success', t('稿件已生成', '稿件已生成', 'maker'));
     }
 
     /* 行为链 B：追加到本机资源库（:1748-1836）
-       写盘前备份到 backups/、原子写、覆盖保留 listed_at —— 由桌面端接口负责 */
+       写盘前滚动备份固定名 1 份、原子写、覆盖保留 listed_at —— 由桌面端接口负责 */
     function libraryPayload(list) {
       return { schema_version: '2.1.0',
         metadata: { name: 'ToolsGCP Resources', description: 'ToolsGCP 资源索引文件',
@@ -4894,10 +6769,33 @@ const App = {
        否则用户会以为"点了没反应/空壳"。 */
     async function reloadMakerLibrary() {
       try { await loadResources(); } catch (error) { /* 刷新失败不影响已经写盘的结果 */ }
+      /* 资源浏览这一页读的是自己那一份（maker.browse），必须一起重载，
+         否则刚写完盘回到列表看到的还是旧行 —— 用户会以为没写进去。 */
+      try { await loadBrowserRows(); } catch (error) { /* 同上 */ }
+    }
+    /* 写盘目标与列表来源不是一回事（m04188 第②项的后续影响，必须提示）：
+       「追加到本机资源库 / 保存到原列表」现在**始终**写程序的 .ToolsGCP/ToolsGCP-Resources.json，
+       但资源来源=云端时，页面列表读的是 GitHub 发布的那份镜像缓存，新条目要等镜像更新才会出现。
+       不写这句话，用户刚点完「已追加」却在看板上找不到，就会以为程序没写进去（正是本轮报的那个 bug 的观感）。
+       所以成功提示后面补一行指路：想立刻看到就把资源来源切到「本地」。 */
+    function librarySourceHint() {
+      if (String(settings.resource_source || 'cloud') !== 'cloud') return '';
+      return '\n' + t('cloud_mirror_hint',
+        '提示：当前资源来源是「云端」，页面列表读的是云端镜像，新条目要等镜像更新才会出现；'
+        + '想马上看到，把资源来源切成「本地」。', 'maker');
+    }
+    /* 条目名给人看的形态：三语言字典取当前界面语言那一份，纯字符串原样返回。
+       ⚠️ 不能用 `String(entry.name)`：applyI18nToEntry 在三语不一致时会写成字典，
+       直接插值到界面上就是用户报的「编辑已有资源后面是一堆程序内部代码」。 */
+    function entryDisplayName(entry) {
+      const raw = entry && entry.name;
+      if (raw && typeof raw === 'object') return pickI18n(raw, '');
+      return String(raw == null ? '' : raw);
     }
     async function appendToLibrary() {
       if (!validateOrToast()) return;
       flushNameIconRename();
+      if (!(await commitIconForWrite())) return;   // 图片没落地就不写索引（m05525）
       const entry = buildEntry();
       const list = items.value.slice();
       const index = list.findIndex((it) => it.id === entry.id);
@@ -4920,23 +6818,24 @@ const App = {
         toast(result.error || t('write_failed', '写入失败', 'maker'), 'error', t('tip_error', '错误', 'maker'));
         return;
       }
-      /* 写盘成功后同步前端状态 + 重新拉资源库（浏览器列表/条数/预览全部刷新） */
-      maker.loadedId = entry.id;
-      maker.loadedName = entry.name || '';
+      /* 写盘成功后**清空表单**（m05525：「点击追加到本机资源库后应该自动清空吧表单」）。
+         旧做法是把这条资源反过来设成编辑态（editingExisting=true），于是表单一直挂着
+         刚提交的内容，用户再点一次就在库里堆一条重复资源。清空之后：
+         · 徽标与「保存到原列表」一起消失（它们都挂在 editingExisting 上）；
+         · resetMakerForm 会顺带重新分配下一个编号，正好用于下一条；
+         · 条目信息已经在下面那条 toast 里报过了，不需要留在表单里。
+         注意顺序：先 await reloadMakerLibrary() 再清 —— nextCode() 读的是刷新后的列表，
+         早清会拿到旧的最大编号，下一条就可能和刚写的撞号。 */
       maker.loadedDownloadUrl = entry.download_url || maker.loadedDownloadUrl;
-      maker.isNewEntry = false;
-      maker.listedAt = entry.listed_at || maker.listedAt;
-      maker.editingExisting = true;
-      maker.editingId = String(entry.id || '');
-      maker.editingCode = String(entry.code || '');
       await reloadMakerLibrary();
+      resetMakerForm();
       const total = result.total != null ? result.total : (index >= 0 ? list.length : list.length + 1);
       const verb = result.action === 'update'
         ? t('library_updated', '已更新', 'maker') : t('library_added', '已追加', 'maker');
       toast(verb + ' ' + t('written_to_library', '{name}（{code}）→ {n} 条', 'maker')
-        .replace('{name}', entry.name || entry.id)
+        .replace('{name}', entryDisplayName(entry) || String(entry.id || ''))
         .replace('{code}', entry.code || '')
-        .replace('{n}', total),
+        .replace('{n}', total) + librarySourceHint(),
         'success', t('已写入资源库', '已写入资源库', 'maker'));
     }
     /* 保存到原列表——编辑模式下把表单写回载入时的那一条。
@@ -4950,6 +6849,7 @@ const App = {
       }
       if (!validateOrToast()) return;
       flushNameIconRename();
+      if (!(await commitIconForWrite())) return;   // 同上：先落地图片再写索引
       const entry = buildEntry();
       if (maker.editingId) entry.id = maker.editingId;
       if (maker.editingCode) entry.code = maker.editingCode;
@@ -4965,13 +6865,15 @@ const App = {
         toast(result.error || t('write_failed', '写入失败', 'maker'), 'error', t('tip_error', '错误', 'maker'));
         return;
       }
-      maker.loadedId = entry.id;
-      maker.loadedName = entry.name || '';
-      maker.isNewEntry = false;
-      maker.listedAt = entry.listed_at || maker.listedAt;
+      /* 写回成功后同样清空表单（m06170「点击保存到原列表按钮也要保存成功后清空」）。
+         以前留着一屏内容和编辑态：用户既不知道存没存，下一次点「保存到原列表」还会
+         继续覆盖同一条。条目信息下面那条 toast 已经报过；顺序与「追加」一致 ——
+         先 reload 再 reset，这样 nextCode() 读到的是刷新后的列表，下一条不会撞号。*/
       await reloadMakerLibrary();
+      resetMakerForm();
       toast(t('saved_to_original', '已保存回原条目：{name}（{code}）', 'maker')
-        .replace('{name}', entry.name || entry.id).replace('{code}', entry.code || ''),
+        .replace('{name}', entryDisplayName(entry) || String(entry.id || '')).replace('{code}', entry.code || '')
+        + librarySourceHint(),
         'success', t('save_to_original', '保存到原列表', 'maker'));
     }
 
@@ -4985,6 +6887,9 @@ const App = {
     async function saveStandalone() {
       if (!validateOrToast()) return;
       flushNameIconRename();
+      /* 独立资源库要**把图标文件复制到目标目录/Icon**，所以预览里那张图必须先真的落地，
+         否则后端拿不到源文件、导出的 JSON 会带一个空图标（m05525）。 */
+      if (!(await commitIconForWrite())) return;
       const entry = buildEntry();
       const result = await bridge.tryCall('maker.save_standalone', entry,
         { default_name: 'ToolsGCP-Resources.json' });
@@ -5001,7 +6906,9 @@ const App = {
             t('tip_error', '错误', 'maker'));
           return;
         }
-        if (fallback.canceled) return;              // 用户在「另存为」里点了取消：静默
+        if (fallback.canceled) return;              // 用户在「另存为」里点了取消：静默，不清
+        /* 产出成功 → 清空表单（口径同 exportDraft / appendToLibrary，本轮需求） */
+        resetMakerForm();
         toast(t('saved_standalone', '已另存为独立资源库：{path}', 'maker')
           .replace('{path}', fallback.path || 'ToolsGCP-Resources.json')
           + '\n' + t('standalone_no_icon', '（当前后端还不能复制图标，这份 JSON 里不包含图标文件）', 'maker'),
@@ -5012,7 +6919,9 @@ const App = {
         toast(result.error || t('write_failed', '写入失败', 'maker'), 'error', t('tip_error', '错误', 'maker'));
         return;
       }
-      if (result.canceled) return;              // 用户在「另存为」里点了取消：静默
+      if (result.canceled) return;              // 用户在「另存为」里点了取消：静默，不清
+      /* 产出成功 → 清空表单（本轮需求：产出类按钮一律全清，含标签与类别） */
+      resetMakerForm();
       toast(t('saved_standalone', '已另存为独立资源库：{path}', 'maker')
         .replace('{path}', result.path || 'ToolsGCP-Resources.json'),
         'success', t('已生成独立资源库', '已生成独立资源库', 'maker'));
@@ -5052,19 +6961,27 @@ const App = {
       maker.name = '';
       maker.id = '';
       maker.code = nextCode();
-      maker.category = makerCategories[0];
-      maker.tags = makerCategories[0];
-      maker._tagsAuto = true;
+      /* 清空表单 = 回到初始态：类别三语都是内置默认「工具」（各分段显示自己的译名），
+         标签三语**全空**（本轮需求：「而且默认标签输入框为空」，且不再有「跟随类别」）。 */
+      maker.category = { 简体中文: makerCategories[0], 繁體中文: makerCategories[0], English: makerCategories[0] };
+      maker.tags = { 简体中文: '', 繁體中文: '', English: '' };
+      maker._nameAuto = true;          // 清空表单 = 回到「名称跟着上方走」的初始态
       maker.systems = [];
-      maker.architectures = [];
       maker.icon = '';
       maker.iconName = '';
       maker.iconSource = '';
       maker.iconPicked = false;
+      maker.iconPending = false;
+      maker.iconData = '';
+      maker.links = [];
       maker.iconExt = '';
       maker.url = '';
-      maker.repoPlatform = 'github';
-      maker.github = '';
+      /* 下载地址（下载页面网址）以前漏清 —— 「保存到原列表」/「清空表单」之后那一栏
+         还挂着上一条资源的网址就是这个原因（m06170 括号里那条）。*/
+      maker.downloadPageUrl = '';
+      /* 多组开源仓库复位成「一组空的 GitHub」——
+         与老行为（清空后是一个空的 GitHub 输入框）等价。 */
+      maker.repos = [newRepoRow()];
       maker.author_url = '';
       maker.chat_url = '';
       maker.loadedDownloadUrl = '';
@@ -5075,29 +6992,139 @@ const App = {
       maker.editingExisting = false;
       maker.editingId = '';
       maker.editingCode = '';
+      makerBaseline.value = '';            // 没有基线了，「未保存」提示自然消失
       makerLanguages.forEach((lang) => {
         ['name', 'description', 'intro', 'supplement'].forEach((key) => { maker.i18n[lang][key] = ''; });
       });
       i18nEnabled.value = true;
-      i18nLangIndex.value = 0;
+      i18nLangIndex.value = Math.max(0, makerLanguages.indexOf(uiLanguage()));
     }
 
     /* 资源浏览（BrowserPage，:1978-2781）：11 列，顺序即数组 */
     const browserQuery = ref('');
     const browserCategory = ref('');
     const browserSelected = ref('');
+    /* 列表滚动位置（m06170：双击进编辑再回到「资源浏览」，列表被弹回最顶端）。
+       这一页是 v-if 切的，DOM 整块重建，scrollTop 天生归零 ⇒ 只能自己记一份。*/
+    const browserScroll = ref(null);
+    let browserScrollTop = 0;
+    /* 资源浏览自己的「本地 / 云端」下拉（m04892 第②项）。
+       ⚠️ 三条硬约束，都是用户原话里点名的：
+         1)「这个选择云端和本地也不会储存在配置里，一直默认为本地」
+            ⇒ 只是一个组件内 ref：**不写 settings、不写 localStorage**，
+              重启/重进制作器一律回到 local。谁以后想"顺手持久化"就是改需求。
+         2) 它只影响这张表：设置里的「资源来源」照旧管搜索页/定制页/收藏页，
+            两者互不干涉（用户这次报的痛点正是"设置改云端后这里也跟着乱"）。
+         3) 云端那份**只读**：镜像每次同步都同名覆盖里面的一切，往里写=静默丢数据
+            （上一轮 maker 写盘事故的同一条根因），所以云端下不许双击进表单、
+            不许删除。 */
+    const browserSource = ref('local');
+    const browserSourceOptions = computed(() => [
+      { value: 'local', label: t('browser_source_local', '本地', 'maker') },
+      { value: 'cloud', label: t('browser_source_cloud', '云端', 'maker') },
+    ]);
+    const browserReadonly = computed(() => browserSource.value === 'cloud');
+    const browserRowsSource = ref([]);      // 当前这一档（本地/云端）现读到的那份
+    /* browserRowsLoaded：区分「这一档已经读到了」（可能是 0 条）与「还没读」。
+       没读成（例如浏览器预览模式没有 maker.browse）才允许退回 items 那份。 */
+    const browserRowsLoaded = ref(false);
+    /* browse 返回的是**磁盘原始 dict**（三语言字段还是字典）。留一份是为了双击进表单时直接用它，
+       而不是再调 resources.detail —— 后者跟着「设置 → 资源来源」解析，会出现
+       「列表是本地那份、载入的是云端那份」的串台（m05525 第④项要求两个开关互相独立）。 */
+    const browserRowsRaw = ref([]);
+    const browserRowsPath = ref('');        // 本次实际读到的文件，给「打开资源库文件」用
+    const browserRowsLoading = ref(false);
     const browserCategoryOptions = computed(() => [{ value: '', label: t('all_categories', '全部类别', 'maker') }]
       .concat(makerCategories.map((c) => ({ value: c, label: term(c) }))));
+    /* 读云端镜像：走 maker.browse（**只读**后端，不触发网络同步、不写任何文件）。
+       失败/接口不存在就把下拉退回本地 —— 宁可让用户看到本地那份，
+       也不要留一张空表让人以为资源库被清空了。 */
+    async function loadBrowserRows() {
+      /* ⚠️ 两个档**都**走 maker.browse 现读磁盘（m05525）：
+         下拉选「本地」就必须是本地那份，选「云端」就是镜像那份，
+         完全不受 设置 → 资源来源 影响 —— 用户明确说这两个开关是独立的。
+         （以前本地档直接复用搜索页的 items，而 items 是按设置里的来源解析的，
+         于是设置=云端时，「本地」列出来的其实还是云端镜像。） */
+      const want = browserSource.value === 'cloud' ? 'cloud' : 'local';
+      browserRowsLoading.value = true;
+      try {
+        const result = await bridge.tryCall('maker.browse', want);
+        if (!result) {
+          needApi('maker.browse', '读取资源库');
+          /* 桌面端没有这个接口（浏览器预览模式）：本地档退回 items 那份，
+             云端档没得退，只能把下拉弹回本地，别让用户对着一张空表。 */
+          if (want === 'cloud') browserSource.value = 'local';
+          browserRowsRaw.value = [];
+          browserRowsLoaded.value = false;
+          return;
+        }
+        if (!result.ok) {
+          toast(String(result.error || t('tip_error', '错误', 'maker')), 'error',
+            t('section_browser', '资源浏览', 'maker'));
+          if (want === 'cloud') browserSource.value = 'local';
+          browserRowsRaw.value = [];
+          browserRowsLoaded.value = false;
+          return;
+        }
+        browserRowsPath.value = String(result.path || '');
+        browserRowsRaw.value = Array.isArray(result.items) ? result.items : [];
+        // 三语言字段是原始字典，必须过 mapItem（和搜索页同一套压平口径），
+        // 否则这一列会显示 [object Object]。
+        browserRowsSource.value = (result.items || []).map((raw) => mapItem(raw));
+        browserRowsLoaded.value = true;
+        /* 列表刚重建 → 把记下的位置放回去（重建之后 scrollTop 是 0）。 */
+        nextTick(() => { if (browserScroll.value) browserScroll.value.scrollTop = browserScrollTop; });
+        if (want === 'cloud' && !result.mirrored) {
+          toast(t('cloud_not_cached', '云端还没有本地镜像，现在显示的是本地那份', 'maker'),
+            'info', t('browser_source_cloud', '云端', 'maker'));
+        }
+      } catch (error) {
+        if (want === 'cloud') browserSource.value = 'local';
+        browserRowsRaw.value = [];
+        browserRowsLoaded.value = false;
+        toast(String((error && error.message) || error), 'error', t('section_browser', '资源浏览', 'maker'));
+      } finally {
+        browserRowsLoading.value = false;
+      }
+    }
+    watch(browserSource, () => {
+      browserScrollTop = 0;              // 换了一份文件，位置没有可比性，回到顶端
+      browserSelected.value = '';      // 两份列表的 code 可能对不上，别留脏选中
+      loadBrowserRows();
+    });
+    /* 每次切进「资源浏览」都现读一次：写盘/删条目之后回到这一页要看到最新的那份，
+       不能依赖搜索页那份 items 的刷新时机（两者现在已经是两条独立的路）。 */
+    watch(activeSection, (key, old) => {
+      /* 离开这一页时记下滚动位置；回到这一页时由 loadBrowserRows 还原。
+         Vue 的 watch 默认 pre-flush，回调跑在 DOM 更新之前，这里还读得到旧节点。*/
+      if (old === 'browser' && browserScroll.value) browserScrollTop = browserScroll.value.scrollTop;
+      if (key === 'browser') loadBrowserRows();
+      /* 其余三个分节同样要记 / 恢复：四个分节容器是 v-if 重建的，切走就被销毁，
+         不补这一句的话"表单滚到中间 → 看一眼资源浏览 → 切回表单"会掉回顶端 ——
+         和需求①说的"切走再切回要回到原位"是同一件事，只是发生在投稿页内部。
+         这里必须**显式带旧/新分节名**：watch 回调跑的时候 activeSection.value 已经是新值了，
+         直接传 "maker" 会让 scrollMemoryKey 用新分节去记旧容器的位置（串味）。
+         browser 跳过：它有自己那套（上面两行的 browserScrollTop + loadBrowserRows 里还原），
+         两边同时驱动同一个容器只会互相覆盖。 */
+      if (old && old !== 'browser') rememberPageScroll('maker:' + old);
+      if (key && key !== 'browser') nextTick(() => restorePageScroll('maker:' + key));
+    });
     const browserRows = computed(() => {
       const key = browserQuery.value.trim().toLowerCase();
       const category = browserCategory.value;
-      return items.value.filter((r) => {
-        if (category && (r.category || []).indexOf(category) < 0) return false;
+      const source = (browserRowsLoaded.value || browserSource.value === 'cloud')
+        ? browserRowsSource.value : items.value;
+      /* 与搜索页同一口径（passesFilters / matchKeyword）：筛选与关键词匹配都用**并集**，
+         这样"只在某个语言池里填过的类别/标签"在资源浏览里也筛得出、搜得到。
+         两个来源（maker.browse 现读的那份 / items 那份）都过 mapItem，都有并集字段。 */
+      return source.filter((r) => {
+        const cats = r.category_all || r.category || [];
+        if (category && cats.indexOf(category) < 0) return false;
         if (!key) return true;
         if (String(r.code).toLowerCase().indexOf(key) >= 0) return true;
         if (String(r.name).toLowerCase().indexOf(key) >= 0) return true;
         if (String(r.id).toLowerCase().indexOf(key) >= 0) return true;
-        return (r.category || []).concat(r.tags || [])
+        return cats.concat(r.tags_all || r.tags || [])
           .some((item) => String(item).toLowerCase().indexOf(key) >= 0);
       }).map((r) => ({
         ...r,
@@ -5107,14 +7134,46 @@ const App = {
     /* count_label 只在筛选时显示（browser_shown），不筛选时不重复页头的条数 */
     const browserCountText = computed(() => ((browserQuery.value.trim() || browserCategory.value)
       ? t('browser_shown', '筛选中 · 显示 {n} / 共 {total} 条', 'maker')
-        .replace('{n}', browserRows.value.length).replace('{total}', items.value.length)
+        .replace('{n}', browserRows.value.length)
+        .replace('{total}', ((browserRowsLoaded.value || browserSource.value === 'cloud')
+          ? browserRowsSource.value : items.value).length)
       : ''));
-    function reloadLibrary() { loadResources().catch(() => {}); }
+    /* 「重新载入」= 现读下拉选中的那一份（本地/云端都由 maker.browse 决定，
+       与设置里的资源来源无关）；本地档顺带把搜索页那份 items 也刷一次，
+       因为那一页显示的仍是「设置来源」的那份，用户可能马上就切过去看。 */
+    function reloadLibrary() {
+      loadBrowserRows().catch(() => {});
+      if (browserSource.value !== 'cloud') loadResources().catch(() => {});
+    }
     function openLibraryFile() {
-      bridge.tryCall('shell.open_path', libraryDir()).then((result) => {
+      const target = (browserSource.value === 'cloud' && browserRowsPath.value)
+        ? browserRowsPath.value : libraryDir();
+      bridge.tryCall('shell.open_path', target).then((result) => {
         if (!result) { needApi('shell.open_path', '打开资源库文件'); return; }
         if (!result.ok) toast(t('打不开', '打不开', 'maker'), 'error', t('tip_error', '错误', 'maker'));
       });
+    }
+
+    /* 「打开图标文件夹」（m06170：导入的图标在 .ToolsGCP\images\icon 里找不到）。
+       图标分三层，同名时生效的那层才是该打开的目录：
+         ① <数据根>\config\icons              制作器导入的新图（现在都写这里）
+         ② <程序目录>\.ToolsGCP\images\icon   程序自带
+         ③ <数据根>\config\cloud\icons        云端镜像
+       到底命中哪一层由后端算 —— 前端自己拼路径必然和 webhost 的取图口径打架。*/
+    async function openIconFolder() {
+      const info = await bridge.tryCall('maker.icon_dirs', maker.iconName);
+      if (!info) { needApi('maker.icon_dirs', '打开图标文件夹'); return; }
+      if (!info.ok) { toast(String(info.error || ''), 'error', t('tip_error', '错误', 'maker')); return; }
+      const result = await bridge.tryCall('shell.open_path', info.current);
+      if (!result) { needApi('shell.open_path', '打开图标文件夹'); return; }
+      if (!result.ok) {
+        toast(t('open_icon_folder_failed', '打不开这个文件夹', 'maker'), 'error',
+          t('tip_error', '错误', 'maker'));
+        return;
+      }
+      toast(t('icon_here_hint', '这张图当前用的是：{path}', 'maker')
+        .replace('{path}', info.resolved || info.current),
+        'info', t('icon', '图标', 'maker'));
     }
     /* 双击资源浏览里的一行 → 直接进入编辑已有资源界面。
        先拿 resources.detail 的完整数据（列表接口可能只带摘要），再灌进表单；失败就用列表那份。
@@ -5123,10 +7182,24 @@ const App = {
           ⚠️ 兜底（detail 接口不存在/失败）时用的是列表那份 —— 列表那一路是 mapItem 压平过的
              **字符串**，于是只有简体中文有内容（这是老后端的老行为，不是回归）。 */
     async function editExistingEntry(row) {
+      /* 云端镜像只读（m04892 第②项）：不许从云端那份进编辑，
+         否则用户改完点保存，写的是本地资源库，界面上那条云端记录却纹丝不动
+         —— 看起来像"保存没生效"。要改请先切回本地。 */
+      if (browserReadonly.value) {
+        toast(t('browser_readonly_cloud', '云端镜像是只读的：要修改请先切回「本地」', 'maker'),
+          'info', t('browser_source_cloud', '云端', 'maker'));
+        return;
+      }
       if (!row) return;
       if (row.code) browserSelected.value = row.code;
       let raw = row;
-      if (row.code) {
+      /* 本地档且现读成功 → 用 browse 那份原始 dict：三语言字典齐全，而且来源和眼前的列表是同一份。
+         读不到（后端没这个接口 / 这一档退回了 items）才走 resources.detail。 */
+      const mine = String(row.code || '');
+      const hit = mine && browserSource.value !== 'cloud' && browserRowsLoaded.value
+        && (browserRowsRaw.value || []).find((it) => String(it.code || '') === mine);
+      if (hit) raw = hit;
+      if (row.code && raw === row) {
         const result = await bridge.tryCall('resources.detail', row.code);
         if (result && result.ok && result.item) {
           /* 以列表那份打底、再用 detail 覆盖：detail 缺字段时不会把列表里已有的值弄丢，
@@ -5134,7 +7207,17 @@ const App = {
           raw = Object.assign({}, row, result.item);
         }
       }
-      loadResourceIntoForm(raw);
+      /* 以前这里没有任何兜底：loadResourceIntoForm 里八十多行顺序赋值，中间抛异常就会把
+         maker._loading 永久留在 true（函数开头置位、结尾才清），此后改名不再跟随、
+         改编号不再跟随，而且界面停在浏览页不给任何提示 —— 只能重启。m05525 的
+         「双击不跳转」正是同一类中断（rawName 越界），这次一并兜住。 */
+      try {
+        loadResourceIntoForm(raw);
+      } catch (error) {
+        maker._loading = false;
+        toast(String((error && error.message) || error), 'error', t('tip_error', '错误', 'maker'));
+        return;
+      }
       activeSection.value = 'form';
       toast(t('editing_existing_tip', '正在编辑「{name}」（{code}）：产出区可用「保存到原列表」写回这一条。', 'maker')
         .replace('{name}', pickI18n(raw.name, '') || row.name || '')
@@ -5143,6 +7226,11 @@ const App = {
     }
     /* 删掉载入到制作资源按钮对应的 loadSelectedIntoForm（双击已等效）。 */
     function deleteSelectedEntries() {
+      if (browserReadonly.value) {
+        toast(t('browser_readonly_cloud', '云端镜像是只读的：要修改请先切回「本地」', 'maker'),
+          'info', t('browser_source_cloud', '云端', 'maker'));
+        return;
+      }
       if (!browserSelected.value) {
         toast(t('先在表格里选一行', '先在表格里选一行', 'maker'),
           'warning', t('没有选中任何条目', '没有选中任何条目', 'maker'));
@@ -5272,7 +7360,7 @@ const App = {
         }
         const result = mergeEntries(items.value, incoming, batchDup.value);
         const yes = await openDialog({ title: t('确认合成', '确认合成', 'maker'),
-          body: t('confirm_merge_write', '将把 {n} 条新条目写入本机资源库：\n{path}\n\n（写入前会自动备份一份）', 'maker')
+          body: t('confirm_merge_write', '将把 {n} 条新条目写入本机资源库：\n{path}\n\n（写入前会把旧资源库滚动备份一份）', 'maker')
             .replace('{n}', result.added).replace('{path}', libraryFullPath()),
           confirmText: t('开始合成', '开始合成', 'maker'), cancelText: t('取消', '取消', 'maker') });
         if (!yes) return;
@@ -5290,9 +7378,10 @@ const App = {
           toast(written.error || t('write_failed', '写入失败', 'maker'), 'error', t('tip_error', '错误', 'maker'));
           return;
         }
-        toast(t('merged_ok', '已合并 {n} 条到资源库（已自动备份）', 'maker')
+        toast(t('merged_ok', '已合并 {n} 条到资源库（写盘前已滚动备份 1 份）', 'maker')
           .replace('{n}', written.added != null ? written.added : result.added)
-          + (written.skipped ? t('，跳过重复 {n} 条', '，跳过重复 {n} 条', 'maker').replace('{n}', written.skipped) : ''),
+          + (written.skipped ? t('，跳过重复 {n} 条', '，跳过重复 {n} 条', 'maker').replace('{n}', written.skipped) : '')
+          + librarySourceHint(),
           'success', t('完成', '完成', 'maker'));
         /* 写完把资源库重新拉一遍，页面上的条目列表立刻是最新的（不用手动刷新） */
         try { await loadResources(); } catch (e) { /* 刷新失败不影响已写入的结果 */ }
@@ -5338,8 +7427,9 @@ const App = {
       '',
       '【投稿表单】',
       '名称和标识 id 是必填项；编码由程序自动分配，不用手动改。',
-      '类别的可选项来自内置类别表，也可以直接输入新类别；标签默认跟着类别走，',
-      '手动改过标签之后就不会再自动覆盖，想恢复联动点「跟随类别」。',
+      '类别的可选项来自内置类别表，也可以直接输入新类别；标签默认留空。',
+      '类别和标签都属于「多语言字段」：切到哪个语言分段就填哪一种语言，三种语言各填各的；',
+      '内置项会自动显示成该语言的写法（如 Tools / 遊戲），输入任一种语言的写法都会认得出来。',
       '适用系统与 CPU 架构都可以多选，留空表示还没确定。',
       '',
       '【图标】',
@@ -5348,12 +7438,14 @@ const App = {
       '两套规则不一样是原版行为。',
       '',
       '【多语言字段】',
-      '默认开启。名称只是可选翻译，最终名称以「基本信息」里的为准；',
-      '三种语言完全相同时不会写成字典，仍然是一个纯字符串。',
+      '默认开启，里面是六个各自独立的输入池：名称、简介、应用介绍、补充、类别、标签。',
+      '切分段就是切池子，三种语言互不覆盖；名称默认跟着上方「名称」一起变，',
+      '在下面单独改过任何一种语言后就脱离跟随（点「跟随名称」可恢复）。',
+      '三种语言内容完全相同时不会写成字典，仍然是一个纯字符串/数组（老数据同形）。',
       '',
       '【产出】',
       '· 生成稿件：输出 <id>/resource.json + 说明文件（+ 图标），打包成 <id>.zip 发给作者；',
-      '· 追加到本机资源库：写入前自动备份到同级 backups/，只保留最近 20 份；',
+      '· 追加到本机资源库：写入前把旧文件滚动备份成固定名的 1 份（用户数据目录 backups/ToolsGCP-Resources.prev.json）；',
       '· 保存到原列表（仅编辑已有资源时出现）：把当前表单按原 id / 编码写回载入的那一条，不会新增重复条目；',
       '· 另存为独立资源库：走系统「另存为」，默认文件名 ToolsGCP-Resources.json，图标会复制到旁边的 Icon/；',
       '· 清空表单：只清界面，不会删除磁盘上的图片。',
@@ -5403,6 +7495,9 @@ const App = {
     const settingQuery = ref('');
     const currentSection = ref('appearance');
     const flashRow = ref('');
+    /* 本轮新增：滚动停稳后闪**整个板块**（用户要的是"对应区域闪两下"；
+       行级 flashRow 只服务搜索命中那条路径，两者独立、互不干扰）。 */
+    const flashSection = ref('');
     const recording = ref('');
     const apiKeyDraft = ref('');
     const apiKeyVisible = ref(false);
@@ -5684,14 +7779,17 @@ const App = {
          我不喜欢 换一个更贴切实际意思的图标」—— 齿轮在整个设置页到处都有，放这一行等于
          没有信息量；键盘才是"按哪几个键"的字面意思。dev 那条仍是 developer（开发者模式），
          两者不再撞同一个图标。 */
-      hotkey: 'keyboard', download: 'download', notification: 'megaphone',
+      hotkey: 'keyboard', download: 'download',
+      /* 本轮新增的「更新」分区：图标沿用 download（下载箭头）会和左边那一项撞成两个
+         一模一样的图标，看不出区别 —— 用 refresh（循环箭头 = "检查新版本"的字面意思），
+         和通知的 megaphone、功能的 application 也都不撞。 */
+      update: 'refresh', notification: 'megaphone',
       behavior: 'application', storage: 'folder',
       ai: 'robot', dev: 'developer', about: 'info',
     };
     function sectionIcon(key) { return SECTION_ICONS[key] || 'setting'; }
 
     const sections = computed(() => {
-      const splashOn = !!draft.splash_screen_enabled;
       const speedOn = !!draft.download_speed_limit_enabled;
       const localSource = draft.resource_source === 'local';
       const aiOn = !!draft.ai_enabled;
@@ -5739,10 +7837,15 @@ const App = {
               { value: 'reduced', label: t('motion_reduced', '减少动画') },
               { value: 'off', label: t('motion_off', '关闭动画') }] },
           { key: 'splash_screen_enabled', type: 'switch', label: t('splash_screen', '启动动画'),
-            tip: t('splash_screen_tip', '开启后，程序启动时将显示启动画面') },
-          { key: 'splash_screen_duration', type: 'slider', indent: true, label: t('splash_screen_duration', '启动动画时长'),
-            tip: t('splash_screen_duration_tip', '增加启动动画时长组件，是因为Python加载资源需要一点时间'),
-            min: 1, max: 5, step: 1, unit: t('seconds', '秒'), visible: splashOn },
+            /* 兜底文案与语言包 zh_CN 的 splash_screen_tip **逐字一致**（本轮需求：
+               时长设置项删掉了，画面存活期改由主流程决定，提示必须说明"自动消失"，
+               否则用户会以为还得自己去关它）。 */
+            tip: t('splash_screen_tip', '开启后，程序启动时显示启动画面，直到主界面就绪后自动消失') },
+          /* ⚠️ 本轮按需求**删除**了"启动动画时长"滑块（splash_screen_duration）：
+             「设置中的启动动画时长删除，这个从此就不要了……显示时长相关代码改为
+              程序什么时候出现这个悬浮启动画面就什么时候消失」。
+             后端 constants.py / settings_manager.py / shell.py / splash.py 已同步去掉
+             时长概念，app.splash_remaining 现在恒返回 0（见下面 boot 里的注释）。 */
           /* 滚动惯性（从功能搬进来）：滚停后保留一点点动量继续滑一小段。默认关闭。 */
           { key: 'scroll_inertia', type: 'switch', label: t('scroll_inertia', '滚动惯性'),
             tip: t('scroll_inertia_tip', '开启后，滚动页面停手时还会顺势滑行一小段（约 60~140px），像真实的惯性滚动。默认关闭') },
@@ -5824,18 +7927,28 @@ const App = {
           { key: 'search_source', type: 'select', width: 180, label: t('search_source', '搜索源'),
             tip: t('github_mirror_hint', '下面的镜像站会把上面的链接原样转发一份，国内下载通常快很多。这条不通就换一条，或者直接用上面的「下载」走 GitHub 官方。'),
             options: SOURCE_OPTIONS.map((v) => ({ value: v, label: v })) },
-          { key: 'download_source', type: 'select', width: 180, label: t('download_source', '下载源'),
+          /* ⚠️⚠️ 本轮（用户：「把下载来源改为下载源」）：这一行界面上一直显示「下载来源」而不是语言包里 settings 模块的「下载源」。
+             根因**不在文案**，在取值：app.js 的 t() 先查扁平 map，而扁平 map 是
+             I18nDomain.MODULES 声明序「先到先得」合并的 —— deploy(下载来源) 排在
+             settings(下载源) 之前，同一个 key 谁先入表谁赢，settings 那份永远被遮住。
+             修法 = t() 的第三参数按模块精确取值（t(key, fallback, 'settings') 直接读
+             I18N.modules.settings，优先于扁平 map）。
+             ⚠️ 刻意**不**去改 deploy_language.json 的那个键：部署页表头「安装路径·下载来源」
+                本来就该叫「下载来源」（那是软件自己的下载页），它没错；两边共用一个 key 才是问题，
+                按模块取值是代价最小的解法。同类重复键共 14 个，目前只有这一处会露出来。 */
+          { key: 'download_source', type: 'select', width: 180,
+            label: t('download_source', '下载源', 'settings'),
             tip: t('github_mirror_hint', '下面的镜像站会把上面的链接原样转发一份，国内下载通常快很多。这条不通就换一条，或者直接用上面的「下载」走 GitHub 官方。'),
             options: SOURCE_OPTIONS.map((v) => ({ value: v, label: v })) },
-          { key: 'update_channel', type: 'select', width: 180, label: t('update_channel', '更新下载渠道'),
-            tip: t('update_channel_tip', '决定「检查更新」愿意接受哪种发布：正式版 + Beta 版（默认）、只要正式版、或只要 Beta 版。'),
-            options: [{ value: 'all', label: t('update_channel_all', '下载正式版和Beta版') },
-              { value: 'stable', label: t('update_channel_stable', '仅下载正式版') },
-              { value: 'beta', label: t('update_channel_beta', '仅下载Beta版') }] },
-          { key: 'download_speed_limit_enabled', type: 'checkbox', label: t('download_speed_limit', '下载限速'),
-            statusText: speedOn ? (draft.download_speed_limit || 100) + ' MB/s' : t('unlimited', '无限制') },
-          { key: 'download_speed_limit', type: 'slider', indent: true, label: t('limit_speed', '限速'),
-            min: 1, max: 300, step: 1, unit: 'MB/s', visible: speedOn },
+          /* 本轮拆卡（用户：「设置中的下载像GCP-AI那样分成几个卡片ui板块」）。
+             分界按语义：卡 1 = 从哪取数据（资源来源 / 搜索源 / 下载源）；
+             卡 2 = 怎么落盘（多线程下载 / 失败重试次数 / 下载保存位置 / 下载限速）。
+             注意限速被挪到卡 2 的**最后一位**：用户原话是「把现在限制放到他们三个的
+                下面的位置也就是第四个位置，不要放到第一个位置」 —— 它原来排在卡 2 开头，
+                顺序错了会让人以为限速是下载的第一个开关。
+             cards 是多数组结构（和 GCP-AI 分区同款），模板对每个数组各画一张
+             .settings-card；整组都没有可见行时那张卡不画（cardHasVisibleRow）。 */
+        ], [
           /* ---------- 下载相关的新设置 ----------
              顺序按在下载保存位置上面位置新增一个多线程下载…和失败重试次数→
              多线程、失败重试在**上**，下载保存位置在**下**。
@@ -5852,6 +7965,37 @@ const App = {
             tip: t('set_download_save_dir_tip', '下载的文件存到哪里。留空 = 系统的「下载」文件夹（不再自动建 ToolsGCP 子目录）。'),
             action: 'choose_download_dir', actionLabel: t('choose_dir', '选择文件夹'),
             placeholder: defaultDownloadDirText() },
+          { key: 'download_speed_limit_enabled', type: 'checkbox', label: t('download_speed_limit', '下载限速'),
+            statusText: speedOn ? (draft.download_speed_limit || 100) + ' MB/s' : t('unlimited', '无限制') },
+          { key: 'download_speed_limit', type: 'slider', indent: true, label: t('limit_speed', '限速'),
+            min: 1, max: 300, step: 1, unit: 'MB/s', visible: speedOn },
+        ]] },
+        /* 「更新」分区（本轮需求：「新增一个更新板块 左侧栏也要同步有 把更新下载渠道和
+           自动检查更新放进这里面，左侧在下载和通知之间 右侧区域也是这个位置之间」）。
+           这两行原来混在下载区，但讲的是「更新怎么进行」，和下载文件本身无关，
+           拆出来语义才对得上。顺序 = download → update → notification：左侧栏与右侧内容区
+           用的是同一个 sections computed（模板 v-for sections），所以这里顺序对了，
+           两处位置会一起对上，不需要再维护第二份清单。 */
+        { key: 'update', label: t('update_section', '更新'), cards: [[
+          { key: 'update_channel', type: 'select', width: 180, label: t('update_channel', '更新下载渠道'),
+            tip: t('update_channel_tip', '决定「检查更新」愿意接受哪种发布：正式版 + Beta 版（默认）、只要正式版、或只要 Beta 版。'),
+            options: [{ value: 'all', label: t('update_channel_all', '下载正式版和Beta版') },
+              { value: 'stable', label: t('update_channel_stable', '仅下载正式版') },
+              { value: 'beta', label: t('update_channel_beta', '仅下载Beta版') }] },
+          /* ⚠️⚠️ 本轮新增（用户原话：「设置中的下载的更新下载渠道下面位置新增一个自动检查更新，
+             默认下拉框选择在右上角提示，还有弹窗提示和关闭，……关闭则是开启程序后不进行自动更新检查」）：
+             三态下拉，而不是开关 —— "发现新版后怎么打扰用户"本身就是三档：
+               corner（默认）= 启动后静默检查，发现新版从右上角滑出精简提示；
+               dialog        = 启动后静默检查，发现新版直接弹完整「发现新版本」窗；
+               off           = 启动后完全不检查（设置里的「检查更新」按钮仍可随时手动点）。
+             "在右上角提示"那句 = 本行下拉的悬浮说明（tip），和 update_channel_tip 同款形式。
+             ⚠️ 键名必须同步进 constants.py DEFAULT_SETTINGS + 浏览器模式兜底（见下一行注释），
+                不然后端设置合并/前端 draft 两边默认值会分叉。 */
+          { key: 'update_auto_check', type: 'select', width: 180, label: t('update_auto_check', '自动检查更新'),
+            tip: t('update_auto_check_tip', '打开程序后自动到 GitHub 看一眼有没有新版本。选「右上角提示」= 发现新版本时从屏幕右上角滑出一条精简提示（默认）；选「弹窗提示」= 直接弹完整的发现新版本窗口；选「关闭」= 启动后不自动检查，需要时自己去点「检查更新」。'),
+            options: [{ value: 'corner', label: t('update_auto_check_corner', '右上角提示') },
+              { value: 'dialog', label: t('update_auto_check_dialog', '弹窗提示') },
+              { value: 'off', label: t('update_auto_check_off', '关闭') }] },
         ]] },
         /* 分区整理：原功能区里混着的 通知 / 行为 / 授权 各自独立成区 */
         { key: 'notification', label: t('notification_section', '通知'), cards: [[
@@ -5937,6 +8081,12 @@ const App = {
               label: t('ai_reply_language', '回复语言'),
               tip: t('ai_reply_language_tip', '强制 GCP-AI 用某种语言回答；跟随输入语言 = 你用中文问就中文答。后端未就绪时此项仍可选，值照常保存'),
               options: aiReplyLangOptions() },
+            /* ★ 本轮按需求**删除**了设置页里的「对话模式」这一行（用户原话：
+               「删除对话模式的选项，但是 GCP-AI 聊天界面中的这个切换 ui 还是正常的，
+                只是删除设置中的这个」）。
+               注意：设置键 ai_chat_mode **保留**（constants.DEFAULT_SETTINGS、
+               后端 chat_mode()、输入框旁的 Chat/Agent 胶囊全都还认它），
+               胶囊继续读写同一个键并落盘 —— 删掉的只是设置页这一行 UI。 */
           ],
           [
             /* ══════════════════ 服务商配置（本轮设置页重构） ══════════════════
@@ -6006,11 +8156,50 @@ const App = {
     function jumpFirstHit() { if (settingHits.value.length) jumpToRow(settingHits.value[0]); }
     function jumpToRow(hit) {
       currentSection.value = hit.sectionKey;
-      scrollSection(hit.sectionKey);
-      flashRow.value = hit.sectionKey + '/' + (hit.key || 'x');
-      setTimeout(() => { flashRow.value = ''; }, 900);
+      /* 行级闪光也要**等滚动停稳再闪**（以前是立刻置位：人还在滚，闪光在被滚走的
+         画面上演完，等于没闪）；传进 scrollSection 的 second 参数统一调度。 */
+      scrollSection(hit.sectionKey, hit.key || hit.sectionKey);
     }
-    function scrollSection(key) {
+    /* ⚠️⚠️ 本轮需求（用户原话）：「点击设置中的左侧栏选项会滚动页面到对应位置时应该在
+       停止滚动页面时这个对应区域应该有那种闪两下的那种，之前我记得做过可以参考一下，
+       对了如果之前的没有做成停指滚动到对应位置时就闪修一下。」
+       旧实现的两个不合格点：① `jumpToRow`（搜索命中）是**立刻**闪、不等滚动停止；
+       ② `.setting-row.is-flash` 只闪一下（900ms ease 无 iteration）。
+       → 现在：scrollSection 之后启动 stopThenFlash —— 平滑滚动没有 scrollend 可用
+          （WebView2 的内核不保证支持），就用 rAF 轮询 scrollTop：**连续 100ms 不动
+          才算停稳**，2000ms 兜底（超远距离 + 低帧率也够）；停稳后给整个
+          `.settings-section` 挂 is-flash，CSS 侧 `flashSection … 2` 闪两下；
+          搜索命中额外再闪那一行。ui_animation=off 时滚动是瞬时的，轮询第一轮就判停，
+          闪光照常。 */
+    let flashStopToken = 0;
+    function stopThenFlash(sectionKey, rowKey) {
+      const host = settingsScroll.value;
+      if (!host) return;
+      /* 连点两个不同栏目：旧的轮询作废（token 自增），不作废的话两条轮询会
+         各自把 is-flash 挂到自己那一块上 —— 用户看到的是"两块同时在闪"。 */
+      const token = ++flashStopToken;
+      let last = host.scrollTop, stableMs = 0, waited = 0, prev = performance.now();
+      const tick = () => {
+        if (token !== flashStopToken) return;
+        const now = performance.now();
+        const dt = now - prev; prev = now; waited += dt;
+        stableMs = Math.abs(host.scrollTop - last) < 1 ? stableMs + dt : 0;
+        last = host.scrollTop;
+        if (stableMs >= 100 || waited >= 2000) {
+          flashSection.value = sectionKey;
+          if (rowKey) flashRow.value = sectionKey + '/' + rowKey;
+          setTimeout(() => {
+            if (token !== flashStopToken) return;
+            if (flashSection.value === sectionKey) flashSection.value = '';
+            if (rowKey && flashRow.value === sectionKey + '/' + rowKey) flashRow.value = '';
+          }, 1400);                          // 650ms × 2 下 + 余量（CSS 改时长记得同步这里）
+          return;
+        }
+        requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }
+    function scrollSection(key, flashRowKey) {
       currentSection.value = key;
       const host = settingsScroll.value;
       const el = host && host.querySelector('.settings-section[data-key="' + key + '"]');
@@ -6027,6 +8216,8 @@ const App = {
       /* 关闭动画时连"平滑滚动"也关掉（它是 JS 行为，不走 CSS 过渡） */
       host.scrollTo({ top: Math.max(0, el.offsetTop - 6),
         behavior: settings.ui_animation === 'off' ? 'auto' : 'smooth' });
+      /* 本轮：点左栏 → 滚动**停稳后**闪这个板块两下（flashRowKey 传了则连带闪那一行） */
+      stopThenFlash(key, flashRowKey || '');
     }
     /* ---------- 左栏选中 ↔ 滚动 的状态机 ----------
        spyMode：'free' = scrollspy 跟随滚动；'locked' = 程序化滚动（点左栏/点搜索结果），
@@ -6152,7 +8343,17 @@ const App = {
          · 关闭AI Agent     → 一并关闭插件制作辅助；
          · 只开AI Agent**不**会自动开插件制作辅助（/plugin 门控保持独立，见 ）。
          后端 ai.set_agent_enabled 的配置页开关同一口径（desktop/api/ai.py）。 */
-      if (key === 'gcp_ai_agent_enabled' && value === false && settings.gcp_plugin_maker_enabled) {
+      /* ⚠️ gcp_ai_agent_enabled 现在是**强制开启**（manifest.locked）：这里不再做
+         "关 Agent → 连带关制作辅助"的联动（那个方向已经没有意义了）。
+         保留"开制作辅助 → 带开 Agent"这一条（虽然 Agent 恒开，但设置值要一致）。 */
+      if (key === 'gcp_ai_agent_enabled' && value === false) {
+        /* 强制开启：写回去 true，别让界面显示成"关"而实际还在工作 */
+        settings.gcp_ai_agent_enabled = true;
+        draft.gcp_ai_agent_enabled = true;
+        settingsState.value = settings;
+        bridge.tryCall('settings.set', 'gcp_ai_agent_enabled', true, false).catch(() => {});
+      }
+      if (false && key === 'gcp_ai_agent_enabled' && value === false && settings.gcp_plugin_maker_enabled) {
         settings.gcp_plugin_maker_enabled = false;
         draft.gcp_plugin_maker_enabled = false;
         settingsState.value = settings;
@@ -6194,6 +8395,10 @@ const App = {
                放在设置里会把窗口标题改成ToolsGCP · resources。已删（同 toggleFavorite 的处理）。 */
         await loadResources();
             await loadFavorites();
+            /* 浏览表的「云端」档读的是本地镜像文件；来源切到云端后镜像可能被后台拉新，
+               不重读这张表就会停在旧内容上。表格选择本身仍与设置解耦（两档各读各的文件），
+               这里只是让「镜像变了」这件事及时反映出来。 */
+            if (browserSource.value === 'cloud') loadBrowserRows().catch(() => {});
             toast(t('resource_source', '资源来源') + '：已更新，正在重新读取资源库', 'info');
             /* 切到云端且后端有 cloud_refresh 接口时，后台检查/拉取一次最新资源库。
                刻意不 await —— 网络慢也不能卡住设置页；状态行自己会显示"正在检查…"→ 版本号。 */
@@ -6255,8 +8460,6 @@ const App = {
       let next = value;
       if (row.key === 'download_speed_limit') {
         next = Math.max(1, Math.min(300, parseInt(value, 10) || 100));
-      } else if (row.key === 'splash_screen_duration') {
-        next = Math.max(1, Math.min(5, parseInt(value, 10) || 2));
       } else if (row.key === 'scroll_inertia_strength') {
         /* 惯性大小：手输时也钉在 1~100，非法输入回落到默认 35（与 constants.py 一致） */
         next = Math.max(1, Math.min(100, parseInt(value, 10) || 35));
@@ -6299,6 +8502,21 @@ const App = {
       applyAppearance();
       /* 资源库的 name/description/intro 已按旧语言拍平，重取一次 */
       try { await loadResources(); } catch (error) { /* 列表刷新失败不影响语言本身 */ }
+      /* 「更多筛选」里类别/标签/系统三组候选的中文名是后端翻好送来的，
+         前端 t() 换不掉 ⇒ 跟着新语言重拉（需求：第四轮②）。 */
+      try { await loadFilterOptions(); } catch (error) { /* 失败就沿用旧候选，不影响语言切换本身 */ }
+      /* 收藏夹列表同理：默认夹显示名是后端按语言算的（favorites.list），
+         不重拉就会一直停在切换前那门语言（用户报：界面切了语言、收藏夹那侧不动）。 */
+      try { await loadFavorites(); } catch (error) { /* 拉不到不影响语言本身 */ }
+      /* 投稿表单的「多语言字段」分段也要跟上界面语言（用户报的 bug：
+         在设置里切到 English 后，投稿页的类别/标签（含下拉框内容）还是简体中文）。
+         原因：类别/标签按**分段语言**显示（makerCategoryText 用 termIn(makerSegLang)），
+         而分段索引以前只在「清空表单」「载入条目」时落到界面语言那一份，
+         切语言本身没同步 ⇒ 分段还停在旧语言，于是整块还是旧语言的写法。
+         这里跟 clearForm / loadResourceIntoForm 的口径保持一致：
+         分段 = 界面语言 ⇒ 切语言后分段、类别/标签输入框、下拉框候选一起换语言。 */
+      const segIndex = makerLanguages.indexOf(uiLanguage());
+      if (segIndex >= 0 && i18nLangIndex.value !== segIndex) i18nLangIndex.value = segIndex;
       toast(t('language_switched', '界面语言已切换为 {lang}').replace('{lang}', value), 'success');
     }
     /* ⚠️ 本轮删除 onProviderChange()（原实现会在切换服务商时执行
@@ -6466,27 +8684,26 @@ const App = {
       if (page.value !== 'settings') return false;
       return String(apiKeyDraft.value || '') !== String(apiKeySnapshot.value || '');
     }
-    async function toggleKeyVisible() {
-      if (!apiKeyVisible.value) {
-        /* 只有在输入框为空时才去后端取已保存的明文；否则会把用户正在输入的新 key 覆盖掉
-           ⚠️ 本轮：服务商弹窗里 Key 按**档案 id** 存（apiKeyProfileId 非空），
-              必须走 `ai.reveal_profile_key`；按厂商读会读到另一条档案/旧厂商槽，
-              表现就是"点小眼睛出来的不是这条档案的 Key"。 */
-        if (!String(apiKeyDraft.value || '').trim()) {
-          const profId = String(apiKeyProfileId.value || '');
-          const result = profId
-            ? await bridge.tryCall('ai.reveal_profile_key', profId)
-            : await bridge.tryCall('settings.reveal_api_key',
-              String(draft.ai_provider || 'deepseek'));
-          if (!result) return needApi('ai.reveal_profile_key', '读取 API Key');
-          if (result.ok) {
-            apiKeyDraft.value = result.value || '';
-            apiKeySnapshot.value = result.value || '';
-          } else toast(result.error || t('key_read_failed', '读取 API Key 失败'), 'error');
-        }
-      }
+    /* ⚠️⚠️ 本轮（用户原话）：「apikey新增加密功能，保存后下次再打开编辑服务商或者
+       直接找到相对应配置文件都不直接是apikey保存，而且编辑服务商界面的apikey输入框
+       会提示已填写apikey，以进行相对应加密服务…」
+       → 输入框里**永远不再回显明文**：小眼睛只负责"把你自己刚敲的新 Key 从圆点变明文"。
+       已保存的 Key 走 DPAPI 密文槽（settings_manager.py 的 api_key_enc_<槽位>），
+       界面只知道"配没配"（apiKeyConfigured），拿不到也不需要拿明文。
+       所以这里**不再**调 ai.reveal_profile_key / settings.reveal_api_key。 */
+    function toggleKeyVisible() {
+      if (!String(apiKeyDraft.value || '').trim()) return;   // 没有新输入 ⇒ 无内容可显示
       apiKeyVisible.value = !apiKeyVisible.value;
     }
+    /* 输入框占位文案：已配置时明确告诉用户"已经有了、是加密存的"，只是不回显 */
+    const apiKeyPlaceholder = computed(() => (apiKeyConfigured.value
+      ? t('api_key_saved_ph', '已填写（已加密），输入新的 Key 可替换')
+      : t('api_key_placeholder', '请输入 API Key')));
+    /* 已配置时才显示的一行说明（放在输入框下面） */
+    const apiKeySavedHint = computed(() => (apiKeyConfigured.value
+      ? t('api_key_saved_hint',
+        '已用 Windows DPAPI 加密保存在本机，出于安全不再回显；需要更换时直接输入新的 Key。')
+      : ''));
     function normalizeApiBase(base) {
       let value = String(base || '').trim();
       if (value && !/^https?:\/\//i.test(value)) value = 'https://' + value;
@@ -6507,13 +8724,21 @@ const App = {
       if (await saveSetting('api_base', base) === false) return false;
       if (await saveSetting('model_name', String(draft.model_name).trim()) === false) return false;
       const key = String(apiKeyDraft.value || '').trim();
-      /* ⚠️ 本轮修复「手动清空后点保存，存储里还是旧 Key」：
-         旧写法 `if (key) { ...保存... } else { 只 toast }` —— 空串**根本不发请求**，
-         后端那条 DPAPI 密文槽还躺在配置里，于是：
-           · 日志/配置文件显示"已配置"，AI 页模型下拉照旧（用户说的"GCP-AI 里还是之前
-             有 apikey 的状态"）；
-           · 用户以为清了，其实什么都没发生。
-         现在空值也**照样调后端**（settings.set_api_key 传 ''，由后端真正清槽落盘）。 */
+      /* ⚠️⚠️ 本轮（Key 不再回显之后的新语义）：
+         输入框空着**不再等于**"用户要清空" —— 已保存的 Key 从不出现在框里，空框是常态。
+         真正的清空走旁边那颗「清空」按钮（clearApiKey）。所以这里：
+           · 已配置 + 空框 ⇒ 视为「没改动」，不发请求，原 DPAPI 密文槽原样保留；
+           · 未配置 + 空框 ⇒ 明确提示先填 Key（旧版会静默发空串，等于什么都没做
+             却弹一句"已清空"，用户以为存上了）。 */
+      if (!key) {
+        if (apiKeyConfigured.value) {
+          apiKeySnapshot.value = '';
+          toast(t('api_key_kept', '已保存的 API Key 未改动（已加密存储）'), 'info');
+          return true;
+        }
+        toast(t('api_key_required', '请先填写 API Key'), 'error');
+        return false;
+      }
       /* ⚠️ Key 按服务商分槽存储：必须带上当前 ai_provider，
          否则切过服务商后会把 Key 存进旧服务商槽，聊天时后端读不到。 */
       const saved = await bridge.tryCall('settings.set_api_key', key,
@@ -6530,9 +8755,8 @@ const App = {
          事件驱动重载**收不到**（app.js:9439）。必须手动让模型候选重载：
          未填 Key 的服务商整组都不该再出现在模型切换 UI 里（需求原话）。 */
       loadAiModelChoices();
-      toast(key ? t('api_key_saved', '模型名称与 API Key 已保存')
-                : t('api_key_cleared', 'API Key 已清空'),
-            key ? 'success' : 'info');
+      /* 走到这里 key 一定非空（空值在上面两条分支里就返回了），所以只有"已保存"一种结果 */
+      toast(t('api_key_saved', '模型名称与 API Key 已保存'), 'success');
       return true;
     }
     async function clearApiKey() {
@@ -6554,18 +8778,10 @@ const App = {
     async function loadApiKeyForProvider(provider) {
       const pid = String(provider || 'deepseek');
       const state = await bridge.tryCall('settings.api_key_state', pid);
-      if (state && state.ok) apiKeyConfigured.value = !!state.configured;
-      if (state && state.ok && state.configured) {
-        const revealed = await bridge.tryCall('settings.reveal_api_key', pid);
-        if (revealed && revealed.ok) {
-          apiKeyDraft.value = String(revealed.value || '');
-          apiKeySnapshot.value = apiKeyDraft.value;
-          return;
-        }
-      }
+      /* ⚠️ 只读"配没配"，**不取明文**（见 toggleKeyVisible 上方那段说明：界面永不回显）。 */
+      apiKeyConfigured.value = !!(state && state.ok && state.configured);
       apiKeyDraft.value = '';
       apiKeySnapshot.value = '';
-      apiKeyConfigured.value = false;
       /* ⚠️ 本轮需求（用户原话）：「设置中切换服务商弹出未填写apikey提示不要了」。
          切服务商时这家没存 Key 是**常态**（用户就是在挨个试服务商），
          每次切都弹一条 info toast 只是噪音；输入框空着 + 「已配置」标记灭
@@ -6717,6 +8933,10 @@ const App = {
             只有「自定义」保留地址输入框（那家没有官方地址可补）。
        ⚠️ 顺带一个好处：不依赖后端也能开弹窗（浏览器模式 / 后端未就绪时不再空转）。 */
     async function aiAddProfile() {
+      /* ⚠️ 每次打开"添加服务商"都从**空暂存**开始：上一次弹窗里没保存就关掉的
+         各家草稿不能复活到这一次（用户没见过那个状态，比丢失更让人困惑）。
+         暂存只活在"本次弹窗开着"的这段时间内，也绝不落盘。 */
+      scratchReset();
       await loadAiProviderCatalog();
       const draft = Object.assign(aiProfileBlankDraft(), { _editing: false });
       aiProfileEditing.value = draft;
@@ -6733,6 +8953,7 @@ const App = {
           按 provider 读写是"列表里有服务商但模型下拉全空"的根因。 */
     async function aiEditProfile(prof) {
       if (!prof) return;
+      scratchReset();          // 同 aiAddProfile：编辑态也不携带上一次的临时草稿
       await loadAiProviderCatalog();
       aiProfileEditing.value = {
         id: String(prof.id || ''),
@@ -6758,15 +8979,9 @@ const App = {
       apiKeyProfileId.value = String(profileId || '');
       const state = await bridge.tryCall('ai.profile_key_state', String(profileId || ''));
       if (state && state.ok) {
+        /* ⚠️ 只取"配没配"这一个布尔值：已保存的 Key 是 DPAPI 密文，界面不回显明文，
+           输入框留给"输入新 Key 替换"。见 toggleKeyVisible 上方那段说明。 */
         apiKeyConfigured.value = !!state.configured;
-        if (state.configured) {
-          const revealed = await bridge.tryCall('ai.reveal_profile_key', String(profileId || ''));
-          if (revealed && revealed.ok) {
-            apiKeyDraft.value = String(revealed.value || '');
-            apiKeySnapshot.value = apiKeyDraft.value;
-            return;
-          }
-        }
         apiKeyDraft.value = '';
         apiKeySnapshot.value = '';
         return;
@@ -6783,18 +8998,105 @@ const App = {
           看着填了、保存的却是另一家的槽，聊天必然 401）。
        ⚠️ 只在新建时重置模型名称标签；编辑已有档案时厂商下拉本来就 disabled，
           不会走到这里覆盖用户自己起的名字。 */
+    /* ══════════ 添加服务商弹窗：未选厂商时锁定下方 + 切换厂商的**临时**暂存 ══════════
+       本轮需求（用户原话）：「GCP-AI的添加服务商弹窗默认为请选择服务商的下拉框，
+       那下面所有的包括 API Key 和支持模型 和 token限制输出 都要变为灰色不可点击状态，
+       期间切换服务商下面的状态也应该不变 再切回来还是之前的状态
+       （**不是永久存储是临时的，不要存储在文件中**）。」
+
+       两件事分开做：
+       ① 锁定：`aiProfLocked`（弹窗打开 且 没选中厂商 且 不是"编辑已有档案"）
+          → 模板给表单加 is-locked，CSS 置灰 + pointer-events:none，
+            并且**所有控件同时带 :disabled**（只靠 CSS 的话键盘 Tab 还能聚焦进去改值，
+            那正是"看着灰着其实还能填"的经典假禁用）。
+       ② 暂存：`profScratch` —— 一个**只在本次弹窗生命周期内存在**的内存对象，
+          按厂商 id 分格存 模型名称标签 / 支持模型 / token 三项 / API Key 草稿。
+          ⚠️ 三条红线：
+            · 绝不写进 settings / 后端（写了就是"永久存储"，用户明确否决）；
+            · Key 草稿也在里面 —— 它本来就是内存态（apiKeyDraft），
+              这里只是把"切走再切回不丢"补齐，不新增任何落盘路径；
+            · 关闭 / 取消 / 保存 三个出口都清空（aiCancelProfile / aiSaveProfile /
+              aiAddProfile / aiEditProfile），否则上一次没保存的草稿会"复活"到
+              下一次弹窗里 —— 那是用户没见过的状态，比丢失更糟。 */
+    const profScratch = {};
+    function scratchReset() {
+      Object.keys(profScratch).forEach((k) => { delete profScratch[k]; });
+    }
+    function scratchStore(pid, editing) {
+      if (!pid || !editing) return;
+      profScratch[pid] = {
+        label: editing.label || '',
+        models: (editing.models || []).slice(),
+        api_base: editing.api_base || '',
+        limit_token: !!editing.limit_token,
+        min_token: editing.min_token,
+        max_token: editing.max_token,
+        key: apiKeyDraft.value || '',
+        keyConfigured: !!apiKeyConfigured.value,
+      };
+    }
+    function scratchTake(pid, editing) {
+      const saved = profScratch[pid];
+      if (!saved || !editing) return false;
+      editing.label = saved.label;
+      editing.models = saved.models.slice();
+      editing.model = editing.models.length ? editing.models[0] : '';
+      editing.api_base = saved.api_base;
+      editing.limit_token = saved.limit_token;
+      editing.min_token = saved.min_token;
+      editing.max_token = saved.max_token;
+      apiKeyDraft.value = saved.key;
+      apiKeyConfigured.value = saved.keyConfigured;
+      apiKeySnapshot.value = '';
+      apiKeyVisible.value = false;
+      return true;
+    }
+    /* 锁定判定：新建（非编辑）+ 厂商还没选 ⇒ 下方一切不可用 */
+    const aiProfLocked = computed(() => {
+      const e = aiProfileEditing.value;
+      if (!e || e._editing) return false;
+      return !String(e.provider || '').trim();
+    });
+
     async function aiProfilePickVendor(pid) {
       const editing = aiProfileEditing.value;
       if (!editing) return;
-      editing.provider = String(pid || '');
+      const next = String(pid || '');
+      const prev = String(editing.provider || '');
+      /* ② 先把**当前厂商**的填写暂存起来（含只是切走没保存的），
+         再决定新厂商显示什么 —— 顺序反了会把 A 的内容存到 B 的名下。 */
+      scratchStore(prev, editing);
+      editing.provider = next;
+      /* 接口地址：只有「自定义」这一家需要用户自己填（内置厂商交给后端按官方值补齐），
+         所以只在 custom 上暂存/恢复。
+         ⚠️ 内置厂商这一支**不能无条件清空 api_base**：模板里厂商下拉在"编辑已有档案"时
+            是禁用的，但"依赖另一个组件的禁用状态"是脆弱契约 —— 万一以后这里被别处
+            调用（或下拉改成可换厂商），无条件清空就会把用户已存档案的地址抹掉。
+            编辑态一律不动 api_base。 */
+      if (next === 'custom') {
+        editing.api_base = (profScratch[next] && profScratch[next].api_base) || editing.api_base || '';
+      } else if (!editing._editing) {
+        editing.api_base = '';
+      }
+      /* 命中暂存 = "切回来还是之前的状态"；没命中 = 该厂商第一次选，铺官方初值。
+         ⚠️ 暂存命中时**不能**再跑下面那段"重新取官方清单覆盖 models"，
+            否则用户刚勾掉的模型会被重新勾回来（= 切回来状态变了）。 */
+      if (scratchTake(next, editing)) {
+        /* 命中暂存 ⇒ 标签**不重算**：scratchTake 恢复的就是用户上一次给这家填的值
+           （哪怕他手动改成"我的 DeepSeek"也原样回来）。
+           ⚠️ 这里绝不能再按"新建"去覆盖 label —— 覆盖一次就等于"切回来状态变了"，
+              正是本轮要修掉的点。 */
+        apiKeyProfileId.value = '';
+        return;
+      }
       const entry = (aiProviderCatalog.value || [])
-        .find((p) => p.provider === editing.provider) || {};
+        .find((p) => p.provider === next) || {};
       /* 支持模型：重新取官方清单，并把它作为"已勾选"的初始状态 */
       const models = Array.isArray(entry.models) ? entry.models.slice() : [];
       editing.models = models;
       editing.model = models.length ? models[0] : '';
       /* 模型名称标签：没被用户改过时跟着换成新厂商的品牌名 */
-      if (!editing._editing) editing.label = aiProfBrandLabel(editing.provider);
+      if (!editing._editing) editing.label = aiProfBrandLabel(next);
       /* Key 草稿清空：新建的档案还没有 id，槽自然是空的 */
       apiKeyDraft.value = '';
       apiKeySnapshot.value = '';
@@ -6841,6 +9143,14 @@ const App = {
       const backdrop = event && event.currentTarget;
       if (!backdrop || !backdrop.querySelector) return;
       if (event.button !== 0) return;             // 只认左键（中键/右键别关）
+      /* ★ 本轮修复（用户原话：「添加服务商的弹窗口如果按功能按键这个窗口会消失」）：
+         用键盘（Enter/Space 等"功能按键"）激活弹窗里的按钮时，浏览器会补发一个
+         **合成 click**，它的 clientX/clientY 恒为 0（左上角）—— 0,0 永远落在面板
+         矩形之外，几何判定就把它当成"点了遮罩空白处" → 弹窗当场消失。
+         Event.detail 是点击次数：鼠标真实点击 ≥1，键盘合成 click = 0。
+         ⇒ detail=0（外加坐标恰为 (0,0) 这道保险）一律不认，键盘激活绝不再误关弹窗。 */
+      if (event.detail === 0) return;
+      if (!event.clientX && !event.clientY) return;
       const panel = backdrop.querySelector('.ai-prof-modal');
       if (!panel) return;
       const rect = panel.getBoundingClientRect();
@@ -6852,6 +9162,7 @@ const App = {
     }
 
     function aiCancelProfile() {
+      scratchReset();          // 本轮新增的临时暂存随弹窗一起作废（本来就不落盘）
       aiProfileEditing.value = null;
       aiProfileNewModel.value = '';
       apiKeyDraft.value = '';
@@ -6930,6 +9241,7 @@ const App = {
          以磁盘上的真实状态为准。旧后端没有 ai.set_profile_key 时也要重拉，
          所以这里放在"有没有存 Key"之外，无条件执行。 */
       await loadAiProfiles();
+      scratchReset();          // 已落盘 ⇒ 暂存作废（下次弹窗从干净状态开始）
       aiProfileEditing.value = null;
       apiKeyVisible.value = false;
       apiKeyProfileId.value = '';
@@ -7224,6 +9536,9 @@ const App = {
       updateState.percent = 100;
       updateState.path = String(payload.path || '');
       updateState.filename = String(payload.filename || 'ToolsGCP.exe');
+      /* 右上角精简卡收起：下载已经有结果了，它的使命（"发现新版"）结束，
+         继续挂着会和下面的"更新包已下载"弹窗重复。 */
+      updateCorner.show = false;
       if (payload.ok === false) {
         updateState.error = String(payload.error || t('download_failed_short', '下载失败'));
         toast(t('update_download_failed', '更新包下载失败：{err}')
@@ -7234,6 +9549,7 @@ const App = {
     });
     onEvent('update.error', (payload) => {
       updateState.downloading = false;
+      updateCorner.show = false;               // 同 update.done：有结果就别再挂着精简卡
       updateState.error = String((payload && payload.error) || t('download_failed_short', '下载失败'));
       toast(t('update_download_failed', '更新包下载失败：{err}')
         .replace('{err}', updateState.error), 'error');
@@ -7241,13 +9557,15 @@ const App = {
     function showUpdateReadyDialog(payload) {
       const p = payload || {};
       const size = humanSize(p.size || updateState.total || updateState.received);
-      const laterLabel = t('later', '稍后');
+      /* 「稍后」→「取消」（用户：把之前**所有的**更新弹窗的稍后改为取消）。
+         正文里那句"选择「稍后」"同步改成「取消」，不然文案和按钮对不上。 */
+      const laterLabel = t('update_btn_cancel', '取消');
       const nowLabel = t('restart_and_update', '立即重启并更新');
       openDialog({
         title: t('update_ready_title', '更新包已下载'),
         wide: false,
         body: t('update_ready_body',
-          '新版本已经下载到临时目录。现在重启程序就会替换成新版本；选择「稍后」则先不重启（更新包会保留在临时目录，下次仍可手动更新）。'),
+          '新版本已经下载到临时目录。现在重启程序就会替换成新版本；选择「取消」则先不重启（更新包会保留在临时目录，下次仍可手动更新）。'),
         rows: [
           { k: t('update_file', '更新文件'), v: p.filename || updateState.filename || 'ToolsGCP.exe' },
           { k: t('update_file_size', '文件大小'), v: size, strong: true },
@@ -7309,74 +9627,193 @@ const App = {
       needApi('update.download', '下载更新包');
       openLink(downloadUrl);
     }
-    async function checkUpdate() {
-      if (checkingUpdate.value) return;
-      checkingUpdate.value = true;
-      const repo = 'Galen563/ToolsGCP';
-      const url = 'https://api.github.com/repos/' + repo + '/releases?per_page=20&_=' + Date.now();
+    /* ══════════ 更新检查（本轮重构，用户原话拆四条）══════════
+       · 「新增一个自动检查更新…开启程序后如果发现新版本从右上角滑动出来精简通知，
+          点击查看详情变成弹窗形式；精简态有 取消/立即下载；弹窗提示和主动点
+          「检查更新」的弹窗一样，不过点空白处要能关闭」
+       · 所以网络与判定逻辑抽成 _fetchNewRelease()，三个入口共用：
+           手动检查（设置/关于页按钮）、自动-弹窗模式、自动-右上角提示模式。
+       ⚠️ manual=false 时**任何失败路径都静默**（网络不通/渠道没 exe/已是最新
+          都不许弹 toast）：开机自动检查弹一串错误提示是打扰。 */
+    const UPDATE_REPO = 'Galen563/ToolsGCP';
+    async function _fetchNewRelease(manual) {
+      const url = 'https://api.github.com/repos/' + UPDATE_REPO
+        + '/releases?per_page=20&_=' + Date.now();
       const data = await fetchJson(url);
       if (!Array.isArray(data)) {
-        checkingUpdate.value = false;
-        toast(t('update_err_network', '网络连接失败，请检查网络后重试'), 'error');
-        return;
+        if (manual) toast(t('update_err_network', '网络连接失败，请检查网络后重试'), 'error');
+        return null;
       }
       if (!data.length) {
-        checkingUpdate.value = false;
-        toast(t('update_err_no_release', '作者还没有发布任何版本'), 'error');
-        return;
+        if (manual) toast(t('update_err_no_release', '作者还没有发布任何版本'), 'error');
+        return null;
       }
-      const channel = draft.update_channel || 'all';
+      const channel = draft.update_channel || settings.update_channel || 'all';
       const pool = channel === 'stable' ? data.filter((r) => !r.prerelease)
         : channel === 'beta' ? data.filter((r) => r.prerelease) : data;
-      /* ⚠️⚠️ 只有**带了 ToolsGCP.exe 的版本**才算"可更新的版本"。
-         ⚠️ 为什么要筛：仓库里可能有只带源码包 / 只带其它附件的 tag（比如测试版）。
-            之前直接取 pool[0] 就说"已是最新版本"，但那个版本**根本没安装包**，
-            用户点了也下不到 —— 现在只认有 ToolsGCP.exe的版本。
-         ⚠️ 找 exe 时不区分大小写（GitHub 上传的可能是 toolsgcp.exe）。 */
+      /* ⚠️⚠️ 只有**带了 ToolsGCP.exe 的版本**才算"可更新的版本"（找 exe 不区分大小写）。 */
       const hasExe = (rel) => (rel.assets || []).some(
         (a) => String(a.name || '').toLowerCase() === 'toolsgcp.exe');
       const usable = pool.filter(hasExe);
       const latest = usable[0];
       if (!latest) {
-        checkingUpdate.value = false;
-        /* ⚠️ 区分两种情况给不同的话：
-           · 渠道里一个带 exe 的版本都没有 → 明确说"没有带安装包的版本"；
-           · 渠道里有，但都比当前版本旧 → 才是"已是最新版本"。 */
-        if (pool.length) {
-          toast(t('update_latest', '当前已是最新版本（v{v}）').replace('{v}', info.version), 'success');
-        } else {
-          toast(t('update_err_no_exe', '所选更新渠道还没有带 ToolsGCP.exe 的版本'), 'info');
+        if (manual) {
+          if (pool.length) {
+            toast(t('update_latest', '当前已是最新版本（v{v}）').replace('{v}', info.version), 'success');
+          } else {
+            toast(t('update_err_no_exe', '所选更新渠道还没有带 ToolsGCP.exe 的版本'), 'info');
+          }
         }
-        return;
+        return null;
       }
       const tag = String(latest.tag_name || '').replace(/^v/i, '');
       if (!isNewer(tag, info.version)) {
-        checkingUpdate.value = false;
-        toast(t('update_latest', '当前已是最新版本（v{v}）').replace('{v}', info.version), 'success');
-        return;
+        if (manual) toast(t('update_latest', '当前已是最新版本（v{v}）').replace('{v}', info.version), 'success');
+        return null;
       }
-      /* ⚠️ 只认 ToolsGCP.exe（没有就当这个版本不可更新），不再退化到"第一个附件" ——
-         那个附件可能是校验文件 / 源码包，下载下来根本不是程序。 */
       const asset = (latest.assets || []).find(
         (a) => String(a.name || '').toLowerCase() === 'toolsgcp.exe');
-      checkingUpdate.value = false;
+      return {
+        latest, tag, asset,
+        pageUrl: latest.html_url || 'https://github.com/' + UPDATE_REPO + '/releases',
+      };
+    }
+    /* 完整"发现新版本"弹窗。closable：点遮罩空白能不能关 ——
+       ⚠️ 用户点名：「记住点击空白处窗口不会自行关闭的bug」（更新类弹窗必须能点空白关）。
+       默认 true；只有历史行为明确要"拦住误关"的场景才传 false。
+       fromAuto（本轮新增）：这次弹窗是**自动检查**（弹窗提示模式 / 右上角卡的查看详情）
+       引出来的 —— 只有这种情况下点「取消」才记成"跳过该版本"；
+       用户在设置里主动点「检查更新」时传 false（那是他自己要查的，不该顺手静音，
+       否则会出现"我点检查更新点了个寂寞，下次自动检查再也不提示了"）。 */
+    function openUpdateDialog(hit, closable, fromAuto) {
+      const latest = hit.latest, asset = hit.asset;
       openDialog({
         title: t('update_available', '发现新版本'), wide: true,
+        backdropClose: closable !== false,
+        /* ── 版式参考旧 PyQt 版 update_dialog.UpdateAvailableDialog：
+              抬头（56×56 logo + 大字版本 + 版本类型徽章）→ 事实表 → 更新说明面板。
+           ⚠️ 预发布判定只看 Release 的 prerelease 字段，**不拿版本号猜**。 */
+        head: {
+          text: String(latest.tag_name || '').trim() || ('v' + hit.tag),
+          badge: latest.prerelease ? t('update_badge_prerelease', 'Beta 版')
+            : t('update_badge_stable', '正式版'),
+          badgeKind: latest.prerelease ? 'prerelease' : 'stable',
+        },
+        /* 右上角纯图标 = 打开发布页；提示文案用语言包早就有的 update_btn_open_page。 */
+        link: { url: hit.pageUrl, tip: t('update_btn_open_page', '打开发布页') },
+        /* ⚠️⚠️ 排版（本轮需求：「文件大小和发布日期太挤了…分别放在当前版本和
+           最新版本的右侧位置」）：四格栅格 ——
+             当前版本 | 最新版本
+             文件大小 | 发布日期
+           原来五行竖排时"更新文件(exe 名)"和"文件大小"挤在一栏；exe 名这一行
+           按用户话移除（抬头已经有版本号大字 + 右上角就能打开发布页）。
+           side 属性由模板画成右侧第二格的值。 */
+        /* ⚠️⚠️ 本轮两处纠正（用户原话：「更新弹窗中的文件大小和最新版本位置交换，
+           并在[新]版本下面新增一个更新文件（这个我上个对话没跟你说要删除）」）：
+           ① 上一轮我把"文件大小和发布日期分别放在当前版本和最新版本的右侧"
+              实现成了「当前版本|最新版本 / 文件大小|发布日期」（两行同类并排），
+              读错了语义 —— 要的是一行一个版本、右边跟着它自己的附属信息：
+                当前版本 | 文件大小
+                最新版本 | 发布日期
+                更新文件（跨右侧整列，文件名长也不挤）
+           ② 「更新文件」那一行是**我擅自删掉的**（当时觉得抬头已有版本号、右上角
+              又能跳发布页），用户明确说他没要求删 → 恢复。 */
         rows: [
-          { k: t('update_current_version', '当前版本'), v: 'v' + info.version },
-          { k: t('update_latest_version', '最新版本'), v: latest.tag_name, strong: true },
-          { k: t('update_asset', '更新文件'), v: asset ? asset.name : '—' },
-          { k: t('update_size', '文件大小'), v: asset ? (Math.round(asset.size / 1048576 * 10) / 10) + ' MB' : '—' },
-          { k: t('update_published', '发布日期'), v: String(latest.published_at || '').slice(0, 10) },
+          { k: t('update_current_version', '当前版本'), v: 'v' + info.version,
+            side: { k: t('update_size', '文件大小'), v: asset ? (Math.round(asset.size / 1048576 * 10) / 10) + ' MB' : '—' } },
+          { k: t('update_latest_version', '最新版本'), v: String(latest.tag_name || hit.tag), strong: true,
+            side: { k: t('update_published', '发布日期'), v: String(latest.published_at || '').slice(0, 10) } },
+          { k: t('update_asset', '更新文件'), v: asset ? asset.name : '—', wide: true },
         ],
-        notes: String(latest.body || '').slice(0, 2000) || t('update_no_notes', '（这个版本没有填写更新说明）'),
-        buttons: [t('later', '稍后'), t('open_release', '打开发布页'), t('download_now', '立即下载')],
+        notes: mdTruncate(latest.body || '', 2000) || t('update_no_notes', '（这个版本没有填写更新说明）'),
+        notesMd: true,
+        /* 「稍后」→「取消」（用户：把之前所有的更新弹窗的稍后改为取消）；
+           两键 → answer() 回布尔，true = 立即下载。 */
+        buttons: [t('update_btn_cancel', '取消'), t('download_now', '立即下载')],
       }).then((value) => {
-        const pageUrl = latest.html_url || 'https://github.com/' + repo + '/releases';
-        if (value === t('download_now', '立即下载')) {
+        /* 两键 → answer() 回布尔：true = 「立即下载」，false = 「取消」或点遮罩。
+           ⚠️ 点遮罩关闭在语义上**就是取消**（遮罩那条路径调的正是 cancelText，
+              而按钮行里"取消"就是它），所以 false 一律按"跳过该版本"处理 ——
+              与用户原话「点击取消则此次版本将不再进行提示」一致。 */
+        if (value === true) {
           startUpdateDownload(asset && asset.browser_download_url, asset);
-        } else if (value === t('open_release', '打开发布页')) openLink(pageUrl);
+        } else if (fromAuto) {
+          muteUpdateTag(hit.tag);
+        }
       });
+    }
+    async function checkUpdate() {
+      if (checkingUpdate.value) return;
+      checkingUpdate.value = true;
+      const hit = await _fetchNewRelease(true);
+      checkingUpdate.value = false;
+      if (hit) openUpdateDialog(hit, true);
+    }
+    /* ---- 启动后的自动检查（设置 update_auto_check：corner 右上角提示 / dialog 弹窗 / off 关闭）----
+       ⚠️ 绝对不能 await、绝对不挡启动：GitHub 不通时这条链路可能要几十秒，
+          所以调用方用 setTimeout(0) 甩后台（和云端资源库同一纪律）。 */
+    const updateCorner = reactive({
+      show: false, version: '', size: '', released: '', prerelease: false,
+      downloading: false, asset: null, hit: null, tag: '',
+    });
+    /* ⚠️⚠️ 本轮需求（用户原话）：「假设设置中的自动检查更新选择在右上角提示，点击取消
+       则此次版本将不再进行提示，弹窗提示也同理。」
+       → "跳过此版本"。被跳过的 tag 存进设置（`update_muted_tag`）：
+         · 必须落盘 —— 只存内存的话下次启动同一个版本又弹出来，等于没记住；
+           这和上一轮"服务商弹窗暂存不许落盘"不冲突：那个是**没做完的草稿**，
+           这个是**用户明确做出的决定（点了取消）**，性质不同。
+         · 只对**自动检查**生效；设置里手动点「检查更新」永远照常弹
+           （用户主动查询，结果不给看就是"点了没反应"）。
+         · 只按 tag 精确匹配：作者发布了更新的版本（tag 不同）自然会重新提示，
+           不需要额外做"解除跳过"的设置项。 */
+    function updateMutedTag() {
+      return String(settings.update_muted_tag || '').trim();
+    }
+    function muteUpdateTag(tag) {
+      const muted = String(tag || '').trim();
+      if (!muted) return;
+      settings.update_muted_tag = muted;       // 先更新内存，后续判断立刻一致
+      saveSetting('update_muted_tag', muted);  // 再落盘（走后端 settings.set）
+    }
+    async function autoCheckUpdate() {
+      const mode = String(settings.update_auto_check || 'corner');
+      if (mode === 'off') return;                 // 需求：「关闭 = 开启程序后不进行自动更新检查」
+      const hit = await _fetchNewRelease(false);  // manual=false：任何失败都静默
+      if (!hit) return;
+      /* 本轮：这个版本用户已经点过「取消」→ 不再打扰。
+         放在 mode 分流**之前**：右上角提示与弹窗提示两种模式共用同一道闸门。 */
+      if (updateMutedTag() && updateMutedTag() === hit.tag) {
+        console.log('[update] 版本 ' + hit.tag + ' 已被用户跳过，本次不再提示');
+        return;
+      }
+      if (mode === 'dialog') { openUpdateDialog(hit, true, true); return; }
+      updateCorner.hit = hit;
+      updateCorner.tag = hit.tag;
+      updateCorner.version = String(hit.latest.tag_name || hit.tag);
+      updateCorner.prerelease = !!hit.latest.prerelease;
+      updateCorner.size = hit.asset ? (Math.round(hit.asset.size / 1048576 * 10) / 10) + ' MB' : '';
+      updateCorner.released = String(hit.latest.published_at || '').slice(0, 10);
+      updateCorner.asset = hit.asset;
+      updateCorner.downloading = false;
+      updateCorner.show = true;
+    }
+    /* 右上角卡「取消」= 跳过这个版本（用户原话：点击取消则此次版本将不再进行提示） */
+    function cornerCancel() {
+      muteUpdateTag(updateCorner.tag);
+      updateCorner.show = false;
+    }
+    function cornerDownload() {
+      if (!updateCorner.asset || updateCorner.downloading) return;
+      updateCorner.downloading = true;
+      startUpdateDownload(updateCorner.asset.browser_download_url, updateCorner.asset);
+    }
+    function cornerDetail() {
+      const hit = updateCorner.hit;
+      updateCorner.show = false;
+      /* 「查看详情」= 用户还想看，**不算取消**、不静音；但从这里进弹窗之后，
+         如果他在弹窗里点「取消」，语义与"弹窗提示模式点取消"一致
+         → fromAuto 传 true，让弹窗的取消把这个版本记成已跳过。 */
+      if (hit) openUpdateDialog(hit, true, true);
     }
     const versionText = computed(() => {
       let text = String(info.version || '');
@@ -7406,6 +9843,12 @@ const App = {
         info.configDir = result.config_dir || '';
         info.language = result.language || '简体中文';
         info.args = Array.isArray(result.args) ? result.args : [];
+        // 系统原生标题栏模式：自绘标题栏与缩放热区整条撤掉（原生 caption 提供
+        // 真正的最小化/最大化/关闭按钮与拖边缩放）。旧后端没这个字段 → 保持自绘。
+        if (result.frameless !== undefined && result.frameless !== null) {
+          info.frameless = !!result.frameless;
+          try { document.documentElement.classList.toggle('is-native-chrome', !result.frameless); } catch (e) {}
+        }
       }
     }
     /* 隐私条款正文已改为**官网外链**（用户协议 / 隐私政策及免责声明都放 pages.dev），
@@ -7955,8 +10398,18 @@ const App = {
         asset.name || '', '', Number(asset.size) || 0, releasesDialog.repo || '');
       if (!result) { needApi('downloader.start', t('download', '下载')); return; }
       if (!result.ok) { toast(t('download_fail', '下载失败：') + (result.error || ''), 'error'); return; }
-      toast(t('download_started', '已开始下载：') + (asset.name || '')
-        + '（' + humanSize(asset.size) + '）', 'success');
+      /* ★ 本轮（用户：「releases 点击一个它会下载，应该有个提示来提示 xxx（完整文件名）
+         已经开始下载（三语言做好）」）：
+         旧提示是「已开始下载：<文件名>（大小）」，前缀压在名字前面、名字还可能被
+         右缘截断，看起来不像"某个文件开始下载了"。现在把它做成**一句话**
+         「<完整文件名>」已开始下载 —— 名字原样整串（不省略、不截断），下一行给大小；
+         停留 3.5s（比默认 2s 长一点，够看清长文件名）。
+         ⚠️ toast 容器宽度 min(340px, 100vw-32px) + .toast-message 的 word-break，
+            长文件名会整词换行，不会被裁。 */
+      const fullName = String(asset.name || (result && result.name) || '').trim();
+      const sizeText = Number(asset.size) > 0 ? humanSize(asset.size) : '';
+      toast(t('download_started_named', '「{name}」已开始下载').replace('{name}', fullName || t('download', '文件'))
+        + (sizeText ? '\n' + sizeText : ''), 'success', '', { duration: 3500, pre: true });
       /* **不再**直接跳到下载页（用户要的是"红点蹦到侧栏"，用户自己点进去）。
          红点从**点击的那个按钮**位置蹦出来 → 飞到左侧栏更多上。 */
       flyDownloadBadge(event);
@@ -8085,6 +10538,21 @@ const App = {
          否则请求失败后旧内容会"藏了不还"。 */
     const aiCutAfter = ref(-1);
     /* 某一行现在要不要渲染：处理期间，被改那条**之后**的既有内容先让位 */
+    /* 最后一条 AI 气泡的下标（-1 = 还没有 AI 回复）。
+       ⚠️⚠️ 为什么需要它：Agent 执行过程卡片必须**只画一次**。
+       上一版卡片的条件只写了 v-if="aiAgentStepsVisible"（一个全局布尔），
+       而它挂在 v-for 的**每条 AI 气泡内部** —— 聊了 5 轮就有 5 条 AI 气泡，
+       于是界面上出现 5 个一模一样的"已完成 N 步"，用户原话：
+         「为什么会有几个相同的agent动作的那个ui」「为什么我的聊天气泡内会有ai的这个操作什么的」。
+       正确做法：步骤属于**最后一条 AI 回复**，只在那一条里渲染。 */
+    const aiLastAiIndex = computed(() => {
+      const list = aiMessages.value || [];
+      for (let i = list.length - 1; i >= 0; i -= 1) {
+        if (list[i] && list[i].role === 'ai') return i;
+      }
+      return -1;
+    });
+
     function aiRowShown(index) {
       const cut = aiCutAfter.value;
       return cut < 0 || index <= cut;
@@ -8093,6 +10561,24 @@ const App = {
     function aiRegenPlaceholder(index) {
       return aiBusy.value && aiPending.value && aiPendingAfter.value === index;
     }
+    /* ==========================================================================
+       运行中过程卡片的**落位**（本轮修复用户报的「Agent 确实执行了，但期间
+       思考/执行/正文的 UI 一个都没有」）：
+         旧写法卡片挂在"最后一条 AI 气泡"里 —— 新一轮提问时最后一条 AI 气泡还是
+         **上一轮**的回答（用户消息刚 push，AI 气泡要等第一个 delta 才存在），
+         于是执行卡片画在上一条气泡下面、被"重新生成藏尾部/滚动位置/上一条已折叠
+         卡片"各种遮挡，用户在当前问题下面看到的就是一片空白。
+         现在：运行中的卡片 = **独立一行**，永远挂在消息列表末尾（本轮自己的位置），
+         done/停止/出错后由 aiRunCardIndex 交还给那条回答气泡自带的磁盘 steps。
+       ========================================================================== */
+    const aiRunCardIndex = computed(() => {
+      if (!aiBusy.value) return -1;
+      // 流式气泡已经存在（新问答挂在末尾；重新生成/编辑重发**就地**在原下标）
+      // → 卡片并进那颗气泡（返回它的下标，模板气泡内条件 aiRunCardIndex === i 命中）。
+      if (aiStreamingIndex.value >= 0) return aiStreamingIndex.value;
+      return -2;   // -2 = 挂独立行（本轮还没有任何气泡）
+    });
+    const aiLiveSteps = computed(() => aiAgentSteps.value);
     /* 流式逐字要**写进哪一格**（和上面同一个口径，别搞两份真值）：
        -1 = 还没有对应气泡 → 在末尾挂一颗临时气泡承载（新回答）；
        ≥0 = 就地写进那条气泡（重新生成回答1 = 新文字直接出现在回答1 那颗气泡里）。
@@ -8225,7 +10711,13 @@ const App = {
       if (index === aiStreamingIndex.value) {
         const text = aiStreamingReasoning.value;
         if (!text) return null;
-        const answered = String(aiStreamingText.value || '').length > 0;
+        /* ★ 本轮（用户原话：「没有任何东西是同时进行的」）：Agent 模式下正文要等
+           所有工具轮跑完才放出来，所以「思考结束」的标志不只是正文字符 ——
+           步骤卡片出现也算思考结束。否则思考块会一直挂着「思考中…」，
+           而下面步骤已经在跑，看着就是"边想边干"。
+           顺序因此恒为：思考中… → 步骤 → 正文。 */
+        const answered = String(aiStreamingText.value || '').length > 0
+          || (Array.isArray(aiAgentSteps.value) && aiAgentSteps.value.length > 0);
         return { key: 'stream', text, streaming: !answered,
                  seconds: answered ? aiThinkSeconds : 0 };
       }
@@ -8267,7 +10759,10 @@ const App = {
     /* ⚠️ token 的**名字里可以有空格**（"@OBS Studio(TG-000024)"、"@Visual Studio Code(TG-…)"）：
        名字段只禁 @ ( ) 和换行，不能禁空格 —— 之前写成 [^\s@()] 会把带空格的应用名整个漏掉，
        用户气泡里就只剩普通文本（正是"@ 发送后不可点击、无下划线"的一种表现）。 */
-    const AI_TOKEN_RE = /@([^@\n()]{1,60})\((TG-\d{4,8})\)/g;
+    /* task-12 需求 6：新增**可选** [选中文本] 后缀（与 rich-input.js MENTION_SOURCE 同步）。
+       方括号内容排除换行与右方括号（] 是唯一终止符；[ 允许，截断已保证不嵌套）；
+       1–200 覆盖清洗上限 80 + 前后括号；后缀用 (?:…)? —— 不带时与旧正则行为完全一致。 */
+    const AI_TOKEN_RE = /@([^@\n()]{1,60})\((TG-\d{4,8})\)(?:\[([^\n\[\]]{1,200})\])?/g;
     /* ⚠️ 本轮：用户原话是「其中"请填写<API Key>"这个是下滑线字体 点击跳转页面到设置中的
        GCP-AI 位置（现在那个是不可点击状态 无下划线 不是蓝色字体的普通字体是不对的
        还有"<>"不是变量而是就是可点击文本的一部分）」。
@@ -8539,10 +11034,10 @@ const App = {
          ② 项目里**早就有浏览器原生方案**并且在用：`field-sizing: content`
             （Chromium 123+，WebView2 Evergreen 必然支持；主输入框那圈就靠它自适应）。
        ⇒ 正解：**让排版引擎按内容给尺寸**，前端一个像素都不算。
-            短文本 = 小框（上一轮的"别固定长条"）；打字变长 = 跟着长（本轮这条）；
-            到 max-width（父级 88%）才折行（"到一定长度自动换行"）；
-            而"你好呀"被压在窄框里折成"你好↵呀"那种**不会有**：
-            field-sizing 的框宽恒等于内容宽，压根不会先于内容折行。
+             短文本 = 小框（上一轮的"别固定长条"）；打字变长 = 跟着长（本轮这条）；
+             到 max-width（父级 88%）才折行（"到一定长度自动换行"）；
+             而"你好呀"被压在窄框里折成"你好↵呀"那种**不会有**：
+             field-sizing 的框宽恒等于内容宽，压根不会先于内容折行。
        aiEditBox 现在只保留**高度兜底**（别让框塌成一条线）。 */
     const aiEditBox = ref({ width: 0, height: 0 });
     const aiEditBoxStyle = computed(() => {
@@ -8584,7 +11079,64 @@ const App = {
         /* 当前第几版（0 基）；缺省时按"最后一版"显示（用户要求默认停在最后一版） */
         vIndex: Number.isFinite(m.variant_index) ? m.variant_index : 0,
         ts: String(m.ts || ''),
+        /* ★ 本轮修复（用户报「Agent 执行步骤存储不到对应对话文件中，有时甚至出现缺失」
+           的前端那一半）：后端每条 assistant 消息都带 steps（见 ai.py _message_view），
+           这里**逐条**带进气泡对象。旧版只有一份全局数组 + "卡片画在最后一颗 AI 气泡
+           下面"，多轮 Agent 的历史里早先几轮的步骤全部隐形（磁盘有、界面无 =
+           用户说的"缺失"），翻版本/切会话时还会串位。 */
+        steps: (Array.isArray(m.steps) && m.steps.length) ? m.steps.slice(0, 40) : null,
+        /* 这一问自己的用量（缓存命中/统计）：done 事件与 _message_view 都带 */
+        usage: (m.usage && typeof m.usage === 'object') ? m.usage : null,
+        /* 这一问的延迟（done/send 回包里带的 latency_ms，本轮新增） */
+        latency: Number.isFinite(m.latency_ms) ? m.latency_ms : null,
       }));
+    }
+
+    /* ---------- 每颗气泡自己的"执行过程"卡片（本轮，见上面 steps 注释） ----------
+       数据源优先级：正在跑的这一轮（最后一颗 AI 气泡 + 运行中）用实时数组；
+       其余一律用消息自带的 m.steps（历史 / 重开程序 / 翻版本都走这条路）。
+       旧的"全局卡片挂最后一颗气泡"渲染点已改成调用这几个函数取"这一条"的数据。 */
+    function aiBubbleSteps(m, i) {
+      if (aiRunActive && aiRunCardIndex.value === i && aiAgentSteps.value.length > 0) {
+        return aiAgentSteps.value;
+      }
+      if (m && Array.isArray(m.steps) && m.steps.length) {
+        return m.steps.map((raw, si) => ({
+          key: si,
+          phase: 'result',
+          round: Number(raw.round || 0) || 0,
+          tool: String(raw.tool || ''),
+          summary: String(raw.summary || raw.tool || t('agent_step_done', '已执行')),
+          argsText: String(raw.args || ''),
+          ok: raw.ok !== false,
+          detail: String(raw.detail || ''),
+        }));
+      }
+      return [];
+    }
+    function aiBubbleStepsOpen(m, i) {
+      if (aiRunActive && aiRunCardIndex.value === i) return aiAgentStepsOpen.value;
+      return !!(m && m._stepsOpen);
+    }
+    function aiToggleBubbleSteps(m, i) {
+      if (aiRunActive && aiRunCardIndex.value === i) { toggleAgentSteps(); return; }
+      if (!m) return;
+      m._stepsOpen = !m._stepsOpen;
+      aiAgentStepsTouched = true;
+    }
+    function aiBubbleStepsDone(m, i) {
+      if (aiRunActive && aiRunCardIndex.value === i) return aiAgentStepsDone.value;
+      return true;   // 历史里的步骤全是收尾状态
+    }
+    function aiBubbleStepsSummary(m, i) {
+      if (aiRunActive && aiRunCardIndex.value === i) return aiAgentStepsSummary.value;
+      const list = (m && Array.isArray(m.steps)) ? m.steps : [];
+      const fail = list.filter((s) => s && s.ok === false).length;
+      if (fail) {
+        return t('ai_agent_finished_fail', '已完成 {n} 步（{fail} 步失败）')
+          .replace('{n}', String(list.length)).replace('{fail}', String(fail));
+      }
+      return t('ai_agent_finished', '已完成 {n} 步').replace('{n}', String(list.length));
     }
     /* ---------- 版本相关的渲染小工具（模板里要用，必须在 setup 返回值里） ---------- */
     /** 这条气泡有几个版本（决定要不要画 ◀ n ▶） */
@@ -8656,6 +11208,31 @@ const App = {
       cancelAiEdit();
       clearStreamBubble();
       aiMessages.value = sessionToMessages(session);
+      /* ⚠️⚠️ 修用户报的两个问题：
+         ①「切换历史/新建对话时调用工具的 ui 一直在这个界面里」→ 换会话必须清掉；
+         ②「加载历史对话里面的"调用工具完成几步"那个不见了」→ 历史里应该**恢复**出来。
+         所以这里不是简单清空，而是从会话数据里**还原**最后一条 AI 消息的步骤记录
+         （后端把 steps 存在那条 assistant 消息上，见 ai.py 的 _persist_assistant）。
+         恢复完后默认**折叠**（历史对话里不需要展开占地方）。 */
+      restoreAgentStepsFromSession(session);
+      /* ★ 本轮（统计面板）：重开会话时把磁盘上的会话累计/最近一问用量带回来，
+         面板不至于"重启就清零"（数据本来就在 usage_total 里）。 */
+      try {
+        const t = session && session.usage_total;
+        aiUsageTotal.value = (t && typeof t === 'object') ? { ...t } : null;
+        let lastU = null;
+        const msgs = (session && Array.isArray(session.messages)) ? session.messages : [];
+        for (let k = msgs.length - 1; k >= 0; k -= 1) {
+          const mm = msgs[k];
+          if (mm && mm.role === 'assistant' && mm.usage && typeof mm.usage === 'object') {
+            lastU = mm.usage; break;
+          }
+        }
+        aiUsageLast.value = lastU ? { ...lastU } : null;
+      } catch (e) { /* 统计不影响加载 */ }
+      /* ★ 本轮修复：进历史对话同样要重新对一次思考档位（同 aiNewChat 那条注释）。
+         不等它：会话内容已经可以看了，档位同步是后台的一次 model_choices。 */
+      refreshAiThinking();
       return true;
     }
     async function openAiSession(sessionId) {
@@ -8685,10 +11262,25 @@ const App = {
       toast(t('deleted', '已删除'), 'success');
     }
     function aiHistory() {
-      aiHistoryOpen.value = true;
-      loadAiSessions();                           // 每次打开都拉最新的一份
+      /* 开/关都走这个按钮（以前只会打开，于是"再点一次想关"没反应） */
+      aiHistoryOpen.value = !aiHistoryOpen.value;
+      if (aiHistoryOpen.value) loadAiSessions();  // 每次打开都拉最新的一份
     }
     function closeAiHistory() { aiHistoryOpen.value = false; }
+    /* 需求（用户实测）：独立 AI 页的历史侧栏打开后，点**面板外面**的空白处不会自动收起。
+       修法：document 上挂一次 mousedown（捕获阶段），点在 .ai-history 之外就关；
+       打开它的那个按钮（[data-ai-history-toggle]）要排除，否则"点第二次想关"会先关再开。
+       ⚠️ 用 mousedown 不用 click：在气泡里拖选文字时 click 根本不会发，mousedown 更直接；
+          面板是 fixed 定位、独立页里和页面内容没有共同父级，挂在 document 上才收得到。 */
+    function aiHistoryOutsideDown(event) {
+      if (!aiHistoryOpen.value) return;
+      const el = event && event.target;
+      if (!el || typeof el.closest !== 'function') return;
+      if (el.closest('.ai-history')) return;               // 面板内部：历史项/删除按钮等
+      if (el.closest('[data-ai-history-toggle]')) return;  // 打开它的按钮：交给它自己切换
+      closeAiHistory();
+    }
+    document.addEventListener('mousedown', aiHistoryOutsideDown, true);
     /* ===========================================================================
      * · 本轮任务 1 / 2 / 3：贴着底部？回到底部按钮；切窗/切页后的滚动恢复
      * ========================================================================
@@ -8855,16 +11447,35 @@ const App = {
          元素一边变高一边贴底要靠 scrollTop = scrollHeight 才对。 */
       const box = document.querySelector('.ai-messages');
       if (!box) return;
+      /* ⚠️⚠️ 用户反馈：「我发现页面往下的速度太快了些」。
+         根因：Agent 执行期间**每一步**都会触发一次滚动（calling / result 各一次，
+         8 步就是 16 次，再加上步骤卡片变高），滚动条一路往下窜，看着很晕。
+         取舍（用户 Q4 选 c「保持现状」= 仍跟到底，但要顺）：
+           · Agent 正在干活时（有步骤且未完成）**不自动跟**—— 过程卡片就在视野里，
+             不需要滚；等它做完再一次性滚到最终回答。
+           · 其余情况照旧（贴底才跟），并且用 smooth 让位移是滑过去而不是瞬移。
+         force（新发送/切会话/点回到底部）永远立即滚，不受上面限制。 */
+      const running = aiAgentStepsVisible.value && !aiAgentStepsDone.value;
       const pinned = force === true || aiStickBottom.value;
+      if (running && force !== true) return;
       const i = Number(index);
       if (Number.isFinite(i) && i >= 0 && i < aiMessages.value.length - 1) {
         const bubble = box.querySelector(`.bubble[data-i="${i}"]`);
         if (bubble && bubble.scrollIntoView) {
-          bubble.scrollIntoView({ block: 'nearest' });
+          try { bubble.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+          catch (e) { bubble.scrollIntoView({ block: 'nearest' }); }
           return;
         }
       }
       if (!pinned) return;
+      /* 平滑滚动：位移是"滑"过去的，不会一步到头（关动效档则瞬时，尊重设置） */
+      const smooth = settings.ui_animation !== 'off';
+      if (smooth && typeof box.scrollTo === 'function') {
+        try {
+          box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' });
+          return;
+        } catch (e) { /* 老内核不支持对象参数 → 退回直接赋值 */ }
+      }
       box.scrollTop = box.scrollHeight;
     }
     /* ---------- 本轮需求：「使用版本树来回切换每次页面都会自动到最底部bug
@@ -9045,20 +11656,277 @@ const App = {
     }
     /** 设置页「回复语言」下拉的 options（后端清单优先，兜底 4 项；自绘 combo 只吃 [{value,label}]） */
     function aiReplyLangOptions() {
+      /* 用户实测：切了界面语言，这个下拉还是「简体中文」——因为 label 用的是后端
+         那次 model_choices 回传的旧文案（抓的时候还是旧语言），之后再没刷新过。
+         正确做法：**value 用后端的**（将来加语种不用动前端），**label 现取当前语言包**。
+         sections 是 computed 且 t() 读 I18N.version，所以切语言立刻跟着变。 */
+      const LOCAL = [
+        { value: 'auto', key: 'ai_reply_lang_auto', zh: '跟随输入语言' },
+        { value: 'zh_CN', key: 'ai_reply_lang_zh_CN', zh: '简体中文' },
+        { value: 'zh_TW', key: 'ai_reply_lang_zh_TW', zh: '繁体中文' },
+        { value: 'en', key: 'ai_reply_lang_en', zh: '英文' },
+      ];
+      const labelOf = (value, fallback) => {
+        const hit = LOCAL.filter((l) => l.value === value)[0];
+        return t(hit ? hit.key : 'ai_reply_lang_' + value, fallback || value);
+      };
       const remote = aiReplyLangsRemote.value;
       if (remote && remote.length) {
-        return remote.map((l) => ({ value: String(l.value), label: String(l.label || l.value) }));
+        return remote.map((l) => {
+          const value = String(l.value);
+          return { value: value, label: labelOf(value, l.label) };
+        });
       }
-      return [
-        { value: 'auto', label: t('ai_reply_lang_auto', '跟随输入语言') },
-        { value: 'zh_CN', label: t('ai_reply_lang_zh_CN', '简体中文') },
-        { value: 'zh_TW', label: t('ai_reply_lang_zh_TW', '繁体中文') },
-        { value: 'en', label: t('ai_reply_lang_en', '英文') },
-      ];
+      return LOCAL.map((l) => ({ value: l.value, label: t(l.key, l.zh) }));
     }
     /* 后端有没有这个接口（旧后端 → 不画胶囊，而不是画一个空的） */
     const aiModelHasApi = ref(true);
     const aiModelVisible = computed(() => aiModelHasApi.value && !!settings.ai_enabled);
+
+    /* =====================================================================
+       对话模式胶囊（Chat / Agent）—— 本轮新增
+       =====================================================================
+       用户原话：「在GCP-AI页面或者右侧窗这个模型选择左侧新增一个一样的ui，不过点击出来
+         里面的不一样，只有一个Chat和Agent选项，Chat只能聊天也是默认选项，Agent则可以
+         调用AI Agent获取可以行动起来的能力，不单单是只能聊天，不过确实也可以只把它当作
+         聊天对象（这两个模式切换也出储存在配置里面）。」
+
+       语义（和后端 ai._agent_tools_ready 的闸门一一对应）：
+         · Chat  —— 默认。**不注入工具清单、不跑工具循环**：就是普通聊天，省 token，
+                    也不会出现"我只是想聊聊，它却去改我的设置"。
+         · Agent —— 才把 38 只「手」的清单塞进 system 并允许 [TOOL] 循环。
+        ⚠️ 和插件总开关（强制开启）不是一回事：插件决定了"这套能力在不在"，
+           这颗胶囊决定"这次对话要不要真的动手"。强制开启 ≠ 每次都要动手。
+        ⚠️ **落盘**：写 settings.ai_chat_mode（用户明确要求"这两个模式切换也出储存在
+           配置里面"），走 saveSetting 同一条链路（settings.set → 广播 → 另一端同步）。
+       --------------------------------------------------------------------- */
+    const CHAT_MODE_KEY = 'ai_chat_mode';
+    const CHAT_MODE_OPTIONS = [
+      { value: 'chat', label: 'Chat',
+        tipKey: 'ai_mode_chat_tip', tipFallback: '只聊天：不会调用工具、不会改动程序（默认）' },
+      { value: 'agent', label: 'Agent',
+        tipKey: 'ai_mode_agent_tip', tipFallback: '可以动手：允许 AI 操作 ToolsGCP（仍有逐项开关约束）' },
+    ];
+    const aiModeOpen = ref(false);
+    /* =====================================================================
+       Agent 执行过程（大厂 Agent 那种"正在调用工具"）
+       =====================================================================
+       用户原话：「我希望他有那种大厂agent软件会提示正在调用工具什么的 调用什么和规划
+         之类的都要有」「而且我希望它输出的内容是人话」。
+
+       数据源：后端 ai.py 工具循环里 push_event("ai.agent_progress", {...})
+         phase: 'calling' | 'result'
+         round / tool / summary（后端给的中文摘要，直接用，前端不翻译工具名）/ ok / detail
+       ⚠️ 为什么摘要由后端给：前端只认识 create_favorite_folder 这种英文 id，
+          翻成人话要维护一张映射表、加工具就漏；后端手上有 args，能拼出
+          "正在创建收藏夹「GCP」"这种带具体对象的话。
+       ⚠️ 这只在 Agent 模式出现：Chat 模式没有工具循环，自然没有这些步骤。 */
+    const aiAgentSteps = ref([]);
+    /* 正在规划/思考中（后端每轮推 planning）—— 让界面先给出"正在思考"的反馈，
+       而不是等思考和正文一起蹦出来 */
+    const aiAgentPlanning = ref(false);        // [{phase, round, tool, summary, ok, detail, key}]
+    let aiAgentStepSeq = 0;
+    /* ★ 本轮修复（用户报 Agent 步骤"重复/串会话"）：ai.agent_progress 事件**不带
+       stream_id/session_id**（后端 push 直接走 shell.push_event），换会话/按停止之后
+       旧运行的尾事件照样会推过来，把卡片混进新会话。现在加一道运行闸门：只有
+       "本端正有一次发送在飞"时才接受这些事件；发送开始置真、done/cancel/error/
+       切会话一律置假，旧尾事件全部丢弃。 */
+    let aiRunActive = false;
+    function onAgentProgress(payload) {
+      if (!payload || typeof payload !== 'object') return;
+      if (!aiRunActive) return;
+      const phase = String(payload.phase || '');
+      const tool = String(payload.tool || '');
+      const round = Number(payload.round || 0) || 0;
+      /* planning：模型开始规划这一步（用户要求"先思考再工具最后正文"）。
+         它不清空已有步骤，只标记"当前正在思考"，让界面先给出反馈。 */
+      if (phase === 'planning') {
+        aiAgentPlanning.value = true;
+        return;
+      }
+      aiAgentPlanning.value = false;
+      if (phase === 'calling') {
+        aiAgentSteps.value.push({
+          key: ++aiAgentStepSeq, phase: 'calling', round, tool,
+          /* 本轮 i18n：兜底文案改走语言包（后端 summary 缺失时英文界面不再露中文） */
+          summary: String(payload.summary || tool || t('agent_step_executing', '正在执行')),
+          /* ⚠️ 把参数也存下来展示成子项（用户原话：「具体内容什么的都没有没有子项在
+             这个分别的里面」）—— 光有一句"正在创建收藏夹「GCP」"不够，
+             用户想看到这一步具体带了什么参数（folder=GCP / code=TG-000050）。 */
+          argsText: agentArgsText(payload.args),
+          ok: null, detail: '',
+        });
+      } else if (phase === 'result') {
+        /* 把这一轮这个工具的最后一条 calling 标成结果（同一个工具可能连调多次，
+           所以从后往前找第一条还没结果的）。找不到就补一条（后端可能先 result）。 */
+        let target = null;
+        for (let i = aiAgentSteps.value.length - 1; i >= 0; i -= 1) {
+          const step = aiAgentSteps.value[i];
+          if (step.phase === 'calling' && step.tool === tool && step.ok === null) {
+            target = step;
+            break;
+          }
+        }
+        if (target) {
+          target.phase = 'result';
+          target.ok = payload.ok !== false;
+          target.detail = String(payload.detail || '');
+        } else {
+          aiAgentSteps.value.push({
+            key: ++aiAgentStepSeq, phase: 'result', round, tool,
+            summary: String(payload.summary || tool || t('agent_step_done', '执行完成')),
+            ok: payload.ok !== false, detail: String(payload.detail || ''),
+          });
+        }
+      }
+    }
+    /* 把工具参数压成一行可读的子项文本（空参数返回空串 = 不显示子项） */
+    function agentArgsText(args) {
+      if (!args || typeof args !== 'object') return '';
+      const parts = [];
+      Object.keys(args).forEach((key) => {
+        let value = args[key];
+        if (value === undefined || value === null || value === '') return;
+        if (typeof value === 'object') {
+          try { value = JSON.stringify(value); } catch (e) { value = String(value); }
+        }
+        const text = String(value);
+        if (text.length > 60) return;      /* 超长参数（run_python 的代码）不进子项 */
+        parts.push(key + '=' + text);
+        if (parts.length >= 5) return;
+      });
+      return parts.join('  ');
+    }
+    function aiResetStats() {
+      /* 新对话 = 新账本：累计与最近一问都清空（后端那边新会话本来也没有 usage_total） */
+      aiUsageLast.value = null;
+      aiUsageTotal.value = null;
+    }
+
+    function resetAgentSteps() {
+      aiAgentSteps.value = [];
+      aiAgentStepSeq = 0;
+      aiAgentPlanning.value = false;
+      /* 换会话/新发送都会先走这里：闸门一并关掉，旧运行的尾事件不再混进新卡片。
+         （发送路径紧接着会重新置 true，顺序见 aiSend 里 resetAgentSteps 之后的赋值。） */
+      aiRunActive = false;
+    }
+
+    /* 从会话数据里恢复"上次执行了几步"
+       ⚠️⚠️ 修用户报的：「我加载历史对话里面的调用工具完成几步那个不见了，没有存储起来的bug」
+       步骤原本只活在内存里，换会话/重启就没了。现在后端把它**存进那条 assistant 消息**
+       （字段 steps），这里读回来重建卡片。恢复后默认折叠（历史里不需要展开占地方）。
+       数据形状：[{tool, summary, args, ok, detail}, ...]（后端存的是紧凑版） */
+    function restoreAgentStepsFromSession(session) {
+      resetAgentSteps();
+      aiAgentStepsOpen.value = false;
+      aiAgentStepsTouched = false;
+      let steps = null;
+      try {
+        const list = (session && Array.isArray(session.messages)) ? session.messages : [];
+        /* 从后往前找第一条带 steps 的 assistant（最新那条回复的执行记录） */
+        for (let i = list.length - 1; i >= 0; i -= 1) {
+          const m = list[i];
+          if (m && m.role === 'assistant' && Array.isArray(m.steps) && m.steps.length) {
+            steps = m.steps;
+            break;
+          }
+        }
+      } catch (e) { steps = null; }
+      if (!steps) return;
+      steps.forEach((raw) => {
+        if (!raw || typeof raw !== 'object') return;
+        aiAgentSteps.value.push({
+          key: ++aiAgentStepSeq,
+          phase: 'result',
+          round: Number(raw.round || 0) || 0,
+          tool: String(raw.tool || ''),
+          summary: String(raw.summary || raw.tool || t('agent_step_done', '已执行')),
+          argsText: String(raw.args || ''),
+          ok: raw.ok !== false,
+          detail: String(raw.detail || ''),
+        });
+      });
+    }
+    /* 执行过程卡片是否显示：有步骤 且 正在忙（或刚结束还没清） */
+    /* ★ 本轮（用户 m02381：「agent模式或chat模式下，ai每次都会先出现一个『v』
+       大概是这个样子的ui然后后面消失了，因为agent和chat没让它干活但是还显示这个
+       就不对了」）：
+       卡片**只由真实步骤撑起来**（aiAgentSteps.length > 0）。
+       原来「正在规划」也能单独把卡片撑出来 —— 那张卡片头上是一个 #i-chevron_down
+       的 V 形折叠箭头，于是每轮（哪怕模型压根没调工具、这一轮就是最终回答）
+       都先闪出一个「v」，等这一轮结束卡片又被收掉 → 用户看到的就是「先出现一个 v
+       然后后面消失」。
+       现在后端也只在**真的解析出工具调用**时才推 planning（见 desktop/api/ai.py），
+       两边一起改：没有活要干的时候，界面上一个「v」都不会冒出来。 */
+    const aiAgentStepsVisible = computed(() =>
+      aiAgentSteps.value.length > 0);
+    /* 折叠：全部完成后自动收起成一行「已完成 N 步」。
+       ⚠️ 用「用户手动展开过」做覆盖：他点开了就一直开着，别自动又收回去。 */
+    const aiAgentStepsOpen = ref(true);
+    let aiAgentStepsTouched = false;
+    const aiAgentStepsDone = computed(() =>
+      aiAgentSteps.value.length > 0
+      && aiAgentSteps.value.every((s) => s.phase === 'result'));
+    const aiAgentStepsSummary = computed(() => {
+      /* 还没开始调工具、只收到 planning → 先显示"正在思考"，
+         避免界面上什么都没有（用户会以为卡住） */
+      if (!aiAgentSteps.value.length) {
+        return aiAgentPlanning.value
+          ? t('ai_agent_planning', '正在思考怎么处理…') : '';
+      }
+      const total = aiAgentSteps.value.length;
+      const failed = aiAgentSteps.value.filter((s) => s.phase === 'result' && s.ok === false).length;
+      const doneCount = aiAgentSteps.value.filter((s) => s.phase === 'result').length;
+      if (!aiAgentStepsDone.value) {
+        return t('ai_agent_running', '正在处理 {done}/{total} 步...')
+          .replace('{done}', doneCount).replace('{total}', total);
+      }
+      return failed
+        ? t('ai_agent_finished_fail', '已完成 {n} 步（{fail} 步失败）')
+          .replace('{n}', total).replace('{fail}', failed)
+        : t('ai_agent_finished', '已完成 {n} 步').replace('{n}', total);
+    });
+    function toggleAgentSteps() {
+      aiAgentStepsTouched = true;
+      aiAgentStepsOpen.value = !aiAgentStepsOpen.value;
+    }
+    /* 当前模式：设置里的值，认不出来一律当 chat（和后端 chat_mode() 同一口径 ——
+       宁可少动手，也不能因为一个脏配置让 AI 突然开始改东西）。 */
+    const aiChatMode = computed(() => (String(settings.ai_chat_mode || '') === 'agent'
+      ? 'agent' : 'chat'));
+    const aiChatModeLabel = computed(() => (aiChatMode.value === 'agent' ? 'Agent' : 'Chat'));
+    const aiChatModeTip = computed(() => {
+      const opt = CHAT_MODE_OPTIONS.find((o) => o.value === aiChatMode.value) || CHAT_MODE_OPTIONS[0];
+      return t(opt.tipKey, opt.tipFallback);
+    });
+    /* 胶囊可见性：和模型胶囊同一条件（AI 开着才显示）。
+       ⚠️ 不依赖后端新接口：settings.ai_chat_mode 有默认值（constants），
+          老后端即使没有 ai.set_chat_mode，写 settings 也照样能存下来。 */
+    const aiModeVisible = computed(() => !!settings.ai_enabled);
+    function toggleAiModeMenu() {
+      if (!aiModeVisible.value) return;
+      aiModeOpen.value = !aiModeOpen.value;
+      /* 和模型弹层互斥：两个都开就叠在一起了 */
+      if (aiModeOpen.value) aiModelOpen.value = false;
+    }
+    async function aiPickChatMode(value) {
+      const want = String(value || '') === 'agent' ? 'agent' : 'chat';
+      aiModeOpen.value = false;
+      if (want === aiChatMode.value) return;
+      /* 先乐观更新（点一下就变，不等往返），失败再回滚 */
+      const previous = settings.ai_chat_mode;
+      settings.ai_chat_mode = want;
+      const saved = await saveSetting(CHAT_MODE_KEY, want);
+      if (!saved) {
+        settings.ai_chat_mode = previous;
+        return;
+      }
+      toast(want === 'agent'
+        ? t('ai_mode_switched_agent', '已切换到 Agent 模式：这次对话 AI 可以动手操作')
+        : t('ai_mode_switched_chat', '已切换到 Chat 模式：只聊天，不会改动程序'),
+        'info');
+    }
     /* =====================================================================
      * · 思考档位（本轮需求：思考 UI 从输入框搬进「模型切换弹层」底部）
      * =====================================================================
@@ -9091,39 +11959,68 @@ const App = {
       if (text === 'max') return 'max';
       return 'off';
     }
-    /** 当前模型档位表查询用的 (provider, model) —— ⚠️ 必须成对取。
-       旧写法只按 `model.name === aiModelCurrent` 在全表里找，同厂商两条档案
-       都列了同一个模型名时会命中**另一条**的档位表。 */
-    const aiThinkModelKey = computed(() => {
-      const provider = String(settings.ai_provider || '').trim().toLowerCase();
-      const model = String(settings.model_name || '').trim();
-      return { provider, model };
-    });
-    /** 当前模型的档位表（对象数组 [{value,label,effort}]）：不支持思考 → 只有 off 一档 */
-    const aiThinkLevelsFull = computed(() => {
-      const name = aiModelCurrent.value;
-      const provider = aiThinkModelKey.value.provider;
+    /* ⚠️ 这里原来有个 `aiThinkModelKey` computed（只给 provider + model 两项）。
+       本轮被下面的 `aiThinkModelEntry()` 取代了：查档位表**和**查档位都必须
+       带上"档案 id"，只成对取 (provider, model) 的那个键本身就不够用了
+       —— 留着它就是一处"看着还在用、实际没人调"的误导，直接删。 */
+    /** 当前选中的 (档案 id + 厂商 + 模型) 在后端 groups 里命中的**那一个模型对象**。
+       ⚠️ 抽成一个函数是有原因的：档位表（thinking_levels）和这条档案×这个模型
+          自己存过的档位（thinking）必须按**同一套匹配规则**取出来。
+          以前是"档位表在这里匹配一遍、档位去查本地镜像表"，两套口径 →
+          同厂商两条档案列同名模型时，档位表是 A 的、显示的值是 B 的（用户报的"相通"）。
+          现在两处都走这个函数，物理上不可能再对不上。
+       ⚠️ 分组匹配顺序：先**档案 id**（用户显式选中的那条），其次才按厂商。
+          同厂商两条档案的模型清单可能不同（一条勾了 2 个、另一条 5 个），
+          只看 provider 会拿错档位表。 */
+    function aiThinkModelEntry(providedId, provider, name) {
+      const pid = String(providedId != null ? providedId
+        : (settings.ai_profile_id || '')).trim().toLowerCase();
+      const prov = String(provider != null ? provider
+        : (settings.ai_provider || '')).trim().toLowerCase();
+      const modelName = String(name != null ? name : (aiModelCurrent.value || '')).trim();
+      if (!modelName) return null;
       for (const group of aiModelGroups.value || []) {
-        /* ⚠️ 本轮：先按**档案 id**（用户显式选中的那条）匹配分组，其次才按厂商。
-           同厂商两条档案的模型清单可能不同（一条勾了 2 个、另一条 5 个），
-           只看 provider 会拿错档位表 —— 思考强度显示成另一条支持的档位。 */
-        if (group.id && settings.ai_profile_id && String(group.id) !== String(settings.ai_profile_id)
-          && String(group.provider || '').toLowerCase() === provider) continue;
+        const groupProvider = String(group.provider || '').toLowerCase();
+        const groupId = String(group.id || '').toLowerCase();
+        if (pid) {
+          /* 有档案 id：只认同 id 的那条；id 对不上但厂商也不同 → 跳过。
+             （老后端不给 group.id 时退化成按厂商匹配，不至于整块画不出来。） */
+          if (groupId && groupId !== pid && groupProvider === prov) continue;
+        }
         for (const model of group.models || []) {
-          if (model.name !== name) continue;
-          if (Array.isArray(model.thinking_levels) && model.thinking_levels.length) {
-            return model.thinking_levels
-              .filter((l) => l && l.value)
-              .map((l) => ({ value: String(l.value), label: String(l.label || l.value) }));
-          }
-          /* 旧后端没有 thinking_levels：按 supports_thinking 兜成默认 4 档表 */
-          if (model.supports_thinking) {
-            return AI_THINK_LEVELS.map((v) => ({ value: v, label: v }));
-          }
-          return [{ value: 'off', label: 'off' }];
+          if (String(model.name || '').trim() !== modelName) continue;
+          return model;
         }
       }
-      /* 模型认不出来（清单没拉到/自定义模型名）：只给 off —— 宁可不给滑块 */
+      return null;
+    }
+    /** 后端算好的"这条档案 × 这个模型"的档位；老后端没这个字段就返回 ''。
+       ⚠️ 这是档位的**权威来源**：后端按 `档案id|厂商|模型` 查表，没记录就是 off。
+          前端本地那份 `settings.ai_thinking_level` 只包含前端自己写过的条目，
+          查不到时**绝不能**回落到全局 `settings.ai_thinking` —— 那个值每次切模型
+          都会被刷新成"上一个模型的档位"，拿它当默认值就是用户报的
+          「厂商添加好了后，每个思考 ui 都应该是关闭状态」不成立的前端半边。 */
+    function aiThinkBackendLevel() {
+      const model = aiThinkModelEntry();
+      if (!model || model.thinking == null) return '';
+      return String(model.thinking).trim();
+    }
+    /** 当前模型的档位表（对象数组 [{value,label,effort}]）：不支持思考 → 只有 off 一档 */
+    const aiThinkLevelsFull = computed(() => {
+      const model = aiThinkModelEntry();
+      if (!model) {
+        /* 模型认不出来（清单没拉到/自定义模型名）：只给 off —— 宁可不给滑块 */
+        return [{ value: 'off', label: 'off' }];
+      }
+      if (Array.isArray(model.thinking_levels) && model.thinking_levels.length) {
+        return model.thinking_levels
+          .filter((l) => l && l.value)
+          .map((l) => ({ value: String(l.value), label: String(l.label || l.value) }));
+      }
+      /* 旧后端没有 thinking_levels：按 supports_thinking 兜成默认 4 档表 */
+      if (model.supports_thinking) {
+        return AI_THINK_LEVELS.map((v) => ({ value: v, label: v }));
+      }
       return [{ value: 'off', label: 'off' }];
     });
     /** 档位值数组（内部逻辑用；显示走 label） */
@@ -9131,24 +12028,42 @@ const App = {
     /** 当前模型支持思考吗（只有 off 一档 = 不支持；弹层里思考区显示禁用态而不是消失） */
     const aiThinkSupported = computed(() => aiThinkLevelsFull.value.length > 1);
     const aiThinkingLevel = computed(() => {
-      /* ⚠️⚠️ 本轮需求（用户原话）：「切换不同模型他们的思考强度默认都是关闭的，
-         每个思考强度都有单独的存储等级几的强度」→ 档位**按模型分别记**，
-         存 `settings.ai_thinking_level`（= { "<provider>|<model>": 档位 }，
-         与后端 profiles.thinking_key() 同一套键格式）。
-         查不到这个模型的记录 = 从没给它单独设过 → 退回全局 `ai_thinking`
-         （全新安装的值是 "off"，所以"默认都是关闭的"天然成立）。
-         下面再跟随所选模型：档位表来自后端（各家官方档位不同，DeepSeek 是
-         off/low/high/max）。先拿**候选值**直接对表：命中就用官方值（'max' 这种
-         我们本地归一化表没有的官方档位，绝不能在显示层被 normalize 改成 'high'
-         —— 后端会做跨模型就近修正，回传的规范值一定在表里）。
-         命不中才走 normalizeAiThinking（兼容旧布尔/中文值），再不行回落第一档。 */
+      /* 需求（用户原话）：「（同厂商或不同厂商多个同时至少 2 个存在时，或单个厂商
+         在设置中的 GCP-AI 厂商设置添加好了后）每个思考 ui 都应该是关闭状态，
+         并且每个都是独立存储的思考强度挡位」。
+         ⚠️⚠️ 回落顺序本轮重排过，顺序本身就是修复：
+           ① **后端算好的** `model.thinking`（按 档案id|厂商|模型 查表，
+              没记录就是 off）—— 事实源，永远优先；
+           ② 本地镜像表里**这条档案 × 这个模型**存过的档位 —— 只在后端没给
+              这个字段（老后端）时兜底；
+           ③ 表内第一档 levels[0]（各家官方表第一档通常是 off；
+              kimi-k3 那类"思考恒开"的表取官方最小档，绝不写死 'off'）。
+         ⚠️ 这里**不再有**"退回全局 settings.ai_thinking"那一步：它是
+            "上一个模型的档位"快照，任何新厂商/新模型都会被它点亮成 high/max
+            —— 正是用户报的"默认不是关闭"。
+         候选值先直接对表：命中就用官方原值（'max'/'minimal' 这种本地归一化表
+         没有的官方档位，绝不能在显示层被 normalize 改掉）。命不中才归一化。 */
       const levels = aiThinkLevels.value;
-      const raw = aiThinkStoredLevel();
+      /* ⚠️⚠️ 本轮修滑块"被锁定"时翻转了上一轮的优先级（上一轮那句"后端值永远优先"
+         是我的设计失误）：
+           用户拨档位 → setAiThinkingLevel 先写本地镜像，再 saveSetting('ai_thinking')；
+           这条写入会广播 settings-changed → 触发 loadAiModelChoices() 重拉 groups，
+           而那一刻后端的表**可能还没收到这次档位**（请求在路上/失败/老后端没接口）。
+           "后端优先"于是把旧值盖回显示 ⇒ 滑块**立刻弹回原位**，看着就是"点了没反应/
+           被锁住"，用户报的正是这个现象。
+         正确语义：本地镜像 = **用户刚刚的显式操作**，必须优先；
+                   后端 `model.thinking` = 没本地记录时的权威初值（保证"新模型默认关闭"），
+                   以及跨端（浏览器模式改过）同步进来时的来源。
+         两者对同一 (档案,模型) 的正常值本来就相同，只在"刚拨完还没落库"这几十毫秒里
+         分胜负 —— 那几十毫秒恰恰是用户唯一在看的时间。
+         最后再兜 levels[0]（各家官方表第一档；kimi-k3 那类恒开表取官方最小档，
+         绝不写死 'off'）。绝不回落全局 settings.ai_thinking（那是"上一个模型的档位"，
+         用它当默认值就是上一轮修的「新厂商默认不是关闭」）。 */
+      const raw = aiThinkStoredLevel() || aiThinkBackendLevel();
       if (raw && levels.indexOf(raw) >= 0) return raw;
       const cur = normalizeAiThinking(raw);
       return levels.indexOf(cur) >= 0 ? cur : (levels[0] || 'off');
     });
-    /** 这个（厂商+模型）**自己存过的**档位；没有就退回全局 ai_thinking（旧行为） */
     /* 思考档位本地镜像的键：**档案 id + 厂商 + 模型名**。
        ⚠️⚠️ 本轮需求（用户原话）：「服务商的模型列表里有同一个服务商时，他的模型很多设置
           都是相通的，例如思考强度 ui 他们就是相通的，可我需要的是**每个模型独立存储**，
@@ -9158,32 +12073,37 @@ const App = {
           ⇒ 键里必须带**档案 id**，和后端 ai_profiles.thinking_key 逐字一致
              （`profile_id|provider|model`），两端算出来的键不同就会互相看不见对方写的值。
        ⚠️ 没有档案 id 时（老配置直接跑）退回旧格式，和后端同样兼容。 */
-    function aiThinkMirrorKey() {
-      const provider = String(settings.ai_provider || '').trim().toLowerCase();
-      const model = String(settings.model_name || '').trim();
-      const pid = String(currentAiProfileId() || '').trim().toLowerCase();
-      if (!provider || !model) return '';
-      const body = provider + '|' + model;
+    function aiThinkMirrorKey(providedId, provider, name) {
+      /* ⚠️ 三个参数都可省略（省略 = 按"当前界面上选中的那条"算）。
+         但在 `pickAiModel` 那种"新的选择还没写进 settings"的时点**必须显式传**，
+         否则算出来的是**上一个**模型/档案的键 —— 于是档位被记到别人身上
+         （本轮自测真踩过：给 A 设完档位，切到 B 时把 A 的键改了）。 */
+      const prov = String(provider != null ? provider
+        : (settings.ai_provider || '')).trim().toLowerCase();
+      const model = String(name != null ? name : (settings.model_name || '')).trim();
+      const pid = String(providedId != null ? providedId
+        : (currentAiProfileId() || '')).trim().toLowerCase();
+      if (!prov || !model) return '';
+      const body = prov + '|' + model;
       return pid ? (pid + '|' + body) : body;
     }
+    /** 本地镜像表里"这条档案 × 这个模型"**自己存过**的档位；没存过就返回 ''。
+       ⚠️⚠️ 本轮改动（用户报的"添加好厂商后思考强度默认不是关闭"的前端半边）：
+          旧写法最后一行是 `return settings.ai_thinking` —— 那是"上一个模型的档位"
+          快照，任何没设过的新厂商/新模型都会继承它，界面显示出来就是 high/max。
+          现在查不到就返回 **空串**，由 aiThinkingLevel 按"后端值 → 表内第一档"回落，
+          绝不拿快照当默认值（与后端 _thinking_level_for 本轮同一口径）。
+       ⚠️ 只认**带档案 id** 的键：旧格式 `provider|model` 同厂商两条档案共用，
+          读它就会让"删了一条档案、另一条又复活成旧档位"，正是要修的现象。
+          （写入端同理，见 setAiThinkingLevel / pickAiModel。） */
     function aiThinkStoredLevel() {
       const key = aiThinkMirrorKey();
-      if (key) {
-        const store = settings.ai_thinking_level;
-        if (store && typeof store === 'object') {
-          const hit = store[key];
-          if (hit != null && String(hit).trim()) return String(hit).trim();
-          /* 老配置兜底：这条档案还没写过新键时，认一次旧的 provider|model
-             （和后端 _thinking_level_for 里的兼容分支同一口径，别只改一端） */
-          const legacyKey = key.indexOf('|') === key.lastIndexOf('|') ? '' :
-            key.slice(key.indexOf('|') + 1);
-          if (legacyKey) {
-            const old = store[legacyKey];
-            if (old != null && String(old).trim()) return String(old).trim();
-          }
-        }
-      }
-      return String(settings.ai_thinking == null ? '' : settings.ai_thinking).trim();
+      if (!key) return '';
+      const store = settings.ai_thinking_level;
+      if (!store || typeof store !== 'object') return '';
+      const hit = store[key];
+      if (hit == null || !String(hit).trim()) return '';
+      return String(hit).trim();
     }
     /** 档位刻度点是不是该整排隐藏：滑块推到**最右**（最高档）时全隐
         （本轮需求原话：「滑动条到最右处中间的小圆点全部隐藏」——
@@ -9330,7 +12250,22 @@ const App = {
          字典的**合并**放在后端 set_model_choice 里做（那里读的是磁盘上的表），
          避免两端同时在线时前端读-改-写整张表互相覆盖丢条目 —— 和 Key 分槽同一套纪律。
          这里先把本地值更新好（界面立刻反馈），再把 provider/model/档位一起交给后端。 */
-      const mirrorKey = aiThinkMirrorKey();
+      /* ★ 本轮：先把「档案 id」补齐再算键。
+         ⚠️ 冷启动 / 刚进历史对话时 settings.ai_profile_id 可能还是空串（模型候选还没拉回来），
+         这时算出来的键是旧格式 `厂商|模型`，写进去以后带 id 的键永远读不到它；
+         后端那边更严重 —— set_model_choice **必须**带档案 id，缺了直接失败，
+         档位只活在前端 ⇒ 用户看到的就是「开思考，新建/进历史对话又变回无思考」。
+         所以：空 id 时按厂商从已拉到的分组里认领一条（认领结果写回 settings，
+         让模型胶囊的显示也跟着正确），认领不到才退回旧格式键。 */
+      let pid = currentAiProfileId();
+      const prov = String(settings.ai_provider || '').trim().toLowerCase();
+      const model = String(settings.model_name || '').trim();
+      if (!pid && prov) {
+        const host = (aiModelGroups.value || []).find((g) =>
+          g && g.id && String(g.provider || '').toLowerCase() === prov);
+        if (host) { pid = String(host.id); settings.ai_profile_id = pid; }
+      }
+      const mirrorKey = aiThinkMirrorKey(pid, prov, model);
       if (mirrorKey) {
         const store = Object.assign({}, (settings.ai_thinking_level
           && typeof settings.ai_thinking_level === 'object') ? settings.ai_thinking_level : {});
@@ -9338,10 +12273,96 @@ const App = {
            同厂商两条档案列同一个模型名时互相覆盖 —— 正是用户本轮报的"相通的"。 */
         store[mirrorKey] = level;
         settings.ai_thinking_level = store;
+        /* ★ 本轮：镜像表必须**落盘**（用户原话：「开思考新建对话或进入历史对话他会
+           默认是无思考，就算你思考开着，必须刷新下状态才会调用思考」）。
+           以前这里只写内存对象，换会话 / 重开程序就退回 off ——
+           磁盘上那张表才是下次进会话能读到的东西。 */
+        saveSetting('ai_thinking_level', store);
       }
       saveSetting('ai_thinking', level);
-      bridge.tryCall('ai.set_model_choice', currentAiProfileId(), provider, model, level)
-        .catch(() => { /* 后端没这个接口：上面的 saveSetting 已经保住"当前档"，不炸界面 */ });
+      /* ⚠️⚠️ 本轮修复我自己上一轮留下的回归（用户原话：「模型思考ui的思考组件出bug了，
+         无法切换被锁定住了」）：这里原来写的是
+             bridge.tryCall('ai.set_model_choice', currentAiProfileId(), provider, model, level)
+         但 setup() 作用域里**从来没有** provider / model 这两个顶层变量
+         （grep 核实：它们只在各函数内部作为局部量存在，见 aiPickModel / aiThinkMirrorKey）。
+         → 一点滑块就 ReferenceError: provider is not defined，而且抛点位置极坏：
+           `settings.ai_thinking_level = store`（本地已改）已经执行完，
+           但 pointermove / pointerup 监听是在这句之后注册的 ⇒ 从没注册上，
+           aiThinkDragging 被置上后再没人清 —— 用户看到的就是"滑块点不动 / 拖一半卡死"，
+           而本地档位又已经改过一次，重试更乱。这就是"被锁定"的完整链路。
+         → 参数从 settings 现取（mirror key 同源，见 aiThinkMirrorKey），不依赖任何
+           外层同名变量；整段再包一层 try/catch：**任何异常都不许再打断滑块交互**。
+           后端调用失败最多是档位没落盘（saveSetting 已经保住当前档），
+           绝不能因为后端不可用就把 UI 冻住。 */
+      try {
+        bridge.tryCall('ai.set_model_choice', pid, prov, model, level)
+          .then((res) => {
+            /* 后端已经把档位记进它那张表了 —— 顺手校准一次本地：
+               后端可能把别名/非法档归一成官方档（ai.py set_model_choice），
+               界面显示的必须等于**真正会发给模型的**那一档。 */
+            if (!res || !res.ok) return;
+            const got = String(res.thinking || '').trim() || level;
+            if (got === level || aiThinkLevels.value.indexOf(got) < 0) return;
+            const fix = Object.assign({}, settings.ai_thinking_level || {});
+            fix[mirrorKey] = got;
+            saveSetting('ai_thinking_level', fix);
+            saveSetting('ai_thinking', got);
+          })
+          .catch(() => { /* 后端没这个接口：上面的 saveSetting 已经保住"当前档" */ });
+      } catch (error) {
+        /* 兜底给取证用：模块级没有 toast（它在 setup 里），console + 后端日志双落，
+           下次这类"点不动"的问题能直接从日志定位。 */
+        console.error('[GCP-AI] 保存思考档位失败:', error);
+      }
+    }
+    /** 让「思考档位」回到后端**真正生效**的那一档 —— 新对话 / 进历史对话 / 冷启动各调一次
+       ⚠️ 用户原话：「chat或agent开思考新建对话或进入历史对话他会默认是无思考，
+          就算你思考开着，必须刷新下状态才会调用思考」。
+       根因有两半，缺一不可：
+         ① 换会话（新建 / 进历史）时代码**从没重拉过**模型候选 —— 档位表和档案 id
+            停在旧会话那一刻（冷启动时甚至还是空的），滑块只能画成「无思考」；
+         ② 本地镜像里这条「档案×模型」存过的档位，可能因为那次 set_model_choice
+            缺档案 id 失败而没进后端 —— 这时要以**用户拨过的**为准推回后端，
+            绝不能反过来把用户的选择降级成 off。
+       顺序：重拉候选 → 有本地合法档就先推给后端（推不上去也保持本地）→
+       没有本地档才认后端那一档并写回镜像表。整段失败只记日志，不阻断界面。 */
+    async function refreshAiThinking() {
+      try {
+        await loadAiModelChoices();
+        const levels = aiThinkLevels.value;
+        if (!levels || !levels.length) return;
+        const local = aiThinkStoredLevel();
+        const localOk = (local && levels.indexOf(local) >= 0) ? local : '';
+        const raw = aiThinkBackendLevel();
+        const backend = (raw && levels.indexOf(raw) >= 0) ? raw : normalizeAiThinking(raw);
+        if (localOk) {
+          /* 用户拨过且合法 → 用户意图优先，顺便自愈「那次没进后端」的档位 */
+          if (localOk === backend) return;
+          const pid = currentAiProfileId();
+          const prov = String(settings.ai_provider || '').trim().toLowerCase();
+          const model = String(settings.model_name || '').trim();
+          if (pid && prov && model) {
+            const res = await bridge.tryCall('ai.set_model_choice', pid, prov, model, localOk)
+              .catch(() => null);
+            if (res && res.ok) return;
+          }
+          return;                       // 推不上去也保持用户本地选择，绝不擅自降级
+        }
+        /* 没有本地档（新装 / 新模型 / 首次进这个历史会话）→ 认后端那一档 */
+        const want = backend || levels[0] || 'off';
+        const key = aiThinkMirrorKey();
+        if (key) {
+          const store = Object.assign({}, (settings.ai_thinking_level
+            && typeof settings.ai_thinking_level === 'object') ? settings.ai_thinking_level : {});
+          if (String(store[key] || '') !== want) {
+            store[key] = want;
+            await saveSetting('ai_thinking_level', store);
+          }
+        }
+        if (String(settings.ai_thinking || '') !== want) await saveSetting('ai_thinking', want);
+      } catch (error) {
+        console.warn('[GCP-AI] 同步思考档位失败:', error);
+      }
     }
     /** 分段滑块按下：第 n 格 → 该格档位（跟手，按下即生效） */
     function aiThinkSegPick(index) {
@@ -9357,9 +12378,6 @@ const App = {
       const rail = event.currentTarget;
       if (!rail || !rail.getBoundingClientRect) return;
       event.preventDefault();                      // 防止拖字选中 / 抢焦点
-      aiThinkDragging = { rail, lastAt: -1 };
-      const at = aiThinkSegPointer(event, rail);
-      if (at >= 0) { aiThinkDragging.lastAt = at; aiThinkSegPick(at); }
       const move = (e) => {
         if (!aiThinkDragging) return;
         const next = aiThinkSegPointer(e, aiThinkDragging.rail);
@@ -9374,9 +12392,25 @@ const App = {
         window.removeEventListener('pointerup', up, true);
         window.removeEventListener('pointercancel', up, true);
       };
+      /* ⚠️⚠️ 本轮修滑块"被锁定"的第二层（第一层是 setAiThinkingLevel 的 ReferenceError）：
+         旧写法把**首次 aiThinkSegPick 放在注册监听之前**。首次 pick 里任何异常都会让
+         `window.addEventListener(...)` 三行整段不执行，而 `aiThinkDragging` 已经被置上
+         → 状态机永久泄漏：之后每次 pointerdown 都因残留状态错乱、每次 pick 都"没反应"，
+         表现就是用户说的"无法切换，被锁定住了"。
+         → 现在：先注册监听再首次 pick，并把首次 pick 包进 try/finally ——
+           成功：正常跟手；失败：立刻复位并摘掉监听，**滑块下一下点击照样能用**，
+           绝不会因为一次异常把整个控件永久冻死。 */
       window.addEventListener('pointermove', move, true);
       window.addEventListener('pointerup', up, true);
       window.addEventListener('pointercancel', up, true);
+      try {
+        const at = aiThinkSegPointer(event, rail);
+        if (at >= 0) { aiThinkDragging = { rail, lastAt: at }; aiThinkSegPick(at); }
+        else { aiThinkDragging = { rail, lastAt: -1 }; }
+      } catch (error) {
+        console.error('[GCP-AI] 思考档位首次选择失败（已复位，可继续操作）:', error);
+        up();
+      }
     }
     /** 拖动中：按指针 x 相对轨道的位置算落在**最近的档位点**
        ⚠️ 本轮几何变了：档位点不再是"每格中心"，而是均匀分布的点 i/(n-1)
@@ -9452,7 +12486,6 @@ const App = {
          同厂商两条档案后端永远只认数组里靠前那条（active_profile 按顺序推），
          于是"点第二条那组的模型"实际没换档案 —— Key、地址、token 上限全都还是
          另一条的，界面上两组勾选却一起变。现在把档案 id 一起交给后端。 */
-      const stored = aiThinkStoredLevel();
       settings.ai_profile_id = String(group.id || '');
       settings.ai_provider = provider;
       settings.model_name = String(model.name || '');
@@ -9472,24 +12505,35 @@ const App = {
         /* 后端可能把档位就近修正过（各家档位表不同）→ 以返回值为准刷新界面 */
         if (result.thinking) settings.ai_thinking = result.thinking;
       }).catch(() => needApi('ai.set_model_choice', t('ai_model_pick', '选择模型')));
-      /* 新模型的档位表（直接按这台 model 算，不等 watch 重拉）：
-         旧档位不在新集合内 → 落回**这张表的第一档**，与界面显示一致。
-         ⚠️ 本轮契约：各家官方档位不同，第一档**不一定是 off**（kimi-k3/k3.1-pro
-            官方只有 low/high/max 思考恒开，k2.7-code 只有单档），所以取
-            nextLevels[0] 而不是写死 'off'，否则会把表外的值存进设置。
-         ⚠️ 但"每个模型默认关闭"这条需求靠的是：这台模型**从没单独设过档位**时，
-            查表查不到 → 退回全局默认 "off"（见 aiThinkStoredLevel），
-            所以这里只在"这台确实存过一个表外档位"时才纠正，不会把默认改成非 off。 */
+      /* 新模型的档位表（直接按这台 model 算，不等 watch 重拉）。
+         ⚠️⚠️ 本轮修掉一个"看着像没反应"的错配：旧写法拿 `stored`
+            （= **上一个**模型的档位）去对新模型的档位表，命不中就把
+            `nextLevels[0]` 写进设置。后果有两个：
+              ① 用户从没设过的新模型被凭空写出一条记录 → "没设过"和"设成 off"
+                 再也区分不开，同厂商再加档案时又会带上这个值（用户报的"相通"）；
+              ② 写入用的还是**厂商级旧键** `provider|model`（和后端
+                 `profiles.thinking_key` 的 `档案id|provider|model` 不一致）
+                 → 同厂商两条档案串档。
+            现在：档位只认**这台模型自己**的记录 —— 优先后端给的 `model.thinking`
+            （后端按 档案id|厂商|模型 查表，没记录就是 off），其次这台自己的镜像键；
+            这台确实存过一个"不在自己档位表里"的值时才纠正，且用**带档案 id 的键**写。 */
       const nextLevels = (Array.isArray(model.thinking_levels) && model.thinking_levels.length)
         ? model.thinking_levels.filter((l) => l && l.value).map((l) => String(l.value))
         : (model.supports_thinking ? AI_THINK_LEVELS : ['off']);
-      if (nextLevels.indexOf(stored) < 0) {
+      const targetId = String(group.id || '');
+      const targetKey = aiThinkMirrorKey(targetId, provider, String(model.name || ''));
+      const targetStore = (settings.ai_thinking_level
+        && typeof settings.ai_thinking_level === 'object') ? settings.ai_thinking_level : {};
+      const ownLevel = String(
+        (model.thinking != null && String(model.thinking).trim())
+          || (targetKey && targetStore[targetKey] != null ? String(targetStore[targetKey]) : '')
+      ).trim();
+      if (ownLevel && nextLevels.indexOf(ownLevel) < 0) {
         const level = nextLevels[0] || 'off';
         settings.ai_thinking = level;
-        if (provider && model.name) {
-          const store = Object.assign({}, (settings.ai_thinking_level
-            && typeof settings.ai_thinking_level === 'object') ? settings.ai_thinking_level : {});
-          store[String(provider).toLowerCase() + '|' + String(model.name)] = level;
+        if (targetKey) {
+          const store = Object.assign({}, targetStore);
+          store[targetKey] = level;
           settings.ai_thinking_level = store;
         }
       }
@@ -9498,6 +12542,8 @@ const App = {
     function toggleAiModelMenu() {
       if (!aiModelVisible.value) return;
       aiModelOpen.value = !aiModelOpen.value;
+      /* 和对话模式弹层互斥（两个都开就叠在一起了） */
+      if (aiModelOpen.value) aiModeOpen.value = false;
       if (aiModelOpen.value && !(aiModelGroups.value || []).length) loadAiModelChoices();
     }
     /** 服务商分组名（本轮多语言修复）
@@ -9642,6 +12688,8 @@ const App = {
     watch([() => settings.ai_provider, () => settings.model_name, () => apiKeyConfigured],
       () => { loadAiModelChoices(); });
     async function aiNewChat() {
+      /* ★ 本轮（统计）：新对话 = 新账本 */
+      aiResetStats();
       rememberAiScroll();                       // 先把旧会话的位置存起来（任务 3）
       const result = await bridge.tryCall('ai.new_session');
       aiSessionId.value = (result && result.ok && result.session && result.session.id) || '';
@@ -9650,8 +12698,18 @@ const App = {
       /* 新对话 = 旧的下标/旧流全部作废（和 loadAiSession 同一套清理） */
       cancelAiEdit();
       clearStreamBubble();
+      /* ⚠️⚠️ 修用户报的「我切换历史或者新建对话这个调用工具的ui一直在这个界面里」：
+         步骤卡片是**上一个会话的执行过程**，换会话必须清掉，否则它会一直挂在新界面。
+         （它本来就不该跨会话残留 —— 它描述的是"上一次 AI 干了什么"。） */
+      resetAgentSteps();
+      aiAgentStepsOpen.value = true;
+      aiAgentStepsTouched = false;
       aiStickBottom.value = true;               // 空会话当然贴底
       focusAiInput();
+      /* ★ 本轮修复（用户原话：「开思考新建对话…他会默认是无思考，必须刷新下状态
+         才会调用思考」）：新对话必须重新对一次档位 —— 换会话时档案 id / 档位表
+         可能还停在上一刻（甚至空），不同步就会显示成无思考。 */
+      refreshAiThinking();
     }
     async function clearAiHistory() {
       /* 需求：点清除要**二次确认**，不能直接删；而且删完要**立刻**把下面的列表清空
@@ -9788,19 +12846,19 @@ const App = {
     }
     /** 打字时的"持续自适应"由 CSS 的 field-sizing: content 负责。
        ⚠️ 保留这个空函数与模板上的 @input 绑定，是为了**明确记录这里不该写代码**：
-          旧版在这里用 canvas 重算宽度并写进内联 style，那一套每一环都脆弱
-          （v-model 与本监听的先后顺序不保证、getComputedStyle().font 在
+           旧版在这里用 canvas 重算宽度并写进内联 style，那一套每一环都脆弱
+           （v-model 与本监听的先后顺序不保证、getComputedStyle().font 在
            Chromium 里对分写字体返回空串导致量出来偏小），而且只要写了内联宽度，
            框就永远固定 —— 正是本轮用户报的现象。 */
     /** 打字时的尺寸自适应：**优先交给 CSS 的 `field-sizing: content`**。
        ⚠️ 但这条能力是 Chromium 123+ 才有（WebView2 Evergreen 一般都有，
-          可**不能假设**：企业机器可能停在较旧的 Runtime）。
-          一旦不支持，`width: auto` 的 textarea 会退回默认的约 20 列、
-          而且**永远不会变长** —— 又变成本轮用户报的那个 bug。
-          所以这里做一次特性检测：支持就什么都不做（最省事也最准），
-          不支持就自己按内容长宽（用 scrollWidth/scrollHeight，
-          这是浏览器**已经排好版**的真实值，不需要 canvas 量字宽，
-          也就不会踩旧版那些坑：字体简写取不到值、v-model 与本监听的先后顺序）。 */
+           可**不能假设**：企业机器可能停在较旧的 Runtime）。
+           一旦不支持，`width: auto` 的 textarea 会退回默认的约 20 列、
+           而且**永远不会变长** —— 又变成本轮用户报的那个 bug。
+           所以这里做一次特性检测：支持就什么都不做（最省事也最准），
+           不支持就自己按内容长宽（用 scrollWidth/scrollHeight，
+           这是浏览器**已经排好版**的真实值，不需要 canvas 量字宽，
+           也就不会踩旧版那些坑：字体简写取不到值、v-model 与本监听的先后顺序）。 */
     let aiFieldSizingOk = null;
     function aiFieldSizingSupported() {
       if (aiFieldSizingOk !== null) return aiFieldSizingOk;
@@ -9882,6 +12940,11 @@ const App = {
       aiBusy.value = true;
       aiAborted = false;
       aiPending.value = true;                    // 「AI正在查看问题...」（不进历史、不落盘）
+      /* Agent 执行过程卡片：每次发送从零开始，执行中默认展开（用户要看它在干什么） */
+      resetAgentSteps();
+      aiRunActive = true;               // 本轮运行开始：接受 ai.agent_progress 事件（见其定义）
+      aiAgentStepsOpen.value = true;
+      aiAgentStepsTouched = false;
       /* 「正在生成」气泡 + 逐字文本的**落点**（必须在 clearStreamBubble 之后设，
          因为它会把这两个也清回 -1）。
          pendingAfter：重新生成时 = 被重生的那条回答的下标 → 进度气泡挂在它正下方
@@ -9920,10 +12983,15 @@ const App = {
              每个对话第一句的思考包（只有 reasoning、没有 text）几乎必丢。
              现在：调用**前**置 await 标志 → 早到的包进缓冲；返回值到了再补 id 重放。 */
           aiStreamAwait = true;
+          /* ⚠️ 最后一个参数是**界面当前那一档思考**：后端以前只按档案表查，前端刚改的档位、
+             或两端档案 id / 模型写法差一点，都会查成 off —— 用户看到的就是「每个对话
+             发送第一句就算你带思考也没用，他就是当没开思考」。后端以这个值为准（模型
+             不支持思考时仍会自动忽略），所以这里必须每次都带上，不能只在设置里改的时候带。 */
           const started = await bridge.tryCall('ai.send_stream', aiSessionId.value || '', text,
             String(settings.ai_reply_mode || 'standard'), resend,
             (userIndex === undefined || userIndex === null) ? '' : userIndex,
-            (assistantIndex === undefined || assistantIndex === null) ? '' : assistantIndex);
+            (assistantIndex === undefined || assistantIndex === null) ? '' : assistantIndex,
+            String(aiThinkingLevel.value || ''));
           if (started && started.ok && started.stream_id) {
             /* 用户消息已经落盘：先按后端返回的会话重建气泡（下标从此以磁盘为准），
                然后把"等回答"这件事整个交给 ai.stream 事件。 */
@@ -9981,7 +13049,8 @@ const App = {
         const result = await bridge.tryCall('ai.send', aiSessionId.value || '', text,
           String(settings.ai_reply_mode || 'standard'), !!resend,
           (userIndex === undefined || userIndex === null) ? '' : userIndex,
-          (assistantIndex === undefined || assistantIndex === null) ? '' : assistantIndex);
+          (assistantIndex === undefined || assistantIndex === null) ? '' : assistantIndex,
+          String(aiThinkingLevel.value || ''));     /* 同流式：带上界面当前思考档位 */
         if (aiAborted) return;                             // 用户点了停止 → 丢弃这次结果
         if (!result) {
           aiMessages.value.push({ role: 'ai', error: true, text: t('ai_backend_missing',
@@ -10035,6 +13104,16 @@ const App = {
         if (result.persisted === false) {
           toast(t('ai_chat_not_saved', '对话没能保存到磁盘'), 'warning');
         }
+        /* 本轮：AI 通过 /plugin 工具循环**造出了新插件** → 立刻刷新插件中心。
+           后端一直在回包里给 created_plugins（desktop/api/ai.py 的 _chat_with_tools），
+           但前端以前完全没消费它 —— 用户让 AI 做完插件，还得自己点「重新加载」才看得见。 */
+        /* ★ 本轮（统计面板）：整段 send() 这条路也要吃到 usage（流式在 finishAiStream） */
+        if (result && result.usage) aiTakeUsage(result);
+        if (Array.isArray(result.created_plugins) && result.created_plugins.length) {
+          loadPlugins(false);
+          toast(t('plugin_created', '已生成 {n} 个插件，去插件中心开启它')
+            .replace('{n}', result.created_plugins.length), 'success');
+        }
         loadAiSessions();                                // 会话标题/时间会变，顺手刷新历史
       } catch (error) {
         aiMessages.value.push({ role: 'ai', error: true,
@@ -10045,6 +13124,7 @@ const App = {
            第二个流会把第一个的气泡冲掉）。所以用 aiStreamId 判断：还在流上就交给
            done/error/cancelled 事件去收尾，这里只清"等待提示"以外的东西。 */
         if (!aiStreamId) {
+          aiRunActive = false;   // 同步/降级路径也到此为止：关闭 Agent 进度闸门
           /* 异常/同步路径收尾：await 标志万一还挂着（tryCall 抛错、fallback 前异常），
              必须关掉缓冲，否则无关事件会攒到**下一条**流里被重放。 */
           resetAiStreamBuffer();
@@ -10060,6 +13140,9 @@ const App = {
                  还位才能让被藏起来的旧分支重新显示，不留"藏了不还"的空洞。 */
           aiCutAfter.value = -1;
         }
+        /* Agent 执行全部结束后自动折叠成一行「已完成 N 步」
+           （执行中一直展开；用户手动点过就以他的选择为准，不再自动改） */
+        if (aiAgentStepsDone.value && !aiAgentStepsTouched) aiAgentStepsOpen.value = false;
         nextTick(scrollAiToEnd);
       }
     }
@@ -10170,6 +13253,8 @@ const App = {
         return;
       }
       if (type === 'done' || type === 'cancelled' || type === 'error') {
+        /* ★ 本轮运行结束：关闭 ai.agent_progress 闸门（旧运行的尾事件不再混进来） */
+        aiRunActive = false;
         /* 本轮（直通模式）：done 立刻落地，不再"等字打完"。
            以前要攒着收尾包是因为打字机可能还没追完、整段替换会跳一下；
            现在显示内容始终等于最后一次 delta 的累计全文，done 带的就是同一份文本
@@ -10201,7 +13286,200 @@ const App = {
 
     /** 收尾（done / cancelled / error）：以磁盘为准重建气泡、解冻 aiBusy。
      *  ⚠️ 本轮（直通模式）：done 到达即调用，不再有"攒着等打完"那条路。 */
+    /* =====================================================================
+       GCP-AI 用量统计（本轮需求 4/5：缓存命中 / 上下文 / 会话统计小面板）
+       =====================================================================
+       数据链路（全部是网关**原样回传**的 usage，不改用户任何对话内容）：
+         · provider 响应 usage（含 prompt_cache_hit_tokens / cached_tokens）
+           → client.py extract_usage() 归一成 {prompt, completion, total, cached}
+         · 每次请求 ai.py _usage_of()：折进 session.usage_total（会话累计）
+           + 本次那份挂到那条消息上；send/done 信封都带 usage
+         · 前端只存两份：aiUsageLast（本次）/ aiUsageTotal（会话累计）。
+       ⚠️ 拿不到 usage（老后端 / 网关不给 / 离线）时面板**如实显示"暂无数据"**，
+          绝不显示 0% 骗人。 */
+    const aiStatsOpen = ref(false);
+    /* ★ 本轮（用户新规格）：悬浮打开；鼠标在按钮/面板这块区域内**不自动关**，
+       离开这块区域才收。面板是 .ai-stats-wrap 的 DOM 子节点，鼠标移到面板上
+       不会触发父级 mouseleave；但按钮与面板之间有 8px 视觉间隙，跨过的瞬间会
+       误报"离开" → 关动作一律延迟 300ms（grace），期间任何 mouseenter 取消关闭。
+       点按钮仍可手动开/关（触屏 / 键盘用户同样能操作）。 */
+    let aiStatsCloseTimer = 0;
+    function aiStatsHover(inside) {
+      if (inside) {
+        if (aiStatsCloseTimer) { clearTimeout(aiStatsCloseTimer); aiStatsCloseTimer = 0; }
+        aiStatsOpen.value = true;
+        return;
+      }
+      if (aiStatsCloseTimer) clearTimeout(aiStatsCloseTimer);
+      aiStatsCloseTimer = setTimeout(function () {
+        aiStatsCloseTimer = 0;
+        aiStatsOpen.value = false;
+      }, 300);
+    }
+    const aiUsageLast = ref(null);
+    const aiUsageTotal = ref(null);
+    function aiTakeUsage(payload) {
+      try {
+        const u = payload && payload.usage;
+        if (!u || typeof u !== 'object') return;
+        if (u.last && typeof u.last === 'object') aiUsageLast.value = { ...u.last };
+        if (u.total && typeof u.total === 'object') aiUsageTotal.value = { ...u.total };
+      } catch (e) { /* 统计是锦上添花，坏了不许影响聊天 */ }
+    }
+    /* 会话累计缓存命中：后端 _fold_usage 把每次请求的 cached 加总到 cached_total */
+    const aiCacheStats = computed(() => {
+      const t = aiUsageTotal.value;
+      if (!t || !Number(t.prompt)) return null;
+      const prompt = Number(t.prompt) || 0;
+      // 只认后端累计的**精确** cached_total；没有 → 这块显示"暂未可用"，
+      // 绝不拿"最近一问"或估算冒充会话级命中率（用户明确不许假数）。
+      const ct = t.cached_total;
+      if (!Number.isFinite(ct) || prompt <= 0) return null;
+      const cached = Math.min(Number(ct) || 0, prompt);
+      return { prompt, cached, rate: Math.min(100, Math.round(cached / prompt * 1000) / 10) };
+    });
+    const aiTokenStats = computed(() => {
+      const t = aiUsageTotal.value;
+      if (!t) return null;
+      return {
+        prompt: Number(t.prompt) || 0,
+        completion: Number(t.completion) || 0,
+        total: Number(t.total) || 0,
+        requests: Number(t.requests) || 0,
+      };
+    });
+    /* 最近一问的命中率（prompt/cached/rate） */
+    const aiLastHit = computed(() => {
+      const l = aiUsageLast.value;
+      if (!l || !Number(l.prompt)) return null;
+      const prompt = Number(l.prompt) || 0;
+      const cached = Number(l.cached) || 0;
+      return { prompt, cached, rate: Math.min(100, Math.round(cached / prompt * 1000) / 10) };
+    });
+    /* 上下文：大数字只显**服务端实测**的 prompt_tokens（= 本次真正发给模型的全部
+       输入：system + 资源清单 + 历史 + 这一问，由网关算出来，不是本地估算）。
+       ⚠️ 用户点名「上下文只是大约而不是真实准确数值」是缺陷 —— 旧版按字符数
+       粗估的 approxTokens 整条删掉；没有实测值时如实显示"暂未可用"，不给估数。
+       下面的「发送范围 / 会话条数」是对设置与会话的事实描述（不是测量值），保留。 */
+    const aiContextStats = computed(() => {
+      const list = aiMessages.value || [];
+      const rounds = Number(settings.ai_context_rounds || 0);
+      let count = 0;
+      list.forEach((m) => { if (m && !m.error) count += 1; });
+      return {
+        rounds,
+        messages: count,
+        /* 服务端实测值：最近一次请求 usage 里的 prompt_tokens（Agent 模式已合并
+           工具循环的每一轮，见 ai.py _merge_usage）；没有 = 0（面板显示暂未可用）。
+           重开会话时 aiUsageLast 为空，退回累计里落盘的 last_prompt（同样是实测值）。 */
+        realPrompt: Number((aiUsageLast.value && aiUsageLast.value.prompt)
+          || (aiUsageTotal.value && aiUsageTotal.value.last_prompt) || 0),
+      };
+    });
+    /* ★ 本轮新增：本次输入的构成（系统提示词 / 工具定义 / 对话消息）。
+       数据链路：后端 _context_mix() 把组装完的 messages 按**字符数**分成三段
+       （工具清单本来拼在 system 正文里，后端已从 system 里扣出来单算），
+       随 usage 一起回传（本次的 last.mix，累计里落盘为 last_mix）。
+       前端只做"比例 → tokens"的折算，不另做估算：
+         · 总量 = 服务端实测的 prompt_tokens（真值）；
+         · 三段 tokens = 各段字符占比 × 总量，四舍五入后**最后一段吃掉尾差**，
+           保证三段相加严格等于实测总量；
+         · 面板上显式带 ≈ 并注明"按字符占比折算"，免得被读成三段各自实测。
+       没有实测值（没发过请求 / 服务商没回 usage）→ null，面板写暂未可用。 */
+    const aiContextMix = computed(() => {
+      const lastUsage = aiUsageLast.value || null;
+      const totUsage = aiUsageTotal.value || null;
+      const mix = (lastUsage && lastUsage.mix) || (totUsage && totUsage.last_mix) || null;
+      if (!mix || typeof mix !== 'object') return null;
+      const chars = {
+        system: Number(mix.system_chars) || 0,
+        tools: Number(mix.tools_chars) || 0,
+        messages: Number(mix.messages_chars) || 0,
+      };
+      const totalChars = chars.system + chars.tools + chars.messages;
+      if (!(totalChars > 0)) return null;
+      const totalTokens = Number((lastUsage && lastUsage.prompt) || (totUsage && totUsage.last_prompt) || 0);
+      if (!(totalTokens > 0)) return null;
+      const parts = [
+        { key: 'system', labelKey: 'ai_stats_mix_system', label: '系统提示词' },
+        { key: 'tools', labelKey: 'ai_stats_mix_tools', label: '工具定义' },
+        { key: 'messages', labelKey: 'ai_stats_mix_messages', label: '对话消息' },
+      ].filter((p) => chars[p.key] > 0);
+      let used = 0;
+      const segments = parts.map((p, i) => {
+        const isLast = i === parts.length - 1;
+        const tk = isLast
+          ? Math.max(0, totalTokens - used)
+          : Math.round(totalTokens * chars[p.key] / totalChars);
+        used += tk;
+        return {
+          key: p.key,
+          name: t(p.labelKey, p.label),
+          chars: chars[p.key],
+          tokens: tk,
+          pct: Math.round(chars[p.key] / totalChars * 1000) / 10,
+        };
+      });
+      return {
+        totalChars,
+        totalTokens,
+        messageCount: Number(mix.message_count) || 0,
+        segments,
+      };
+    });
+
+    /* ★ 本轮新增（用户：「新建对话也能看到统计 UI 还是没解决」）：
+       面板里的"系统提示词 / 工具定义 / 对话消息"三行改成**常显骨架** ——
+       不管有没有发过请求，这三行标签与配色都先摆出来（没数据时值是 '—'），
+       否则新对话里整块 v-if="aiContextMix" 不渲染，用户只看到一行"暂未可用"，
+       观感就是"统计 UI 没显示"。
+       有实测构成时直接复用 aiContextMix.segments 的折算值，口径不变。 */
+    const aiMixLegend = computed(() => {
+      const parts = [
+        { key: 'system', labelKey: 'ai_stats_mix_system', label: '系统提示词' },
+        { key: 'tools', labelKey: 'ai_stats_mix_tools', label: '工具定义' },
+        { key: 'messages', labelKey: 'ai_stats_mix_messages', label: '对话消息' },
+      ];
+      const mx = aiContextMix.value;
+      return parts.map((p) => {
+        const seg = mx ? mx.segments.find((s) => s.key === p.key) : null;
+        return {
+          key: p.key,
+          name: t(p.labelKey, p.label),
+          tokens: seg ? seg.tokens : null,
+          pct: seg ? seg.pct : null,
+        };
+      });
+    });
+
+    function aiNumberFmt(n) {
+      const v = Number(n) || 0;
+      if (v >= 1000000) return (v / 1000000).toFixed(1) + 'M';
+      if (v >= 1000) return (v / 1000).toFixed(1) + 'k';
+      return String(v);
+    }
+    async function copyAiStats() {
+      /* 复制出去的内容和面板**同一口径**：三块各自要么是真值、要么明说暂未可用 */
+      const out = [];
+      const tk = aiTokenStats.value;
+      const cs = aiCacheStats.value;
+      const ctx = aiContextStats.value;
+      if (cs) out.push(t('ai_stats_cache', '缓存命中') + ': ' + cs.rate + '% (' + cs.cached + ' / ' + cs.prompt + ' tokens)');
+      else out.push(t('ai_stats_cache', '缓存命中') + ': ' + t('ai_stats_cache_na', '暂未可用：服务商未回传缓存命中数据'));
+      if (ctx.realPrompt > 0) out.push(t('ai_stats_context', '上下文') + ': ' + ctx.realPrompt + ' tokens');
+      else out.push(t('ai_stats_context', '上下文') + ': ' + t('ai_stats_context_na', '暂未可用：发送后才有服务端实测值'));
+      if (tk) out.push(t('ai_stats_session', '会话统计') + ': ' + tk.prompt + ' in / ' + tk.completion + ' out / ' + tk.total + ' total / ' + tk.requests + ' req');
+      else out.push(t('ai_stats_session', '会话统计') + ': ' + t('ai_stats_session_na', '暂未可用：还没有带回用量的请求'));
+      const mx = aiContextMix.value;
+      if (mx) {
+        out.push(t('ai_stats_mix_title', '本次输入构成') + ': '
+          + mx.segments.map((s) => s.name + ' ≈' + s.tokens + ' (' + s.pct + '%)').join(' / '));
+      }
+      await copyText(out.join('\n'));
+    }
+
     function finishAiStream(payload) {
+      aiTakeUsage(payload);
       const type = String(payload.type || '');
       const session = (payload.session && Array.isArray(payload.session.messages))
         ? payload.session : null;
@@ -10509,12 +13787,18 @@ const App = {
            ⚠️ 这一条必须排在 detail 之前 —— 弹窗是盖在详情页之上的浮层，
               没有这个分支时 Esc 直接命中 detail 分支，弹窗还开着页面先退了。 */
         if (releasesDialog.open) { event.preventDefault(); closeReleases(); return; }
+        /* task-12 需求 6：选区右键菜单开着时，Esc **先收菜单**再谈退出详情
+           （与 releasesDialog 排在 detail 之前同一论证：浮层优先）。 */
+        if (selMenu.value) { closeSelMenu(); return; }
         if (detail.value) { event.preventDefault(); closeDetail(); return; }
         if (selectionBar.value) { exitSelection(); return; }
         if (recording.value) { recording.value = ''; return; }
         if (trayMenu.value) { trayMenu.value = false; return; }
+        /* 公告正文右键菜单：Esc 先收它（浮层优先于页面/详情） */
+        if (noticeCtx.value) { closeNoticeCtx(); return; }
         /* 本轮新增（AI 区）：气泡右键菜单 / 模型弹层 / @候选 —— Esc 优先收起它们 */
         if (aiCtx.open) { closeAiCtx(); return; }
+        if (aiModeOpen.value) { aiModeOpen.value = false; return; }
         if (aiModelOpen.value) { aiModelOpen.value = false; return; }
         if (aiAtOpen.value) { closeAiAt(); return; }
         /* 收藏夹右键菜单（重命名/删除）—— Esc 关掉它 */
@@ -10533,9 +13817,31 @@ const App = {
     /* ---------- 启动 ---------- */
     /* 启动分步进度（出问题时能一眼看出卡在哪一步；也用于超时兜底） */
     let bootStep = 'init';
+    /* 启动步骤 → 屏幕文案/进度（只有核心阶段上屏；其余只进日志）
+       ⚠️ 这里刻意不逐一列每步，而是把"准备阶段"折叠成一个区间：用户不想看到
+          `启动中[paths]` 这种内部名词，只想大概知道走到哪儿了。 */
+    const BOOT_STAGE = {
+      bridge: [10, 'boot_starting', '正在启动…'],
+      appinfo: [16, 'boot_starting', '正在启动…'],
+      paths: [22, 'boot_ui', '正在准备界面…'],
+      settings: [30, 'boot_ui', '正在准备界面…'],
+      window: [38, 'boot_ui', '正在准备界面…'],
+      privacy: [44, 'boot_starting', '正在启动…'],
+      ready: [50, 'boot_ui', '正在准备界面…'],
+      render: [58, 'boot_ui', '正在准备界面…'],
+    };
+
     function setStep(name) {
       bootStep = name;
-      bootText.value = '启动中[' + name + ']';
+      const stage = BOOT_STAGE[name];
+      if (stage) {
+        bootText.value = t(stage[1], stage[2]);
+      } else {
+        /* 非核心步骤：界面上保持当前那句话（不再刷成"启动中[xxx]"这种内部步骤名，
+           用户只想知道大概走到哪儿了）；排查仍然靠 document.title + [boot] step= 日志。
+           ⚠️ 这里**不写任何兜底文案**：bootText 一开始就是"正在启动…"，不会为空。 */
+        if (!bootText.value) bootText.value = t('boot_starting', '正在启动…');
+      }
       /* ⚠️⚠️ 本轮修复「浏览器模式标签页标题只能是 ToolsGCP，右边还有 " · render"，
          给我删除」：这里以前会把**启动步骤名**拼进 document.title（排查启动卡死用的），
          而 boot 的最后一步正好叫 `render`（8893 行 `setStep('render')`），
@@ -10547,6 +13853,16 @@ const App = {
          要查卡在哪儿看那两处，别看页签。 */
       try { document.title = 'ToolsGCP'; } catch (e) {}
       try { if (bridge.ready) bridge.call('log.client', 'info', '界面', '[boot] step=' + name).catch(function(){}); } catch (e) {}
+    }
+
+    /* 收尾启动画面：100% → 下一帧淡出（幂等：资源落定与 9 秒兜底都会调）
+       ⚠️ 必须幂等：快机器上资源 100ms 就回来了，兜底定时器 9 秒后还会再调一次。 */
+    let bootFinished = false;
+    function finishBoot() {
+      if (bootFinished) return;
+      bootFinished = true;
+      bootText.value = t('boot_finishing', '即将完成…');
+      setTimeout(() => { booting.value = false; }, 200);
     }
 
     /* ---------- 法律同意状态检查（纯本地读取，**绝不联网**） ----------
@@ -10562,21 +13878,250 @@ const App = {
       return agreed;
     }
 
+    /* ---------- 启动自检：样式表是不是真的到位了（需求②） ----------
+       症状（用户原话）：「启动后 UI 被堆叠在一起、样式是最基础底层的」，
+       偶发，50 多次遇到一次。
+       真因：13 个 CSS 里只要少了 variables.css（设计变量）和 base.css（reset），
+             页面就退回浏览器默认排版 —— 正是「都堆在一起、最基础底层样式」的样子。
+       以前不会自愈：app.js 里没有重挂逻辑，资源一旦没加载成功，
+             界面就一直裸奔到用户手动刷新为止。
+       做法：盯住每个 CSS <link> 的 load / error 事件，
+             **明确报错**的才就地重挂（改 href 加时间戳，位置不动 ⇒ CSS 覆盖顺序不变），
+             重挂完再复查；还是不行才弹提示告诉用户。
+       ⚠️ 三个坑，都是这次真踩到的：
+         1) **不能用「link 元素在不在」当判据**。link 在 HTML 解析时就有了，
+            样式表还没下载完 —— 早判一次会把「还在路上」当成「没加载」，
+            反而把 13 个 CSS 全部再请求一遍（把偶发的排队问题变成常态）。
+         2) **不能用 document 的 load 事件当结算点**。各浏览器/jsdom 对
+            「load 触发时样式表是否已进 document.styleSheets」的处理不一致，
+            早判同样会误判。唯一可靠的信号是 link 自己的 load / error 事件。
+         3) **不能用「某个 CSS 变量能不能算出来」当判据**。jsdom 等无布局环境
+            不支持自定义属性取值，会把一切误判成「样式没加载」。
+            所以判据只用「link 有没有报 error」。 */
+    const STYLE_GUARD_FILES = [
+      '/static/css/variables.css',
+      '/static/css/base.css',
+      '/static/css/components.css',
+      '/static/css/layout.css',
+      '/static/css/animations.css',
+      '/static/css/overlays.css',
+      '/static/css/fav-fixes.css',
+      '/static/css/settings-fixes.css',
+      '/static/css/download-fixes.css',
+      '/static/css/r22-fixes.css',
+      '/static/css/r24-fixes.css',
+      '/static/css/download-ui.css',
+      '/static/css/ai-fixes.css',
+    ];
+    /* rel -> 'loading' | 'ok' | 'fail' */
+    const styleStates = Object.create(null);
+    function styleLinkElement(rel) {
+      const links = document.getElementsByTagName('link');
+      for (let i = 0; i < links.length; i += 1) {
+        const l = links[i];
+        const relAttr = (l.getAttribute('rel') || '').toLowerCase();
+        if (relAttr.indexOf('stylesheet') < 0) continue;
+        const href = l.getAttribute('href') || '';
+        if (href.indexOf(rel) >= 0) return l;
+      }
+      return null;
+    }
+    function watchStyleLink(link, rel) {
+      if (!link) return;
+      if (link.__tgStyleWatched) return;
+      link.__tgStyleWatched = true;
+      if (styleStates[rel] === undefined) styleStates[rel] = 'loading';
+      link.addEventListener('load', function () { styleStates[rel] = 'ok'; });
+      link.addEventListener('error', function () { styleStates[rel] = 'fail'; });
+      /* 已经加载完的（脚本晚于 CSS 执行时 link.sheet 已存在）直接记 ok */
+      if (link.sheet) styleStates[rel] = 'ok';
+    }
+    function missingStyleFiles() {
+      /* 只有两种算「缺」：link 元素压根不在，或者 link 明确报了 error。
+         还在 loading 的一律不算（那是正常下载中）。 */
+      return STYLE_GUARD_FILES.filter(function (rel) {
+        const link = styleLinkElement(rel);
+        if (!link) return true;
+        return styleStates[rel] === 'fail';
+      });
+    }
+    function reloadStyleFile(rel) {
+      const stamp = '?tg=' + Date.now();
+      let link = styleLinkElement(rel);
+      if (link) {
+        /* 就地改写 href：位置不动 ⇒ CSS 覆盖顺序不变
+           （追加到 head 末尾会把补丁样式排到基础样式前面，覆盖关系就反了） */
+        styleStates[rel] = 'loading';
+        link.setAttribute('href', rel + stamp);
+        watchStyleLink(link, rel);
+        return link;
+      }
+      /* 元素本身都不在了（被人动过）：按标准顺序插到它该在的位置 */
+      link = document.createElement('link');
+      link.setAttribute('rel', 'stylesheet');
+      link.setAttribute('href', rel + stamp);
+      const idx = STYLE_GUARD_FILES.indexOf(rel);
+      let anchor = null;
+      for (let i = idx + 1; i < STYLE_GUARD_FILES.length && !anchor; i += 1) {
+        anchor = styleLinkElement(STYLE_GUARD_FILES[i]);
+      }
+      if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(link, anchor);
+      else (document.head || document.documentElement).appendChild(link);
+      watchStyleLink(link, rel);
+      return link;
+    }
+    function waitForStyles(links, timeoutMs) {
+      return new Promise(function (resolve) {
+        if (!links.length) { resolve(false); return; }
+        let left = links.length;
+        let done = false;
+        const finish = function () { if (!done) { done = true; resolve(true); } };
+        const timer = setTimeout(finish, timeoutMs || 8000);
+        links.forEach(function (link) {
+          const one = function () {
+            left -= 1;
+            if (left <= 0) { clearTimeout(timer); finish(); }
+          };
+          link.addEventListener('load', one, { once: true });
+          link.addEventListener('error', one, { once: true });
+        });
+      });
+    }
+    async function ensureStylesLoaded() {
+      /* 先把已有的 13 个 link 都挂上 load/error 监听 */
+      STYLE_GUARD_FILES.forEach(function (rel) { watchStyleLink(styleLinkElement(rel), rel); });
+      /* 等一轮：给还在路上的样式表时间落定（不阻塞启动，只是让判定更准） */
+      await waitForStyles(
+        STYLE_GUARD_FILES.map(styleLinkElement).filter(function (l) { return !!l; }),
+        6000
+      );
+      const missing = missingStyleFiles();
+      if (!missing.length) return true;
+      console.warn('[ToolsGCP] 样式表加载失败，准备就地重挂：', missing.join(', '));
+      const links = [];
+      missing.forEach(function (rel) { links.push(reloadStyleFile(rel)); });
+      await waitForStyles(links, 8000);
+      const still = missingStyleFiles();
+      if (still.length) {
+        console.warn('[ToolsGCP] 样式表重挂后仍然缺失：', still.join(', '));
+        toast(t('style_load_failed', '界面样式未能完整加载，已尝试重新载入。'), 'warning');
+        return false;
+      }
+      return true;
+    }
+
+    /* ★★ 窗口显示的唯一保险丝：app.ready 必须**送达**后端。
+       背景（用户原话：「网速慢/无网状态下第一次启动，任务栏和托盘都已经出现程序，
+       但是程序窗口就是不出现」）：
+         · 冷启动 WebView2 首次初始化要 8 秒上下，pywebview 的 api 注入往往**晚于**
+           boot() 跑到那几处 app.ready —— bridge.tryCall 在 api 还没挂上时是
+           **静默返回 null**（调用根本没发出去，不报错）；
+         · 旧版没有任何补发：ready 丢了 → 后端只能等它自己 20 秒的兜底超时，
+           期间任务栏/托盘图标都已出现（建窗时 pywebview 真的 Show/Hide 过一轮），
+           窗口却停在屏幕外 → 用户看到的就是"程序启动了但窗口不弹"。
+       现在：没送达就退避重试（0.2s 起指数递增、封顶 2s，最长约 30 秒），
+       api 一旦注入好，下一跳重试立刻生效；成功后永不再发。 */
+    var readyDelivered = false;
+    var readyTimer = 0;
+    var readyDelay = 200;
+    var readyTries = 0;
+    function reportReady() {
+      if (readyDelivered) return Promise.resolve(true);
+      readyTries += 1;
+      return Promise.resolve(bridge.tryCall('app.ready')).then(function (res) {
+        if (res && res.ok) {
+          readyDelivered = true;
+          if (readyTimer) { clearTimeout(readyTimer); readyTimer = 0; }
+          console.log('[boot] app.ready 已送达后端（第 ' + readyTries + ' 次）');
+          return true;
+        }
+        /* 封顶：约 16 次（200ms 起指数退避、单次最长 2s → 覆盖 ~25 秒）。
+           后端有 20s 总兜底 + 6s 资源加载兜底，重试再久也撞不过它们；
+           真后端连 app.ready 都没有（旧版本）时这里也只是安静收手。 */
+        if (!readyTimer && readyTries < 16) {
+          readyTimer = setTimeout(function () {
+            readyTimer = 0;
+            readyDelay = Math.min(readyDelay * 2, 2000);
+            reportReady();
+          }, readyDelay);
+        }
+        return false;
+      }, function () { return false; });
+    }
+
+    /* boot_pack 的落地：字段形状与各单独接口**逐字一致**（后端就是直接复用那些
+       方法拼的），所以这里等于把四个老函数各自的赋值搬进一个函数。 */
+    function applyBootPack(pack) {
+      const infoRes = pack.info;
+      if (infoRes && infoRes.ok) {
+        info.app = infoRes.app || 'ToolsGCP';
+        info.version = infoRes.version || '';
+        info.python = infoRes.python || '';
+        info.dataDir = infoRes.data_dir || '';
+        info.configDir = infoRes.config_dir || '';
+        info.language = infoRes.language || '简体中文';
+        info.args = Array.isArray(infoRes.args) ? infoRes.args : [];
+        if (infoRes.frameless !== undefined && infoRes.frameless !== null) {
+          info.frameless = !!infoRes.frameless;
+          try { document.documentElement.classList.toggle('is-native-chrome', !infoRes.frameless); } catch (e) {}
+        }
+      }
+      const pathsRes = pack.paths;
+      if (pathsRes && pathsRes.ok) {
+        info.configDir = pathsRes.config_dir || info.configDir;
+        info.dataDir = pathsRes.data_dir || info.dataDir;
+        info.resourceFile = pathsRes.resource_file || info.resourceFile;
+        info.version = pathsRes.version || info.version;
+      }
+      const setRes = pack.settings;
+      if (setRes && setRes.ok && setRes.settings) {
+        Object.assign(settings, setRes.settings);
+        settingsLoaded.value = true;
+        /* 与 loadSettings 逐字同口径的两个历史默认值修复（空串下拉显示空白） */
+        if (!String(settings.search_source || '').trim()) settings.search_source = 'Github';
+        if (!String(settings.download_source || '').trim()) settings.download_source = 'Github';
+        applyAppearance();
+      }
+      bootPackPrivacy = (pack.privacy && pack.privacy.ok) ? pack.privacy : null;
+    }
+    var bootPackPrivacy = null;
+
     async function boot() {
       try {
         setStep('bridge');
         await bridge.init();
         bridge.call('log.client','info','界面','[boot] bridge ready=' + bridge.ready).catch(function(){});
+        /* ★★ 本轮启动优化（用户：「程序经常在启动时未响应，经常发生」）：
+           旧 boot() 开头是 **四次串行** js_api 往返（app.info → settings.paths →
+           settings.get → window.state）。每一次往返都要"起 Python 线程执行 +
+           回 GUI 线程 evaluate_js 投递结果"，而冷启动阶段 GUI 线程正被 WebView2
+           初始化压着 —— 慢机器上这四次能累计 1~3 秒，全花在"窗口还没显示"之前，
+           体感就是"双击图标半天没反应 / 任务栏图标闪一下白边未响应"。
+           后端新增 app.boot_pack 一次带回 info+paths+settings+privacy；旧后端没有
+           这个接口时 tryCall 返回 null → **原样退回**下面四个老调用（向后兼容）。 */
         setStep('appinfo');
-        await loadAppInfo();
-        await loadPaths();
-        setStep('settings');
-        await loadSettings();
+        const pack = await bridge.tryCall('app.boot_pack');
+        if (pack && pack.ok) {
+          applyBootPack(pack);
+        } else {
+          await loadAppInfo();
+          await loadPaths();
+          setStep('settings');
+          await loadSettings();
+        }
         Object.assign(draft, settings);
-        setStep('window'); await syncWindow();
+        /* ★ 同步窗口状态（maximized/fullscreen）挪出关键路径：它只是给根节点挂
+           类名用的，不参与任何显示判定 —— 但**必须**在启动时来一次（旧版 await 在
+           boot 头部白占一次往返）。fire-and-forget：迟到也无妨，window.state 事件
+           和 done 之后的 syncWindow 都会再校准。 */
+        syncWindow().catch(function () {});
 
         const bundle = await bridge.tryCall('i18n.bundle');
         if (bundle && bundle.ok) flattenI18n(bundle);
+        /* 样式自检 + 自愈（需求②）：样式表缺了就地重挂，别让界面一直裸奔。
+           放在 i18n 之后是为了能拿到三语文案（style_load_failed）。 */
+        /* 不 await：自检要等文档 load 结算，await 会把启动流程卡住 */
+        try { ensureStylesLoaded().catch(function (error) { /* 自检失败不影响启动 */ }); } catch (error) {}
 
         /* ========== ① 法律闸门：先于一切网络资源加载（本轮需求） ==========
            未同意 → 协议窗置顶显示，**窗口照常放出来**（app.ready 提前上报），
@@ -10585,24 +14130,35 @@ const App = {
               旧版把 app.ready 押在 boot 末尾，云端一卡 + 启动页遮罩（z190）盖住
               协议窗（z140）→ 用户对着一个永远不出现的窗口等同意按钮。 */
         setStep('privacy');
-        const agreed = await checkPrivacyState();
+        /* pack 带回的同意状态与 checkPrivacyState 同语义：同意过就顺手把本地
+           镜像也写上（老浏览器/无 localStorage 时 writeLocal 自己会吞异常）。 */
+        let agreed;
+        if (bootPackPrivacy) {
+          agreed = !!bootPackPrivacy.agreed;
+          if (agreed) writeLocal('privacyAgreed', true);
+        } else {
+          agreed = await checkPrivacyState();
+        }
         if (!agreed) {
           privacy.open = true;
           booting.value = false;            // 撤掉启动页遮罩，让协议窗成为可见的最顶层
           setStep('consent');
           try { document.title = 'ToolsGCP'; } catch (e) {}
-          bridge.tryCall('app.ready');      // 窗口放出来（后端仍会等启动画面播完）
+          reportReady();                     // 窗口放出来（带重发保险，见 reportReady）
           return;                            // 同意后由 acceptPrivacy() 继续启动
         }
         /* 已同意：也要**立刻**上报 ready —— 窗口显示不再等云端资源。
            （网络差时最多看到"正在寻找资源文件…"遮罩 + 重试按钮，窗口本身一定出来；
              后端 _try_show 自己还会等启动画面，这里提前调不会闪半成品。） */
         setStep('ready');
-        bridge.tryCall('app.ready');
+        reportReady();
         await continueBoot();
       } catch (error) {
         console.error('[ToolsGCP] boot failed at step=' + bootStep, error);
         booting.value = false;
+        /* ⚠️ 启动脚本自己崩了也**必须**放窗口出来：页面资源已加载完毕，
+           用户至少看得见界面、看得见错误提示，绝不能退化成"图标在、窗口不弹"。 */
+        reportReady();
         bootText.value = '启动失败（' + bootStep + '）：' + (error && error.message ? error.message : error);
         /* 本轮多语言：硬编码中文 → t()（"启动异常（step）：" 这段以前英文界面也露中文） */
         toast(t('boot_error_prefix', '启动异常（') + bootStep + '）：'
@@ -10626,25 +14182,18 @@ const App = {
         /* 模型切换 UI 的候选（按 Key 过滤后的服务商/模型）：启动预取一次，
            之后填 Key / 换服务商时靠 watch 重载（见下面 ai_provider / apiKeyConfigured） */
         try { await loadAiModelChoices(); } catch (error) { /* 拿不到就隐藏胶囊 */ }
-        const options = await bridge.tryCall('resources.filter_options');
-        if (options && options.ok) remoteOptions.value = options;
+        /* 「更多筛选」候选预取（按当前界面语言，见 loadFilterOptions 的注释） */
+        try { await loadFilterOptions(); } catch (error) { /* 拉不到就用本地候选，筛选照常可用 */ }
         const keyState = await bridge.tryCall('settings.api_key_state',
           String(settings.ai_provider || 'deepseek'));
         if (keyState && keyState.ok) apiKeyConfigured.value = !!keyState.configured;
-        /* 需求：「API Key 上次保存的内容，下次打开程序里面是空的，状态更新下又出现了」。
-           根因：启动时只拿了"是否已配置"（configured），从没把明文取回输入框，所以空的。
-           现在启动就把已保存的 Key 取回来填上（输入框是 password 类型，显示为圆点），
-           同时写进 apiKeySnapshot，这样"未保存修改"的判定才是对的。
-           ⚠️ 带当前服务商：Key 按服务商分槽存储，读错槽就显示成“空的”。 */
-        if (keyState && keyState.ok && keyState.configured) {
-          const revealed = await bridge.tryCall('settings.reveal_api_key',
-            String(settings.ai_provider || 'deepseek'));
-          if (revealed && revealed.ok) {
-            apiKeyDraft.value = String(revealed.value || '');
-            apiKeySnapshot.value = apiKeyDraft.value;
-          }
-        }
-        /* GCP-AI：接上最近一次对话（数据在 .ToolsGCP/config/chats/，与 PyQt 版共用） */
+        /* ⚠️⚠️ 本轮（用户要求 API Key 加密 + 界面不回显）：启动时**不再**调用
+           settings.reveal_api_key 把明文塞进输入框。已保存的 Key 只以 DPAPI 密文
+           存在本机（settings_manager 的 api_key_enc_<槽位>），界面拿到的只有
+           "配没配"这一个布尔值；输入框用占位文案告诉用户"已填写（已加密）"，
+           想换 Key 时直接输入新的即可（见 apiKeyPlaceholder / apiKeySavedHint）。 */
+        apiKeyDraft.value = '';
+        apiKeySnapshot.value = '';
         try { await loadAiOnBoot(); } catch (error) { /* AI 不可用不影响启动 */ }
         const hotkeyState = await bridge.tryCall('shell.environment');
         if (hotkeyState && hotkeyState.ok && hotkeyState.hotkeys) {
@@ -10683,25 +14232,23 @@ const App = {
           await bridge.call('settings.set', 'open_settings_on_restart', false).catch(() => {});
           settings.open_settings_on_restart = false;
         }
-        /* ⚠️ 启动画面没播完之前，界面也不该出现 —— 但**资源库加载**可以先开始。
-           这里只等"启动动画剩余时间"，等完就撤启动页，然后才进入资源库加载段。 */
-        let waitMs = 0;
-        try {
-          const remaining = await bridge.tryCall('app.splash_remaining');
-          waitMs = (remaining && remaining.ok) ? Math.max(0, Number(remaining.remaining) || 0) : 0;
-        } catch {
-          waitMs = 0;
-        }
-        /* 兜底：最多再等 10 秒，防止后端异常导致永远卡在启动页 */
-        waitMs = Math.min(waitMs, 10000);
-        if (waitMs > 0) {
-          bootText.value = t('starting', '正在启动…');
-          await new Promise((resolve) => setTimeout(resolve, waitMs));
-        }
+        /* ⚠️ 本轮**删掉**了"等原生启动画面播完再撤启动遮罩"这段等待。
+           旧写法是 `app.splash_remaining` 拿一个毫秒数然后 sleep 等够 —— 那是配合
+           已删除的"启动动画时长"设置项用的。现在不能再等，原因是死锁：
+             原生画面的存活期 = 「入口顶起 → **主窗口显示之后** → 关掉」，
+             而主窗口显示要等前端上报 ready，ready 就在这段代码之后；
+             前端再等画面关 = 画面等前端 = 谁也等不到谁（只能靠后端超时兜底挣脱）。
+           后端已经把 app.splash_remaining 恒返回 0、app.splash_wait 立刻放行，
+           所以即使有缓存的旧前端在调它们也不会卡住；这里直接把等待整段去掉。 */
         /* ★★★ 撤掉启动页 —— 从这一刻起，用户看到的是**真实的页面**，
            资源库加载提示会长在搜索页/定制页的空白中心（而不是启动页上）。 */
         setStep('render');
-        booting.value = false;
+        /* ★ 第 28 轮③：这里**不再立刻撤掉启动画面**，而是把它继续当"加载画面"用：
+           用户要的就是"先看加载画面、资源好了再进界面"。窗口本身早就放出来了
+           （app.ready 已在 boot() 里提前上报），所以不违反"窗口要尽快出现"。
+           ⚠️ 撤画面统一走 finishBoot()：资源落定 → 100% → 淡出；另有 9 秒兜底。 */
+        bootText.value = t('boot_resources', '正在加载资源库…');
+        setTimeout(() => { finishBoot(); }, 9000);      /* 兜底：绝不把启动画面挂死 */
         await nextTick();
         measureViewport();
 
@@ -10726,7 +14273,7 @@ const App = {
             new Promise((resolve) => { setTimeout(() => resolve(null), 12000); }),
           ]);
         } catch (error) { cloudBoot = null; }
-        bootText.value = '正在加载资源库…';
+        bootText.value = t('boot_resources', '正在加载资源库…');
         /* ⚠️ loadResources() 本身要等网络往返（云端不通时会等到超时）。
            启动是关键路径，不能让它无限期拖住窗口 —— 加一道 8 秒的超时保护：
            超时就用本地资源库继续启动（程序照常出来，后面还能在设置里重试）。
@@ -10736,6 +14283,7 @@ const App = {
           loadResources(),
           new Promise((resolve) => { setTimeout(resolve, 8000); }),
         ]);
+        finishBoot();
         const cloudFailed = !!(cloudBoot && cloudBoot.ok === false && !cloudBoot.skipped);
         if (cloudFailed) {
           /* ⚠️ **不再阻塞**。
@@ -10787,13 +14335,18 @@ const App = {
         } catch (e) { /* ignore */ }
         /* 首帧画完 → **再**上报一次 ready（幂等，boot 里已提前调过；这里是保险），
            再把窗口摆回工作区正中（消除建窗时的偏移） */
-        var readyRes = await bridge.tryCall('app.ready');
-        console.log('[boot] app.ready ->', readyRes);
+        await reportReady();   // 幂等保险：boot 里已提前调过；这里再确认一次送达
         const centered = await bridge.tryCall('window.center');
         if (!centered) syncWindow();
         /* ⚠️ 法律闸门已在 boot() 最前面过掉了（agree 之后才会走到这里），
            这里只做"同意之后才拉公告"的第二道（顺序仍然是：先同意、后公告）。 */
         await loadNotices(false);
+
+        /* ⚠️ 本轮需求：「自动检查更新…开启程序后如果发现新版本从右上角滑动出来」——
+           挂在公告拉取之后（法律闸门已过关、界面已就绪），且**绝不 await**：
+           GitHub 不通时这条要等几十秒，挡启动就是事故（与云端资源库同一纪律）。
+           mode=off（设置里关了）时 autoCheckUpdate 内部立刻返回，一个请求都不发。 */
+        setTimeout(() => { autoCheckUpdate().catch(() => {}); }, 1200);
 
         loadPlugins(false);
         /* 后台读一次云端资源库状态（有接口才显示；不阻塞启动） */
@@ -10832,7 +14385,7 @@ const App = {
       if (!agreed) {
         privacy.open = true;
         booting.value = false;
-        bridge.tryCall('app.ready');
+        reportReady();
         return;
       }
       await continueBoot();
@@ -10857,6 +14410,18 @@ const App = {
             捕获阶段才能保证我们看到的 event.key 是用户真正按下的那个键。 */
       document.addEventListener('keydown', onGlobalCopy, true);
       window.addEventListener('resize', onWindowResize);
+      /* 窗口重新获得焦点时重读一次真实窗口状态（syncWindow → window.state）。
+         ⚠️ 为什么需要：最大化在系统里是「还原点 + 最大化标志」两个东西，用户用
+            Win+↑ / 双击标题栏 / 系统菜单切换时不一定有 resize 事件（尺寸没变的那种，
+            比如最大化 ↔ F11 全屏），win.maximized 一旦漂了，前端就会在最大化窗口上
+            继续显示缩放热区 —— 正是用户报的「全屏后靠近边缘变成拉伸光标」。 */
+      window.addEventListener('focus', () => { syncWindow(); });
+      /* 「回到顶部」悬浮球（见 backToTop 的长注释）：
+         ⚠️ scroll 不冒泡 ⇒ 必须捕获阶段；abort 那三个用冒泡就够（只为用户输入服务）。 */
+      document.addEventListener('scroll', onAnyScrollForBall, true);
+      window.addEventListener('wheel', onUserScrollInput, { passive: true });
+      window.addEventListener('touchstart', onUserScrollInput, { passive: true });
+      document.addEventListener('keydown', onUserScrollInput);
       /* 插件配置页 iframe 按 Esc → 它 postMessage 给宿主，这里把配置页收起回到插件列表。
          同时也用于主题同步之外的少量协议（保留 type 前缀 toolsgcp-）。 */
       window.addEventListener('message', (event) => {
@@ -10873,6 +14438,8 @@ const App = {
          这里在**捕获阶段**拦下所有带修饰键的链接点击，统一 preventDefault 并走 openLink，
          从源头保证只有一条路径（系统浏览器 + 程序内不开窗）。顺带记一条日志便于复现。 */
       const onModifiedLinkClick = (event) => {
+        /* 右键同样会派发 auxclick：Ctrl+右键 也不该走"打开链接" */
+        if (!event || event.button === 2) return;
         if (!(event.ctrlKey || event.metaKey || event.button === 1)) return;
         const target = event.target;
         const anchor = target && target.closest ? target.closest('a[href]') : null;
@@ -10890,6 +14457,27 @@ const App = {
       window.addEventListener('click', onModifiedLinkClick, true);
       window.addEventListener('auxclick', onModifiedLinkClick, true);
       window._onModifiedLinkClick = onModifiedLinkClick;
+      /* ---------- Markdown 渲染产物里的链接（公告 / 更新说明） ----------
+         渲染器生成的 <a class="md-link" data-mdlink="…"> **没有 href**，所以浏览器
+         不会导航、也不会触发上面那条"Ctrl+点 <a href> 被 WebView2 开新窗口"的问题；
+         这里在捕获阶段统一拦下来交给 openLink（→ shell.open_url → 系统浏览器）。
+         ⚠️ 只认 data-mdlink 这个属性，别的 a 标签一律不碰（其它弹窗/页面的链接行为不变）。 */
+      const onMarkdownLinkClick = (event) => {
+        /* ⚠️⚠️ 右键也会派发 auxclick（button === 2）：不挡的话"右键公告链接"会像左键
+           一样直接把链接丢给系统浏览器，右键菜单还没来得及弹人就跳走了
+           （用户报的 bug：右键公告的链接直接跳转）。右键只归 contextmenu 管。 */
+        if (!event || event.button === 2) return;
+        const anchor = event && event.target && event.target.closest
+          ? event.target.closest('a[data-mdlink]') : null;
+        if (!anchor) return;
+        const url = anchor.getAttribute('data-mdlink') || '';
+        if (!url) return;
+        event.preventDefault();
+        event.stopPropagation();
+        openLink(url, event);
+      };
+      window.addEventListener('click', onMarkdownLinkClick, true);
+      window.addEventListener('auxclick', onMarkdownLinkClick, true);
       /* 侧栏动态选中标：窗口尺寸/侧栏展开态/语言/页面变化都要重新量一次 */
       window.addEventListener('resize', _onNavResize);
       /* ---------- 滚动惯性（设置 → 功能 → 滚动惯性，默认关闭） ----------
@@ -11075,6 +14663,9 @@ const App = {
           root.classList.toggle('is-maximized', !!win.maximized);
           root.classList.toggle('is-fullscreen', !!win.fullscreen);
         }
+        /* 原生侧（系统快捷键等）改了窗口状态时，同样要补量指示标：
+           全屏/还原会改变左侧栏高度、底部条目位置，而状态事件本身不触发 resize。 */
+        requestAnimationFrame(() => syncNavIndicator(false));
       });
       onEvent('favorites-changed', () => loadFavorites().then(() => runQuery()));
       /* 启动时那个**后台**云端刷新跑完了（resources.cloud_refresh_async 的回调）。
@@ -11103,6 +14694,133 @@ const App = {
 resetIconRetries();
         iconEpoch.value += 1;
       });
+      /* ===================== Agent 工具 → 界面动作（agent.ui） =====================
+         Web 版没有 Qt 主窗口，core/ai/agent_web.py 里那些"要动界面"的工具
+         （切页 / 开详情 / 弹提示 / 开插件配置页 / 新建会话 / 部署清单回值）
+         没法直接操作 DOM，所以后端推事件、前端在这里落地。
+         ⚠️ 每个 op 都必须**有真实实现**，做不到就回一句失败 —— 不要静默吞掉，
+            否则模型会以为"已经帮你做了"（这是 AGENT_PROMPT_FOOTER 明令禁止的）。 */
+      /* Agent 工具执行过程：大厂 Agent 那种「正在调用 XX」提示（用户点名要的） */
+      onEvent('ai.agent_progress', (payload) => { onAgentProgress(payload); });
+
+      onEvent('agent.ui', (payload) => {
+        const req = (payload && typeof payload === 'object') ? payload : {};
+        const op = String(req.op || '');
+        const reqId = String(req.reqId || '');
+        const reply = (data) => {
+          if (!reqId) return;
+          bridge.tryCall('ai.agent_reply', reqId, data).catch(() => {});
+        };
+        try {
+          if (op === 'goto_page') {
+            const target = String(req.page || '');
+            if (!target) { reply({ ok: false, error: '没有指定页面' }); return; }
+            doGoto(target);
+            reply({ ok: true, page: target });
+            return;
+          }
+          if (op === 'open_resource') {
+            const code = String(req.code || '').trim();
+            if (!code) { reply({ ok: false, error: '没有指定资源' }); return; }
+            /* 资源清单在 items 里（搜索页那份）。找不到就用后端给的名字兜底 —
+               openDetail 只要求能显示出东西，不必强求和本地列表完全同一对象。 */
+            const item = (items.value || []).find((r) =>
+              String(r.code || r.id || '').toUpperCase() === code.toUpperCase());
+            if (!item) { reply({ ok: false, error: '当前列表里没有 ' + code + '，请先搜索或刷新' }); return; }
+            openDetail(item);
+            reply({ ok: true });
+            return;
+          }
+          if (op === 'notify') {
+            toast(String(req.text || ''), String(req.level || 'info'));
+            reply({ ok: true });
+            return;
+          }
+          if (op === 'open_plugin_config') {
+            const id = String(req.id || '');
+            let plugin = pluginById(id);
+            /* 列表可能还没加载过（用户没进过插件页）：先拉一次再找 */
+            if (!plugin) { loadPlugins(false).then(() => {}); }
+            plugin = pluginById(id);
+            if (!plugin) { reply({ ok: false, error: '没有找到插件 ' + id }); return; }
+            if (!plugin.hasConfig) { reply({ ok: false, error: '这个插件没有配置界面' }); return; }
+            openPluginPage(plugin);
+            reply({ ok: true });
+            return;
+          }
+          if (op === 'new_chat') {
+            aiNewChat().catch(() => {});
+            reply({ ok: true });
+            return;
+          }
+          /* ⚠️⚠️ 修「切换主题成功了但要重启才生效」：
+             旧写法只调 applyAppearance()，而它读的是前端 settings 快照 ——
+             后端写盘后推的 settings-changed 何时到达不确定，set_theme 这条
+             agent.ui 事件经常**先到**，于是 applyAppearance 用的是旧值 = 没变化。
+             现在：事件里带齐了最新值（后端从磁盘刚读的），前端**先落到本地
+             settings 再应用**，不依赖事件先后顺序。 */
+          if (op === 'set_theme') {
+            /* ★ 本轮（字体等 bug 的前端兜底）：draft 是设置页控件绑定的那份，
+               只写 settings 不写 draft 的话，后端 settings-changed 万一没到
+               （旧版 agent 写设置走错域就从没发过），设置页下拉框还是旧值。
+               两个一起写，事件到不到都一致。 */
+            if (req.theme !== undefined) {
+              settings.theme = req.theme;
+              draft.theme = req.theme;
+            }
+            applyAppearance();
+            reply({ ok: true });
+            return;
+          }
+          if (op === 'apply_appearance') {
+            /* AI 改完任意外观项后后端推这个：把所有外观相关值一次性落地再重画。
+               （theme_effect / accent_color / ui_font_family / ui_animation 都要带上，
+                 否则"切了毛玻璃但没反应"就是漏了某个字段。） */
+            ['theme', 'theme_effect', 'accent_color', 'ui_font_family', 'ui_animation']
+              .forEach((k) => {
+                if (req[k] !== undefined && req[k] !== null) {
+                  /* 同 set_theme 的兜底：settings（应用层）与 draft（设置页控件层）
+                     一起落地，agent 改外观后设置页选中项立刻跟得上实际效果。 */
+                  settings[k] = req[k];
+                  draft[k] = req[k];
+                }
+              });
+            applyAppearance();
+            reply({ ok: true });
+            return;
+          }
+          if (op === 'apply_language') {
+            /* ⚠️⚠️ 必须走完整的 changeLanguage 链路（这是用户要的"模仿人类操作"）：
+               人类在设置里选语言 → onRowChange → changeLanguage() → 重拉语言包
+               → flattenI18n → 重取资源/筛选/收藏 → 投稿表单分段重算 → 整页重渲染。
+               AI 改语言必须走**同一条**路；只写 settings 就会出现用户报的
+               「小部分成功切换、大部分还是老样子」。 */
+            reply({ ok: true });
+            if (req.language) {
+              queue(() => changeLanguage(req.language)).catch(() => {});
+            }
+            return;
+          }
+          if (op === 'reload_data') {
+            reply({ ok: true });
+            /* 资源来源/卡片尺寸这类改完要重新读数据 */
+            loadResources().then(() => loadFavorites()).catch(() => {});
+            return;
+          }
+          if (op === 'deploy_list') {
+            /* 需要回值：把当前部署清单回给后端（agent_web.deploy_list 在等这个） */
+            reply({ ok: true, items: (deployList.value || []).map((row) => ({
+              code: String(row.code || ''), name: String(row.name || ''),
+              status: String(row.status || ''),
+            })) });
+            return;
+          }
+          reply({ ok: false, error: '不认识的界面动作: ' + op });
+        } catch (error) {
+          reply({ ok: false, error: (error && error.message) || String(error) });
+        }
+      });
+
       onEvent('settings-changed', (payload) => {
         if (!payload || !payload.key) return;
         settings[payload.key] = payload.new;
@@ -11124,13 +14842,20 @@ resetIconRetries();
 
       /* ⚠️ 启动总兜底：无论 boot() 卡在哪一步，8 秒后一定撤掉启动遮罩，
          保证界面永远能出来（宁可少加载一点数据，也不能一直黑屏/卡启动页）。 */
+      /* ⚠️ 第 28 轮③：启动画面现在要挂到"资源落定"为止（云端最多 12+8 秒），
+         8 秒的看门狗会把"正在加载资源"误报成"启动较慢"。所以：
+         · 时限放宽到 20 秒；
+         · step=render（正在加载资源库）时不弹警告 —— 那是正常阶段，不是卡死；
+         · 任何情况下都保证 booting=false（界面/启动画面一定会撤）。 */
       const bootWatchdog = setTimeout(() => {
         if (booting.value) {
           console.warn('[ToolsGCP] boot watchdog fired at step=' + bootStep);
           booting.value = false;
-          toast(t('boot_slow', '启动较慢（卡在 ') + bootStep + '），已先显示界面', 'warning');
+          if (bootStep !== 'render') {
+            toast(t('boot_slow', '启动较慢（卡在 ') + bootStep + '），已先显示界面', 'warning');
+          }
         }
-      }, 8000);
+      }, 20000);
 
       boot()
         .then(() => clearTimeout(bootWatchdog))
@@ -11147,10 +14872,18 @@ resetIconRetries();
          移除的是冒泡阶段那个（不存在）→ 监听器会永久留在 document 上。 */
       document.removeEventListener('keydown', onGlobalCopy, true);
       window.removeEventListener('resize', onWindowResize);
+      /* ⚠️ remove 的 capture 标志必须和 add 一致（见上面 onBeforeUnmount 的同类坑） */
+      document.removeEventListener('scroll', onAnyScrollForBall, true);
+      window.removeEventListener('wheel', onUserScrollInput);
+      window.removeEventListener('touchstart', onUserScrollInput);
+      document.removeEventListener('keydown', onUserScrollInput);
+      abortBackTopAnim();
       document.removeEventListener('mousedown', onDocMoreDown, true);
       window.removeEventListener('scroll', _makerScrollHandler, true);
       if (resizeObserver) resizeObserver.disconnect();
       if (favGridObserver) favGridObserver.disconnect();
+      /* 分段滑块的观察器随组件一起断，否则切页后回调还在写已经不存在的 thumb */
+      if (segResizeObserver) segResizeObserver.disconnect();
       /* 首页轮播定时器（stopSlide）随首页一起移除，这里不再需要停它。 */
       if (rafId) cancelAnimationFrame(rafId);
       /* ⚠️ 变量名跟 task-4 状态机同步：旧 scrollRaf 已改名 spyRaf（引用不存在的名字会抛
@@ -11173,6 +14906,9 @@ resetIconRetries();
       if (page.value === 'favorites') measureFavGrid();
       syncSegThumbs(true);                              // 窗口缩放：瞬时对齐，不重播动画
       scheduleSegSync();                                // 布局稳定后再兜一次（双栏切换晚一帧）
+      /* 变矮之后内容可能不再溢出，浏览器会把 scrollTop 夹回去（也会发 scroll 事件，
+         但那条要等下一帧）—— 这里主动对账，避免球在窗口缩小后还亮着。 */
+      syncBackTop();
     }
 
     /* ---------- 分段按钮的"滑动选中块" ----------
@@ -11193,17 +14929,37 @@ resetIconRetries();
           thumb.className = 'seg-thumb';
           seg.insertBefore(thumb, seg.firstChild);
         }
-        const ir = on.getBoundingClientRect();
-        /* left/top 相对 .segmented 的 padding box（绝对定位 left:0 落在 border 内侧），
-           所以减掉 1px 边框；这样 thumb 与选中项像素对齐。 */
-        let left = ir.left - sr.left - 1;
-        let top = ir.top - sr.top - 1;
-        let width = ir.width;
-        let height = ir.height;
+        /* 量选中项一律用布局口径（offset*），不要用 getBoundingClientRect。
+           原因（用户报「滑动到别处再滑回来，选中块明显短了」，实测差 13px / 4%）：
+           components.css 给 .seg-item:active 写了 transform: scale(.96)，真人点击是
+           「按下 → 缩放 → 松手 → 回弹过渡 → click」，而 click 触发的这次同步正好量在回弹里
+           —— rect 会把 transform 折算进去，于是写进 thumb 的宽度只有真实宽度的 96%。
+           更糟的是 transform 不改变边框盒，segResizeObserver 永远不会为此回调补刀，
+           所以这个偏短会**永久**留在滑块上。offsetLeft/Top/Width/Height 只反映布局，
+           与任何 transform 无关，量出来天然正确。
+           offsetParent 是 .segmented（position:relative）时，offsetLeft/Top 本来就是相对它的
+           padding box，和绝对定位 left/top 同一个坐标系（等价于旧算式 ir.left - sr.left - 1
+           里那个减 1），不需要再修边框；只有 DOM 意外套了层（offsetParent 不是 seg）
+           才退回 rect 算术。 */
+        let left, top, width, height;
+        if (on.offsetParent === seg) {
+          left = on.offsetLeft;
+          top = on.offsetTop;
+          width = on.offsetWidth;
+          height = on.offsetHeight;
+        } else {
+          const ir = on.getBoundingClientRect();
+          left = ir.left - sr.left - 1;
+          top = ir.top - sr.top - 1;
+          width = ir.width;
+          height = ir.height;
+        }
         /* 夹紧到容器内容框：即使某一帧量到的是旧布局（见上面 resize 那段注释），
-           thumb 也绝不会画到 .segmented 外面去（用户说的"撑破父容器"）。 */
-        const boxW = Math.max(0, sr.width - 2);
-        const boxH = Math.max(0, sr.height - 2);
+           thumb 也绝不会画到 .segmented 外面去（用户说的"撑破父容器"）。
+           clientWidth/Height = padding box = 绝对定位的 containing block，
+           同样比 rect.width - 2 更准（rect 也会被 transform 污染）。 */
+        const boxW = Math.max(0, seg.clientWidth);
+        const boxH = Math.max(0, seg.clientHeight);
         if (width > boxW) width = boxW;
         if (height > boxH) height = boxH;
         if (left < 0) left = 0;
@@ -11222,6 +14978,9 @@ resetIconRetries();
           thumb.style.transition = '';
         }
       });
+      /* 每次同步都顺手把观察器补齐：新挂载的分段（换页 v-if、设置开关）第一次
+         由这里登记，之后它自己变宽变窄就能回调到同步。 */
+      observeSegContainers();
     }
     /* 布局可能晚一两帧才稳定（单/双栏切换、字体、滚动条出现）——再补一次瞬时对齐。 */
     let segSyncRaf = 0;
@@ -11231,6 +14990,50 @@ resetIconRetries();
         segSyncRaf = requestAnimationFrame(() => {
           segSyncRaf = 0;
           syncSegThumbs(true);
+        });
+      });
+    }
+
+    /* ---------- 容器宽度变了、但**没有** window resize 的那一类 ----------
+       ⚠️ 真机取证（_devtest/probe_seg_thumb_live3.js，无头 Edge 实测）：
+          只把 .i18n-seg 的容器改窄 200px（等价于滚动条出现/侧栏展开/单双栏切换挤窄），
+          每项从 312px 变成 245.33px，thumb 仍停在 312px —— dw=66.67，1500ms 后依旧错；
+          切到 English 再挤窄时 dx=100 / dw=50，选中块压到邻居身上。
+          用户说的"一切换选中 UI 大小和形状就不对"就是这个：**尺寸过期的滑块**，
+          而不是测量口径错（终态在等宽容器上永远重合，已实测）。
+       旧代码只在 watch 响应式变化 + window resize 时重量，所以"布局自己变了"没人补量。
+       修法：给每个 .segmented 和它的 .seg-item 挂 ResizeObserver —— 任何原因导致的
+             宽度/高度变化都会再量一次。三处（maker-seg / i18n-seg / view-seg）共用同一套，
+             因为 syncSegThumbs 本来就是遍历全部 .segmented 的。
+       ⚠️ 为什么这里用 immediate=false（保留过渡）：挤窄往往发生在点击动画还在飞的 220ms 内，
+          瞬时对齐会把动画掐成一次跳变；写新目标值让过渡自己追，视觉上仍是"滑过去"。
+          而 window resize 那条路径已经先做过 immediate 对齐，RO 随后量到同样的值，
+          属性没变化就不会补播动画 —— 两种诉求同时满足。
+       ⚠️ 回调里排到下一帧再写样式：在 RO 回调里同步改布局会触发
+          "ResizeObserver loop completed with undelivered notifications" 报错。 */
+    let segResizeObserver = null;
+    let segRoPending = false;
+    const segRoSeen = typeof WeakSet === 'function' ? new WeakSet() : null;
+    if (window.ResizeObserver) {
+      segResizeObserver = new ResizeObserver(() => {
+        if (segRoPending) return;
+        segRoPending = true;
+        requestAnimationFrame(() => {
+          segRoPending = false;
+          syncSegThumbs(false);
+          observeSegContainers();
+        });
+      });
+    }
+    /* 新出现的分段（v-if 换页、设置里开关切换出来的）也要挂上观察器。
+       同一元素重复 observe 是幂等的，WeakSet 只是省掉无谓调用。
+       滑块 .seg-thumb 是绝对定位（不占 flex 空间），写它的尺寸不会反过来撑大容器 ⇒ 不会自激。 */
+    function observeSegContainers() {
+      if (!segResizeObserver) return;
+      Array.prototype.forEach.call(document.querySelectorAll('.segmented'), (seg) => {
+        if (segRoSeen && !segRoSeen.has(seg)) { segRoSeen.add(seg); segResizeObserver.observe(seg); }
+        Array.prototype.forEach.call(seg.querySelectorAll('.seg-item'), (it) => {
+          if (segRoSeen && !segRoSeen.has(it)) { segRoSeen.add(it); segResizeObserver.observe(it); }
         });
       });
     }
@@ -11274,6 +15077,8 @@ resetIconRetries();
       t, term, info, settings, win, booting, bootText, toasts, toast, dismiss,
       toastClass,
       dialog, openDialog, answer, confirmDialog, onDialogSelect, dialogChecksSome,
+      /* Markdown 弹窗渲染（notesMd/bodyMd 开关 + 产物 computed） */
+      dialogNotesHtml, dialogBodyHtml,
       /* 导航 */
       page, detail, detailPage, navHover, navPinned, navOpen, navTop, navBottom, moreItems, moreOpen,
       /* 云端资源库加载遮罩 */
@@ -11298,8 +15103,15 @@ resetIconRetries();
          给 _devtest 的运行时回归留测试接缝；measureViewport 本来就是页面重排入口）。 */
       vlistTop, measureViewport,
       visibleTags, hiddenTagCount, tagAvail, onIconError, iconSrc, iconFailed, firstChar, isHttp,
+      /* task-14：标签折叠算法的测试接缝（模板不用）—— _devtest/probe_tag_fold.mjs
+         直接喂构造 item + avail 断言五种形态，不用真把卡片滚进视口。 */
+      tagLayout, tagBoxWidth, plusBoxWidth, tagTextPx, tagGap, tagMetrics,
       toggleDialogChecks,
       cardMenu, openCardMenu, closeCardMenu, cardMenuMention, cardMenuPing,
+      /* task-12 需求 6/7：详情区选区菜单 + 每条链接的测 Ping */
+      selMenu, onSelContext, selMenuMention, selMenuCopy, detailRowPing,
+      /* 第五轮需求④：详情页 Ping 按钮的进行中状态（模板要拿它做 :disabled 和点阵） */
+      pingIsBusy, pingDotsText,
       selectionBar, selectedCount, allSelected, selState, selectionItems, selectAll, exitSelection,
       confirmSelection, setView, setFavView, onCardClick, runQuery,
       /* 卡片 / 详情 */
@@ -11309,7 +15121,7 @@ resetIconRetries();
       customizeEditing, customizeOnboarded, selectedInterests, interestCatalog, interestGroups,
       pickedInterest, toggleInterest, interestsRatio, interestNamesText, clearInterests,
       saveInterests, resetInterests, recommendations, customSort, emptyRecommendTitle, onRecommendClick,
-      recommendGroups, customSortOptions, customFilters, customFilterOpen, customPanelH, customChevronDeg,
+      recommendGroups, customSortOptions, customFilters, customFilterRows, customFilterOpen, customPanelH, customChevronDeg,
       toggleCustomFilter, isCustomFilterOn, toggleCustomFilterValue,
       /* 收藏 */
       favFolder, isDefaultFolder, moveFolderOptions, favItems, favMoving, moveTarget, favSelectedCount, favAllChecked,
@@ -11320,6 +15132,7 @@ resetIconRetries();
       favMenu, openFavMenu, closeFavMenu, favMenuRename, favMenuRemove,
       /* 公告 */
       loadNotices, isRead, markRead, markAllRead, openNotice, noticeKey, isReadKey,
+      noticeSource, noticeBodyHtml,
       /* Github / 反馈 */
       lightbox, sponsorImage, feedbackUrl, introLines, qqGroups,
       /* 日志 */
@@ -11329,7 +15142,7 @@ resetIconRetries();
       toggleDeployMode, openPicker, togglePick, applyPicker,
       startDeploySelection, removeDeployRow, openDeployDetail, exportManifest, importManifest,
       confirmClearDeploy, confirmDeploy, deployOne, statusText, setRowStatus, previewKindOf,
-      deployIconOf, deploySourceOf, openPageSingle, ST_SKIPPED,
+      deployIconOf, deploySourceOf, openPageSingle, rowSiteUrl, rowRepoUrl, openRowSite, openRowRepo, ST_SKIPPED,
       /* 插件 */
       pluginQuery, pluginCountText, filteredPlugins, flashPlugin, devGuide, pluginPage,
       pluginFrameRef, syncPluginTheme,
@@ -11338,22 +15151,30 @@ resetIconRetries();
       /* 提交软件 */
       maker, makerLanguages, makerSections, activeSection, makerCategories, makerCategoryOptions,
       makerCategoryText,
-      makerPlatforms, makerArchs,
-      i18nEnabled, i18nLangIndex, repoPlatformOptions, repoPrefix, repoPlaceholder, repoPreviewText,
+      makerPlatforms,
+      i18nEnabled, i18nLangIndex, repoPlatformOptions, pasteRepoUrl,
+      /* 多组开源仓库 */
+      repoPlaceholderFor, addRepoRow, removeRepoRow, repoRowsFor, repoListText, repoListTitle,
       libraryStatusText, libraryLabel, libraryTooltip, libraryFullPath,
-      previewName, previewDesc, previewTagList, previewIcon, statusLine, statusLevel,
+      addLinkRow, removeLinkRow, linkCellText, linkCellSet,
+      previewName, previewDesc, previewTagList, previewIcon, iconDisplayName, statusLine, statusLevel,
+      previewDirty, browserScroll,
       formScroll, previewCard, makerLeft, makerRight, makerBody, syncMakerPreviewSticky,
-      onNameChanged, onIdChanged, onCategoryChanged, onTagsEdited, restoreTagsFollow,
-      toggleChip, onRepoPlatformChanged, setI18nLang, refreshPreview, pickIcon,
+      onNameChanged, onIdChanged, onCategoryChanged, makerCategoryText, makerTagsText,
+      /* 名称三语言联动（m04188 ③）：下方手改 → onLocalNameEdited 脱离跟随；
+         「跟随名称」按钮 → restoreNameFollow 恢复联动并把上方值刷进三种语言。 */
+      onLocalNameEdited, restoreNameFollow,
+      toggleChip, toggleSystem, onRepoPlatformChanged, setI18nLang, refreshPreview, pickIcon, openIconFolder,
       buildEntry, exportDraft, appendToLibrary,
       saveToOriginal, exitEditing, editExistingEntry, saveStandalone, clearForm, browserQuery, browserCategory, browserSelected,
       browserCategoryOptions, browserRows, browserCountText, reloadLibrary, openLibraryFile,
+      browserSource, browserSourceOptions, browserReadonly, browserRowsLoading,
       deleteSelectedEntries, batchMode, batchDup, batchFiles, batchFileIndex,
       batchOutput, batchPreviewText, batchModeOptions, batchDupOptions, batchAddFiles,
       batchRemoveSelected, batchClearFiles, batchChooseOutput, batchPreview, batchRun,
       makerHelpBlocks,
       /* AI */
-      showBall, ballPaused, aiOpen, aiDraft, aiBusy, aiMessages, aiWelcomeText,
+      showBall, ballPaused, backTopPage, backTopVisible, backToTop, aiOpen, aiDraft, aiBusy, aiMessages, aiWelcomeText,
       /* 下载 */
       releasesDialog, downloads, downloadBadge, downloadIconOf, flyDownloadBadge,
       releasesSource, releasesSourceOptions, changeReleasesSource, reloadReleases,
@@ -11381,19 +15202,39 @@ resetIconRetries();
       closeAiHistory, clearAiHistory, aiSend, aiStop, focusAiInput,
       /* 本次 5 项改造新增的状态与方法（版本导航 / 原地编辑 / 等待提示 / 撤销润色） */
       aiPending, aiPendingAfter, aiStreamSlot, aiStreamingIndex, aiStreamingText,
-      aiRowShown, aiRegenPlaceholder,
+      aiRowShown, aiRegenPlaceholder, aiLastAiIndex,
       aiVariantCount, aiVariantPage, aiBubbleText, aiCanSwitchVariant, aiIsEditing,
       aiSwitchVariant, aiStartEdit, aiCancelEdit, aiAcceptEdit,
       aiEditingIndex, aiEditDraft, aiPolishOriginal, aiEditBoxStyle, aiEditBoxAutoGrow,
       /* 本轮改造：逐字打字机 / 思考折叠 / 模型切换 / @候选 / 蓝链 / AI 右键菜单 */
       aiStreamingReasoning, aiThinkOf, aiThinkIsOpen, aiThinkToggle, aiThinkLabel,
       aiBubbleParts, onAiLinkClick, gotoSettingsAi,
+      /* 与 vlistTop/measureViewport 同一套路：给 _devtest 运行时回归留的测试接缝（模板不用），
+         task-12 需求 6 的 @token 往返（含 [选中文本] 后缀）靠它离线断言。 */
+      aiSplitLinks,
       toastLink, toastParts, onToastLinkClick, toastLinkGo, toastLinkClose,
       aiCtx, openAiCtx, closeAiCtx, aiCtxCopy,
+      noticeCtx, onNoticeContext, closeNoticeCtx,
+      noticeCtxCopyLink, noticeCtxCopy, noticeCtxSelectAll,
       /* 本轮（任务 1 / 2 / 3 / 4）：贴底判定 + 回到底部按钮 + 会话滚动恢复 + 思考块保位 */
       aiStickBottom, aiBackBottomVisible, aiStreaming, aiBackToBottom,
       aiScrollMemory, rememberAiScroll, restoreAiScroll, aiScrollBox,
       aiModelGroups, aiModelOpen, aiModelCurrent, aiModelVisible, aiModelNoKey,
+      /* 对话模式胶囊（Chat / Agent） */
+      aiModeOpen, aiChatMode, aiChatModeLabel, aiChatModeTip, aiModeVisible,
+      CHAT_MODE_OPTIONS, toggleAiModeMenu, aiPickChatMode,
+      /* Agent 执行过程卡片 */
+      aiAgentSteps, aiAgentStepsVisible, aiAgentStepsOpen, aiAgentStepsDone,
+      /* ★ 本轮：逐条气泡的执行过程卡片（页面 + 抽屉两处模板共用这一组函数） */
+      aiBubbleSteps, aiBubbleStepsOpen, aiToggleBubbleSteps,
+      aiBubbleStepsDone, aiBubbleStepsSummary,
+      aiAgentStepsSummary, toggleAgentSteps, restoreAgentStepsFromSession, aiAgentPlanning,
+      /* ★ 本轮（需求 4）：用量统计面板（缓存命中 / 上下文 / 会话统计） */
+      aiStatsOpen, aiStatsHover, aiUsageLast, aiUsageTotal,
+      /* ★ 本轮：运行中过程卡片独立行（见 aiRunCardIndex 注释） */
+      aiRunCardIndex, aiLiveSteps,
+      aiCacheStats, aiTokenStats, aiLastHit, aiContextStats, aiContextMix, aiMixLegend,
+      aiNumberFmt, copyAiStats,
       aiProviderLabel,
       normalizeAiThinking,
       aiThinkSupported, aiThinkingLevel, aiThinkLevels, aiThinkLevelsFull,
@@ -11406,16 +15247,17 @@ resetIconRetries();
       aiAtOpen, aiAtQuery, aiAtCandidates, aiAtPicked, closeAiAt, applyAiAt, aiAtKeydown,
       /* 设置 */
       sections, draft, currentSection, settingQuery, settingHits, jumpFirstHit, jumpToRow,
-      scrollSection, syncSectionFromScroll, settingsScroll, flashRow, recording, isVisible, rowKey, sectionIcon,
+      scrollSection, syncSectionFromScroll, settingsScroll, flashRow, flashSection, recording, isVisible, rowKey, sectionIcon,
       clearSettingQuery,
       cardHasVisibleRow, defaultDownloadDirText, downloadDefaultDir, loadDownloadDefaultDir,
       cloudStatusText, cloudSyncing, refreshCloudLibrary,
       onRowChange, onRowInput, onRowCommit, recordHotkey, resetHotkey, toggleKeyVisible,
       startRecord, stopRecording, onSliderWheel,
-      apiKeyDraft, apiKeyVisible, saveApiKey, clearApiKey, logoutDev, fire, versionText,
+      apiKeyDraft, apiKeyVisible, apiKeyPlaceholder, apiKeySavedHint,
+      saveApiKey, clearApiKey, logoutDev, fire, versionText,
       /* 服务商配置档案（本轮设置页重构）：状态 + 操作 */
       aiProfiles, aiProfilesActive, aiProfilesActiveId, aiProfileEditing,
-      aiProfBusy, aiProfileNewModel,
+      aiProfBusy, aiProfileNewModel, aiProfLocked,
       aiProviderCatalog, aiProviderOptions, aiProfileModelChoices,
       aiProfVendorLabel, aiProfCountText, aiProfBrandLabel, loadAiProfiles, loadAiProviderCatalog,
       aiAddProfile, aiEditProfile, aiProfilePickVendor, aiProfileToggleModel,
@@ -11425,6 +15267,8 @@ resetIconRetries();
       checkingUpdate, checkUpdate, saveSetting,
       updateState, humanSize, applyUpdate, startUpdateDownload, openUpdateFolder,
       showUpdateReadyDialog,
+      /* 自动检查更新（右上角精简提示 + 三态设置） */
+      updateCorner, cornerCancel, cornerDownload, cornerDetail,
       /* 隐私 / 托盘 */
       privacy, acceptPrivacy, rejectPrivacy, checkPrivacyThenNotices,
       showTip, hideTip,
@@ -11508,11 +15352,12 @@ const Combo = {
     /* （提交软件·类别）：可编辑下拉 —— 对齐 py 的 EditableComboBox（QComboBox editable）。
        触发器变成一个输入框，既能从列表里选，也能直接敲任何自定义值。 */
     editable: { type: Boolean, default: false },
-    /* 可编辑态输入框里显示什么和真正存的值可以不同。
-       py 版 EditableComboBox 显示的是**当前语言译名**（category_combo.currentText()），
-       落盘时才用 _canonical_term 还原成规范值。这里同理：modelValue 存规范值（如工具），
-       displayValue 只负责显示（如 English 界面的 "Tools"）；为 null 时退回 modelValue。 */
-    displayValue: { type: String, default: null },
+    /* ⚠️ 本轮删除 displayValue prop（连同 editText computed）：
+       它当初是为「modelValue 存规范中文、框里显示译名」而加的，只跟**界面语言**；
+       而提交软件的类别/标签现在要跟着「多语言字段」的**分段语言**显示，
+       调用方（index.html 的类别 combo）改为直接交显示文本进 model-value、
+       并在 @change 里自己还原规范值（见 app.js 的 makerCategoryText / onCategoryChanged）。
+       全站已无任何地方再传 display-value（grep 实证）⇒ 留着就是死代码。 */
   },
   emits: ['change'],
   data() {
@@ -11521,10 +15366,6 @@ const Combo = {
     return { open: false, left: 0, top: 0, minWidth: 0, maxHeight: 300, highlightedIndex: -1 };
   },
   computed: {
-    /* 可编辑输入框里显示的文本（见 displayValue 的注释） */
-    editText() {
-      return this.displayValue == null ? this.modelValue : this.displayValue;
-    },
     current() {
       const hit = this.options.find((o) => String(o.value) === String(this.modelValue));
       if (hit) return hit.label;
@@ -11547,7 +15388,11 @@ const Combo = {
       if (!target || !target.closest) { this.open = false; return; }
       /* 弹层是 teleport 到 body 的，点条目不能被当成"点外部" */
       if (target.closest('.combo-pop')) return;
-      /* 点到自己的触发器/根节点：由它自己的 click 处理，这里不动 */
+      /* 点到自己的触发器/根节点：由它自己的 click 处理，这里不动。
+         ⚠️ 这里**绝不能**抢先关掉自己的弹层：mousedown 早于 click，而触发器
+         （普通模式的 button、可编辑模式的箭头）绑的是 @click="toggle" ——
+         这里关一次、它再 toggle 一次，净效果就是"点了没反应/关了又开"。
+         "点触发器空白处要退出展开态"这条需求改在 onEditableBlankClick 里用 click 处理。 */
       if (target.closest('.combo') === this.$el) return;
       /* 其它情况一律收起 —— 包括"点到**另一个**下拉框"，这正是之前漏掉的分支 */
       this.open = false;
@@ -11700,12 +15545,45 @@ const Combo = {
     pick(option) {
       if (!option) return;
       this.open = false;
-      if (String(option.value) !== String(this.modelValue)) this.$emit('change', option.value);
+      if (String(option.value) !== String(this.modelValue)) this.$emit('change', option.value, true);
     },
     /* 可编辑模式：输入框每次输入都把值抛给父组件（受控），父组件负责写回 model-value */
+    /* 点击输入框：没开就开，开着不动（开着时用户可能在选文字，不能一反弹就收起）。
+       箭头仍走 toggle，所以"点箭头收起"这条老语义不变。 */
+    openOnEditClick() {
+      if (this.disabled) return;
+      if (this.open) return;
+      const idx = this.options.findIndex((o) => String(o.value) === String(this.modelValue));
+      this.highlightedIndex = idx >= 0 ? idx : 0;
+      this.open = true;
+      this.$nextTick(this.place);
+    },
+    /* ⚠️ 本轮修复（用户原话：「输入框点击之后点击附近的空白处结果还是不能退出输入状态，
+       必须要远一点才行的bug」）：可编辑下拉的触发器整块是 cursor:text 的自绘控件，
+       点它自己的内边距/空白时焦点不会自己离开输入框，弹层和"正在输入"的观感就一直挂着。
+       输入框本体与箭头都用 @click.stop 拦掉了冒泡，所以**只有真·空白处**会走到这里：
+       展开着 → 收起 + 主动 blur（退出输入状态）；收起着 → 当作点开了控件，聚焦并展开。 */
+    onEditableBlankClick(event) {
+      if (this.disabled) return;
+      const edit = this.$refs.editInput;
+      if (event && event.target && edit && (event.target === edit || edit.contains(event.target))) return;
+      if (this.open) {
+        this.open = false;
+        if (edit) { try { edit.blur(); } catch (e) { /* 忽略 */ } }
+        return;
+      }
+      if (edit) { try { edit.focus(); } catch (e) { /* 忽略 */ } }
+      this.openOnEditClick();
+    },
+    /* Tab 进到输入框时不自动展开（那是"路过了"，不是"要点"）；
+       这里只为**鼠标按住时先把别的下拉收起**保持一致性，故空实现留档 ——
+       如果以后要做"聚焦即展开"，记得先确认不会打断输入法。 */
+    openOnEditFocus() { /* 故意不展开：聚焦≠想打开列表（输入法/Tab 顺序都会误触发） */ },
+    /* 输入框内容变化（受控） */
     onEditInput(event) {
       if (this.disabled) return;
-      this.$emit('change', event && event.target ? event.target.value : '');
+      // 第二个参数 false = 用户手打的文本（区别于 pick() 的「从列表里选了一项」）。
+      this.$emit('change', event && event.target ? event.target.value : '', false);
     },
     /* 可编辑模式键盘：↓/↑ 开列表并高亮，Enter 选当前高亮项（没有高亮就收起），Esc 收起；
        其余键（字母/中文/退格/左右移动光标）一律放行，不能拦输入。 */
@@ -11765,10 +15643,17 @@ const Combo = {
       <!-- 可编辑模式：触发器保留 .combo-trigger 的外观，里面换成输入框 -->
       <div v-if="editable" ref="trigger" class="combo-trigger combo-trigger-editable"
            :style="width ? { width: width + 'px' } : null"
-           role="combobox" :aria-expanded="open ? 'true' : 'false'">
-        <input ref="editInput" class="combo-edit" type="text" :value="editText"
+           role="combobox" :aria-expanded="open ? 'true' : 'false'"
+           @click="onEditableBlankClick">
+        <!-- ⚠️ 本轮修复（用户原话：「类别那里的ui这个列表点不出来……点击这个ui没用展开的问题」）：
+             可编辑模式下点击**输入框本体**也要能展开列表。以前只有右侧 12px 的箭头绑了 toggle，
+             而 .combo-trigger-editable 是 cursor:text 的整块区域，用户自然去点宽的那块 →
+             看起来就是"这个下拉点不开"。用 @click.stop 阻断冒泡（避免外层再收到一次），
+             展开/收起都由 openOnEditClick 统一决定。 -->
+        <input ref="editInput" class="combo-edit" type="text" :value="modelValue"
                :disabled="disabled" :placeholder="placeholder"
-               @input="onEditInput" @keydown="onEditKeyDown" @click.stop>
+               @input="onEditInput" @keydown="onEditKeyDown"
+               @click.stop="openOnEditClick" @focus="openOnEditFocus">
         <svg class="ic combo-arrow" width="12" height="12"
              @click.stop="toggle"><use href="#i-chevron_down"></use></svg>
       </div>
@@ -11925,7 +15810,9 @@ const inputMenuState = { open: false, target: null, allSelected: false };
    因为右键可能让 target 先失焦、把 selectionStart/End 清掉 ——
    等 openInputMenu 里再读就永远读不到"已全选"了（用户报的"怎么全选都没有取消全选"）。
    记录 el + 那一刻是否全选；只认"同一个元素"的快照，换框/换页面自动失效。 */
-const _lastSelectionSnapshot = { el: null, allSelected: false, at: 0 };
+/* 右键前的选区快照：WebView2 里 contextmenu 之后可能立刻改焦点/清选区，
+   所以"有没有选内容"和"是不是全选"都要在**第一行**就记下来（见 contextmenu 监听）。 */
+const _lastSelectionSnapshot = { el: null, allSelected: false, hasSelection: false, at: 0 };
 
 function _inputMenuEl() { return document.getElementById('input-menu'); }
 
@@ -11941,7 +15828,13 @@ function closeInputMenu() {
    剪贴板读不到时**保守视为可用**（权限/后端缺失都不能把功能点灰）。 */
 function _fieldSelection(el) {
   if (!el) return false;
-  if (el.tagName && el.tagName.toLowerCase() === 'input') {
+  const tag = el.tagName ? el.tagName.toLowerCase() : '';
+  /* ⚠️ textarea 必须和 input 一样读 selectionStart/End。
+     根因（用户原话：「我框选了内容点击右键结果很多按钮都是灰色包括复制按钮都无法使用」）：
+     以前这里只判了 input，textarea 掉进下面的 window.getSelection() 分支 —— 而
+     textarea 的选区**不属于文档选区**（window.getSelection() 对它恒为 collapsed），
+     于是文本框里明明框选了一整段，菜单里的复制/剪切仍然全灰。 */
+  if (tag === 'input' || tag === 'textarea') {
     try { return (el.selectionEnd || 0) > (el.selectionStart || 0); } catch (e) { return false; }
   }
   const sel = window.getSelection && window.getSelection();
@@ -12083,9 +15976,18 @@ async function openInputMenu(event, target) {
   const x = event.clientX; const y = event.clientY;
   await nextFrameMeasurePlace(menu, x, y);
   /* 状态：先同步算好（选区/内容），剪贴板异步补刀 */
-  const hasSel = _fieldSelection(target);
+  /* 实时选区 + 右键那一瞬的快照，两者取或：实时读得到就以实时为准；
+     读不到（失焦/引擎清了选区）但快照证明刚才确实选了 → 仍然可用。 */
+  const liveSel = _fieldSelection(target);
+  const hasSel = liveSel || !!(snap && snap.el === target && snap.hasSelection);
   const hasContent = _fieldHasContent(target);
   const editable = _fieldEditable(target);
+  const hist = _fieldHistories.get(target);
+  /* 撤销/重做按"栈里真的有东西"决定是否可点：以前恒为可点，点了才弹
+     「没有可撤销的操作了」，等于把状态错误推给用户。*/
+  const canUndo = !!hist && (hist.past.length > 0
+    || !_histEqual(_fieldSnapshot(target), hist.last));
+  const canRedo = !!hist && hist.future.length > 0;
   _applyInputMenuStates({
     copy: hasSel,
     cut: hasSel && editable,
@@ -12093,8 +15995,8 @@ async function openInputMenu(event, target) {
        可编辑框先置可用，剪贴板确认是空的再置灰（保守：读不到=可用） */
     paste: editable,
     'select-all': hasContent,
-    undo: editable,
-    redo: editable,
+    undo: editable && canUndo,
+    redo: editable && canRedo,
   });
   const empty = await _clipboardLooksEmpty();
   if (inputMenuState.open && inputMenuState.target === target) {
@@ -12367,12 +16269,59 @@ function _undoRedo(target, cmd) {
   _fieldApplySnapshot(target, next);
   return true;
 }
+/* ⚠️⚠️ 撤销栈的**基线**必须在内容变化之前种下（用户原话：
+   「我刚刚不小心删除了一个字我按撤回...结果他说没有可撤回的东西了」）。
+   根因：_fieldHistory(el) 首次被调用是在**第一次 input 事件里**，而那时 el.value
+   已经是改后内容 → h.last 直接等于"改后"，紧接着 _histEqual(snap, h.last) 相等
+   直接 return ⇒ 第一次修改永远不会入栈 ⇒ past 恒空 ⇒ 撤销永远说"没有可撤销的操作"。
+   修法：在 beforeinput（改动发生**前**触发）与 focusin 时先建好历史对象，
+   让 h.last 保存"未改之前"的内容；这样第一次 input 就能把真正的旧值推进 past。
+   （focusin 兜住不触发 beforeinput 的写入路径：右键粘贴、拖拽、脚本 setRangeText 等；
+     beforeinput 兜住"已聚焦后才开始输入"这条最常见路径。两处都只在**没有历史**时
+     建对象，已有历史绝不覆盖 last。）*/
+function _fieldHistorySeed(el) {
+  if (!el || _fieldSelfWrite) return;
+  if (_fieldHistories.has(el)) return;
+  const snap = _fieldSnapshot(el);
+  if (snap) _fieldHistories.set(el, { past: [], future: [], last: snap, timer: 0, stamp: 0 });
+}
+document.addEventListener('focusin', (event) => {
+  const el = event.target;
+  if (el && _fieldEditable(el)) _fieldHistorySeed(el);
+}, true);
+document.addEventListener('beforeinput', (event) => {
+  const el = event.target;
+  if (el && _fieldEditable(el)) _fieldHistorySeed(el);
+}, true);
 /* 记录来源：document 捕获阶段的 input 事件（覆盖所有 input/textarea/contenteditable，
    包括 Vue 组件内部自己渲染出来的那些，不用逐个元素 addEventListener）。 */
 document.addEventListener('input', (event) => {
   const el = event.target;
   if (!el || !_fieldEditable(el)) return;
   _fieldHistoryPush(el);
+}, true);
+/* ⚠️ Ctrl+C / Ctrl+X：改走我们自己的 Win32 剪贴板（用户原话：
+   「我用快捷键ctrl+c复制了但是我win+v查看粘贴板发现没有它」）。
+   根因：浏览器原生 copy 用的是 WebView2 内部那条延迟渲染剪贴板路径，
+   写进去的文本不参与 Windows 剪贴板历史（Win+V），所以粘贴板上什么都没有。
+   修法：有选区时拦下来，调 _copySelectionFrom（三级兜底第一级就是
+   bridge 'clipboard.write' = Win32 SetClipboardData，会进 Win+V 历史），
+   并 preventDefault 防止浏览器再覆盖一次。Ctrl+V 不拦：系统剪贴板写入后浏览器原生
+   粘贴本来就能读到，自己造 insertText 反而更容易破坏输入法/富文本事务。 */
+document.addEventListener('keydown', (event) => {
+  if (!event.ctrlKey || event.altKey || event.metaKey) return;
+  if (event.isComposing || event.keyCode === 229) return;
+  const key = String(event.key || '').toLowerCase();
+  if (key !== 'c' && key !== 'x') return;
+  if (event.shiftKey) return;                 // Ctrl+Shift+C 常是开发者工具/别的语义，放过
+  const el = event.target;
+  if (!el || !_isEditableField(el)) return;
+  if (!_fieldSelection(el)) return;           // 没选区：交回浏览器原生（选中空白/光标态）
+  event.preventDefault();
+  event.stopPropagation();
+  const tag = (el.tagName || '').toLowerCase();
+  _copySelectionFrom(el, tag);
+  if (key === 'x' && _fieldEditable(el)) _deleteSelection(el, tag);
 }, true);
 /* 快捷键：Ctrl+Z 撤销 / Ctrl+Y 或 Ctrl+Shift+Z 重做（走同一套 per-field 栈）
    ⚠️ composition（中文输入法组词）期间不拦：那时浏览器的输入事务不能被我们打断。
@@ -12403,9 +16352,11 @@ document.addEventListener('contextmenu', (event) => {
      所以这里是捕获阶段的第一行，连 _isEditableField 判断都排在它后面。 */
   try {
     _lastSelectionSnapshot.el = null;
+    _lastSelectionSnapshot.hasSelection = false;
     if (target && _isEditableField(target)) {
       _lastSelectionSnapshot.el = target;
       _lastSelectionSnapshot.allSelected = _fieldAllSelected(target);
+      _lastSelectionSnapshot.hasSelection = _fieldSelection(target);
       _lastSelectionSnapshot.at = Date.now();
     }
   } catch (e) { /* 拿不到就按"未全选"处理，行为不比旧版差 */ }
@@ -12417,6 +16368,31 @@ document.addEventListener('contextmenu', (event) => {
   if (_isInputMenuExcluded(target)) return;
   event.preventDefault();
   openInputMenu(event, target);
+}, true);
+/* ⚠️ 本轮修复（用户原话：「输入框点击之后点击附近的空白处结果还是不能退出输入状态
+   必须要远一点才行的bug」）——「退出输入状态」= 焦点真的离开输入框。
+   Chromium 正常情况下点空白会把焦点交给 body，但这个界面里输入框四周几乎全是
+   **自绘控件**（下拉触发器整块 cursor:text、chip、分段控制器、卡片、图标按钮…），
+   点在"看起来是空白、其实还待在同一个自绘控件里"的位置时焦点并不会走，
+   于是聚焦环、下拉弹层、以及"正在输入"的观感一直挂着，必须点到很远才生效。
+   这里加一层明确兜底：按下的位置既不是输入区、也不是会自己处理焦点的交互元素
+   （按钮/链接/标签/下拉弹层/右键菜单/分段项）时，主动把焦点从当前输入框收回。
+   ⚠️ 只 blur，**不 preventDefault**：文本选择、滚动条拖动、按钮点击全部照常。 */
+document.addEventListener('mousedown', (event) => {
+  const active = document.activeElement;
+  if (!active || active === document.body || !_isEditableField(active)) return;
+  const target = event.target;
+  if (!target || !target.closest) return;
+  /* 属性写法要和项目里既有的判定一致（app.js 滚动接管那条用的是
+     `[contenteditable=""], [contenteditable="true"]` 两种都列）——
+     富文本框在某些状态下就是空值写法，只认 "true" 会把它误判成"空白处"。 */
+  if (target.closest('input, textarea, select, [contenteditable=""], [contenteditable="true"], button, a, label')) return;
+  /* .combo-trigger 也豁免：可编辑下拉的空白处由组件自己的 onEditableBlankClick 处理
+     （它要区分"收起着点开来"和"展开着收掉"），这里抢先 blur 会让它随后 focus 回去，
+     白白制造一次 blur→focus 抖动。 */
+  if (target.closest('.combo-trigger')) return;
+  if (target.closest('.combo-pop, #input-menu, .seg-item, .chip, .dropdown-panel')) return;
+  try { active.blur(); } catch (e) { /* 老内核偶发抛错，忽略即可 */ }
 }, true);
 /* 点其它地方 / 滚动 / 缩放 / 失焦：收起（菜单项自己的 mousedown 不算"外面"） */
 document.addEventListener('mousedown', (event) => {

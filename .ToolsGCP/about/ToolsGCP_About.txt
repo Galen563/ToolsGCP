@@ -1,0 +1,87 @@
+ToolsGCP 软件介绍
+版本号：v1.0
+最近更新：[2026/11/11]
+
+⚠️ 这份文件是给 GCP-AI 和用户查阅的"关于本软件的全部介绍"。
+   正文不在系统提示词里（避免每轮对话都烧一遍 token）：被问到"这软件是什么 /
+   谁做的 / 仓库在哪"这类问题时，用 read_file 读这份文件，然后**据原文回答**。
+   改介绍内容只改这份 txt，不用改代码、不用重新打包。
+
+
+一、最核心的一句话（作者原话口径）
+
+ToolsGCP是由Galen563独立开发者制作的一款常用软件和实用网站等的聚合平台，
+Github项目仓库：https://github.com/Galen563/ToolsGCP，
+资源存储和索引的支持库仓库：https://github.com/Galen563/ToolsGCP-Resources。
+
+
+二、开发者信息
+
+· 开发者：Galen563（独立开发者，1 人）
+· 开发人员：Galen563（1 人）
+· 作者 Github 主页：https://github.com/Galen563
+· 主仓库（程序本体 / 更新发布）：https://github.com/Galen563/ToolsGCP
+· 支持库仓库（资源存储与索引）：https://github.com/Galen563/ToolsGCP-Resources
+· 官网（在线文档、用户协议、隐私政策的发布页）：https://toolsgcp.pages.dev/
+· 反馈 / 提 Issue：https://github.com/Galen563/ToolsGCP/issues
+
+
+三、它是什么
+
+ToolsGCP 是一款 Windows 桌面工具箱启动器，定位是"常用软件和实用网站的聚合平台"：
+它自己不提供软件，而是维护一份"程序 / 网站索引"（资源库），每条都直达官网或
+官方 GitHub，帮用户少踩坑、少搜一堆下载站假链接。
+
+主要能力：
+· 资源库检索：按分类 / 标签 / 系统筛选，支持关键词搜索，收录常用软件与实用网站。
+· 收藏夹：把常用条目收起来，支持多个收藏夹、导入导出。
+· 部署清单：把常用的软件环境整理成清单，批量领取下载地址。
+· 插件扩展：一个文件夹 = 一个插件；插件有两个根目录（程序内置目录 + 用户数据目录），
+  用户目录优先级更高。
+· 资源制作器：把本地写好的一份资源信息做成 ToolsGCP 能收录的条目。
+· GCP-AI：内嵌的 AI 助手，可以在资源库里找软件，也能直接操作 ToolsGCP 本体
+  （开关在"设置 → GCP-AI"）。
+· 公告：从项目仓库的 GitHub Issue 拉取作者发布的公告。
+· 在线更新：检查新版本、下载更新包、重启并替换。
+· 下载页：从仓库 Releases 里按文件直接下载。
+· 桌面能力：无边框自绘标题栏、系统托盘、全局热键、开机自启、深浅色主题、
+  简体中文 / 繁體中文 / English 三语界面。
+
+
+四、技术形态（被问到"怎么做的 / 什么架构"时按这段答）
+
+· 入口：ToolsGCP.pyw（唯一入口）。
+· 壳：Python + pywebview（WebView2 窗口），负责窗口 / 托盘 / 热键 / 原生能力。
+· 界面：Vue3 运行时版（无打包构建），页面在 .ToolsGCP/webui/ 下，改完刷新即生效。
+· 业务逻辑：.ToolsGCP/modules/pymodels/（资源查询、收藏、设置、插件、AI、数据根）。
+· 启动画面：纯 Win32 分层窗口，不依赖 Qt。
+· 资源库数据：.ToolsGCP/ToolsGCP-Resources.json，另有支持库仓库负责资源存储与索引。
+· 已不再依赖 PyQt5（旧 PyQt5 单机版已归档，仅作历史参考）。
+
+
+五、数据与文件放在哪（被问到"数据存哪里"时按这段答）
+
+· 程序目录旁的 .ToolsGCP\ 是**资源目录**（界面、模块、图标、资源库、插件、
+  这份介绍、用户协议与隐私政策），随程序发布，不是配置目录，也不会被迁移。
+· 程序自动产生的配置 / 日志 / 会话在**用户数据根**：默认 <用户主目录>\.ToolsGCP\
+  （config / logs / chats），首次运行自动创建。
+· %USERPROFILE%\ToolsGCP.json 是指针文件，记录数据根位置；
+  可在设置里迁移数据根，指针文件本身固定在用户主目录。
+· 用户协议与隐私政策全文：程序目录 .ToolsGCP\legal\ 下的两份 txt；
+  线上版在 https://toolsgcp.pages.dev/user-agreement 与
+  https://toolsgcp.pages.dev/privacy 。
+
+
+六、收费与授权
+
+· 免费开源（GitHub 仓库公开）。
+· 部分资源条目带"授权 / 密钥"字段，那是**第三方软件自己的**授权信息，
+  不是 ToolsGCP 的收费；ToolsGCP 不对第三方软件的安全性或合法性作保证
+  （具体见《ToolsGCP 用户协议》《ToolsGCP 隐私政策及免责声明》）。
+
+
+七、赞助与反馈
+
+· 项目支持微信赞助（界面"Galen563 / Github"页有赞助二维码，赞助时请写备注昵称与金额）。
+· 官方 QQ 改进 / 建议群：312751713；投诉 / 举报群：973961899。
+· 问题反馈首选 GitHub Issues：https://github.com/Galen563/ToolsGCP/issues

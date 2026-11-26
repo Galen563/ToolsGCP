@@ -14,8 +14,14 @@ pywebview 支持直接把 WSGI 应用当 `url` 传（`create_window(url=app)`）
     /res/image/<path>    → .ToolsGCP/images/<path>
     /res/<name>          → .ToolsGCP/<name>          （logo.png 等）
     /api/health          → {"ok": true, ...}         （自检脚本用）
-⚠️ 所有返回都带 `Cache-Control: no-store`：开发期改前端文件必须立刻生效，
-   否则 WebView2 会缓存旧 JS，改完看不到效果（这是最容易踩的坑）。
+ ⚠️ 缓存策略（两张脸，别看错）：
+    · 首页 `/`：`no-store`。它要注入主题元信息，且测试依赖这条（test_boot_screen_theme.py /
+      test_browser_tab_icon.py 都断言它）。
+    · 静态资源（CSS/JS/图片）：`no-cache` + `ETag`。以前全部 `no-store`，每次启动都要把 13 个 CSS + 4 个 JS
+      整个重下一遍，而旧服务器是 HTTP/1.0（响应完就关连接）+ backlog 只有 5，
+      请求一多就会挤爆队列 → 某几个 CSS 拿不到 → 界面退回「最基础底层样式」。
+      现在改成「每次都问一次但带 ETag」：修改后刷新依然立刻生效（ETag 跟 mtime_ns 变），
+      而未变的资源只回几十字节的 304。
 ⚠️ 路径必须做越界校验：`/static/../../secret` 之类不能读到 webui 外面去。
 """
 
@@ -25,7 +31,7 @@ import os
 import posixpath
 import re                                       # _inject_boot_theme 改写 <html> 标签用
 import threading
-
+import time                                            # Last-Modified 头用
 import bottle
 
 from pymodels.constants import CONFIG_DIR, APP_NAME, APP_VERSION
@@ -81,9 +87,14 @@ def _no_store():
 
 
 def _send_icon(rel: str):
-    """图标专用：云端目录优先、程序自带兜底
-    ⚠️ 与 `_safe_join` 分开是因为它的查找要跨**两个根**（cloud icons / images），
-       而 `_safe_join` 只能限定在一个根里；这里只取 basename，天然没有穿越风险。
+    """图标专用：三层找，**用户导入永远最前**，后两层的先后随设置里的
+       「资源来源」交换（云端→镜像在前，本地→程序自带在前）。
+       口径见 cloud_icon_source.icon_file / official_layers：
+       用户那份排最前是「导入图标被官方图遮住」的修法，不随来源变；
+       来源交换那两层是「切云端/本地图标不跟着换」的修法（m05379 第③项）。
+    ⚠️ 与 `_safe_join` 分开是因为它的查找要跨**三个根**（config/icons /
+       cloud icons / images），而 `_safe_join` 只能限定在一个根里；
+       这里只取 basename，天然没有穿越风险。
     """
     base = os.path.basename(str(rel or "").replace("\\", "/"))
     if not base:
@@ -113,6 +124,44 @@ def _safe_join(root: str, rel: str) -> str:
     return full
 
 
+def _etag_for(st) -> str:
+    """静态资源的强校验 ETag。
+
+    用 st_mtime_ns（纳秒）而不是 st_mtime（秒）：有些文件系统上同一秒内改两次
+    文件，秒级 mtime 相同 => ETag 相同 => 浏览器拿到旧缓存，
+    「改完刷新看不到效果」的老坑会回来。纳秒 + 文件大小一起进 ETag。
+    """
+    mtime_ns = int(getattr(st, "st_mtime_ns", int(st.st_mtime * 1000000000)))
+    return '"%x-%x"' % (mtime_ns, int(st.st_size))
+
+
+def _http_date(ts: float) -> str:
+    """RFC 1123 日期（Last-Modified 用）。
+
+    手写而不 import email.utils：整个模块已经够沉了，不值得为一行格式化再加导入。
+    """
+    return time.strftime("%a, %d %b %Y %H:%M:%S GMT", time.gmtime(ts))
+
+
+def _not_modified(etag: str) -> bool:
+    """请求方手上这份缓存是不是最新的（If-None-Match 强校验）。
+
+    弱校验（W/"..."）按 HTTP 语义同样算命中，这里剥掉 W/ 前缀再比。
+    """
+    header = bottle.request.headers.get("If-None-Match", "") or ""
+    if not header:
+        return False
+    for part in header.split(","):
+        token = part.strip()
+        if token == "*":
+            return True
+        if token.startswith("W/"):
+            token = token[2:].strip()
+        if token == etag:
+            return True
+    return False
+
+
 def _send_file(full_path: str, *, download: bool = False):
     if not full_path or not os.path.isfile(full_path):
         bottle.response.status = 404
@@ -120,7 +169,33 @@ def _send_file(full_path: str, *, download: bool = False):
     ext = os.path.splitext(full_path)[1].lower()
     bottle.response.content_type = _EXTRA_TYPES.get(ext) or (
         mimetypes.guess_type(full_path)[0] or "application/octet-stream")
-    _no_store()
+    try:
+        st = os.stat(full_path)
+    except OSError:
+        bottle.response.status = 404
+        return "not found"
+
+    # ---- 本轮：静态资源改成「可校验缓存」，不再一刀切 no-store -------------
+    # 老做法所有静态文件都 no-store，浏览器每次启动都要把 13 个 CSS + 4 个 JS
+    # 整个重下一遍；一次启动 17+ 个请求，每个都是一条新 TCP 连接
+    # （旧服务器是 HTTP/1.0，响应完就关连接，监听 backlog 只有 5）。
+    # 请求一多就可能挤爆队列 => 某几个 CSS 拿不到 => 用户看到「UI 堆叠在一起、
+    # 只剩最基础底层样式」。这就是「开 50 多次碰到一次」的直接机制。
+    # 现在改成 no-cache（每次都问一次，但带 ETag）+ 命中就回 304 空响应：
+    #   · 改完刷新照样立刻生效（ETag 跟着 mtime_ns 变 => 不命中 => 回新内容）；
+    #   · 绝大多数情况下只回几十字节的 304，服务器不用再读一遍文件、也不用把
+    #     几百 KB 的内容重新编码一遍，首屏轻得多、失败面小得多。
+    # 注意：首页 / 仍然是 no-store（它要注入主题元信息，见 create_app 的注释；
+    #    test_boot_screen_theme.py / test_browser_tab_icon.py 都在断言这条）。
+    etag = _etag_for(st)
+    bottle.response.set_header("ETag", etag)
+    bottle.response.set_header("Last-Modified", _http_date(st.st_mtime))
+    bottle.response.set_header("Cache-Control", "no-cache")
+    if _not_modified(etag):
+        # 304：bottle 会自动剔掉 Content-Length（bad_headers 里列了它），
+        # 客户端因此知道「没有正文」，不会傻等一个 body。
+        bottle.response.status = 304
+        return ""
     try:
         with open(full_path, "rb") as handle:
             return handle.read()
@@ -323,9 +398,15 @@ def create_app():
     #    规范 URL 现在是 `/res/image/icon/<name>`（走下面的 res_image 就够了）。
     #    这里保留 `/res/icon/<name>` 作为**兼容别名**，指向同一个新目录 ——
     #    这样旧版本前端缓存/旧资源库 JSON 里的写法也不会 404。
-    # ⚠️⚠️ 云端图标：作者把 icon.zip 传到 GitHub Release 后，图标优先从
-    #    `<数据根>/config/cloud/icons` 取，取不到再退回程序自带的 images/icon
-    #    （见 cloud_icon_source.icon_file）。同步在后台线程跑，路由本身**永不联网**。
+    # ⚠️⚠️ 图标三层查找（见 cloud_icon_source.icon_file）：用户导入的
+    #    `<数据根>/config/icons` **最优先** —— 必须遮住下面两份官方图；
+    #    剩下两层的先后**跟着设置里的「资源来源」交换**：
+    #      来源=云端 → 云端镜像 `<数据根>/config/cloud/icons` 在前；
+    #      来源=本地 → 程序自带 `.ToolsGCP/images/icon` 在前；
+    #    这样「切来源」会真的换一套图（m05379 第③项），而不是只有 JSON 换。
+    #    同步在后台线程跑，路由本身**永不联网**；它也不直接读设置，
+    #    来源是 resolve_resource_file 记在 cloud_resource_source.source_mode()
+    #    里的进程内记忆（路由拿不到 SettingsManager，见那边的注释）。
     @app.get("/res/icon/<rel:path>")
     def res_icon(rel):
         return _send_icon(rel)
@@ -336,7 +417,7 @@ def create_app():
 
     @app.get("/res/image/<rel:path>")
     def res_image(rel):
-        # 图标子路径单独走"云端优先"（/res/image/icon/xx.png 是规范 URL）
+        # 图标子路径单独走三层查找（/res/image/icon/xx.png 是规范 URL）
         head = str(rel or "").replace("\\", "/")
         if head.startswith("icon/"):
             return _send_icon(head[len("icon/"):])

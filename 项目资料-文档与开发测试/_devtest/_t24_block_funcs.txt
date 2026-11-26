@@ -1,0 +1,109 @@
+# ---------- 内置术语「显示文本 → 规范中文」反查（写侧兜底，task-24）--------
+#
+# 为什么必须有这一段：category / tags 在磁盘上的**值口径**是规范简体中文（见
+# resource_schema 的 LANG_LIST_FIELDS），但前端制作器把三个语言池当自由文本框，
+# 用户从下拉里挑到的往往是**当前界面语言的那份显示值**（English 界面下就是 "Clipboard"）。
+# 旧写法只调 normalize_lang_list —— 它只管形状不管值，于是显示值被当成规范值原样落盘，
+# 脏值通道就是这么来的（库里 57 条里 15 条中枪）。后果不只是难看：类别筛选/分组走
+# _collect_text 那套按值精确匹配、不做术语反查，"Clipboard" 既筛不进「粘贴板」那一组，
+# 又让同一个内置类别在库里同时存在两种写法。
+# 读侧早就有这道反查（desktop/api/resources.py 的 _canonical_term →
+# language_manager.canonical_term），落盘侧一直是空白，这里补上：进门就还原成规范值。
+
+
+def _term_manager():
+    """取当前语言管理器实例（术语反查表挂在它身上，见 language_manager._term_reverse）。
+
+    为什么要自己兜底 new 一个：主链路里 desktop.shell 会建好实例并登记成"当前实例"，
+    但 _normalize 也会被自测脚本 / 无窗口路径直接调用，那时没有当前实例，
+    canonical_term 拿不到管理器就**原样返回** —— 表现是"兜底跑了一遍、一个脏值都没变"，
+    极难查（_devtest/probe_task24_canonical.py 就是这么踩到的）。语言表只是三个小 json，
+    兜底建一次的成本可忽略；反查表由 LanguageManager 缓存，随 translations 一起作废。
+    """
+    try:
+        from pymodels.core import language_manager as _lm
+    except Exception:
+        return None
+    try:
+        manager = _lm.get_current_manager()
+        if manager is None:
+            manager = _lm.LanguageManager()
+        return manager
+    except Exception:
+        return None
+
+
+def canonicalize_term(value, manager=None):
+    """单个 category / tags 元素：内置术语的任意语言写法 → 规范简体中文；认不出的一律原样。
+
+    口径（lead 定死，别越界）：
+      ① 简体中文 / 繁體中文 / English 三种写法都认，且**与当前界面语言无关**
+         （English 界面下收到 "Clipboard" 也要还原成「粘贴板」）；
+      ② 反查不到 = 用户自定义值，绝不猜、绝不丢；
+      ③ 幂等：规范值在反查表里是「键→键」自等，再进一次不变。
+    """
+    if not isinstance(value, str):
+        return value                      # dict / int 这类脏元素不猜类型，原样交回
+    text = value.strip()
+    if not text:
+        return ""
+    try:
+        from pymodels.core.language_manager import canonical_term
+        got = canonical_term(text, manager)
+    except Exception:
+        return text                       # 语言层挂了不能连累落盘：宁可留脏值，不可丢数据
+    return str(got) if got else text
+
+
+def _canonicalize_pool(values, manager):
+    """一个语言池（list）→ 逐项反查 + 去空去重
+
+    为什么必须去重：反查会把「粘贴板 / 粘貼板 / Clipboard」并成同一个规范值，
+    不去重就留下 ["粘贴板", "粘贴板"] 这种自己跟自己重复的池子。
+    """
+    out = []
+    for item in values:
+        text = canonicalize_term(item, manager)
+        if isinstance(text, str):
+            if not text or text in out:
+                continue
+        out.append(text)
+    return out
+
+
+def canonicalize_lang_list(value, manager=None):
+    """category / tags 落盘前的**值**兜底：形态保持（list[str] 与 {语言: list[str]} 都覆盖），
+    每个元素过一遍 canonical_term；反查后三池同值 → 塌缩成扁平 list[str]。
+
+    为什么塌缩：库里绝大多数老数据就是扁平 list[str]（规范中文），显示译名由
+    translate_term 在**取用时**生成（resources.py 的 _canonical_term / DETAIL_* 那套读侧契约），
+    所以「三池写同一个规范值」与「扁平一份」信息等价；留三份副本反而多三个再次写脏的口子。
+    为什么三池内容不一致时保持字典原样交回：lead 口径「只统一同一条内容的不同语言写法，
+    不合并本来就不同的内容」——那种情况不自动改，进迁移报告的「待用户自决」段落。
+    """
+    if manager is None:
+        manager = _term_manager()
+    if isinstance(value, (list, tuple)):
+        return _canonicalize_pool(list(value), manager)
+    if not isinstance(value, dict):
+        return value                      # 字符串等历史脏形态：交给 normalize 的压平结果，不在这儿猜
+    try:
+        order = list(getattr(resource_schema, "LANGUAGE_FALLBACK", ()) or ())
+    except Exception:
+        order = []
+    langs = [lang for lang in order if lang in value]
+    langs += [lang for lang in value if lang not in langs]   # 未知语言键也要处理，不静默丢字段
+    pools = {}
+    for lang in langs:
+        raw = value[lang]
+        items = _canonicalize_pool(list(raw) if isinstance(raw, (list, tuple)) else [raw], manager)
+        if items:                         # 与 normalize_lang_list 同规则：空池不写字段
+            pools[str(lang)] = items
+    if not pools:
+        return value                      # 全语言皆空（非字符串脏形态）→ 原样，行为与改动前一致
+    first = next(iter(pools.values()))
+    if all(items == first for items in pools.values()):
+        return first                      # 反查后三池同值 → 塌缩
+    return pools
+
+

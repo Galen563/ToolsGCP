@@ -1,6 +1,6 @@
 """重新生成内嵌英文兜底表—— 不参与程序运行
 用法（项目根目录）：
-    python .ToolsGCP/tools/build_en_fallback.py
+    python "项目资料-文档与开发测试/tools/build_en_fallback.py"
 什么时候要跑：
     往 `.ToolsGCP/modules/languages/*.json` 里**新增或修改**了 key 的
     "English" 值时，跑一次这个脚本，把改动同步进
@@ -22,14 +22,16 @@ import sys
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-LANGUAGES_DIR = PROJECT_ROOT / ".ToolsGCP" / "modules" / "languages"
+# ⚠️ 语言文件按语言分目录：{zh_CN,zh_TW,en_US}/<module>_language.json。
+#    英文兜底表就取 en_US 那份（它本身就是英文）；老形态（值是三语字典）也兼容，取 English。
+LANGUAGES_DIR = (PROJECT_ROOT / ".ToolsGCP" / "modules" / "languages"
+               / "en_US")
 OUTPUT = (PROJECT_ROOT / ".ToolsGCP" / "modules" / "pymodels" / "core"
           / "en_fallback.py")
 
 # 模块名 -> 语言文件（必须和 core/language_manager.py 的 load_all_languages 一致）
 MODULE_FILES = {
     "search": "search_language.json",
-    "home": "home_language.json",
     "notice": "notice_language.json",
     "tools_gcp": "ToolsGCPcenter_language.json",
     "deploy": "deploy_language.json",
@@ -50,7 +52,7 @@ HEADER = '''"""
 ========================================
 
 生成命令（项目根目录）：
-    python .ToolsGCP/tools/build_en_fallback.py
+    python "项目资料-文档与开发测试/tools/build_en_fallback.py"
 
 语言文件（.ToolsGCP/modules/languages/*.json）可以被移走 / 缺失 / 损坏。没有这张表
 的话，界面会中英混杂：有的组件在 .py 里内嵌了中文兜底、有的直接把 key 名显示出来。
@@ -84,13 +86,27 @@ def main():
             data = json.load(handle)
         table = {}
         for key, value in data.items():
-            if isinstance(value, dict) and value.get("English"):
-                table[key] = value["English"]
+            if isinstance(value, dict):
+                # 老形态：{"zh_CN": "...", "zh_TW": "...", "en_US": "..."} 或 {"English": "..."}
+                english = value.get("English") or value.get("en_US")
+                if english:
+                    table[key] = english
+            elif isinstance(value, str):
+                # 新形态：en_US 那份直接就是英文文案
+                table[key] = value
         by_module[module] = table
 
     for module, filename in MODULE_FILES.items():
         if module not in by_module:
             print(f"[警告] 语言文件不存在，该模块跳过: {filename}")
+
+    if not by_module:
+        print("[中止] 没有任何语言文件被读到 —— 拒绝写出空表（会把英文兜底功能清空）")
+        return 1
+    empty = [name for name, table in by_module.items() if not table]
+    if empty:
+        print(f"[中止] 这些模块读出来是空的: {empty} —— 拒绝写盘")
+        return 1
 
     lines = [HEADER]
     for module in sorted(by_module):

@@ -161,6 +161,40 @@ def _to_local_text(value):
 
 # ---- markdown → 人能直接读的纯文本（不引入 markdown 渲染库）----
 
+# 原始 markdown 正文最多留多少字符（`body_md` 字段，给界面按 markdown 渲染用）。
+# 为什么要夹：Issue 正文可能几千字，而它会进内存缓存和 pywebview 的接口返回值；
+# 界面上"公告"一屏根本读不到那么多，截断到 6000 既够渲染完整公告，又不会把
+# 配置/IPC 无上限地撑大。
+BODY_MD_MAX = 6000
+
+
+def _truncate_markdown(text, limit=BODY_MD_MAX):
+    """把原始 markdown 夹到 limit 个字符，且**只在行边界**下刀。
+
+    ⚠️ 为什么不能像 body 那样直接 slice：截断点落在语法结构中间（半个 `**`、
+       半行代码围栏、半个 `[](url)`）时，前端那个内置渲染器会把残缺标记**当成正文
+       显示出来**，看起来就是"更新内容里多了一串乱码"。按行夹则每一行都是完整的
+       语法单元，渲染器最坏只是少显示后面的内容。
+    """
+    text = str(text or "").replace("\r\n", "\n").replace("\r", "\n")
+    if not text.strip():
+        return ""
+    marker = "\n……（内容过长，此处截断）"
+    if len(text) <= limit:
+        return text.strip()
+    out = []
+    used = 0
+    budget = max(0, limit - len(marker))       # 给截断提示本身留出位置
+    for line in text.split("\n"):
+        cost = len(line) + 1
+        if used + cost > budget:
+            out.append(marker)
+            break
+        out.append(line)
+        used += cost
+    return "\n".join(out).strip()
+
+
 _CODE_FENCE_RE = re.compile(r"^\s*```.*$", re.M)
 _IMAGE_RE = re.compile(r"!\[([^\]]*)\]\(([^)\s]+)\)")
 _LINK_RE = re.compile(r"\[([^\]]+)\]\(([^)\s]+)\)")
@@ -176,6 +210,8 @@ def markdown_to_text(text):
     """把 Issue 正文（markdown）擦成人能直接读的纯文本
     去标题井号 / 粗体星号、`[文字](链接)` → `文字 (链接)`、列表符号换圆点、
     代码块围栏删掉但保留内容、HTML 标签去掉。
+    ⚠️ 这一步是**不可逆**的（结构信息丢了就回不来），所以界面要按 markdown 渲染时
+       绝不能用它的输出 —— 用 normalize_issue 里那个未经擦除的 `body_md`。
     """
     text = str(text or "").replace("\r\n", "\n").replace("\r", "\n")
     if not text.strip():
@@ -213,6 +249,17 @@ def normalize_issue(raw):
         "number": number,
         "title": str(raw.get("title") or "").strip(),
         "body": markdown_to_text(raw.get("body")),
+        # ⚠️ 本轮新增 body_md：**未经擦除的原始 markdown**，给界面按 markdown 渲染用
+        #    （需求原话：「公告的弹窗那里和公告页面里面也要支持 markdown 预览那种样式
+        #     出来」—— 而 `body` 被 markdown_to_text() 擦成纯文本后，`#`/`**`/`[]()`
+        #     这些结构**已经永久丢了**，前端再怎么改都渲染不回来。这条数据路径
+        #     （announcements.list → store.items）必须自己带原文）。
+        #    · 保留 body 不动：老界面 / 搜索 / 复制 / 语言兜底还在用它，
+        #      而且纯文本正是"渲染不出来时"的安全降级；
+        #    · 夹长度：Issue 正文可能很长，接口返回和内存缓存都不该无上限地长大；
+        #      截断在**行边界**上做，免得把半个 `**` / 代码围栏喂给渲染器
+        #      （前端拿到的仍然是完整语义的行）。
+        "body_md": _truncate_markdown(raw.get("body"), BODY_MD_MAX),
         "author": issue_author(raw),
         "url": str(raw.get("html_url") or ""),
         "created_at": created,

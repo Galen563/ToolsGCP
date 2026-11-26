@@ -28,13 +28,26 @@ function record(name, ok, detail) {
   console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? '  ' + JSON.stringify(detail) : ''}`);
 }
 
+/* 精确删掉包含 marker 的那段内联 <script>（只用 indexOf，避免正则跨标签误伤） */
+function cutInlineScript(html, marker) {
+  let at = html.indexOf(marker);
+  let guard = 0;
+  while (at >= 0 && guard++ < 10) {
+    const open = html.lastIndexOf('<script', at);
+    const close = html.indexOf('</' + 'script>', at);
+    if (open < 0 || close < 0) break;
+    html = html.slice(0, open) + html.slice(close + 9);
+    at = html.indexOf(marker);
+  }
+  return html;
+}
 async function bootPage(query = '') {
   const vc = new VirtualConsole();
   vc.on('jsdomError', () => {}); /* 屏蔽 CSS 解析等噪音 */
   let html = await (await fetch(`${BASE}/?page=settings&auditfile=jsdom_probe${query}`)).text();
   /* Tailwind CDN 运行时在 jsdom 里会因布局 API 缺失崩溃（与逻辑断言无关），剥掉 */
-  html = html.replace(/<script src="\/static\/js\/vendor\/tailwind\.js"[\s\S]*?<\/script>/, '')
-             .replace(/<script>[\s\S]*?tailwind\.config[\s\S]*?<\/script>/, '');
+  html = html.replace(/<script src="\/static\/js\/vendor\/tailwind\.js"[\s\S]*?<\/script>/, '');
+  html = cutInlineScript(html, 'tailwind.config');
   const dom = new JSDOM(html, {
     url: `${BASE}/?page=settings&auditfile=jsdom_probe${query}`,
     runScripts: 'dangerously',

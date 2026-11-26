@@ -106,6 +106,10 @@ CONFIG_DIRS = (
     "chats",
     "plugin_data",
     "logs",
+    # ⚠️ 第 28 轮（m06556 第②项）：原先这里还有一条 "icons"（图标曾落
+    #    <数据根>\config\icons）。用户明确要求图标存到程序目录 .ToolsGCP\images\icon
+    #    ⇒ save_icon 不再往数据根写，这条也就没有搬迁意义了，已移除；
+    #    老版本留下的那批文件由 cloud_icon_source.migrate_user_icons() 搬回程序目录。
     # ⚠️ 用户自己装的插件：`<数据根>\plugins`（顶层目录，和 logs/ 一样不放在 config/ 下）
     #    它跟 config/ 里那些"程序自动产出的配置"不同 —— 里面是**用户/开发者放进去的
     #    插件代码**，属于用户资产，所以数据根迁移时必须跟着走，不能丢。
@@ -190,15 +194,29 @@ def _emit_log(level: str, message: str):
 
 
 def _flush_pending_logs() -> bool:
-    """把积压的日志写进 logger；返回 True = 队列已清空（或本来就没东西）"""
+    """把积压的日志写进 logger；返回 True = 队列已清空（或本来就没东西）
+
+    ⚠️ 这里修过一次**启动死锁**，别改回"持着锁去 import"：
+      旧写法在 `with _PENDING_LOCK:` 里面调 `_logger_module()` —— 它要 import
+      `pymodels.utils.logger`，而 logger 自己又要 `from ..constants import LOGS_DIR`。
+      于是：守护线程**持着 _PENDING_LOCK** 卡在 constants 的模块导入锁上（那一刻主线程
+      正在导入 constants），而主线程走到下一条 `_emit_log` 时又反过来等 _PENDING_LOCK
+      —— 两边互等，程序**卡在启动界面永远起不来**（抓到的栈：主线程 data_root.py:194 抢锁；
+      子线程 importlib acquire ← logger.py:18）。本机复现率不低（连跑两次卡两次），
+      用户那边就是偶发的"双击没反应，进程在但没窗口"。
+      现在先把快照**认领**走（锁内只做列表搬运，不 import），**在锁外**取 logger；
+      取不到再把快照原样放回队首 —— 顺序不变，也不会被别的线程重复写一遍。
+    """
     with _PENDING_LOCK:
         if not _PENDING_LOGS:
             return True
-        module = _logger_module()
-        if module is None:
-            return False
-        pending, _PENDING_LOGS[:] = list(_PENDING_LOGS), []
-    for level, message in pending:
+        claimed, _PENDING_LOGS[:] = list(_PENDING_LOGS), []
+    module = _logger_module()
+    if module is None:
+        with _PENDING_LOCK:
+            _PENDING_LOGS[:0] = claimed
+        return False
+    for level, message in claimed:
         try:
             getattr(module.log, level)("数据目录", "data_root", message)
         except Exception:

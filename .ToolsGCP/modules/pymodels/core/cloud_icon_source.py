@@ -23,11 +23,31 @@ r"""云端图标包：GitHub Release 里的 icon.zip → 解到 <数据根>/conf
   而且数据根迁移时 `<数据根>` 会整体搬走，云端图标跟着搬才正确。
 
 ========== 取用顺序 ==========
-`icon_file(name)` 给 webhost 用：
-    ① 云端目录有 → 用云端；
-    ② 否则退回程序自带的 `.ToolsGCP\images\icon`（首次同步完成前的兜底，
-       也是本地模式用户一直在用的那份）。
-本地模式（resource_source=local）→ 直接 ②，绝不联网。
+`icon_file(name)` 给 webhost 用，**三层**从高到低：
+    ① 程序自带 `.ToolsGCP/images/icon`（= `bundled_icons_dir()`）—— **制作器导入的新图
+       就落在这里**（第 28 轮改口，见下面的说明）。
+    ②③ 程序自带与云端目录 `<数据根>/config/cloud/icons` 的**先后由设置里的
+       「资源来源」现算**（`official_layers()`，m05379 第③项：切云端/本地图标不跟着换）：
+         · 来源=云端 → ③ 在前、② 兜底（列表读的是镜像那份索引，图标就该跟镜像一致）；
+         · 来源=本地 → ② 在前、③ 兜底（列表读的是发布包那份索引，图标跟着实体文件走）；
+         · 取不到来源（老调用方/异常）→ 按发布默认 cloud。
+       两个事实解释为什么这样排而不是"某一层永远优先"：
+       (a) 同名同时存在于 ②③ 时，③ 那份不可能比 ② 更新 —— 两者都是发布包 icon.zip
+           的拷贝、同源，差异只可能是用户自己动过 ②（或被上一版 save_icon 写过），
+           所以来源=本地时 ② 必须赢，否则界面图标与它正在读的那份索引不同源；
+       (b) 但来源=云端时反过来：镜像里可能有比发布包**更新**的一批图标
+           （icon.zip 随资源库一起发布），② 排前面就会用旧的一批。
+       ⚠️ 副作用（用户要的就是这个语义）：**手工**拷进 `.ToolsGCP/images/icon`
+           的同名图只在来源=本地时生效；想两种模式都生效，请在制作器里重新导入一次。
+    ④ 旧用户层 `<数据根>/config/icons`（`user_icons_dir()`）**排最后兜底**。
+       ⚠️⚠️ 第 28 轮（m06454 第②项）改口：图标**写入与读取都以程序目录为准**。
+       旧版本（第 24/26 轮）把用户导入的图写进 `<数据根>/config/icons`，结果：
+         ① 用户按老路径 `.ToolsGCP/images/icon` 找不到自己导入的图；
+         ② 那个目录还是程序自己悄悄建出来的（用户从没做过它）。
+       现在 `save_icon()` 落在程序目录（旧层只当"程序目录写不进去"时的兜底），
+       旧层残留的那几张由 `migrate_user_icons()` 搬进程序目录（只搬目标不存在的，
+       绝不覆盖官方同名图）。
+本模块**全程不联网**：取用哪一层只查本地目录；联网只发生在 sync()/后台拉取。
 
 ========== 不阻塞首屏 ==========
 和 JSON 一样：下载/解压全部在**后台线程**里跑（`ensure_background_sync`），
@@ -55,6 +75,7 @@ from .cloud_resource_source import (
     ERR_NO_RELEASE,
     CloudResourceSource,
     MAX_RETRY,
+    source_mode,
     TIMEOUT_SECONDS,
     build_candidate_urls,
     cloud_dir,
@@ -131,20 +152,141 @@ def bundled_icons_dir() -> str:
     return os.path.join(CONFIG_DIR, "images", "icon")
 
 
+def user_icons_dir() -> str:
+    """**旧版**用户导入层：`<数据根>/config/icons`（只读探测，**不再创建**）
+
+    ⚠️⚠️ 第 28 轮（m06556 第②项）改口：图标的**写入与读取都以程序目录为准**
+        （`.ToolsGCP/images/icon`，即 `bundled_icons_dir()`）。这个函数现在只剩两个用途：
+          ① 迁移旧文件：老版本把导入的图写在这里，得搬进程序目录
+             （`migrate_user_icons()`），否则老资源库里那几条的图标当场消失；
+          ② 程序目录**写不进去**时的兜底落点（装进 Program Files / 只读 exe 时，
+             `save_icon()` 退到这里并记一条 warn）。
+    ⚠️ 这里**故意不再 makedirs**：用户明确说过"我根本就没做过配置文件那里有这个
+        icons 文件夹"——那个空目录就是以前这里造的。真要写请显式调
+        `ensure_user_icons_dir()`。
+    """
+    from .. import constants
+    return os.path.join(constants.DATA_DIR, "icons")
+
+
+def ensure_user_icons_dir() -> str:
+    """只在**真的要往旧用户层写**的时候才创建它（save_icon 的只读兜底）"""
+    path = user_icons_dir()
+    try:
+        os.makedirs(path, exist_ok=True)
+    except Exception:
+        pass
+    return path
+
+
+def migrate_user_icons(dest_dir: str = "") -> list:
+    """把旧用户层里的图标搬进程序目录：只搬"目标不存在"的，绝不覆盖官方同名图。
+
+    为什么必须搬而不是"干脆不读用户层"：老版本把用户导入的图写进了
+    `<数据根>/config/icons`，资源库 `icon` 字段记的就是文件名；读不到就变成
+    首字母兜底 —— 用户会认为"我的图又丢了"。异常一律吞掉：迁移失败不能拦住启动。
+    返回搬过去的文件名列表（给日志用）。
+    """
+    target = dest_dir or bundled_icons_dir()
+    moved = []
+    try:
+        source = user_icons_dir()
+        if not os.path.isdir(source):
+            return moved
+        if not os.path.isdir(target):
+            try:
+                os.makedirs(target, exist_ok=True)
+            except Exception:
+                return moved
+        for name in sorted(os.listdir(source)):
+            if os.path.splitext(name)[1].lower() not in _ALLOWED_EXT:
+                continue
+            src_file = os.path.join(source, name)
+            dst_file = os.path.join(target, name)
+            try:
+                if not os.path.isfile(src_file) or os.path.exists(dst_file):
+                    continue
+                shutil.copy2(src_file, dst_file)
+                moved.append(name)
+            except Exception:
+                continue
+    except Exception:
+        pass
+    return moved
+
+
+def user_icon_file(name: str) -> str:
+    """只在**用户导入层**（user_icons_dir）里找 name；存在返回路径，否则空串。
+    给"删除/校验用户自己那份"的调用用：icon_file() 是三层合并视图，
+    判断不了"用户层到底有没有这一张"，精确操作用户文件必须走这里。
+    ⚠️ 只取 basename（防目录穿越），口径和 icon_file 一致。
+    """
+    base = os.path.basename(str(name or "").replace("\\", "/"))
+    if not base:
+        return ""
+    candidate = os.path.join(user_icons_dir(), base)
+    try:
+        if os.path.isfile(candidate):
+            return candidate
+    except Exception:
+        pass
+    return ""
+
+
 def icon_meta_file() -> str:
     return os.path.join(cloud_dir(), ICON_META_NAME)
 
 
+def official_layers():
+    """「程序自带（= 程序目录 `.ToolsGCP/images/icon`）」与「云端镜像」的先后，
+    按当前资源来源决定。
+
+    单独抽出来是为了可测（icon_shadow_test.py 直接断言这两种顺序），
+    也为了让 webhost / maker 的说明有同一处出处。
+    任何异常都回退到「程序自带在前」——本地实体永远比一次远程同步可靠。
+    """
+    try:
+        if source_mode() == "cloud":
+            return (icons_dir(), bundled_icons_dir())
+    except Exception:
+        pass
+    return (bundled_icons_dir(), icons_dir())
+
+
 def icon_file(name: str) -> str:
-    """按文件名找图标：**云端优先**，没有再退回程序自带的那份
+    r"""按文件名找图标：**程序自带 / 云端镜像（顺序按资源来源）→ 旧用户层兜底**
     找不到返回空串。调用方（webhost 路由）拿到空串就 404。
+
+    ⚠️⚠️ 第 28 轮（m06454 第②项）改口：图标的**写入与读取都以程序目录为准**
+       （`.ToolsGCP/images/icon`，也就是 `bundled_icons_dir()`）。
+       旧版本（第 24/26 轮）把用户导入的图写进 `<数据根>/config/icons`，结果：
+       ① 用户按老路径 `.ToolsGCP\images\icon` 找不到自己导入的图；
+       ② 那个目录还是程序自己悄悄建出来的（用户从没做过它）。
+       现在：制作器导入的图就落在程序目录，跟资源库 `ToolsGCP-Resources.json`
+       同级；旧版本留在用户层的那几张由 `migrate_user_icons()` 搬进程序目录
+       （只搬目标不存在的，绝不覆盖官方同名图）。
+       `<数据根>/config/icons` 退为**最后兜底**：只在程序目录写不进去时
+       （装进 Program Files / 只读 exe）才用作落点。
+
+    ⚠️ 「程序自带 vs 云端镜像」的**先后由设置里的「资源来源」决定**
+       （m05379 第③项：切云端 / 本地文件时图标要跟着换）：
+         · 来源=云端 → 镜像在前、程序自带兜底；
+         · 来源=本地 → 程序自带在前、镜像兜底；
+         · 取不到来源（老调用方 / 异常）→ 按发布默认 cloud。
+       顺序由 `official_layers()` 现算，不写死，所以「切了设置立刻生效」，
+       也不需要重启（前端切来源会重载资源列表 → resolve_resource_file 刷新
+       那份进程内记忆 → 本函数下一次解析就换序）。
+       ⚠️ 副作用要讲清楚：手工放进 `.ToolsGCP/images/icon` 的图**不再是**
+         「哪边新取哪边」，它只在来源=本地时赢。这是用户自己要的语义
+         （本地=看本地文件，云端=看云端镜像），想要自己的图两种模式都生效，
+         正确做法是在制作器里重新导入一次图标。
     ⚠️ `name` 只取 basename —— 路由层已经把路径安全处理过了，
        这里再掐一次是双保险（防目录穿越）。
     """
     base = os.path.basename(str(name or "").replace("\\", "/"))
     if not base:
         return ""
-    for directory in (icons_dir(), bundled_icons_dir()):
+    for directory in official_layers() + (user_icons_dir(),):
         try:
             candidate = os.path.join(directory, base)
             if os.path.isfile(candidate):
@@ -616,6 +758,7 @@ def ensure_background_sync(min_interval: float = BACKGROUND_MIN_INTERVAL,
 __all__ = [
     "ICON_ASSET_NAME",
     "CloudIconSource",
-    "icons_dir", "bundled_icons_dir", "icon_file", "icon_meta_file",
+    "icons_dir", "bundled_icons_dir", "user_icons_dir",
+    "icon_file", "user_icon_file", "official_layers", "icon_meta_file",
     "ensure_background_sync", "set_notifier", "background_state",
 ]

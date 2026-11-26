@@ -1,9 +1,17 @@
 {
   "id": "plugin-showcase",
-  "name": "插件示例",
+  "name": {
+    "简体中文": "插件示例",
+    "繁體中文": "外掛範例",
+    "English": "Plugin Showcase"
+  },
   "version": "1.0.0",
   "author": "Galen563",
-  "description": "照着这个例子写你自己的插件：多文件结构、多语言、读写自己的配置、用资源库数据。",
+  "description": {
+    "简体中文": "演示插件如何读写自己的插件数据文件结构：开启后，写自己的设置、读资源库内容。",
+    "繁體中文": "示範外掛如何讀寫自己的外掛資料檔結構：開啟後，寫自己的設定、讀資源庫內容。",
+    "English": "A demo of how a plugin reads and writes its own data files: settings and resource-library content."
+  },
   "entry": "app.py",
   "icon": "assets/icon.png"
 }

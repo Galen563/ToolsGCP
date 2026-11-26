@@ -1,0 +1,7 @@
+top type=dict
+keys=['schema_version', 'metadata', 'resources']
+  schema_version -> str '2.1.0'
+  metadata -> dict 5
+  resources -> list 57
+  list key 'resources' first item keys=['id', 'code', 'name', 'category', 'tags', 'icon', 'url', 'github', 'description', 'intro', 'supplement', 'listed_at', 'systems']
+  codes sample=['TG-000001', 'TG-000002', 'TG-000003', 'TG-000004', 'TG-000005']

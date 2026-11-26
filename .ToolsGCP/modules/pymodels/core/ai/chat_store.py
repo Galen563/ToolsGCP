@@ -53,6 +53,10 @@ class ChatSession:
         self.messages = [m for m in (data.get("messages") or [])
                          if isinstance(m, dict) and m.get("role") in
                          (ROLE_USER, ROLE_ASSISTANT, ROLE_SYSTEM)]
+        # ★ 本轮（缓存命中/会话统计）：会话累计用量随文件走。老文件没有这个键 → 空 dict，
+        #   前端按"还没有数据"处理；写盘时才带上（见 to_dict），不制造无意义的空字段。
+        usage_total = data.get("usage_total")
+        self.usage_total = dict(usage_total) if isinstance(usage_total, dict) else {}
         # 还没产生任何一条消息的新会话，磁盘上没有对应文件
         self.dirty = not bool(self.id)
 
@@ -61,7 +65,7 @@ class ChatSession:
         return not self.messages
 
     def to_dict(self) -> dict:
-        return {
+        out = {
             "schema_version": SCHEMA_VERSION,
             "id": self.id,
             "title": self.title,
@@ -73,6 +77,12 @@ class ChatSession:
             #    白名单拷贝在加字段时容易漏掉，导致"此前/下一版"丢失。
             "messages": self.messages,
         }
+        # ★ 本轮（缓存命中/会话统计）：累计用量只在**非空**时写 ——
+        #   保持老文件形状不变（没聊过 AI 的会话不长出空键），读档侧见 __init__。
+        usage_total = getattr(self, "usage_total", None)
+        if isinstance(usage_total, dict) and usage_total:
+            out["usage_total"] = dict(usage_total)
+        return out
 
 
 class ChatStore:

@@ -4,18 +4,14 @@
     "name": "ToolsGCP Resources",
     "description": "ToolsGCP 资源索引文件",
     "icon_dir": ".ToolsGCP/Icon",
-    "updated_at": "2026-10-14T22:30:44+08:00",
-    "total_count": 53
+    "updated_at": "2026-11-24 23:24:36",
+    "total_count": 57
   },
   "resources": [
     {
       "id": "localsend",
       "code": "TG-000001",
-      "name": {
-        "简体中文": "LocalSend",
-        "繁體中文": "LocalSend",
-        "English": "LocalSend"
-      },
+      "name": "LocalSend",
       "category": [
         "工具"
       ],
@@ -42,28 +38,24 @@
       },
       "listed_at": "2026-09-21 00:40:14",
       "systems": [
-        "全平台"
-      ],
-      "architectures": [
-        "x64",
-        "arm64",
-        "arm",
-        "Apple Silicon"
+        "Windows",
+        "macOS",
+        "Linux",
+        "Android",
+        "iOS",
+        "iPadOS"
       ]
     },
     {
       "id": "pcl-ce",
       "code": "TG-000002",
-      "name": {
-        "简体中文": "PCL CE",
-        "繁體中文": "PCL CE",
-        "English": "PCL CE"
-      },
+      "name": "PCL CE",
       "category": [
         "游戏"
       ],
       "tags": [
-        "MC启动器"
+        "MC启动器",
+        "知名"
       ],
       "icon": "TG-000002.png",
       "url": "https://ce.pclc.cc",
@@ -86,25 +78,17 @@
       "listed_at": "2026-09-21 00:40:14",
       "systems": [
         "Windows"
-      ],
-      "architectures": [
-        "x64",
-        "arm64"
       ]
     },
     {
       "id": "steam",
       "code": "TG-000003",
-      "name": {
-        "简体中文": "Steam",
-        "繁體中文": "Steam",
-        "English": "Steam"
-      },
+      "name": "Steam",
       "category": [
         "游戏"
       ],
       "tags": [
-        "启动器",
+        "游戏平台",
         "官方"
       ],
       "icon": "TG-000003.png",
@@ -128,21 +112,16 @@
       "systems": [
         "Windows",
         "macOS",
-        "Linux"
-      ],
-      "architectures": [
-        "x64",
-        "arm64"
+        "Linux",
+        "Android",
+        "iOS",
+        "iPadOS"
       ]
     },
     {
       "id": "watt-toolkit",
       "code": "TG-000004",
-      "name": {
-        "简体中文": "Watt Toolkit",
-        "繁體中文": "Watt Toolkit",
-        "English": "Watt Toolkit"
-      },
+      "name": "Watt Toolkit",
       "category": [
         "工具"
       ],
@@ -172,12 +151,9 @@
       "systems": [
         "Windows",
         "macOS",
-        "Linux"
-      ],
-      "architectures": [
-        "x64",
-        "arm64",
-        "Apple Silicon"
+        "Linux",
+        "Android",
+        "iOS"
       ]
     },
     {
@@ -188,15 +164,28 @@
         "游戏"
       ],
       "tags": [
-        "MC启动器"
+        "MC启动器",
+        "知名"
       ],
       "icon": "TG-000005.png",
       "url": "https://meloong.com/PCL",
       "github": "https://github.com/Meloong-Git/PCL",
       "author_url": "https://ifdian.net/p/0164034c016c11ebafcb52540025c377",
-      "description": "Minecraft启动器，提供游戏版本管理、模组下载、整合包安装等功能。",
-      "intro": "PCL2（Plain Craft Launcher 2）是一款人气很高的 Minecraft 启动器，以启动速度快、界面清爽和上手门槛低受到玩家欢迎。它支持原版及各主流模组加载器的版本安装与切换，内置模组、整合包、资源包和光影的搜索下载，能够自动检测并补全游戏所需的 Java 运行环境，游戏崩溃后还会提供日志分析和排查建议。启动器免安装、占用空间小，配置与存档都在本地，适合希望少折腾配置、专注于游戏的 Minecraft 玩家。",
-      "supplement": "经典 Minecraft 启动器，官方仅提供 Windows 桌面版，下载后可绿色免安装直接运行；内置下载、模组与整合包管理，并会自动检测补全运行环境，暂无手机端与网页版。",
+      "description": {
+        "简体中文": "Minecraft启动器，提供游戏版本管理、模组下载、整合包安装等功能。",
+        "繁體中文": "Minecraft 啟動器，提供遊戲版本管理、模組下載、整合包安裝等功能。",
+        "English": "A Minecraft launcher that provides game version management, mod downloads, modpack installation, and other features."
+      },
+      "intro": {
+        "简体中文": "PCL2（Plain Craft Launcher 2）是一款人气很高的 Minecraft 启动器，以启动速度快、界面清爽和上手门槛低受到玩家欢迎。它支持原版及各主流模组加载器的版本安装与切换，内置模组、整合包、资源包和光影的搜索下载，能够自动检测并补全游戏所需的 Java 运行环境，游戏崩溃后还会提供日志分析和排查建议。启动器免安装、占用空间小，配置与存档都在本地，适合希望少折腾配置、专注于游戏的 Minecraft 玩家。",
+        "繁體中文": "PCL2（Plain Craft Launcher 2）是一款人氣很高的 Minecraft 啟動器，以啟動速度快、介面清爽和上手門檻低受到玩家歡迎。它支援原版及各主流模組載入器的版本安裝與切換，內建模組、整合包、資源包和光影的搜尋下載，能夠自動偵測並補全遊戲所需的 Java 執行環境，遊戲崩潰後還會提供日誌分析和排查建議。啟動器免安裝、佔用空間小，設定與存檔都在本機，適合希望少折騰設定、專注於遊戲的 Minecraft 玩家。",
+        "English": "PCL2 (Plain Craft Launcher 2) is a highly popular Minecraft launcher, welcomed by players for its fast startup, clean interface, and low barrier to entry. It supports installation and switching of vanilla versions and versions for mainstream mod loaders, has built-in search and download for mods, modpacks, resource packs, and shaders, can automatically detect and complete the Java runtime environment required by the game, and after a game crash also provides log analysis and troubleshooting suggestions. The launcher is portable, takes up little space, and stores configurations and saves locally, making it suitable for Minecraft players who want to avoid tedious configuration and focus on the game."
+      },
+      "supplement": {
+        "简体中文": "经典 Minecraft 启动器，官方仅提供 Windows 桌面版，下载后可绿色免安装直接运行；内置下载、模组与整合包管理，并会自动检测补全运行环境，暂无手机端与网页版。",
+        "繁體中文": "經典 Minecraft 啟動器，官方僅提供 Windows 桌面版，下載後可綠色免安裝直接執行；內建下載、模組與整合包管理，並會自動偵測補全執行環境，暫無手機端與網頁版。",
+        "English": "A classic Minecraft launcher; the official version only provides a Windows desktop version. After download, it can run directly as a green portable application; it has built-in downloads and mod/modpack management, and automatically detects and completes the runtime environment. There is currently no mobile or web version."
+      },
       "listed_at": "2026-09-21 00:40:14",
       "systems": [
         "Windows"
@@ -215,8 +204,7 @@
       ],
       "tags": [
         "创作",
-        "赞助",
-        "官方"
+        "赞助"
       ],
       "icon": "TG-000006.png",
       "url": "https://ifdian.net/",
@@ -239,23 +227,19 @@
       "systems": [
         "iOS",
         "Android",
-        "web"
+        "web",
+        "iPadOS"
       ]
     },
     {
       "id": "epic-games",
       "code": "TG-000007",
-      "name": {
-        "简体中文": "Epic Games",
-        "繁體中文": "Epic Games",
-        "English": "Epic Games"
-      },
+      "name": "Epic Games",
       "category": [
         "游戏"
       ],
       "tags": [
-        "启动器",
-        "官方"
+        "游戏平台"
       ],
       "icon": "TG-000007.png",
       "url": "https://www.epicgames.com",
@@ -278,25 +262,17 @@
       "systems": [
         "Windows",
         "macOS"
-      ],
-      "architectures": [
-        "x64"
       ]
     },
     {
       "id": "wegame",
       "code": "TG-000008",
-      "name": {
-        "简体中文": "WeGame",
-        "繁體中文": "WeGame",
-        "English": "WeGame"
-      },
+      "name": "WeGame",
       "category": [
         "游戏"
       ],
       "tags": [
-        "启动器",
-        "官方"
+        "游戏平台"
       ],
       "icon": "TG-000008.png",
       "url": "https://www.wegame.com",
@@ -319,27 +295,17 @@
       "systems": [
         "Windows",
         "macOS"
-      ],
-      "architectures": [
-        "x64",
-        "arm64",
-        "Apple Silicon"
       ]
     },
     {
       "id": "python",
       "code": "TG-000009",
-      "name": {
-        "简体中文": "Python",
-        "繁體中文": "Python",
-        "English": "Python"
-      },
+      "name": "Python",
       "category": [
         "编程"
       ],
       "tags": [
-        "编程语言",
-        "官方"
+        "编程语言"
       ],
       "icon": "TG-000009.png",
       "url": "https://www.python.org/",
@@ -364,12 +330,6 @@
         "Windows",
         "macOS",
         "Linux"
-      ],
-      "architectures": [
-        "x64",
-        "x86",
-        "arm64",
-        "Apple Silicon"
       ]
     },
     {
@@ -388,6 +348,7 @@
       ],
       "icon": "TG-000010.png",
       "url": "https://www.bilibili.com/",
+      "download_page_url": "https://app.bilibili.com/",
       "description": {
         "简体中文": "视频弹幕社区，提供动画、游戏、科技、生活等领域的视频内容与互动。",
         "繁體中文": "影片彈幕社群，提供動畫、遊戲、科技、生活等領域的影片內容與互動。",
@@ -405,7 +366,12 @@
       },
       "listed_at": "2026-09-21 00:40:14",
       "systems": [
-        "全平台"
+        "Windows",
+        "macOS",
+        "Android",
+        "iPadOS",
+        "iOS",
+        "web"
       ]
     },
     {
@@ -424,6 +390,7 @@
       ],
       "icon": "TG-000011.png",
       "url": "https://www.douyin.com/",
+      "download_page_url": "https://www.douyin.com/downloadpage/",
       "description": {
         "简体中文": "短视频创作与分享平台，提供视频编辑、直播、社交等功能。",
         "繁體中文": "短影音創作與分享平台，提供影片剪輯、直播、社群等功能。",
@@ -441,17 +408,18 @@
       },
       "listed_at": "2026-09-21 00:40:14",
       "systems": [
-        "全平台"
+        "Windows",
+        "macOS",
+        "iPadOS",
+        "Android",
+        "iOS",
+        "web"
       ]
     },
     {
       "id": "blender",
       "code": "TG-000012",
-      "name": {
-        "简体中文": "Blender",
-        "繁體中文": "Blender",
-        "English": "Blender"
-      },
+      "name": "Blender",
       "category": [
         "建筑/设计"
       ],
@@ -481,26 +449,17 @@
         "Windows",
         "macOS",
         "Linux"
-      ],
-      "architectures": [
-        "x64",
-        "arm64",
-        "Apple Silicon"
       ]
     },
     {
       "id": "unity",
       "code": "TG-000013",
-      "name": {
-        "简体中文": "Unity",
-        "繁體中文": "Unity",
-        "English": "Unity"
-      },
+      "name": "Unity",
       "category": [
         "游戏引擎"
       ],
       "tags": [
-        "官方"
+        "知名"
       ],
       "icon": "TG-000013.png",
       "url": "https://unity.com/",
@@ -524,26 +483,17 @@
         "Windows",
         "macOS",
         "Linux"
-      ],
-      "architectures": [
-        "x64",
-        "arm64",
-        "Apple Silicon"
       ]
     },
     {
       "id": "godot",
       "code": "TG-000014",
-      "name": {
-        "简体中文": "Godot",
-        "繁體中文": "Godot",
-        "English": "Godot"
-      },
+      "name": "Godot",
       "category": [
         "游戏引擎"
       ],
       "tags": [
-        "官方"
+        "轻量"
       ],
       "icon": "TG-000014.png",
       "url": "https://godotengine.org/",
@@ -571,23 +521,12 @@
         "Android",
         "iOS",
         "web"
-      ],
-      "architectures": [
-        "x64",
-        "x86",
-        "arm64",
-        "arm",
-        "Apple Silicon"
       ]
     },
     {
       "id": "trae",
       "code": "TG-000015",
-      "name": {
-        "简体中文": "Trae",
-        "繁體中文": "Trae",
-        "English": "Trae"
-      },
+      "name": "Trae",
       "category": [
         "编程"
       ],
@@ -597,9 +536,9 @@
       "icon": "TG-000015.png",
       "url": "https://www.trae.cn/",
       "description": {
-        "简体中文": "字节跳动推出的 AI 原生 IDE，可在国际版与国内版之间切换。",
-        "繁體中文": "字節跳動推出的 AI 原生 IDE，可在國際版與中國版之間切換。",
-        "English": "An AI-native IDE from ByteDance that can switch between the international and China editions."
+        "简体中文": "字节跳动推出的 AI 原生 IDE。",
+        "繁體中文": "字節跳動推出的 AI 原生 IDE。",
+        "English": "An AI-native IDE launched by ByteDance."
       },
       "intro": {
         "简体中文": "Trae 是字节跳动推出的 AI 编程与办公工具，包含面向开发的 IDE 和面向文档、数据分析的办公平台。它支持用自然语言描述需求，由 AI 直接生成或修改代码，也能自动拆解并执行任务，同时保留传统编辑器界面与工作模式切换。产品覆盖桌面端、网页端与手机端，账号数据可多端同步。适合希望把重复性编码和日常文档工作交给 AI、同时保留人工验收环节的开发者与办公用户。",
@@ -613,39 +552,33 @@
       },
       "listed_at": "2026-09-21 00:40:14",
       "systems": [
-        "全平台"
+        "Windows",
+        "macOS",
+        "Android",
+        "iOS",
+        "Linux"
       ],
-      "architectures": [
-        "x64",
-        "Apple Silicon"
-      ],
-      "variants": [
+      "links": [
         {
-          "key": "cn",
-          "label": "国内版",
-          "url": "https://www.trae.cn/"
-        },
-        {
-          "key": "global",
-          "label": "国际版",
+          "label": {
+            "简体中文": "国际版官网",
+            "繁體中文": "國際版官網",
+            "English": "International edition official website"
+          },
           "url": "https://www.trae.ai/"
         }
-      ],
-      "default_variant": "cn"
+      ]
     },
     {
       "id": "hmcl",
       "code": "TG-000016",
-      "name": {
-        "简体中文": "HMCL",
-        "繁體中文": "HMCL",
-        "English": "HMCL"
-      },
+      "name": "HMCL",
       "category": [
         "游戏"
       ],
       "tags": [
-        "MC启动器"
+        "MC启动器",
+        "知名"
       ],
       "icon": "TG-000016.png",
       "url": "https://hmcl.huangyuhui.net/",
@@ -670,22 +603,12 @@
         "Windows",
         "macOS",
         "Linux"
-      ],
-      "architectures": [
-        "x64",
-        "x86",
-        "arm64",
-        "arm"
       ]
     },
     {
       "id": "sjmcl",
       "code": "TG-000017",
-      "name": {
-        "简体中文": "SJMCL",
-        "繁體中文": "SJMCL",
-        "English": "SJMCL"
-      },
+      "name": "SJMCL",
       "category": [
         "游戏"
       ],
@@ -715,22 +638,12 @@
         "Windows",
         "macOS",
         "Linux"
-      ],
-      "architectures": [
-        "x64",
-        "x86",
-        "arm64",
-        "Apple Silicon"
       ]
     },
     {
       "id": "verse",
       "code": "TG-000018",
-      "name": {
-        "简体中文": "Verse",
-        "繁體中文": "Verse",
-        "English": "Verse"
-      },
+      "name": "Verse",
       "category": [
         "游戏"
       ],
@@ -759,21 +672,14 @@
       "systems": [
         "Windows",
         "macOS",
-        "Linux"
-      ],
-      "architectures": [
-        "x64",
-        "Apple Silicon"
+        "Linux",
+        "Android"
       ]
     },
     {
       "id": "bakaxl",
       "code": "TG-000019",
-      "name": {
-        "简体中文": "BakaXL",
-        "繁體中文": "BakaXL",
-        "English": "BakaXL"
-      },
+      "name": "BakaXL",
       "category": [
         "游戏"
       ],
@@ -800,22 +706,21 @@
       },
       "listed_at": "2026-09-21 00:40:14",
       "systems": [
-        "Windows"
+        "Windows",
+        "macOS",
+        "Linux"
       ]
     },
     {
       "id": "pyisland",
       "code": "TG-000020",
-      "name": {
-        "简体中文": "Pyisland",
-        "繁體中文": "Pyisland",
-        "English": "Pyisland"
-      },
+      "name": "Pyisland",
       "category": [
-        "编程"
+        "工具"
       ],
       "tags": [
-        "学习"
+        "系统",
+        "工具"
       ],
       "icon": "TG-000020.png",
       "url": "https://pyisland.com/",
@@ -843,11 +748,7 @@
     {
       "id": "geek-uninstaller",
       "code": "TG-000021",
-      "name": {
-        "简体中文": "Geek Uninstaller",
-        "繁體中文": "Geek Uninstaller",
-        "English": "Geek Uninstaller"
-      },
+      "name": "Geek Uninstaller",
       "category": [
         "工具"
       ],
@@ -874,25 +775,19 @@
       "listed_at": "2026-09-21 00:40:14",
       "systems": [
         "Windows"
-      ],
-      "architectures": [
-        "x86",
-        "x64"
       ]
     },
     {
       "id": "tiez",
       "code": "TG-000022",
-      "name": {
-        "简体中文": "TieZ",
-        "繁體中文": "TieZ",
-        "English": "TieZ"
-      },
+      "name": "TieZ",
       "category": [
         "工具"
       ],
       "tags": [
-        "实用"
+        "实用",
+        "系统",
+        "粘贴板"
       ],
       "icon": "TG-000022.png",
       "url": "https://tiez.name666.top/",
@@ -915,23 +810,13 @@
       "listed_at": "2026-09-21 00:40:14",
       "systems": [
         "Windows",
-        "macOS",
-        "Android"
-      ],
-      "architectures": [
-        "x64",
-        "x86",
-        "Apple Silicon"
+        "macOS"
       ]
     },
     {
       "id": "memreduct",
       "code": "TG-000023",
-      "name": {
-        "简体中文": "Memreduct",
-        "繁體中文": "Memreduct",
-        "English": "Memreduct"
-      },
+      "name": "Memreduct",
       "category": [
         "工具"
       ],
@@ -959,20 +844,12 @@
       "listed_at": "2026-09-21 00:40:14",
       "systems": [
         "Windows"
-      ],
-      "architectures": [
-        "x64",
-        "arm64"
       ]
     },
     {
       "id": "obs",
       "code": "TG-000024",
-      "name": {
-        "简体中文": "OBS",
-        "繁體中文": "OBS",
-        "English": "OBS"
-      },
+      "name": "OBS Studio",
       "category": [
         "工具"
       ],
@@ -1004,25 +881,16 @@
         "Windows",
         "macOS",
         "Linux"
-      ],
-      "architectures": [
-        "x64",
-        "Apple Silicon"
       ]
     },
     {
       "id": "human-benchmark",
       "code": "TG-000025",
-      "name": {
-        "简体中文": "Human Benchmark",
-        "繁體中文": "Human Benchmark",
-        "English": "Human Benchmark"
-      },
+      "name": "Human Benchmark",
       "category": [
         "工具"
       ],
       "tags": [
-        "趣味",
         "测试"
       ],
       "icon": "TG-000025.png",
@@ -1044,7 +912,8 @@
       },
       "listed_at": "2026-09-21 00:40:14",
       "systems": [
-        "web"
+        "web",
+        "Android"
       ]
     },
     {
@@ -1081,30 +950,35 @@
       },
       "listed_at": "2026-09-21 00:40:14",
       "systems": [
-        "Windows"
-      ],
-      "architectures": [
-        "x64",
-        "x86",
-        "arm64"
+        "Windows",
+        "macOS",
+        "Linux"
       ]
     },
     {
       "id": "mctier",
       "code": "TG-000027",
-      "name": {
-        "简体中文": "MCTier",
-        "繁體中文": "MCTier",
-        "English": "MCTier"
-      },
+      "name": "MCTier",
       "category": [
-        "游戏"
+        "工具"
       ],
       "tags": [
-        "工具"
+        "工具",
+        "网络"
       ],
       "icon": "TG-000027.png",
       "url": "https://mctier.pmhs.top/",
+      "github": "https://github.com/pmh1314520/MCTier",
+      "repos": [
+        {
+          "platform": "github",
+          "url": "https://github.com/pmh1314520/MCTier"
+        },
+        {
+          "platform": "gitee",
+          "url": "https://gitee.com/peng-minghang/mctier"
+        }
+      ],
       "description": {
         "简体中文": "虚拟局域网通用组网工具，把电脑和手机连进同一个大厅，支持语音、文件与屏幕共享。",
         "繁體中文": "虛擬區域網路通用組網工具，把電腦和手機連進同一個大廳，支援語音、檔案與螢幕共享。",
@@ -1124,21 +998,13 @@
       "systems": [
         "Windows",
         "Android",
-        "Linux"
-      ],
-      "architectures": [
-        "x64",
-        "arm64"
+        "macOS"
       ]
     },
     {
       "id": "wallpaper-engine",
       "code": "TG-000028",
-      "name": {
-        "简体中文": "Wallpaper Engine",
-        "繁體中文": "Wallpaper Engine",
-        "English": "Wallpaper Engine"
-      },
+      "name": "Wallpaper Engine",
       "category": [
         "个性化"
       ],
@@ -1166,26 +1032,22 @@
       "systems": [
         "Windows",
         "Android"
-      ],
-      "architectures": [
-        "x64",
-        "x86"
       ]
     },
     {
       "id": "nexbox",
       "code": "TG-000029",
-      "name": {
-        "简体中文": "NexBox",
-        "繁體中文": "NexBox",
-        "English": "NexBox"
-      },
+      "name": "NexBox",
       "category": [
         "工具"
+      ],
+      "tags": [
+        "实用"
       ],
       "icon": "TG-000029.png",
       "url": "https://nexbox.top/",
       "github": "https://github.com/MuLiuSaMa/NexBox",
+      "download_page_url": "https://nexbox.top/download.html",
       "description": {
         "简体中文": "开源的综合工具箱软件，提供多种实用功能集成。",
         "繁體中文": "開源的綜合工具箱軟體，提供多種實用功能整合。",
@@ -1204,9 +1066,6 @@
       "listed_at": "2026-09-21 00:40:14",
       "systems": [
         "Windows"
-      ],
-      "architectures": [
-        "x64"
       ]
     },
     {
@@ -1249,11 +1108,7 @@
     {
       "id": "mineradio",
       "code": "TG-000031",
-      "name": {
-        "简体中文": "Mineradio",
-        "繁體中文": "Mineradio",
-        "English": "Mineradio"
-      },
+      "name": "Mineradio",
       "category": [
         "工具"
       ],
@@ -1289,11 +1144,7 @@
     {
       "id": "claude",
       "code": "TG-000032",
-      "name": {
-        "简体中文": "Claude",
-        "繁體中文": "Claude",
-        "English": "Claude"
-      },
+      "name": "Claude",
       "category": [
         "AI"
       ],
@@ -1323,22 +1174,15 @@
         "macOS",
         "iOS",
         "Android",
-        "web"
-      ],
-      "architectures": [
-        "x64",
-        "arm64",
-        "Apple Silicon"
+        "web",
+        "Linux",
+        "iPadOS"
       ]
     },
     {
       "id": "gemini",
       "code": "TG-000033",
-      "name": {
-        "简体中文": "Gemini",
-        "繁體中文": "Gemini",
-        "English": "Gemini"
-      },
+      "name": "Gemini",
       "category": [
         "AI"
       ],
@@ -1368,17 +1212,15 @@
         "macOS",
         "iOS",
         "Android",
-        "web"
+        "web",
+        "ChromeOS",
+        "iPadOS"
       ]
     },
     {
       "id": "grok",
       "code": "TG-000034",
-      "name": {
-        "简体中文": "Grok",
-        "繁體中文": "Grok",
-        "English": "Grok"
-      },
+      "name": "Grok",
       "category": [
         "AI"
       ],
@@ -1406,17 +1248,14 @@
       "systems": [
         "web",
         "iOS",
-        "Android"
+        "Android",
+        "iPadOS"
       ]
     },
     {
       "id": "chatgpt",
       "code": "TG-000035",
-      "name": {
-        "简体中文": "ChatGPT",
-        "繁體中文": "ChatGPT",
-        "English": "ChatGPT"
-      },
+      "name": "ChatGPT",
       "category": [
         "AI"
       ],
@@ -1446,17 +1285,14 @@
         "macOS",
         "iOS",
         "Android",
-        "web"
+        "web",
+        "iPadOS"
       ]
     },
     {
       "id": "deepseek",
       "code": "TG-000036",
-      "name": {
-        "简体中文": "DeepSeek",
-        "繁體中文": "DeepSeek",
-        "English": "DeepSeek"
-      },
+      "name": "DeepSeek",
       "category": [
         "AI"
       ],
@@ -1485,23 +1321,15 @@
       "systems": [
         "Windows",
         "macOS",
-        "iOS",
+        "web",
         "Android",
-        "web"
-      ],
-      "architectures": [
-        "x64",
-        "Apple Silicon"
+        "iOS"
       ]
     },
     {
       "id": "kimi",
       "code": "TG-000037",
-      "name": {
-        "简体中文": "Kimi",
-        "繁體中文": "Kimi",
-        "English": "Kimi"
-      },
+      "name": "Kimi",
       "category": [
         "AI"
       ],
@@ -1532,21 +1360,14 @@
         "Android",
         "iOS",
         "web",
-        "其他"
-      ],
-      "architectures": [
-        "x64",
-        "Apple Silicon"
+        "iPadOS",
+        "HarmonyOS"
       ]
     },
     {
       "id": "qwen-studio",
       "code": "TG-000038",
-      "name": {
-        "简体中文": "Qwen Studio",
-        "繁體中文": "Qwen Studio",
-        "English": "Qwen Studio"
-      },
+      "name": "Qwen Studio",
       "category": [
         "AI"
       ],
@@ -1573,7 +1394,12 @@
       },
       "listed_at": "2026-09-21 00:40:14",
       "systems": [
-        "web"
+        "web",
+        "Windows",
+        "macOS",
+        "iOS",
+        "iPadOS",
+        "Android"
       ]
     },
     {
@@ -1613,7 +1439,9 @@
         "macOS",
         "Android",
         "iOS",
-        "web"
+        "web",
+        "iPadOS",
+        "HarmonyOS"
       ]
     },
     {
@@ -1653,23 +1481,20 @@
         "macOS",
         "Android",
         "iOS",
-        "web"
-      ],
-      "architectures": [
-        "x64",
-        "Apple Silicon"
+        "web",
+        "iPadOS"
       ]
     },
     {
       "id": "witch-clipboard",
       "code": "TG-000041",
-      "name": {
-        "简体中文": "Witch Clipboard",
-        "繁體中文": "Witch Clipboard",
-        "English": "Witch Clipboard"
-      },
+      "name": "Witch Clipboard",
       "category": [
         "工具"
+      ],
+      "tags": [
+        "系统",
+        "粘贴板"
       ],
       "icon": "TG-000041.png",
       "github": "https://github.com/witchscottishfoldcat/WitchClipboard",
@@ -1691,20 +1516,12 @@
       "listed_at": "2026-09-21 00:40:14",
       "systems": [
         "Windows"
-      ],
-      "architectures": [
-        "x64",
-        "arm64"
       ]
     },
     {
       "id": "lightc",
       "code": "TG-000042",
-      "name": {
-        "简体中文": "LightC",
-        "繁體中文": "LightC",
-        "English": "LightC"
-      },
+      "name": "LightC",
       "category": [
         "工具"
       ],
@@ -1733,9 +1550,6 @@
       "listed_at": "2026-09-21 00:40:14",
       "systems": [
         "Windows"
-      ],
-      "architectures": [
-        "x64"
       ]
     },
     {
@@ -1747,6 +1561,9 @@
         "English": "AI Cubby"
       },
       "category": [
+        "工具"
+      ],
+      "tags": [
         "工具"
       ],
       "icon": "TG-000043.png",
@@ -1770,21 +1587,18 @@
       "listed_at": "2026-09-21 00:40:14",
       "systems": [
         "Windows"
-      ],
-      "architectures": [
-        "x64"
       ]
     },
     {
       "id": "class-widgets-2",
       "code": "TG-000044",
-      "name": {
-        "简体中文": "Class-Widgets-2",
-        "繁體中文": "Class-Widgets-2",
-        "English": "Class-Widgets-2"
-      },
+      "name": "Class-Widgets-2",
       "category": [
         "工具"
+      ],
+      "tags": [
+        "学习",
+        "教学辅助"
       ],
       "icon": "TG-000044.png",
       "github": "https://github.com/RinLit-233-shiroko/Class-Widgets-2",
@@ -1808,20 +1622,12 @@
       "systems": [
         "Windows",
         "macOS"
-      ],
-      "architectures": [
-        "x64",
-        "Apple Silicon"
       ]
     },
     {
       "id": "recordly",
       "code": "TG-000045",
-      "name": {
-        "简体中文": "Recordly",
-        "繁體中文": "Recordly",
-        "English": "Recordly"
-      },
+      "name": "Recordly",
       "category": [
         "剪辑"
       ],
@@ -1851,10 +1657,6 @@
         "Windows",
         "macOS",
         "Linux"
-      ],
-      "architectures": [
-        "x64",
-        "Apple Silicon"
       ]
     },
     {
@@ -1891,19 +1693,19 @@
       },
       "listed_at": "2026-09-21 22:47:23",
       "systems": [
-        "Windows"
+        "Windows",
+        "Linux"
       ]
     },
     {
       "id": "steelylink-tools",
       "code": "TG-000047",
-      "name": {
-        "简体中文": "SteelyLink-Tools",
-        "繁體中文": "SteelyLink-Tools",
-        "English": "SteelyLink-Tools"
-      },
+      "name": "SteelyLink-Tools",
       "category": [
         "工具"
+      ],
+      "tags": [
+        "工具集"
       ],
       "icon": "TG-000047.png",
       "url": "https://tools.steelylink.com/",
@@ -1931,13 +1733,13 @@
     {
       "id": "fileconverter",
       "code": "TG-000048",
-      "name": {
-        "简体中文": "FileConverter",
-        "繁體中文": "FileConverter",
-        "English": "FileConverter"
-      },
+      "name": "FileConverter",
       "category": [
         "工具"
+      ],
+      "tags": [
+        "系统",
+        "文件转换"
       ],
       "icon": "TG-000048.png",
       "url": "https://file-converter.io/",
@@ -1960,71 +1762,110 @@
       "listed_at": "2026-09-21 23:11:06",
       "systems": [
         "Windows"
-      ],
-      "architectures": [
-        "x64",
-        "x86"
       ]
     },
     {
       "id": "tabbit",
       "code": "TG-000049",
-      "name": {
-        "简体中文": "Tabbit",
-        "繁體中文": "Tabbit",
-        "English": "Tabbit"
-      },
+      "name": "Tabbit",
       "category": [
         "工具"
       ],
+      "tags": [
+        "AI原生浏览器"
+      ],
       "icon": "TG-000049.png",
       "url": "https://www.tabbit.com/",
+      "download_page_url": "https://www.tabbit.com/",
       "description": {
-        "简体中文": "内置了AI的浏览器",
-        "繁體中文": "內建 AI 的瀏覽器",
-        "English": "A browser with built-in AI"
+        "简体中文": "Tabbit是美团光年之外推出的AI原生浏览器，用智能代理自动完成跨网页、跨软件任务。",
+        "繁體中文": "Tabbit是美團光年之外推出的AI原生瀏覽器，用智能代理自動完成跨網頁、跨軟體任務。",
+        "English": "Tabbit is an AI-native browser from Meituan's Guangnian Zhiwai that uses intelligent agents to automate cross-webpage and cross-app tasks."
+      },
+      "intro": {
+        "简体中文": "Tabbit把AI深度嵌入浏览器，用户用自然语言下指令，智能代理可自动搜索、提取信息、填写表单并交付结果，使浏览器从被动展示变为主动执行。它聚合LongCat、DeepSeek、Kimi、GLM等多款大模型，可按场景切换；“妙招”可把高频流程保存为复用指令，一键调用；垂直标签栏与智能整理可按主题归类标签页，缓解标签页灾难。基础对话、网页阅读、常用妙招等核心功能永久免费，Windows与macOS版均已上架；复杂网页与跨平台操作稳定性仍有提升空间。",
+        "繁體中文": "Tabbit把AI深度嵌入瀏覽器，使用者用自然語言下指令，智能代理可自動搜尋、提取資訊、填寫表單並交付結果，使瀏覽器從被動展示變為主動執行。它聚合LongCat、DeepSeek、Kimi、GLM等多款大模型，可按場景切換；「妙招」可把高頻流程保存為可複用指令，一鍵呼叫；垂直標籤欄與智能整理可按主題歸類標籤頁，緩解標籤頁災難。基礎對話、網頁閱讀、常用妙招等核心功能永久免費，Windows與macOS版均已上架；複雜網頁與跨平台操作穩定性仍有提升空間。",
+        "English": "Tabbit embeds AI deeply into the browser. Users give natural-language instructions, and its intelligent agent can automatically search, extract information, fill forms, and deliver results, turning the browser from a passive display tool into an active executor. It aggregates multiple models including LongCat, DeepSeek, Kimi, and GLM, with scenario-based switching. Its \"Miaozhao\" feature saves frequent workflows as reusable commands for one-click invocation, while vertical tabs and smart organization group tabs by topic to ease tab overload. Core features such as basic chat, webpage reading, and common shortcuts are permanently free. Windows and macOS versions are available. Stability in complex webpages and cross-platform operations still needs improvement."
       },
       "listed_at": "2026-10-05 13:44:54",
       "systems": [
         "Windows",
         "macOS"
+      ],
+      "links": [
+        {
+          "label": {
+            "简体中文": "国际版官网",
+            "繁體中文": "國際版官網",
+            "English": "International edition official website"
+          },
+          "url": "https://www.tabbit.ai/"
+        }
       ]
     },
     {
       "id": "removebg",
       "code": "TG-000050",
-      "name": {
-        "简体中文": "removebg",
-        "繁體中文": "removebg",
-        "English": "removebg"
-      },
+      "name": "removebg",
       "category": [
         "工具"
       ],
+      "tags": {
+        "简体中文": [
+          "抠图",
+          "去背景",
+          "AI图像"
+        ],
+        "繁體中文": [
+          "抠图",
+          "去背景",
+          "AI图像"
+        ],
+        "English": [
+          "去背景",
+          "AI图像",
+          "Photo Tool"
+        ]
+      },
+      "icon": "TG-000050.png",
       "url": "https://www.remove.bg/",
       "description": {
-        "简体中文": "抠图网站",
-        "繁體中文": "去背網站",
-        "English": "An online background remover"
+        "简体中文": "Remove.bg是AI自动抠图工具的开山产品，5秒一键去除图片背景，2021年被Canva收购。",
+        "繁體中文": "Remove.bg是AI自動摳圖工具的開山產品，5秒一鍵去除圖片背景，2021年被Canva收購。",
+        "English": "Remove.bg is the pioneering AI background remover that strips image backgrounds in about 5 seconds with one click. Acquired by Canva in 2021."
       },
-      "listed_at": "2026-10-05 13:47:33"
+      "intro": {
+        "简体中文": "Remove.bg由奥地利团队Kaleido AI于2018年推出，是基于AI的在线背景移除服务。用户上传图片后，算法自动分离主体与背景，对发丝等精细边缘有专项优化，支持人像、商品、动物、汽车等多种对象。去背后可直接替换纯色或图片背景，也可用“魔力笔刷”手动擦除/恢复细节。提供网页端、桌面应用、Photoshop插件及API，支持批量处理，每月处理图片超1.5亿张、月活3200万。免费版输出低分辨率预览（约0.25MP），高清下载需付费，按张计费或订阅，中国大陆访问偶尔较慢。",
+        "繁體中文": "Remove.bg由奧地利團隊Kaleido AI於2018年推出，是基於AI的線上背景移除服務。使用者上傳圖片後，演算法自動分離主體與背景，對髮絲等精細邊緣有專項優化，支援人像、商品、動物、汽車等多種對象。去背後可直接替換純色或圖片背景，也可用「魔力筆刷」手動擦除/恢復細節。提供網頁端、桌面應用、Photoshop外掛及API，支援批次處理，每月處理圖片超1.5億張、月活3200萬。免費版輸出低解析度預覽（約0.25MP），高清下載需付費，按張計費或訂閱，中國大陸訪問偶爾較慢。",
+        "English": "Launched in 2018 by Austrian team Kaleido AI, Remove.bg is an AI-powered online background removal service. Users upload an image, and the algorithm automatically separates the subject from the background, with dedicated optimization for fine edges like hair and support for people, products, animals, and cars. After removal, you can swap in solid colors or image backgrounds, or use the Magic Brush to manually erase or restore details. It offers a web app, desktop apps, a Photoshop plugin, and an API, with batch processing. It handles over 150 million images per month with 32 million monthly active users. The free tier gives low-resolution previews (around 0.25MP); HD downloads require payment via pay-per-image credits or subscription. Access from mainland China can occasionally be slow."
+      },
+      "listed_at": "2026-10-05 13:47:33",
+      "systems": [
+        "web"
+      ]
     },
     {
       "id": "iconkitchen",
       "code": "TG-000051",
-      "name": {
-        "简体中文": "IconKitchen",
-        "繁體中文": "IconKitchen",
-        "English": "IconKitchen"
-      },
+      "name": "IconKitchen",
       "category": [
         "工具"
       ],
+      "tags": [
+        "图标生成",
+        "多平台"
+      ],
+      "icon": "TG-000051.ico",
       "url": "https://icon.kitchen/",
       "description": {
-        "简体中文": "各平台图标制作网站",
-        "繁體中文": "各平台圖示製作網站",
-        "English": "A website for creating app icons for every platform"
+        "简体中文": "IconKitchen是一款免费的在线应用图标生成工具，支持iOS、Android、Web、macOS等多平台图标的一键生成与导出。",
+        "繁體中文": "IconKitchen是一款免費的線上應用圖標生成工具，支援iOS、Android、Web、macOS等多平台圖標的一鍵生成與匯出。",
+        "English": "IconKitchen is a free online app icon generator that lets you create and export icons for iOS, Android, Web, macOS, and more, all from one place."
+      },
+      "intro": {
+        "简体中文": "IconKitchen由开发者Roman Nurik打造，前身是Android社区知名的AndroidAssetStudio。用户上传图片或选用内置素材后，可调整颜色、圆角、形状、文字等参数，实时预览图标效果。其核心优势是一站式多平台适配：一次设计即可导出iOS、Android（含自适应图标）、Web（favicon）、macOS、watchOS、tvOS等所需的全部尺寸和格式，免去手动逐一切图的繁琐。工具完全在线运行，无需安装，界面直观，适合开发者与设计师快速产出项目可用的图标资源包。",
+        "繁體中文": "IconKitchen由開發者Roman Nurik打造，前身是Android社群知名的AndroidAssetStudio。使用者上傳圖片或選用內建素材後，可調整顏色、圓角、形狀、文字等參數，即時預覽圖標效果。其核心優勢是一站式多平台適配：一次設計即可匯出iOS、Android（含自適應圖標）、Web（favicon）、macOS、watchOS、tvOS等所需的全部尺寸和格式，免去手動逐一切圖的繁瑣。工具完全線上運行，無需安裝，介面直觀，適合開發者與設計師快速產出專案可用的圖標資源包。",
+        "English": "Built by developer Roman Nurik, IconKitchen is the successor to the well-known AndroidAssetStudio from the Android community. Users can upload an image or pick from built-in assets, then adjust colors, corner radius, shape, text, and other parameters with live preview. Its core strength is one-stop multi-platform adaptation: design once and export every required size and format for iOS, Android (including adaptive icons), Web favicons, macOS, watchOS, and tvOS—no manual slicing needed. The tool runs entirely online with no installation, offering an intuitive interface that helps developers and designers quickly produce project-ready icon asset bundles."
       },
       "listed_at": "2026-10-05 13:48:53",
       "systems": [
@@ -2034,22 +1875,193 @@
     {
       "id": "gsmanager",
       "code": "TG-000052",
-      "name": {
-        "简体中文": "GSManager",
-        "繁體中文": "GSManager",
-        "English": "GSManager"
-      },
+      "name": "GSManager",
       "category": [
         "工具"
+      ],
+      "tags": [
+        "服务器部署",
+        "管理"
       ],
       "icon": "TG-000052.png",
       "url": "https://www.gsmanager.cn/",
       "description": {
-        "简体中文": "专为简化游戏服务器的部署、管理和维护而设计",
-        "繁體中文": "專為簡化遊戲伺服器的部署、管理與維護而設計",
-        "English": "Designed to simplify the deployment, management, and maintenance of game servers"
+        "简体中文": "GSManager是开源游戏服务器面板，一键部署Steam/MC服务端，简化开服与管理流程。",
+        "繁體中文": "GSManager是開源遊戲伺服器面板，一鍵部署Steam/MC伺服端，簡化開服與管理流程。",
+        "English": "GSManager is an open-source game server panel for one-click Steam/MC deployment and simplified server management."
       },
-      "listed_at": "2026-10-05 13:50:19"
+      "intro": {
+        "简体中文": "GSManager（GameServerManager）是一款基于Docker的开源游戏服务器管理面板，专为简化游戏服务器的部署、管理和维护而设计。它支持50+款Steam游戏及Minecraft一键部署，提供Web管理界面、实时终端、资源监控、权限管理、可视化配置编辑、定时存档备份等功能。内置PTY伪终端与云端实例市场，降低开服门槛，适合个人玩家与小型社区快速搭建专属游戏服务器。",
+        "繁體中文": "GSManager（GameServerManager）是一款基於Docker的開源遊戲伺服器管理面板，專為簡化遊戲伺服器的部署、管理和維護而設計。它支援50+款Steam遊戲及Minecraft一鍵部署，提供Web管理介面、即時終端、資源監控、權限管理、視覺化配置編輯、定時存檔備份等功能。內建PTY偽終端與雲端實例市場，降低開服門檻，適合個人玩家與小型社群快速搭建專屬遊戲伺服器。",
+        "English": "GSManager (GameServerManager) is a Docker-based open-source game server management panel designed to simplify the deployment, management, and maintenance of game servers. It supports one-click deployment for 50+ Steam games and Minecraft, offering a web UI, real-time terminal, resource monitoring, permission management, visual config editing, and scheduled backups. With a built-in PTY terminal and cloud instance marketplace, it lowers the barrier to entry for individuals and small communities to quickly set up dedicated game servers."
+      },
+      "listed_at": "2026-10-05 13:50:19",
+      "systems": [
+        "Windows",
+        "Linux",
+        "web"
+      ]
+    },
+    {
+      "id": "mt",
+      "code": "TG-000053",
+      "name": {
+        "简体中文": "MT管理器",
+        "繁體中文": "MT管理器",
+        "English": "MT Manager"
+      },
+      "category": [
+        "工具"
+      ],
+      "tags": [
+        "管理器"
+      ],
+      "icon": "TG-000053.png",
+      "url": "https://mt.cc/",
+      "download_page_url": "https://mt.cc/download/",
+      "chat_url": "https://bbs.binmt.cc/",
+      "description": {
+        "简体中文": "Android 平台文件管理 & 逆向修改神器。",
+        "繁體中文": "Android 平台檔案管理 & 逆向修改神器。",
+        "English": "Android Platform File Management & Reverse Engineering Modification Tool."
+      },
+      "intro": {
+        "简体中文": "Android 平台文件管理 & 逆向修改神器。双窗口操作，多功能 ，玩机必备。",
+        "繁體中文": "Android 平台檔案管理 & 逆向修改神器。雙視窗操作，多功能，玩機必備。",
+        "English": "Android Platform File Management & Reverse Engineering Modification Tool. Dual-window operation, multi-functional, a must-have for Android tinkerers."
+      },
+      "listed_at": "2026-11-12 22:37:24",
+      "systems": [
+        "Android"
+      ]
+    },
+    {
+      "id": "vscode",
+      "code": "TG-000054",
+      "name": "VSCode",
+      "category": [
+        "编程"
+      ],
+      "tags": [
+        "IDE编辑器",
+        "官方"
+      ],
+      "icon": "TG-000054.png",
+      "url": "https://code.visualstudio.com/",
+      "download_page_url": "https://code.visualstudio.com/download",
+      "description": {
+        "简体中文": "由微软开发的免费、开源、跨平台源代码编辑器，集简洁性与强大的开发工具于一体。",
+        "繁體中文": "由微軟開發的免費、開源、跨平台原始碼編輯器，兼具簡潔性與強大的開發工具。",
+        "English": "A free, open-source, cross-platform source code editor developed by Microsoft, combining simplicity with powerful development tools."
+      },
+      "intro": {
+        "简体中文": "VS Code 的核心是一个轻快迅捷的源代码编辑器，支持数百种语言的语法高亮、IntelliSense 代码补全、语义理解与重构。它内置交互式调试器，可逐行执行代码、检查变量与调用栈，并集成 Git 版本控制，让开发者无需离开编辑器即可完成日常的编辑、构建与调试循环。其开放的扩展模型允许用户深度定制，是 Web 与跨平台开发的主流工具之一。",
+        "繁體中文": "VS Code 的核心是一個輕快迅捷的原始碼編輯器，支援數百種語言的語法高亮、IntelliSense 程式碼補全、語意理解與重構。它內建互動式偵錯器，可逐行執行程式碼、檢查變數與呼叫堆疊，並整合 Git 版本控制，讓開發者無需離開編輯器即可完成日常的編輯、建置與偵錯循環。其開放的擴充模型允許使用者深度自訂，是 Web 與跨平台開發的主流工具之一。",
+        "English": "At its core, VS Code is a fast and lightweight source code editor with syntax highlighting, IntelliSense code completion, semantic understanding, and refactoring for hundreds of languages. It includes an interactive debugger for stepping through code, inspecting variables and call stacks, and integrates Git version control so developers can edit, build, and debug without leaving the editor. Its open extension model enables deep customization, making it a mainstream tool for web and cross-platform development."
+      },
+      "listed_at": "2026-11-13 00:24:59",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Linux",
+        "web"
+      ]
+    },
+    {
+      "id": "git",
+      "code": "TG-000055",
+      "name": "Git",
+      "category": [
+        "编程"
+      ],
+      "tags": [
+        "版本控制",
+        "知名"
+      ],
+      "icon": "TG-000055.png",
+      "url": "https://git-scm.com/",
+      "github": "https://github.com/git/git",
+      "download_page_url": "https://git-scm.com/install/",
+      "description": {
+        "简体中文": "开源分布式版本控制系统，高效管理代码版本与协作。",
+        "繁體中文": "開源分散式版本控制系統，高效管理程式碼版本與協作。",
+        "English": "Open-source distributed version control system for efficient code management."
+      },
+      "intro": {
+        "简体中文": "Git由Linux之父Linus Torvalds于2005年创建，是分布式版本控制系统，每个开发者本地拥有完整仓库副本，支持离线提交、分支管理与合并。它以速度、数据完整性和对非线性开发流程的强大支持著称，已成为全球软件开发的事实标准。",
+        "繁體中文": "Git由Linux之父Linus Torvalds於2005年創建，是分散式版本控制系統，每位開發者本地擁有完整倉庫副本，支援離線提交、分支管理與合併。它以速度、資料完整性和對非線性開發流程的強大支援著稱，已成為全球軟體開發的事實標準。",
+        "English": "Created by Linus Torvalds in 2005, Git is a distributed version control system where every developer has a full local copy of the repository. Known for speed, data integrity, and strong support for non-linear workflows, it has become the de facto standard for software development."
+      },
+      "listed_at": "2026-11-14 17:29:24",
+      "systems": [
+        "Windows",
+        "macOS",
+        "Linux"
+      ]
+    },
+    {
+      "id": "wechat",
+      "code": "TG-000056",
+      "name": {
+        "简体中文": "微信",
+        "繁體中文": "微信",
+        "English": "WeChat"
+      },
+      "category": [
+        "社交"
+      ],
+      "tags": [
+        "社交"
+      ],
+      "icon": "TG-000056.png",
+      "url": "https://weixin.qq.com/",
+      "download_page_url": "https://weixin.qq.com/",
+      "description": {
+        "简体中文": "腾讯旗下全民级即时通讯与生活服务平台，国民级社交软件。",
+        "繁體中文": "騰訊旗下全民級即時通訊與生活服務平台，國民級社交軟體。",
+        "English": "Tencent's Nationwide Instant Messaging And Life Service Platform, A National-Level Social Software."
+      },
+      "intro": {
+        "简体中文": "微信覆盖文字、语音、视频通话、朋友圈、公众号、小程序、微信支付等功能，已发展为涵盖社交、内容、支付、服务的超级应用，是中国网民日常沟通与生活服务的核心入口。",
+        "繁體中文": "微信覆蓋文字、語音、視訊通話、朋友圈、公眾號、小程式、微信支付等功能，已發展為涵蓋社交、內容、支付、服務的超級應用，是中國網民日常溝通與生活服務的核心入口。",
+        "English": "WeChat covers text, voice, video calls, Moments, Official Accounts, Mini Programs, WeChat Pay, and other features. It has grown into a super app covering social networking, content, payment, and services, and serves as a core gateway for daily communication and life services for Chinese internet users."
+      },
+      "listed_at": "2026-11-14 17:45:28",
+      "systems": [
+        "全平台"
+      ]
+    },
+    {
+      "id": "qq",
+      "code": "TG-000057",
+      "name": "QQ",
+      "category": [
+        "社交"
+      ],
+      "tags": [
+        "社交"
+      ],
+      "icon": "TG-000057.png",
+      "url": "https://im.qq.com/",
+      "download_page_url": "https://im.qq.com/",
+      "description": {
+        "简体中文": "腾讯旗下经典即时通讯软件，支持聊天、文件传输与社交。",
+        "繁體中文": "騰訊旗下經典即時通訊軟體，支援聊天、檔案傳輸與社交。",
+        "English": "Tencent's classic messaging app for chat, file transfer, and social networking."
+      },
+      "intro": {
+        "简体中文": "QQ支持文字、语音、视频通话、文件传输、群聊、空间动态等功能，是中国互联网发展初期最具代表性的社交产品之一，至今仍拥有庞大用户群体。",
+        "繁體中文": "QQ支援文字、語音、視訊通話、檔案傳輸、群聊、空間動態等功能，是中國網際網路發展初期最具代表性的社交產品之一。",
+        "English": "QQ supports text, voice and video calls, file transfer, group chats, and Qzone, remaining one of the most representative social products from China's early internet era."
+      },
+      "listed_at": "2026-11-14 17:57:42",
+      "systems": [
+        "Windows",
+        "macOS",
+        "iOS",
+        "Android",
+        "HarmonyOS"
+      ]
     }
   ]
 }

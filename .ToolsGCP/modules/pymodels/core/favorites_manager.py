@@ -69,11 +69,23 @@ class FavoritesManager:
                 if not isinstance(folder, dict):
                     continue
                 name = str(folder.get("name") or "").strip()
-                if not name or any(f["name"] == name for f in folders):
+                if not name:
                     continue
                 # 老数据里默认收藏夹存的是中文名，统一迁移成英文键
                 if name in LEGACY_DEFAULT_NAMES:
                     name = DEFAULT_FOLDER
+                # ⚠️ 归一**之后**还要再判一次重名：用户完全可能自己建过一个叫
+                #    "Default" 的夹（英文界面下默认夹显示名恰好就是它），同时老文件里
+                #    还有中文名的 "默认收藏夹"。在归一前判重的话，两条都会留下来 ——
+                #    folders() 出现两个 "Default"，_folder() 只认第一条，第二条的条目
+                #    就从界面上凭空消失（看不见的收藏才是真丢数据）。这里合并条目。
+                existed = next((f for f in folders if f["name"] == name), None)
+                if existed is not None:
+                    for code in (folder.get("items") or []):
+                        text = str(code or "").strip()
+                        if text and text not in existed["items"]:
+                            existed["items"].append(text)
+                    continue
                 items = folder.get("items")
                 items = [str(i) for i in items if str(i).strip()] if isinstance(items, list) else []
                 # 去重且保序
